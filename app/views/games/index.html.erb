@@ -1,2 +1,27 @@
-<h1>Games#index</h1>
-<p>Find me in app/views/games/index.html.erb</p>
+<h1>試合結果</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>日付</th>
+      <th>回戦</th>
+      <th>対戦</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @games.each do |game| %>
+      <tr>
+        <td><%= game.played_on %></td>
+        <td><%= game.game_number %>回戦</td>
+        <td>
+          <%= game.team0.short_name %>
+          <%= game.team0_score %>
+          -
+          <%= game.team1_score %>
+          <%= game.team1.short_name %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
