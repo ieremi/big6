@@ -1,0 +1,10 @@
+<h1>東京六大学</h1>
+
+<ul>
+  <% @universities.each do |university| %>
+    <li>
+      <%= university.name %>
+      （<%= university.short_name %>）
+    </li>
+  <% end %>
+</ul>
