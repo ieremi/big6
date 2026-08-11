@@ -23,7 +23,7 @@ universities.each do |attributes|
   end
 end
 
-(2000..2026).each do |year|
+(1925..2026).each do |year|
   Season.find_or_create_by!(year: year, term: "spring")
   Season.find_or_create_by!(year: year, term: "autumn")
 end
