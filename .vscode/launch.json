@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "rdbg",
+            "name": "Debug Scorebook",
+            "request": "launch",
+            "script": "bin/rails",
+            "args": [
+                "runner",
+                "lib/big6/scorebook/season.rb"
+            ]
+        }
+    ]
+}
