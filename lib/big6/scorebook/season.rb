@@ -6,7 +6,7 @@ url = URI("https://big6scorebook.jp/api/game/search")
 
 url.query = URI.encode_www_form(
   league: "リーグ戦",
-  season: "1920秋"
+  season: "1997秋"
 )
 
 response = Net::HTTP.get_response(url)
