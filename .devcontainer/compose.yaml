@@ -8,7 +8,7 @@ services:
 
     volumes:
       - ../../big6:/workspaces/big6:cached
-      - ./.zshrc:/home/vscode/.zshrc:ro
+      - ./.zshrc:/home/vscode/starship.zsh:ro
       - ../../linux_dotfiles/.config/starship.toml:/home/vscode/.config/starship.toml:ro
       # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
