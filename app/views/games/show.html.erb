@@ -1,0 +1,76 @@
+<%= link_to "← 試合一覧", games_path, class: "back-link" %>
+
+<h1><%= @game.season.title %> <%= @game.team0.short_name %> vs <%= @game.team1.short_name %></h1>
+
+<p class="muted">
+  <%= @game.played_on %>　<%= @game.game_number %>回戦
+  <% if @scoreboard.stadium.present? %>　<%= @scoreboard.stadium %><% end %>
+  <% if @scoreboard.attendance.present? %>　観衆<%= @scoreboard.attendance %>人<% end %>
+</p>
+
+<% if @scoreboard.present? %>
+  <div class="scoreboard">
+    <table class="scoreboard-table">
+      <thead>
+        <tr>
+          <th class="team-col"></th>
+          <% @scoreboard.innings.each do |n| %>
+            <th><%= n %></th>
+          <% end %>
+          <th>計</th>
+          <th>安</th>
+          <th>失</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td class="team-col">
+            <span class="team-chip" style="background: <%= @game.team0.color %>"><%= @game.team0.initial %></span>
+            <%= @game.team0.short_name %>
+          </td>
+          <% @scoreboard.innings.each do |n| %>
+            <td><%= @scoreboard.top_runs(n) %></td>
+          <% end %>
+          <td class="total"><%= @game.team0_score %></td>
+          <td><%= @scoreboard.top_hits %></td>
+          <td><%= @scoreboard.top_errors %></td>
+        </tr>
+        <tr>
+          <td class="team-col">
+            <span class="team-chip" style="background: <%= @game.team1.color %>"><%= @game.team1.initial %></span>
+            <%= @game.team1.short_name %>
+          </td>
+          <% @scoreboard.innings.each do |n| %>
+            <td><%= @scoreboard.bottom_runs(n) %></td>
+          <% end %>
+          <td class="total"><%= @game.team1_score %></td>
+          <td><%= @scoreboard.bottom_hits %></td>
+          <td><%= @scoreboard.bottom_errors %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <dl class="scoreboard-meta">
+    <% if @scoreboard.started_at.present? %>
+      <div>
+        <dt>試合時間</dt>
+        <dd><%= @scoreboard.started_at %> 〜 <%= @scoreboard.finished_at %>（<%= @scoreboard.duration %>）</dd>
+      </div>
+    <% end %>
+    <% if @scoreboard.umpires.any? %>
+      <div>
+        <dt>審判</dt>
+        <dd><%= @scoreboard.umpires.join("、") %></dd>
+      </div>
+    <% end %>
+  </dl>
+<% else %>
+  <p>
+    <%= @game.team0.short_name %>
+    <span class="score"><%= @game.team0_score %> - <%= @game.team1_score %></span>
+    <%= @game.team1.short_name %>
+  </p>
+  <p class="muted">詳細データはありません。</p>
+<% end %>

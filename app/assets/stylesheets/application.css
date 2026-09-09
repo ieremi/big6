@@ -244,6 +244,81 @@ ul.list li {
   margin-top: 0.5rem;
 }
 
+.scoreboard {
+  background: #111827;
+  border-radius: 12px;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.scoreboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  border: none;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.scoreboard-table th {
+  background: transparent;
+  color: #fbbf24;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+
+.scoreboard-table th.team-col,
+.scoreboard-table td.team-col {
+  text-align: left;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scoreboard-table td.total {
+  font-weight: 700;
+  color: #fbbf24;
+  font-size: 1.1rem;
+}
+
+.scoreboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.scoreboard-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scoreboard-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: 0 0 1.5rem;
+}
+
+.scoreboard-meta div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.scoreboard-meta dt {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.scoreboard-meta dd {
+  margin: 0;
+}
+
 .period-toolbar {
   display: flex;
   align-items: center;

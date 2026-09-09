@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   resources :universities, only: [ :index ]
-  resources :games, only: [ :index ]
+  resources :games, only: [ :index, :show ]
   resources :seasons, only: [ :index, :show ] do
     member do
       get :standings

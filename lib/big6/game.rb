@@ -29,6 +29,7 @@ Season.where.not(scorebook_games: nil).find_each do |season|
 
     game.team0_score = info["runsTotalTop"].to_i
     game.team1_score = info["runsTotalBottom"].to_i
+    game.scorebook_game_id = info["id"]
     game.save!
   end
 end

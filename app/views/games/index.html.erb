@@ -15,9 +15,11 @@
         <td><%= game.played_on %></td>
         <td><%= game.game_number %>回戦</td>
         <td>
-          <%= game.team0.short_name %>
-          <span class="score"><%= game.team0_score %> - <%= game.team1_score %></span>
-          <%= game.team1.short_name %>
+          <%= link_to game_path(game) do %>
+            <%= game.team0.short_name %>
+            <span class="score"><%= game.team0_score %> - <%= game.team1_score %></span>
+            <%= game.team1.short_name %>
+          <% end %>
         </td>
       </tr>
     <% end %>
