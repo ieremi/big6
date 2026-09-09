@@ -1,22 +1,29 @@
 <h1>シーズン一覧</h1>
 
-<% @seasons.group_by { |season| (season.year / 10) * 10 }.each_with_index do |(decade, seasons), index| %>
-  <%= tag.details class: "decade", open: index.zero? do %>
-    <%= tag.summary "#{decade}〜#{decade + 9}年" %>
-    <ul class="list">
-      <% seasons.each do |season| %>
-        <li>
-          <% if @games_counts[season.id].to_i > 0 %>
-            <%= link_to season.title, season_path(season) %>
-            <span class="muted">
-              (<%= @games_counts[season.id] %>試合<% if @attendance_totals[season.id] %>・観衆<%= number_with_delimiter(@attendance_totals[season.id]) %>人<% end %>)
-            </span>
-            ・<%= link_to "順位表", standings_season_path(season) %>
-          <% else %>
-            <span class="muted"><%= season.title %></span>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+<div data-controller="decade-fold">
+  <div class="period-toolbar">
+    <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
+    <button type="button" class="period-btn" data-action="decade-fold#closeAll" data-shortcut="f" data-shortcut-label="すべて閉じる">すべて閉じる <kbd>f</kbd></button>
+  </div>
+
+  <% @seasons.group_by { |season| (season.year / 10) * 10 }.each_with_index do |(decade, seasons), index| %>
+    <%= tag.details class: "decade", open: index.zero?, data: { decade_fold_target: "decade" } do %>
+      <%= tag.summary "#{decade}〜#{decade + 9}年" %>
+      <ul class="list">
+        <% seasons.each do |season| %>
+          <li>
+            <% if @games_counts[season.id].to_i > 0 %>
+              <%= link_to season.title, season_path(season) %>
+              <span class="muted">
+                (<%= @games_counts[season.id] %>試合<% if @attendance_totals[season.id] %>・総観衆<%= number_with_delimiter(@attendance_totals[season.id]) %>人<% end %>)
+              </span>
+              ・<%= link_to "順位表", standings_season_path(season) %>
+            <% else %>
+              <span class="muted"><%= season.title %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
   <% end %>
-<% end %>
+</div>

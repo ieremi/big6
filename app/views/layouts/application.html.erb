@@ -23,15 +23,17 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body data-controller="shortcuts" data-action="keydown@window->shortcuts#handleKeydown keydown.esc@window->shortcuts#closeHelp">
     <header class="site-header">
       <div class="container">
-        <%= link_to "⚾ Big6", root_path, class: "brand" %>
+        <%= link_to root_path, class: "brand", data: { shortcut: "0", shortcut_label: "トップ" } do %>
+          ⚾ Big6 <kbd>0</kbd>
+        <% end %>
         <nav>
-          <%= link_to "シーズン", seasons_path %>
-          <%= link_to "対戦成績", matchups_path %>
-          <%= link_to "試合", games_path %>
-          <%= link_to "大学", universities_path %>
+          <%= link_to seasons_path, data: { shortcut: "1", shortcut_label: "シーズン" } do %>シーズン <kbd>1</kbd><% end %>
+          <%= link_to matchups_path, data: { shortcut: "2", shortcut_label: "対戦成績" } do %>対戦成績 <kbd>2</kbd><% end %>
+          <%= link_to games_path, data: { shortcut: "3", shortcut_label: "試合" } do %>試合 <kbd>3</kbd><% end %>
+          <%= link_to universities_path, data: { shortcut: "4", shortcut_label: "大学" } do %>大学 <kbd>4</kbd><% end %>
         </nav>
       </div>
     </header>
@@ -39,5 +41,16 @@
     <main class="container">
       <%= yield %>
     </main>
+
+    <div id="shortcuts-help" class="shortcuts-help" hidden data-shortcuts-target="help" data-action="click->shortcuts#backdropClick">
+      <div class="shortcuts-help-panel">
+        <div class="shortcuts-help-header">
+          <h2>ショートカット</h2>
+          <button type="button" class="shortcuts-help-close" data-action="shortcuts#closeHelp" aria-label="閉じる">✕</button>
+        </div>
+        <ul data-shortcuts-target="helpList"></ul>
+        <p class="muted"><kbd>Esc</kbd> または <kbd>?</kbd> で閉じる</p>
+      </div>
+    </div>
   </body>
 </html>
