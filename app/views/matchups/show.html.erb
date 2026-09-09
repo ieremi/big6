@@ -1,0 +1,38 @@
+<%= link_to "← 対戦成績一覧", matchups_path, class: "back-link" %>
+
+<h1><%= @matchup.team0.short_name %> vs <%= @matchup.team1.short_name %> 対戦成績</h1>
+
+<% pct = ->(value) { number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+
+<p class="muted">
+  通算
+  <%= @matchup.team0.short_name %><%= @matchup.wins(@matchup.team0) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team0)) %>）、
+  <%= @matchup.team1.short_name %><%= @matchup.wins(@matchup.team1) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team1)) %>）、
+  引き分け<%= @matchup.draws %>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>シーズン</th>
+      <th>日付</th>
+      <th>回戦</th>
+      <th>対戦</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @matchup.games.each do |game| %>
+      <tr>
+        <td><%= game.season.title %></td>
+        <td><%= game.played_on %></td>
+        <td><%= game.game_number %>回戦</td>
+        <td>
+          <%= game.team0.short_name %>
+          <span class="score"><%= game.team0_score %> - <%= game.team1_score %></span>
+          <%= game.team1.short_name %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

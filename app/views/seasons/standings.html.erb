@@ -45,7 +45,8 @@
                 <% if col_row.university == row.university %>
                   <span class="dash">---</span>
                 <% else %>
-                  <%= @standings.results_between(row.university, col_row.university).join %>
+                  <%= link_to @standings.results_between(row.university, col_row.university).join,
+                        matchup_path(team0_slug: row.university.slug, team1_slug: col_row.university.slug) %>
                 <% end %>
               </td>
             <% end %>

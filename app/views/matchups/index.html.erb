@@ -1,0 +1,37 @@
+<h1>対戦成績</h1>
+
+<div class="table-scroll">
+  <table class="standings-table">
+    <thead>
+      <tr>
+        <th class="col-team"></th>
+        <% @universities.each do |u| %>
+          <th>
+            <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% @universities.each do |row_university| %>
+        <tr>
+          <td class="col-team">
+            <span class="team-chip" style="background: <%= row_university.color %>"><%= row_university.initial %></span>
+          </td>
+          <% @universities.each do |col_university| %>
+            <td class="result-cell">
+              <% if row_university == col_university %>
+                <span class="dash">---</span>
+              <% else %>
+                <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
+                <%= link_to number_with_precision(matchup.percentage(row_university), precision: 3).sub(/\A0/, ""),
+                      matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug) %>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -208,6 +208,15 @@ ul.list li {
   color: #000;
 }
 
+.result-cell a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.result-cell a:hover {
+  text-decoration: underline;
+}
+
 .standings-table tbody tr:hover td.result-cell {
   background: #fff;
 }
