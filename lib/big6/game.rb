@@ -37,10 +37,13 @@ Season.where.not(scorebook_games: nil).find_each do |season|
       played_on: Date.parse(info.fetch("gameDay"))
     )
 
+    attendance = info["attendance"].to_s.delete(",").strip
+
     game.game_number = game_number
     game.team0_score = info["runsTotalTop"].to_i
     game.team1_score = info["runsTotalBottom"].to_i
     game.scorebook_game_id = info["id"]
+    game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
     game.save!
   end
 end
