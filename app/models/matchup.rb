@@ -25,7 +25,22 @@ class Matchup
     decided.zero? ? nil : wins(team, since: since).to_f / decided
   end
 
+  def average_attendance(since: nil)
+    values = games_since(since).filter_map { |g| attendance_for(g) }
+    return nil if values.empty?
+
+    values.sum / values.size
+  end
+
   private
+
+  def attendance_for(game)
+    entry = game.season.scorebook_games&.find { |g| g["id"] == game.scorebook_game_id }
+    return nil unless entry
+
+    value = entry["attendance"].to_s.delete(",").strip
+    value.to_i if value.match?(/\A\d+\z/)
+  end
 
   def games_since(since)
     return games if since.nil?

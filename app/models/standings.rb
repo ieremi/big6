@@ -1,8 +1,12 @@
 class Standings
-  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, keyword_init: true) do
+  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :attendance_total, :attendance_count, keyword_init: true) do
     def percentage
       decided = wins + losses
       decided.zero? ? 0.0 : wins.to_f / decided
+    end
+
+    def average_attendance
+      attendance_count.zero? ? nil : attendance_total / attendance_count
     end
   end
 
@@ -22,12 +26,17 @@ class Standings
     @results[[a.id, b.id]] || []
   end
 
+  def attendances_between(a, b)
+    @attendances[[a.id, b.id]] || []
+  end
+
   private
 
   def compute
     games = season.games.includes(:team0, :team1).order(:played_on, :game_number)
+    attendance_by_scorebook_id = build_attendance_lookup
 
-    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0 } }
+    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0 } }
     pair_games = Hash.new { |h, k| h[k] = [] }
 
     games.each do |g|
@@ -43,11 +52,20 @@ class Standings
         tallies[g.team1_id][:draws] += 1
       end
 
+      attendance = attendance_by_scorebook_id[g.scorebook_game_id]
+      if attendance
+        tallies[g.team0_id][:attendance_total] += attendance
+        tallies[g.team0_id][:attendance_count] += 1
+        tallies[g.team1_id][:attendance_total] += attendance
+        tallies[g.team1_id][:attendance_count] += 1
+      end
+
       pair_games[[g.team0_id, g.team1_id].sort] << g
     end
 
     points = Hash.new(0)
     @results = {}
+    @attendances = {}
 
     pair_games.each do |(a_id, b_id), pair|
       wins_a = pair.count { |g| winner_id(g) == a_id }
@@ -57,6 +75,10 @@ class Standings
 
       @results[[a_id, b_id]] = pair.map { |g| symbol_for(g, a_id) }
       @results[[b_id, a_id]] = pair.map { |g| symbol_for(g, b_id) }
+
+      attendances = pair.map { |g| attendance_by_scorebook_id[g.scorebook_game_id] }
+      @attendances[[a_id, b_id]] = attendances
+      @attendances[[b_id, a_id]] = attendances
     end
 
     @rows_by_id = universities.each_with_object({}) do |u, h|
@@ -67,11 +89,22 @@ class Standings
         losses: t[:losses],
         draws: t[:draws],
         points: points[u.id],
-        games: t[:wins] + t[:losses] + t[:draws]
+        games: t[:wins] + t[:losses] + t[:draws],
+        attendance_total: t[:attendance_total],
+        attendance_count: t[:attendance_count]
       )
     end
 
     @rows = @rows_by_id.values.sort_by { |r| [-r.points, -r.percentage] }
+  end
+
+  def build_attendance_lookup
+    return {} if season.scorebook_games.blank?
+
+    season.scorebook_games.each_with_object({}) do |g, lookup|
+      value = g["attendance"].to_s.delete(",").strip
+      lookup[g["id"]] = value.to_i if value.match?(/\A\d+\z/)
+    end
   end
 
   def winner_id(game)

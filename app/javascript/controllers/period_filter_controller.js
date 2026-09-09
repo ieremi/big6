@@ -2,10 +2,14 @@ import { Controller } from "@hotwired/stimulus"
 
 const ORDER = ["5", "10", "20", "all"]
 const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all" }
+const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["rate", "button"]
-  static values = { period: { type: String, default: "all" } }
+  static targets = ["rate", "button", "metricButton"]
+  static values = {
+    period: { type: String, default: "all" },
+    metric: { type: String, default: "rate" }
+  }
 
   connect() {
     this.boundKeydown = this.handleKeydown.bind(this)
@@ -22,6 +26,8 @@ export default class extends Controller {
 
     if (KEY_TO_PERIOD[event.key]) {
       this.periodValue = KEY_TO_PERIOD[event.key]
+    } else if (KEY_TO_METRIC[event.key]) {
+      this.metricValue = KEY_TO_METRIC[event.key]
     } else if (event.key === "<") {
       this.step(1)
     } else if (event.key === ">") {
@@ -39,12 +45,20 @@ export default class extends Controller {
     this.periodValue = event.currentTarget.dataset.period
   }
 
+  setMetric(event) {
+    this.metricValue = event.currentTarget.dataset.metric
+  }
+
   periodValueChanged() {
     this.render()
   }
 
+  metricValueChanged() {
+    this.render()
+  }
+
   render() {
-    const attr = `data-rate-${this.periodValue}`
+    const attr = `data-${this.metricValue}-${this.periodValue}`
 
     this.rateTargets.forEach((el) => {
       el.textContent = el.getAttribute(attr) || "—"
@@ -52,6 +66,10 @@ export default class extends Controller {
 
     this.buttonTargets.forEach((el) => {
       el.classList.toggle("active", el.dataset.period === this.periodValue)
+    })
+
+    this.metricButtonTargets.forEach((el) => {
+      el.classList.toggle("active", el.dataset.metric === this.metricValue)
     })
   }
 }

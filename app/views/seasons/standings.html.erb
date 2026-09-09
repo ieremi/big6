@@ -9,56 +9,72 @@
     <%= link_to "試合一覧を見る", season_path(@season) %>
   </p>
 
-  <div class="table-scroll">
-    <table class="standings-table">
-      <thead>
-        <tr>
-          <th>順位</th>
-          <th class="col-team"></th>
-          <% @standings.rows.each do |col_row| %>
-            <th>
-              <span class="team-chip" style="background: <%= col_row.university.color %>">
-                <%= col_row.university.initial %>
-              </span>
-            </th>
-          <% end %>
-          <th>試合</th>
-          <th>勝利</th>
-          <th>敗戦</th>
-          <th>引分</th>
-          <th>勝ち点</th>
-          <th>勝率</th>
-        </tr>
-      </thead>
+  <div data-controller="cell-toggle">
+    <div class="period-toolbar">
+      <span class="muted">セル表示:</span>
+      <button type="button" class="period-btn" data-mode="results" data-cell-toggle-target="button" data-action="cell-toggle#setMode">対戦成績</button>
+      <button type="button" class="period-btn" data-mode="attendance" data-cell-toggle-target="button" data-action="cell-toggle#setMode">観衆数</button>
+    </div>
 
-      <tbody>
-        <% @standings.rows.each_with_index do |row, index| %>
+    <div class="table-scroll">
+      <table class="standings-table">
+        <thead>
           <tr>
-            <td><span class="rank-badge"><%= index + 1 %></span></td>
-            <td class="col-team">
-              <span class="team-chip" style="background: <%= row.university.color %>">
-                <%= row.university.initial %>
-              </span>
-            </td>
+            <th>順位</th>
+            <th class="col-team"></th>
             <% @standings.rows.each do |col_row| %>
-              <td class="result-cell">
-                <% if col_row.university == row.university %>
-                  <span class="dash">---</span>
-                <% else %>
-                  <%= link_to @standings.results_between(row.university, col_row.university).join,
-                        matchup_path(team0_slug: row.university.slug, team1_slug: col_row.university.slug) %>
-                <% end %>
-              </td>
+              <th>
+                <span class="team-chip" style="background: <%= col_row.university.color %>">
+                  <%= col_row.university.initial %>
+                </span>
+              </th>
             <% end %>
-            <td><%= row.games %></td>
-            <td><%= row.wins %></td>
-            <td><%= row.losses %></td>
-            <td><%= row.draws %></td>
-            <td><%= row.points %></td>
-            <td><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
+            <th>試合</th>
+            <th>勝利</th>
+            <th>敗戦</th>
+            <th>引分</th>
+            <th>勝ち点</th>
+            <th>勝率</th>
+            <th>総観衆</th>
+            <th>平均観衆</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody>
+          <% @standings.rows.each_with_index do |row, index| %>
+            <tr>
+              <td><span class="rank-badge"><%= index + 1 %></span></td>
+              <td class="col-team">
+                <span class="team-chip" style="background: <%= row.university.color %>">
+                  <%= row.university.initial %>
+                </span>
+              </td>
+              <% @standings.rows.each do |col_row| %>
+                <td class="result-cell">
+                  <% if col_row.university == row.university %>
+                    <span class="dash">---</span>
+                  <% else %>
+                    <% results_text = @standings.results_between(row.university, col_row.university).join %>
+                    <% attendance_text = @standings.attendances_between(row.university, col_row.university)
+                         .map { |a| a ? number_with_delimiter(a) : "-" }.join("/") %>
+                    <%= link_to results_text,
+                          matchup_path(team0_slug: row.university.slug, team1_slug: col_row.university.slug),
+                          data: { cell_toggle_target: "cell", results: results_text, attendance: attendance_text } %>
+                  <% end %>
+                </td>
+              <% end %>
+              <td><%= row.games %></td>
+              <td><%= row.wins %></td>
+              <td><%= row.losses %></td>
+              <td><%= row.draws %></td>
+              <td><%= row.points %></td>
+              <td><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
+              <td><%= number_with_delimiter(row.attendance_total) %></td>
+              <td><%= row.average_attendance ? number_with_delimiter(row.average_attendance) : "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 <% end %>

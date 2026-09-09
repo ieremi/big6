@@ -1,8 +1,15 @@
 <h1>対戦成績</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+<% avg = ->(value) { value.nil? ? "—" : number_with_delimiter(value) } %>
 
 <div data-controller="period-filter">
+  <div class="period-toolbar">
+    <span class="muted">表示指標:</span>
+    <button type="button" class="period-btn" data-metric="rate" data-period-filter-target="metricButton" data-action="period-filter#setMetric">勝率 <kbd>w</kbd></button>
+    <button type="button" class="period-btn" data-metric="attendance" data-period-filter-target="metricButton" data-action="period-filter#setMetric">観衆 <kbd>p</kbd></button>
+  </div>
+
   <div class="period-toolbar">
     <span class="muted">表示期間:</span>
     <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">すべて <kbd>a</kbd></button>
@@ -38,6 +45,7 @@
                 <% else %>
                   <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
                   <% rates = @periods.transform_values { |since| pct.call(matchup.percentage(row_university, since: since)) } %>
+                  <% attendances = @periods.transform_values { |since| avg.call(matchup.average_attendance(since: since)) } %>
                   <%= link_to rates["all"],
                         matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug),
                         data: {
@@ -45,7 +53,11 @@
                           rate_5: rates["5"],
                           rate_10: rates["10"],
                           rate_20: rates["20"],
-                          rate_all: rates["all"]
+                          rate_all: rates["all"],
+                          attendance_5: attendances["5"],
+                          attendance_10: attendances["10"],
+                          attendance_20: attendances["20"],
+                          attendance_all: attendances["all"]
                         } %>
                 <% end %>
               </td>
