@@ -1,0 +1,33 @@
+<%= link_to "← シーズン一覧", seasons_path %>
+
+<h1><%= @season.title %></h1>
+
+<% if @games.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>日付</th>
+        <th>回戦</th>
+        <th>対戦</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% @games.each do |game| %>
+        <tr>
+          <td><%= game.played_on %></td>
+          <td><%= game.game_number %>回戦</td>
+          <td>
+            <%= game.team0.short_name %>
+            <%= game.team0_score %>
+            -
+            <%= game.team1_score %>
+            <%= game.team1.short_name %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>試合データがありません。</p>
+<% end %>
