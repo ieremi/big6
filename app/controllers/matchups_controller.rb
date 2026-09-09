@@ -1,6 +1,14 @@
 class MatchupsController < ApplicationController
+  PERIODS = {
+    "5" => -> { 5.years.ago.to_date },
+    "10" => -> { 10.years.ago.to_date },
+    "20" => -> { 20.years.ago.to_date },
+    "all" => -> { nil }
+  }.freeze
+
   def index
     @universities = University.order(:id).to_a
+    @periods = PERIODS.transform_values(&:call)
     @matchups = {}
 
     @universities.combination(2).each do |team0, team1|

@@ -2,7 +2,7 @@
 
 <h1><%= @matchup.team0.short_name %> vs <%= @matchup.team1.short_name %> 対戦成績</h1>
 
-<% pct = ->(value) { number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+<% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 
 <p class="muted">
   通算

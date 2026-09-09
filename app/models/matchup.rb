@@ -11,21 +11,27 @@ class Matchup
       .to_a
   end
 
-  def wins(team)
-    games.count { |g| winner(g) == team }
+  def wins(team, since: nil)
+    games_since(since).count { |g| winner(g) == team }
   end
 
-  def draws
-    games.count { |g| winner(g).nil? }
+  def draws(since: nil)
+    games_since(since).count { |g| winner(g).nil? }
   end
 
-  def percentage(team)
+  def percentage(team, since: nil)
     other = team == team0 ? team1 : team0
-    decided = wins(team) + wins(other)
-    decided.zero? ? 0.0 : wins(team).to_f / decided
+    decided = wins(team, since: since) + wins(other, since: since)
+    decided.zero? ? nil : wins(team, since: since).to_f / decided
   end
 
   private
+
+  def games_since(since)
+    return games if since.nil?
+
+    games.select { |g| g.played_on >= since }
+  end
 
   def winner(game)
     return nil if game.team0_score == game.team1_score

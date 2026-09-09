@@ -1,37 +1,58 @@
 <h1>対戦成績</h1>
 
-<div class="table-scroll">
-  <table class="standings-table">
-    <thead>
-      <tr>
-        <th class="col-team"></th>
-        <% @universities.each do |u| %>
-          <th>
-            <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
-          </th>
-        <% end %>
-      </tr>
-    </thead>
+<% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 
-    <tbody>
-      <% @universities.each do |row_university| %>
+<div data-controller="period-filter">
+  <div class="period-toolbar">
+    <span class="muted">表示期間:</span>
+    <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">すべて <kbd>a</kbd></button>
+    <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
+    <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
+    <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
+    <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
+  </div>
+
+  <div class="table-scroll">
+    <table class="standings-table">
+      <thead>
         <tr>
-          <td class="col-team">
-            <span class="team-chip" style="background: <%= row_university.color %>"><%= row_university.initial %></span>
-          </td>
-          <% @universities.each do |col_university| %>
-            <td class="result-cell">
-              <% if row_university == col_university %>
-                <span class="dash">---</span>
-              <% else %>
-                <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
-                <%= link_to number_with_precision(matchup.percentage(row_university), precision: 3).sub(/\A0/, ""),
-                      matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug) %>
-              <% end %>
-            </td>
+          <th class="col-team"></th>
+          <% @universities.each do |u| %>
+            <th>
+              <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+            </th>
           <% end %>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+
+      <tbody>
+        <% @universities.each do |row_university| %>
+          <tr>
+            <td class="col-team">
+              <span class="team-chip" style="background: <%= row_university.color %>"><%= row_university.initial %></span>
+            </td>
+            <% @universities.each do |col_university| %>
+              <td class="result-cell">
+                <% if row_university == col_university %>
+                  <span class="dash">---</span>
+                <% else %>
+                  <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
+                  <% rates = @periods.transform_values { |since| pct.call(matchup.percentage(row_university, since: since)) } %>
+                  <%= link_to rates["all"],
+                        matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug),
+                        data: {
+                          period_filter_target: "rate",
+                          rate_5: rates["5"],
+                          rate_10: rates["10"],
+                          rate_20: rates["20"],
+                          rate_all: rates["all"]
+                        } %>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
