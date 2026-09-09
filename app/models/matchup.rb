@@ -11,33 +11,45 @@ class Matchup
       .to_a
   end
 
-  def wins(team, since: nil)
-    games_since(since).count { |g| winner(g) == team }
+  def wins(team, since: nil, season_id: nil)
+    scoped_games(since: since, season_id: season_id).count { |g| winner(g) == team }
   end
 
-  def draws(since: nil)
-    games_since(since).count { |g| winner(g).nil? }
+  def draws(since: nil, season_id: nil)
+    scoped_games(since: since, season_id: season_id).count { |g| winner(g).nil? }
   end
 
-  def percentage(team, since: nil)
+  def percentage(team, since: nil, season_id: nil)
     other = team == team0 ? team1 : team0
-    decided = wins(team, since: since) + wins(other, since: since)
-    decided.zero? ? nil : wins(team, since: since).to_f / decided
+    decided = wins(team, since: since, season_id: season_id) + wins(other, since: since, season_id: season_id)
+    decided.zero? ? nil : wins(team, since: since, season_id: season_id).to_f / decided
   end
 
-  def average_attendance(since: nil)
-    values = games_since(since).filter_map(&:attendance)
+  def average_attendance(since: nil, season_id: nil)
+    values = attendance_values(since: since, season_id: season_id)
     return nil if values.empty?
 
     values.sum / values.size
   end
 
+  def total_attendance(since: nil, season_id: nil)
+    values = attendance_values(since: since, season_id: season_id)
+    return nil if values.empty?
+
+    values.sum
+  end
+
   private
 
-  def games_since(since)
-    return games if since.nil?
+  def attendance_values(since: nil, season_id: nil)
+    scoped_games(since: since, season_id: season_id).filter_map(&:attendance)
+  end
 
-    games.select { |g| g.played_on >= since }
+  def scoped_games(since: nil, season_id: nil)
+    scoped = games
+    scoped = scoped.select { |g| g.played_on >= since } if since
+    scoped = scoped.select { |g| g.season_id == season_id } if season_id
+    scoped
   end
 
   def winner(game)

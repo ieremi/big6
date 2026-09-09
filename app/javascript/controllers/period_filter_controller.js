@@ -1,11 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 const ORDER = ["5", "10", "20", "all"]
-const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all" }
+const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["rate", "button", "metricButton"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton"]
   static values = {
     period: { type: String, default: "all" },
     metric: { type: String, default: "rate" }
@@ -49,6 +49,61 @@ export default class extends Controller {
     this.metricValue = event.currentTarget.dataset.metric
   }
 
+  // The value attribute a "rowAvg"/"rowSum" element carries: each such element
+  // already represents a single aggregate (avg or sum), so only metric+period matter.
+  metricAttr() {
+    return this.metricValue === "attendance" ? `data-attendance-${this.periodValue}` : `data-rate-${this.periodValue}`
+  }
+
+  sortByColumn(event) {
+    const header = event.currentTarget
+    const cellIndex = parseInt(header.dataset.cellIndex, 10)
+    const kind = header.dataset.sortKind
+    const tbody = this.element.querySelector("tbody")
+    const rows = Array.from(tbody.querySelectorAll("tr"))
+
+    const valueFor = (row) => {
+      const cell = row.children[cellIndex]
+      const el = cell && cell.querySelector("[data-period-filter-target]")
+      if (!el) return null
+
+      let attr
+      if (el.dataset.periodFilterTarget === "cell") {
+        if (this.metricValue === "attendance") {
+          attr = kind === "sum" ? `data-attendance-sum-${this.periodValue}` : `data-attendance-avg-${this.periodValue}`
+        } else {
+          attr = `data-rate-${this.periodValue}`
+        }
+      } else {
+        attr = this.metricAttr()
+      }
+
+      const raw = el.getAttribute(attr)
+      const num = parseFloat(String(raw).replace(/,/g, ""))
+      return Number.isNaN(num) ? null : num
+    }
+
+    const direction = header.dataset.sortDirection === "desc" ? "asc" : "desc"
+
+    rows.sort((a, b) => {
+      const va = valueFor(a)
+      const vb = valueFor(b)
+      if (va === null && vb === null) return 0
+      if (va === null) return 1
+      if (vb === null) return -1
+      return direction === "desc" ? vb - va : va - vb
+    })
+
+    rows.forEach((row) => tbody.appendChild(row))
+
+    this.element.querySelectorAll("th.sortable").forEach((th) => {
+      th.classList.remove("sorted-asc", "sorted-desc")
+      delete th.dataset.sortDirection
+    })
+    header.dataset.sortDirection = direction
+    header.classList.add(direction === "desc" ? "sorted-desc" : "sorted-asc")
+  }
+
   periodValueChanged() {
     this.render()
   }
@@ -58,10 +113,24 @@ export default class extends Controller {
   }
 
   render() {
-    const attr = `data-${this.metricValue}-${this.periodValue}`
+    this.cellTargets.forEach((el) => {
+      if (this.metricValue === "attendance") {
+        const avg = el.getAttribute(`data-attendance-avg-${this.periodValue}`) || "—"
+        const sum = el.getAttribute(`data-attendance-sum-${this.periodValue}`) || "—"
+        el.textContent = `${avg}（計${sum}）`
+      } else {
+        el.textContent = el.getAttribute(`data-rate-${this.periodValue}`) || "—"
+      }
+    })
 
-    this.rateTargets.forEach((el) => {
-      el.textContent = el.getAttribute(attr) || "—"
+    const metricAttr = this.metricAttr()
+
+    this.rowAvgTargets.forEach((el) => {
+      el.textContent = el.getAttribute(metricAttr) || "—"
+    })
+
+    this.rowSumTargets.forEach((el) => {
+      el.textContent = el.getAttribute(metricAttr) || "—"
     })
 
     this.buttonTargets.forEach((el) => {

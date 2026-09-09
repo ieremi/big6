@@ -1,7 +1,7 @@
 <h1>対戦成績</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
-<% avg = ->(value) { value.nil? ? "—" : number_with_delimiter(value) } %>
+<% num = ->(value) { value.nil? ? "—" : number_with_delimiter(value) } %>
 
 <div data-controller="period-filter">
   <div class="period-toolbar">
@@ -16,19 +16,43 @@
     <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
     <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
     <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
+    <button type="button" class="period-btn" data-period="r" data-period-filter-target="button" data-action="period-filter#setPeriod">直近シーズン <kbd>r</kbd></button>
     <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
   </div>
+
+  <p class="muted">
+    列見出しをクリック（または <kbd>W</kbd><kbd>K</kbd><kbd>M</kbd><kbd>H</kbd><kbd>T</kbd><kbd>R</kbd><kbd>A</kbd><kbd>S</kbd>）すると、その列の値で並べ替えられます。
+    観衆表示では各セルに平均（計は合計）を表示します。
+  </p>
 
   <div class="table-scroll">
     <table class="standings-table">
       <thead>
         <tr>
           <th class="col-team"></th>
-          <% @universities.each do |u| %>
-            <th>
+          <% @universities.each_with_index do |u, index| %>
+            <th class="sortable"
+                data-action="click->period-filter#sortByColumn"
+                data-cell-index="<%= index + 1 %>"
+                data-sort-kind="avg"
+                data-shortcut="<%= u.initial %>"
+                data-shortcut-label="<%= u.short_name %>で並べ替え">
               <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+              <kbd><%= u.initial %></kbd>
             </th>
           <% end %>
+          <th class="sortable"
+              data-action="click->period-filter#sortByColumn"
+              data-cell-index="<%= @universities.size + 1 %>"
+              data-sort-kind="avg"
+              data-shortcut="A"
+              data-shortcut-label="平均で並べ替え">平均 <kbd>A</kbd></th>
+          <th class="sortable"
+              data-action="click->period-filter#sortByColumn"
+              data-cell-index="<%= @universities.size + 2 %>"
+              data-sort-kind="sum"
+              data-shortcut="S"
+              data-shortcut-label="合計で並べ替え">合計 <kbd>S</kbd></th>
         </tr>
       </thead>
 
@@ -44,24 +68,37 @@
                   <span class="dash">---</span>
                 <% else %>
                   <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
-                  <% rates = @periods.transform_values { |since| pct.call(matchup.percentage(row_university, since: since)) } %>
-                  <% attendances = @periods.transform_values { |since| avg.call(matchup.average_attendance(since: since)) } %>
+                  <% rates = @periods.transform_values { |opts| pct.call(matchup.percentage(row_university, **opts)) } %>
+                  <% avgs = @periods.transform_values { |opts| num.call(matchup.average_attendance(**opts)) } %>
+                  <% sums = @periods.transform_values { |opts| num.call(matchup.total_attendance(**opts)) } %>
+                  <% data = { period_filter_target: "cell" } %>
+                  <% @periods.each_key do |k|
+                       data["rate_#{k}".to_sym] = rates[k]
+                       data["attendance_avg_#{k}".to_sym] = avgs[k]
+                       data["attendance_sum_#{k}".to_sym] = sums[k]
+                     end %>
                   <%= link_to rates["all"],
                         matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug),
-                        data: {
-                          period_filter_target: "rate",
-                          rate_5: rates["5"],
-                          rate_10: rates["10"],
-                          rate_20: rates["20"],
-                          rate_all: rates["all"],
-                          attendance_5: attendances["5"],
-                          attendance_10: attendances["10"],
-                          attendance_20: attendances["20"],
-                          attendance_all: attendances["all"]
-                        } %>
+                        data: data %>
                 <% end %>
               </td>
             <% end %>
+            <% row_rate_avg = @row_averages[row_university]["rate"].transform_values { |v| pct.call(v) } %>
+            <% row_attendance_avg = @row_averages[row_university]["attendance"]["avg"].transform_values { |v| num.call(v) } %>
+            <% row_attendance_sum = @row_averages[row_university]["attendance"]["sum"].transform_values { |v| num.call(v) } %>
+            <% avg_data = { period_filter_target: "rowAvg" } %>
+            <% sum_data = { period_filter_target: "rowSum" } %>
+            <% @periods.each_key do |k|
+                 avg_data["rate_#{k}".to_sym] = row_rate_avg[k]
+                 avg_data["attendance_#{k}".to_sym] = row_attendance_avg[k]
+                 sum_data["attendance_#{k}".to_sym] = row_attendance_sum[k]
+               end %>
+            <td class="result-cell avg-cell">
+              <%= content_tag :span, row_rate_avg["all"], data: avg_data %>
+            </td>
+            <td class="result-cell sum-cell">
+              <%= content_tag :span, "—", data: sum_data %>
+            </td>
           </tr>
         <% end %>
       </tbody>

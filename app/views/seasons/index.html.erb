@@ -9,7 +9,7 @@
   <% @seasons.group_by { |season| (season.year / 10) * 10 }.each_with_index do |(decade, seasons), index| %>
     <%= tag.details class: "decade", open: index.zero?, data: { decade_fold_target: "decade" } do %>
       <%= tag.summary "#{decade}〜#{decade + 9}年" %>
-      <ul class="list">
+      <ul class="list season-list">
         <% seasons.each do |season| %>
           <li>
             <% if @games_counts[season.id].to_i > 0 %>
