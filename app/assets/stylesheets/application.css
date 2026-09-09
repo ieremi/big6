@@ -156,3 +156,62 @@ ul.list li {
 .muted {
   color: var(--text-muted);
 }
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.standings-table th,
+.standings-table td {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.standings-table th.col-team,
+.standings-table td.col-team {
+  text-align: left;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.team-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.col-team {
+  width: 1%;
+}
+
+.result-cell {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  background: #fff;
+  color: #000;
+}
+
+.standings-table tbody tr:hover td.result-cell {
+  background: #fff;
+}
+
+.dash {
+  color: var(--text-muted);
+}
