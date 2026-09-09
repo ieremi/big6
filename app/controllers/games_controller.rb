@@ -1,6 +1,11 @@
 class GamesController < ApplicationController
+  SORT_COLUMNS = {
+    "played_on" => :played_on,
+    "game_number" => :game_number
+  }.freeze
+
   def index
-    @games = Game.includes(:team0, :team1).order(:played_on, :id)
+    @games = Game.includes(:team0, :team1)
     @games = @games.where(season_id: params[:season_id]) if params[:season_id].present?
 
     if params[:university_id].present?
@@ -8,6 +13,10 @@ class GamesController < ApplicationController
     end
 
     @games = @games.where(game_number: params[:game_number]) if params[:game_number].present?
+
+    @sort = SORT_COLUMNS.key?(params[:sort]) ? params[:sort] : "played_on"
+    @direction = params[:direction] == "desc" ? "desc" : "asc"
+    @games = @games.order(SORT_COLUMNS[@sort] => @direction.to_sym).order(:id)
 
     @universities = University.order(:id)
     @seasons = Season.order(year: :desc, term: :asc)

@@ -10,7 +10,7 @@
         include_blank: "大学",
         data: { action: "change->auto-submit#submit" } %>
   <%= select_tag :game_number,
-        options_for_select([ [ "1回戦", 1 ], [ "2回戦", 2 ], [ "3回戦", 3 ] ], params[:game_number]),
+        options_for_select((1..6).map { |n| [ "#{n}回戦", n ] }, params[:game_number]),
         include_blank: "回戦",
         data: { action: "change->auto-submit#submit" } %>
   <noscript><%= submit_tag "絞り込む", class: "period-btn" %></noscript>
@@ -24,8 +24,8 @@
 <table>
   <thead>
     <tr>
-      <th>日付</th>
-      <th>回戦</th>
+      <th><%= games_sort_link("played_on", "日付") %></th>
+      <th><%= games_sort_link("game_number", "回戦") %></th>
       <th>対戦</th>
     </tr>
   </thead>
