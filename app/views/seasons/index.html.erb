@@ -1,13 +1,13 @@
 <h1>シーズン一覧</h1>
 
-<ul>
+<ul class="list">
   <% @seasons.each do |season| %>
     <li>
       <% if @games_counts[season.id].to_i > 0 %>
         <%= link_to season.title, season_path(season) %>
-        (<%= @games_counts[season.id] %>試合)
+        <span class="muted">(<%= @games_counts[season.id] %>試合)</span>
       <% else %>
-        <%= season.title %>
+        <span class="muted"><%= season.title %></span>
       <% end %>
     </li>
   <% end %>

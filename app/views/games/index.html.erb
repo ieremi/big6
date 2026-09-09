@@ -16,9 +16,7 @@
         <td><%= game.game_number %>回戦</td>
         <td>
           <%= game.team0.short_name %>
-          <%= game.team0_score %>
-          -
-          <%= game.team1_score %>
+          <span class="score"><%= game.team0_score %> - <%= game.team1_score %></span>
           <%= game.team1.short_name %>
         </td>
       </tr>
