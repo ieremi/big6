@@ -225,6 +225,25 @@ ul.list li {
   color: var(--text-muted);
 }
 
+.decade {
+  margin-bottom: 0.75rem;
+}
+
+.decade summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.5rem 0.25rem;
+  color: var(--text);
+}
+
+.decade summary:hover {
+  color: var(--accent);
+}
+
+.decade .list {
+  margin-top: 0.5rem;
+}
+
 .period-toolbar {
   display: flex;
   align-items: center;
