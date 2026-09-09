@@ -86,10 +86,12 @@ h1 {
 
 a {
   color: var(--accent);
+  text-decoration: none;
 }
 
 a:hover {
   color: var(--accent-hover);
+  text-decoration: underline;
 }
 
 table {
@@ -148,9 +150,28 @@ ul.list li {
 }
 
 .score {
+  display: inline-flex;
+  align-items: baseline;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   padding: 0 0.35rem;
+}
+
+.score-num {
+  display: inline-block;
+  min-width: 1.4em;
+}
+
+.score-num-left {
+  text-align: right;
+}
+
+.score-num-right {
+  text-align: left;
+}
+
+.score-sep {
+  padding: 0 0.3em;
 }
 
 .muted {
