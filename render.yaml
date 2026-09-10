@@ -18,17 +18,16 @@ services:
         fromDatabase:
           name: big6-db
           property: connectionString
+      # solid_cache/solid_queue/solid_cable each need their own physical database
+      # (sharing one with primary breaks schema loading, since they'd share one
+      # schema_migrations table). Create big6-db-cache/-queue/-cable as extra
+      # databases on the same Postgres instance, then set these manually in the
+      # Render dashboard to that instance's connection string with the database
+      # name swapped for each. sync: false leaves them blank here so Render
+      # prompts for manual entry instead of reusing the primary connection string.
       - key: CACHE_DATABASE_URL
-        fromDatabase:
-          name: big6-db
-          property: connectionString
+        sync: false
       - key: QUEUE_DATABASE_URL
-        fromDatabase:
-          name: big6-db
-          property: connectionString
+        sync: false
       - key: CABLE_DATABASE_URL
-        fromDatabase:
-          name: big6-db
-          property: connectionString
-      - key: SOLID_QUEUE_IN_PUMA
-        value: "true"
+        sync: false
