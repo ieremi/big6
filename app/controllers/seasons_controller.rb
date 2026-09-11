@@ -16,6 +16,7 @@ class SeasonsController < ApplicationController
   def show
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @games = @season.games.includes(:team0, :team1).order(:played_on, :game_number)
+    @weeks = SeasonWeeks.new(@games).weeks
   end
 
   def standings

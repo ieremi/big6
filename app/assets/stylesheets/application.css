@@ -90,6 +90,21 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+.week-heading {
+  font-size: 1.1rem;
+  margin: 2rem 0 0.75rem;
+}
+
+.week-heading:first-of-type {
+  margin-top: 0;
+}
+
+.card-heading {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 1.25rem 0 0.5rem;
+}
+
 a {
   color: var(--accent);
   text-decoration: none;

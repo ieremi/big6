@@ -7,31 +7,39 @@
 <% end %>
 
 <% if @games.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>日付</th>
-        <th>回戦</th>
-        <th>対戦</th>
-      </tr>
-    </thead>
+  <% @weeks.each do |week| %>
+    <h2 class="week-heading">第<%= week.number %>週</h2>
 
-    <tbody>
-      <% @games.each do |game| %>
-        <tr>
-          <td><%= game.played_on %></td>
-          <td><%= game.game_number %>回戦</td>
-          <td>
-            <%= link_to game_path(game) do %>
-              <%= game.team0.short_name %>
-              <%= score_span(game.team0_score, game.team1_score) %>
-              <%= game.team1.short_name %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+    <% week.series.each do |s| %>
+      <h3 class="card-heading"><%= s.team0.short_name %> vs <%= s.team1.short_name %></h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>回戦</th>
+            <th>対戦</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% s.games.each do |game| %>
+            <tr>
+              <td><%= game.played_on %></td>
+              <td><%= game.game_number %>回戦</td>
+              <td>
+                <%= link_to game_path(game) do %>
+                  <%= game.team0.short_name %>
+                  <%= score_span(game.team0_score, game.team1_score) %>
+                  <%= game.team1.short_name %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  <% end %>
 <% else %>
   <p class="muted">試合データがありません。</p>
 <% end %>
