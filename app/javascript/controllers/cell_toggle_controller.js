@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["cell", "button"]
+  static targets = ["cell", "button", "resultsColumn", "attendanceColumn"]
   static values = { mode: { type: String, default: "results" } }
 
   connect() {
@@ -25,6 +25,14 @@ export default class extends Controller {
 
     this.buttonTargets.forEach((el) => {
       el.classList.toggle("active", el.dataset.mode === this.modeValue)
+    })
+
+    this.resultsColumnTargets.forEach((el) => {
+      el.hidden = this.modeValue !== "results"
+    })
+
+    this.attendanceColumnTargets.forEach((el) => {
+      el.hidden = this.modeValue !== "attendance"
     })
   }
 }

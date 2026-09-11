@@ -29,14 +29,14 @@
                 </span>
               </th>
             <% end %>
-            <th>試合</th>
-            <th>勝利</th>
-            <th>敗戦</th>
-            <th>引分</th>
-            <th>勝ち点</th>
-            <th>勝率</th>
-            <th>総観衆</th>
-            <th>平均観衆</th>
+            <th data-cell-toggle-target="resultsColumn">試合</th>
+            <th data-cell-toggle-target="resultsColumn">勝利</th>
+            <th data-cell-toggle-target="resultsColumn">敗戦</th>
+            <th data-cell-toggle-target="resultsColumn">引分</th>
+            <th data-cell-toggle-target="resultsColumn">勝ち点</th>
+            <th data-cell-toggle-target="resultsColumn">勝率</th>
+            <th data-cell-toggle-target="attendanceColumn">総観衆</th>
+            <th data-cell-toggle-target="attendanceColumn">平均観衆</th>
           </tr>
         </thead>
 
@@ -63,14 +63,14 @@
                   <% end %>
                 </td>
               <% end %>
-              <td><%= row.games %></td>
-              <td><%= row.wins %></td>
-              <td><%= row.losses %></td>
-              <td><%= row.draws %></td>
-              <td><%= row.points %></td>
-              <td><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
-              <td><%= number_with_delimiter(row.attendance_total) %></td>
-              <td><%= row.average_attendance ? number_with_delimiter(row.average_attendance) : "—" %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.games %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.wins %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.losses %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.draws %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.points %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
+              <td data-cell-toggle-target="attendanceColumn"><%= number_with_delimiter(row.attendance_total) %></td>
+              <td data-cell-toggle-target="attendanceColumn"><%= row.average_attendance ? number_with_delimiter(row.average_attendance) : "—" %></td>
             </tr>
           <% end %>
         </tbody>
