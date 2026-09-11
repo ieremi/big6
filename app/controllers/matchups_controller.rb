@@ -25,6 +25,15 @@ class MatchupsController < ApplicationController
     team0 = University.find_by!(slug: params[:team0_slug])
     team1 = University.find_by!(slug: params[:team1_slug])
     @matchup = Matchup.new(team0, team1)
+
+    latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
+    @periods = {
+      "all" => {},
+      "5" => { since: 5.years.ago.to_date },
+      "10" => { since: 10.years.ago.to_date },
+      "20" => { since: 20.years.ago.to_date },
+      "r" => { season_id: latest_season_id }
+    }
   end
 
   private

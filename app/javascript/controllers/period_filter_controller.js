@@ -5,7 +5,7 @@ const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel"]
   static values = {
     period: { type: String, default: "all" },
     metric: { type: String, default: "rate" }
@@ -139,6 +139,10 @@ export default class extends Controller {
 
     this.metricButtonTargets.forEach((el) => {
       el.classList.toggle("active", el.dataset.metric === this.metricValue)
+    })
+
+    this.periodPanelTargets.forEach((el) => {
+      el.hidden = el.dataset.period !== this.periodValue
     })
   }
 }

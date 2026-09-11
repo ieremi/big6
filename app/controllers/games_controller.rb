@@ -63,6 +63,17 @@ class GamesController < ApplicationController
       render :show and return
     end
 
+    if @season.nil? && @year.nil?
+      latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
+      @periods = {
+        "all" => {},
+        "5" => { since: 5.years.ago.to_date },
+        "10" => { since: 10.years.ago.to_date },
+        "20" => { since: 20.years.ago.to_date },
+        "r" => { season_id: latest_season_id }
+      }
+    end
+
     @games = @matchup.games_for(season: @season, year: @year)
   end
 end

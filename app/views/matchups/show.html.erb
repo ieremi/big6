@@ -3,13 +3,28 @@
 <h1><%= @matchup.team0.short_name %> vs <%= @matchup.team1.short_name %> 対戦成績</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+<% labels = { "all" => "通算", "5" => "直近5年", "10" => "直近10年", "20" => "直近20年", "r" => "直近シーズン" } %>
 
-<p class="muted">
-  通算
-  <%= @matchup.team0.short_name %><%= @matchup.wins(@matchup.team0) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team0)) %>）、
-  <%= @matchup.team1.short_name %><%= @matchup.wins(@matchup.team1) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team1)) %>）、
-  引き分け<%= @matchup.draws %>
-</p>
+<div data-controller="period-filter">
+  <div class="period-toolbar">
+    <span class="muted">表示期間:</span>
+    <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">通算 <kbd>a</kbd></button>
+    <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
+    <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
+    <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
+    <button type="button" class="period-btn" data-period="r" data-period-filter-target="button" data-action="period-filter#setPeriod">直近シーズン <kbd>r</kbd></button>
+    <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
+  </div>
+
+  <% @periods.each do |key, opts| %>
+    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= labels[key] %>
+      <%= @matchup.team0.short_name %><%= @matchup.wins(@matchup.team0, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team0, **opts)) %>）、
+      <%= @matchup.team1.short_name %><%= @matchup.wins(@matchup.team1, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@matchup.team1, **opts)) %>）、
+      引き分け<%= @matchup.draws(**opts) %>
+    <% end %>
+  <% end %>
+</div>
 
 <table>
   <thead>
