@@ -1,4 +1,6 @@
 class Matchup
+  Streak = Struct.new(:team, :length, :first_game, :last_game, keyword_init: true)
+
   attr_reader :team0, :team1, :games
 
   def initialize(team0, team1)
@@ -23,6 +25,46 @@ class Matchup
     other = team == team0 ? team1 : team0
     decided = wins(team, since: since, season_id: season_id) + wins(other, since: since, season_id: season_id)
     decided.zero? ? nil : wins(team, since: since, season_id: season_id).to_f / decided
+  end
+
+  def longest_streak(team, since: nil, season_id: nil)
+    best = nil
+    length = 0
+    first_game = nil
+
+    scoped_games(since: since, season_id: season_id).each do |g|
+      if winner(g) == team
+        length += 1
+        first_game ||= g
+        best = Streak.new(team: team, length: length, first_game: first_game, last_game: g) if best.nil? || length > best.length
+      else
+        length = 0
+        first_game = nil
+      end
+    end
+
+    best
+  end
+
+  def current_streak(team, since: nil, season_id: nil)
+    games = scoped_games(since: since, season_id: season_id)
+    return nil if games.empty?
+
+    length = 0
+    first_game = nil
+    last_game = nil
+
+    games.reverse_each do |g|
+      break unless winner(g) == team
+
+      length += 1
+      first_game = g
+      last_game ||= g
+    end
+
+    return nil if length.zero?
+
+    Streak.new(team: team, length: length, first_game: first_game, last_game: last_game)
   end
 
   def average_attendance(since: nil, season_id: nil)

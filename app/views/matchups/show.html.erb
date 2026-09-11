@@ -41,6 +41,25 @@
         <%= @team1.short_name %><%= @matchup.wins(@team1, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@team1, **opts)) %>）、
         引き分け<%= @matchup.draws(**opts) %>
       <% end %>
+
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+        最多連勝：
+        <%= @team0.short_name %><%= streak_description(@matchup.longest_streak(@team0, **opts)) %>、
+        <%= @team1.short_name %><%= streak_description(@matchup.longest_streak(@team1, **opts)) %>
+      <% end %>
+
+      <% streak0 = @matchup.current_streak(@team0, **opts)
+         streak1 = @matchup.current_streak(@team1, **opts) %>
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+        現在の連勝：
+        <% if streak0 %>
+          <%= @team0.short_name %><%= current_streak_description(streak0) %>
+        <% elsif streak1 %>
+          <%= @team1.short_name %><%= current_streak_description(streak1) %>
+        <% else %>
+          なし
+        <% end %>
+      <% end %>
     <% end %>
 
     <p class="muted" data-period-filter-target="gameCount"><%= @games.size %>試合</p>
