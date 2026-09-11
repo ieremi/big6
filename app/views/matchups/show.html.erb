@@ -1,7 +1,7 @@
-<%= link_to "← 対戦成績一覧", matchups_path, class: "back-link" %>
+<%= link_to "← 対戦カード一覧", matchups_path, class: "back-link" %>
 
 <h1>
-  <%= @team0.short_name %> vs <%= @team1.short_name %> 対戦成績
+  <%= @team0.short_name %> vs <%= @team1.short_name %> 対戦カード
   <%= @season ? @season.title : (@year ? "#{@year}年" : nil) %>
 </h1>
 
@@ -29,9 +29,13 @@
         引き分け<%= @matchup.draws(**opts) %>
       <% end %>
     <% end %>
+
+    <p class="muted" data-period-filter-target="gameCount"><%= @games.size %>試合</p>
+
+    <%= render "games/games_table", games: @games, show_season: @season.nil?, game_periods: @game_periods %>
   </div>
+<% else %>
+  <p class="muted"><%= @games.size %>試合</p>
+
+  <%= render "games/games_table", games: @games, show_season: @season.nil? %>
 <% end %>
-
-<p class="muted"><%= @games.size %>試合</p>
-
-<%= render "games/games_table", games: @games, show_season: @season.nil? %>

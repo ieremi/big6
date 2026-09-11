@@ -5,7 +5,7 @@ const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount"]
   static values = {
     period: { type: String, default: "all" },
     metric: { type: String, default: "rate" }
@@ -117,7 +117,7 @@ export default class extends Controller {
       if (this.metricValue === "attendance") {
         const avg = el.getAttribute(`data-attendance-avg-${this.periodValue}`) || "—"
         const sum = el.getAttribute(`data-attendance-sum-${this.periodValue}`) || "—"
-        el.textContent = `${avg}（計${sum}）`
+        el.innerHTML = `<span class="cell-line">平均: ${avg}</span><span class="cell-line">合計: ${sum}</span>`
       } else {
         el.textContent = el.getAttribute(`data-rate-${this.periodValue}`) || "—"
       }
@@ -144,5 +144,19 @@ export default class extends Controller {
     this.periodPanelTargets.forEach((el) => {
       el.hidden = el.dataset.period !== this.periodValue
     })
+
+    if (this.hasGameRowTarget) {
+      let visibleCount = 0
+      this.gameRowTargets.forEach((el) => {
+        const periods = (el.dataset.periods || "").split(" ")
+        const visible = periods.includes(this.periodValue)
+        el.hidden = !visible
+        if (visible) visibleCount++
+      })
+
+      this.gameCountTargets.forEach((el) => {
+        el.textContent = `${visibleCount}試合`
+      })
+    }
   }
 }

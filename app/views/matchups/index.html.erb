@@ -1,4 +1,4 @@
-<h1>対戦成績</h1>
+<h1>対戦カード</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 <% num = ->(value) { value.nil? ? "—" : number_with_delimiter(value) } %>
@@ -22,7 +22,7 @@
 
   <p class="muted">
     列見出しをクリック（または <kbd>W</kbd><kbd>K</kbd><kbd>M</kbd><kbd>H</kbd><kbd>T</kbd><kbd>R</kbd><kbd>A</kbd><kbd>S</kbd>）すると、その列の値で並べ替えられます。
-    観衆表示では各セルに平均（計は合計）を表示します。
+    観衆表示では各セルに平均・合計を2行で表示します。
   </p>
 
   <div class="table-scroll">
@@ -101,6 +101,27 @@
             </td>
           </tr>
         <% end %>
+
+        <tr class="grand-total-row">
+          <td class="col-team muted">全体</td>
+          <% @universities.each do %>
+            <td class="result-cell"><span class="dash">—</span></td>
+          <% end %>
+          <% grand_avg = @grand_attendance.transform_values { |v| num.call(v["avg"]) } %>
+          <% grand_sum = @grand_attendance.transform_values { |v| num.call(v["sum"]) } %>
+          <% grand_avg_data = { period_filter_target: "rowAvg" } %>
+          <% grand_sum_data = { period_filter_target: "rowSum" } %>
+          <% @periods.each_key do |k|
+               grand_avg_data["attendance_#{k}".to_sym] = grand_avg[k]
+               grand_sum_data["attendance_#{k}".to_sym] = grand_sum[k]
+             end %>
+          <td class="result-cell avg-cell">
+            <%= content_tag :span, "—", data: grand_avg_data %>
+          </td>
+          <td class="result-cell sum-cell">
+            <%= content_tag :span, "—", data: grand_sum_data %>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

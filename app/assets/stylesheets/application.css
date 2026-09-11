@@ -234,6 +234,11 @@ ul.list li {
   width: 1%;
 }
 
+.grand-total-row td {
+  border-top: 2px solid var(--border);
+  font-weight: 700;
+}
+
 th.sortable {
   cursor: pointer;
   user-select: none;
@@ -270,6 +275,11 @@ th.sortable.sorted-desc::after {
 .result-cell a {
   color: inherit;
   text-decoration: none;
+}
+
+.result-cell a .cell-line {
+  display: block;
+  font-size: 0.85em;
 }
 
 .result-cell a:hover {

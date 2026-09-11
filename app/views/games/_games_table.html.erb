@@ -12,7 +12,12 @@
 
   <tbody>
     <% games.each do |game| %>
-      <tr>
+      <% row_data = if local_assigns[:game_periods]
+           { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" ") }
+         else
+           {}
+         end %>
+      <%= tag.tr data: row_data do %>
         <% if local_assigns[:show_season] %>
           <td><%= game.season.title %></td>
         <% end %>
@@ -25,7 +30,7 @@
             <%= game.team1.short_name %>
           <% end %>
         </td>
-      </tr>
+      <% end %>
     <% end %>
   </tbody>
 </table>

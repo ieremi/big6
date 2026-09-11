@@ -45,6 +45,18 @@ class Matchup
     games.select { |g| season ? g.season_id == season.id : g.season.year == year.to_i }
   end
 
+  def period_keys_for(game, periods)
+    periods.select do |_, opts|
+      if opts[:since]
+        game.played_on >= opts[:since]
+      elsif opts[:season_id]
+        game.season_id == opts[:season_id]
+      else
+        true
+      end
+    end.keys
+  end
+
   private
 
   def attendance_values(since: nil, season_id: nil)

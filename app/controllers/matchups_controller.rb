@@ -13,12 +13,13 @@ class MatchupsController < ApplicationController
       "r" => { season_id: latest_season_id }
     }
 
-    cache_key = "matchups_index_data/v1/#{latest_season_id}/#{Game.maximum(:updated_at)&.to_i}"
+    cache_key = "matchups_index_data/v2/#{latest_season_id}/#{Game.maximum(:updated_at)&.to_i}"
     data = Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) { build_data }
 
     @cells = data[:cells]
     @row_avg = data[:row_avg]
     @row_sum = data[:row_sum]
+    @grand_attendance = data[:grand_attendance]
   end
 
   def show
@@ -41,6 +42,8 @@ class MatchupsController < ApplicationController
       render "games/show" and return
     end
 
+    @games = @matchup.games_for(season: @season, year: @year)
+
     if @season.nil? && @year.nil?
       latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
       @periods = {
@@ -50,9 +53,8 @@ class MatchupsController < ApplicationController
         "5" => { since: 5.years.ago.to_date },
         "r" => { season_id: latest_season_id }
       }
+      @game_periods = @games.each_with_object({}) { |g, h| h[g.id] = @matchup.period_keys_for(g, @periods) }
     end
-
-    @games = @matchup.games_for(season: @season, year: @year)
   end
 
   private
@@ -100,7 +102,18 @@ class MatchupsController < ApplicationController
       }
     end
 
-    { cells: cells, row_avg: row_avg, row_sum: row_sum }
+    { cells: cells, row_avg: row_avg, row_sum: row_sum, grand_attendance: grand_attendance }
+  end
+
+  def grand_attendance
+    @periods.transform_values do |opts|
+      scope = Game.all
+      scope = scope.where(season_id: opts[:season_id]) if opts[:season_id]
+      scope = scope.where("played_on >= ?", opts[:since]) if opts[:since]
+      values = scope.where.not(attendance: nil).pluck(:attendance)
+
+      { "avg" => values.empty? ? nil : values.sum / values.size, "sum" => values.empty? ? nil : values.sum }
+    end
   end
 
   def row_average(values)
