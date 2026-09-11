@@ -1,15 +1,6 @@
 Rails.application.routes.draw do
   resources :universities, only: [ :index ]
 
-  get "games/matchup", to: "games#matchup_search", as: :games_matchup_search
-  get "games/:team0_slug/:team1_slug/:year/:term/:game_number", to: "games#matchup", as: :game_browse,
-    constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
-  get "games/:team0_slug/:team1_slug/:year/:term", to: "games#matchup", as: :matchup_season_browse,
-    constraints: { year: /\d{4}/, term: /spring|autumn/ }
-  get "games/:team0_slug/:team1_slug/:year", to: "games#matchup", as: :matchup_year_browse,
-    constraints: { year: /\d{4}/ }
-  get "games/:team0_slug/:team1_slug", to: "games#matchup", as: :matchup_browse,
-    constraints: { team1_slug: /[a-z]+/ }
   get "games/:team0_slug/:year/:term", to: "games#browse", as: :team_season_browse,
     constraints: { team0_slug: /[a-z]+/, year: /\d{4}/, term: /spring|autumn/ }
   get "games/:team0_slug", to: "games#browse", as: :team_browse, constraints: { team0_slug: /[a-z]+/ }
@@ -19,6 +10,12 @@ Rails.application.routes.draw do
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "matchups", to: "matchups#index", as: :matchups
+  get "matchups/:team0_slug/:team1_slug/:year/:term/:game_number", to: "matchups#show", as: :matchup_game,
+    constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
+  get "matchups/:team0_slug/:team1_slug/:year/:term", to: "matchups#show", as: :matchup_season,
+    constraints: { year: /\d{4}/, term: /spring|autumn/ }
+  get "matchups/:team0_slug/:team1_slug/:year", to: "matchups#show", as: :matchup_year,
+    constraints: { year: /\d{4}/ }
   get "matchups/:team0_slug/:team1_slug", to: "matchups#show", as: :matchup
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

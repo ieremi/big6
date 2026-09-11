@@ -22,18 +22,37 @@ class MatchupsController < ApplicationController
   end
 
   def show
-    team0 = University.find_by!(slug: params[:team0_slug])
-    team1 = University.find_by!(slug: params[:team1_slug])
-    @matchup = Matchup.new(team0, team1)
+    @team0 = University.find_by!(slug: params[:team0_slug])
+    @team1 = University.find_by!(slug: params[:team1_slug])
+    @matchup = Matchup.new(@team0, @team1)
 
-    latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
-    @periods = {
-      "all" => {},
-      "5" => { since: 5.years.ago.to_date },
-      "10" => { since: 10.years.ago.to_date },
-      "20" => { since: 20.years.ago.to_date },
-      "r" => { season_id: latest_season_id }
-    }
+    if params[:year] && params[:term]
+      @season = Season.find_by!(year: params[:year], term: params[:term])
+    elsif params[:year]
+      @year = params[:year]
+    end
+
+    if @season && params[:game_number]
+      @game = Game.includes(:team0, :team1, :season)
+        .where(team0_id: [ @team0.id, @team1.id ], team1_id: [ @team0.id, @team1.id ])
+        .where(season_id: @season.id, game_number: params[:game_number])
+        .first!
+      @scoreboard = GameScoreboard.new(@game)
+      render "games/show" and return
+    end
+
+    if @season.nil? && @year.nil?
+      latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
+      @periods = {
+        "all" => {},
+        "20" => { since: 20.years.ago.to_date },
+        "10" => { since: 10.years.ago.to_date },
+        "5" => { since: 5.years.ago.to_date },
+        "r" => { season_id: latest_season_id }
+      }
+    end
+
+    @games = @matchup.games_for(season: @season, year: @year)
   end
 
   private
