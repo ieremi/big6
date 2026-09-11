@@ -67,10 +67,10 @@
                 <% if row_university == col_university %>
                   <span class="dash">---</span>
                 <% else %>
-                  <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
-                  <% rates = @periods.transform_values { |opts| pct.call(matchup.percentage(row_university, **opts)) } %>
-                  <% avgs = @periods.transform_values { |opts| num.call(matchup.average_attendance(**opts)) } %>
-                  <% sums = @periods.transform_values { |opts| num.call(matchup.total_attendance(**opts)) } %>
+                  <% cell = @cells[[ row_university.id, col_university.id ]] %>
+                  <% rates = cell["rate"].transform_values { |v| pct.call(v) } %>
+                  <% avgs = cell["attendance_avg"].transform_values { |v| num.call(v) } %>
+                  <% sums = cell["attendance_sum"].transform_values { |v| num.call(v) } %>
                   <% data = { period_filter_target: "cell" } %>
                   <% @periods.each_key do |k|
                        data["rate_#{k}".to_sym] = rates[k]
@@ -83,9 +83,9 @@
                 <% end %>
               </td>
             <% end %>
-            <% row_rate_avg = @row_averages[row_university]["rate"].transform_values { |v| pct.call(v) } %>
-            <% row_attendance_avg = @row_averages[row_university]["attendance"]["avg"].transform_values { |v| num.call(v) } %>
-            <% row_attendance_sum = @row_averages[row_university]["attendance"]["sum"].transform_values { |v| num.call(v) } %>
+            <% row_rate_avg = @row_avg[row_university.id]["rate"].transform_values { |v| pct.call(v) } %>
+            <% row_attendance_avg = @row_avg[row_university.id]["attendance"].transform_values { |v| num.call(v) } %>
+            <% row_attendance_sum = @row_sum[row_university.id]["attendance"].transform_values { |v| num.call(v) } %>
             <% avg_data = { period_filter_target: "rowAvg" } %>
             <% sum_data = { period_filter_target: "rowSum" } %>
             <% @periods.each_key do |k|
