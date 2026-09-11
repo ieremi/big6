@@ -1,13 +1,30 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Big6" %></title>
+    <% page_title = content_for(:title) || "Big6" %>
+    <% page_description = content_for(:description) || "東京六大学野球のシーズン・対戦成績・試合結果データベース" %>
+    <% page_image = "#{request.base_url}/icon.png" %>
+
+    <title><%= page_title %></title>
+    <meta name="description" content="<%= page_description %>">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Big6">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Big6">
+    <meta property="og:title" content="<%= page_title %>">
+    <meta property="og:description" content="<%= page_description %>">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:image" content="<%= page_image %>">
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="<%= page_title %>">
+    <meta name="twitter:description" content="<%= page_description %>">
+    <meta name="twitter:image" content="<%= page_image %>">
 
     <%= yield :head %>
 
