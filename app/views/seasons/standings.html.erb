@@ -58,7 +58,7 @@
                     <% attendance_text = @standings.attendances_between(row.university, col_row.university)
                          .map { |a| a ? number_with_delimiter(a) : "-" }.join("/") %>
                     <%= link_to results_text,
-                          matchup_path(team0_slug: row.university.slug, team1_slug: col_row.university.slug),
+                          matchup_season_path(row.university.slug, col_row.university.slug, @season.year, @season.term),
                           data: { cell_toggle_target: "cell", results: results_text, attendance: attendance_text } %>
                   <% end %>
                 </td>
