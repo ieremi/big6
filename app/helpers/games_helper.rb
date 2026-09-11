@@ -3,6 +3,27 @@ module GamesHelper
     matchup_game_path(game.team0.slug, game.team1.slug, game.season.year, game.season.term, game.game_number)
   end
 
+  # Confirmed by spot-checking the official site: seasons before 2005 spring
+  # return a page with the game framework but no actual score/box-score data
+  # (empty template), so linking to them would be useless.
+  OFFICIAL_SITE_MIN_YEAR = 2005
+
+  def official_game_url(game)
+    return nil if game.season.year < OFFICIAL_SITE_MIN_YEAR
+
+    term_code = game.season.term == "spring" ? "s" : "a"
+    vs = "#{game.team0.initial}#{game.team1.initial}#{game.game_number}"
+
+    "https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=#{game.season.year}#{term_code}" \
+      "&gd=#{game.played_on}&gnd=#{game.game_number}&vs=#{vs}"
+  end
+
+  def scorebook_game_url(game)
+    return nil if game.scorebook_game_id.blank?
+
+    "https://big6scorebook.jp/game/#{game.scorebook_game_id}"
+  end
+
   def sortable_game_header(key, label, shortcut)
     active = @sort == key
     th_classes = [ "sortable" ]

@@ -85,3 +85,14 @@
   </p>
   <p class="muted">詳細データはありません。</p>
 <% end %>
+
+<% if (url = official_game_url(@game)) %>
+  <p class="muted">
+    <%= link_to "東京六大学野球連盟のページで見る →", url, target: "_blank", rel: "noopener noreferrer" %>
+  </p>
+<% end %>
+<% if (url = scorebook_game_url(@game)) %>
+  <p class="muted">
+    <%= link_to "Scorebookで見る →", url, target: "_blank", rel: "noopener noreferrer" %>
+  </p>
+<% end %>
