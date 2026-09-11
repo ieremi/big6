@@ -8,6 +8,14 @@
 
 <h1><%= @season.title %></h1>
 
+<% if @tags.any? %>
+  <p>
+    <% @tags.each do |t| %>
+      <span class="season-tag"><%= t.label %></span>
+    <% end %>
+  </p>
+<% end %>
+
 <% if @games.any? %>
   <p><%= link_to "順位表を見る", standings_season_path(@season.year, @season.term) %></p>
 <% end %>

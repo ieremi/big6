@@ -1,4 +1,6 @@
 class SeasonsController < ApplicationController
+  TAGS_CACHE_EXPIRY = 6.hours
+
   def index
     @seasons = Season.order(year: :desc, term: :desc)
     @games_counts = Game.group(:season_id).count
@@ -11,12 +13,26 @@ class SeasonsController < ApplicationController
       end
       totals[season.id] = total if total.positive?
     end
+
+    cache_key = "season_tags/v2/#{Game.maximum(:updated_at)&.to_i}"
+    @season_tags = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
+      @seasons.each_with_object({}) { |season, tags| tags[season.id] = SeasonTags.new(season).tags }
+    end
+
+    @selected_tags = Array(params[:tags]) & SeasonTags::LABELS
+    if @selected_tags.any?
+      @seasons = @seasons.select do |season|
+        labels = (@season_tags[season.id] || []).map(&:label)
+        @selected_tags.all? { |t| labels.include?(t) }
+      end
+    end
   end
 
   def show
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @games = @season.games.includes(:team0, :team1).order(:played_on, :game_number)
     @weeks = SeasonWeeks.new(@games).weeks
+    @tags = SeasonTags.new(@season).tags
   end
 
   def standings
