@@ -10,6 +10,8 @@ Rails.application.routes.draw do
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "matchups", to: "matchups#index", as: :matchups
+  get "matchups/:team0_slug/:team1_slug/:year/:term/:game_number/og.png", to: "games#og_image", as: :game_og_image,
+    constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
   get "matchups/:team0_slug/:team1_slug/:year/:term/:game_number", to: "matchups#show", as: :matchup_game,
     constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
   get "matchups/:team0_slug/:team1_slug/:year/:term", to: "matchups#show", as: :matchup_season,

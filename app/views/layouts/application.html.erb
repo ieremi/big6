@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <% page_title = content_for(:title) || "Big6" %>
     <% page_description = content_for(:description) || "東京六大学野球のシーズン・対戦成績・試合結果データベース" %>
-    <% page_image = "#{request.base_url}/og-image.png" %>
+    <% page_image = content_for(:image_url) || "#{request.base_url}/og-image.png" %>
 
     <title><%= page_title %></title>
     <meta name="description" content="<%= page_description %>">

@@ -1,3 +1,14 @@
+<%
+  game_score = "#{@game.team0.short_name} #{@game.team0_score}-#{@game.team1_score} #{@game.team1.short_name}"
+  content_for :title, "#{game_score}（#{@game.season.title}第#{@game.game_number}回戦） - Big6"
+  content_for :description, [
+    @game.played_on.to_s,
+    game_score,
+    (@scoreboard.attendance.present? ? "観衆#{@scoreboard.attendance.to_s.strip}人" : nil)
+  ].compact.join(" ")
+  content_for :image_url, game_og_image_url(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term, @game.game_number)
+%>
+
 <%= link_to "← 試合一覧", games_path, class: "back-link" %>
 
 <h1><%= @game.season.title %> <%= @game.team0.short_name %> vs <%= @game.team1.short_name %></h1>

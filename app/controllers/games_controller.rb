@@ -59,4 +59,16 @@ class GamesController < ApplicationController
       .group_by { |g| g.team0_id == @team0.id ? g.team1 : g.team0 }
       .sort_by { |opponent, _| opponent.position }
   end
+
+  def og_image
+    team0 = University.find_by!(slug: params[:team0_slug])
+    team1 = University.find_by!(slug: params[:team1_slug])
+    season = Season.find_by!(year: params[:year], term: params[:term])
+    game = Game.includes(:team0, :team1, :season)
+      .where(team0_id: [ team0.id, team1.id ], team1_id: [ team0.id, team1.id ])
+      .where(season_id: season.id, game_number: params[:game_number])
+      .first!
+
+    send_data GameOgImage.new(game).to_png, type: "image/png", disposition: "inline"
+  end
 end
