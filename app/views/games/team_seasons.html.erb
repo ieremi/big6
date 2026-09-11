@@ -1,3 +1,9 @@
+<%
+  content_for :title, "#{@team0.name} シーズン一覧 - Big6"
+  content_for :description, "#{@team0.name}の全シーズン成績・試合一覧"
+  content_for :image_url, team_og_image_url(@team0.slug)
+%>
+
 <%= link_to "← 大学一覧", games_path, class: "back-link" %>
 
 <h1><%= @team0.name %> シーズン一覧</h1>

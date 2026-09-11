@@ -59,6 +59,35 @@ class MatchupsController < ApplicationController
     end
   end
 
+  def index_og_image
+    send_data SiteOgImage.new(title: "Matchups").to_png, type: "image/png", disposition: "inline"
+  end
+
+  def matchup_og_image
+    team0 = University.find_by!(slug: params[:team0_slug])
+    team1 = University.find_by!(slug: params[:team1_slug])
+    matchup = Matchup.new(team0, team1)
+
+    season = nil
+    year = nil
+    if params[:year] && params[:term]
+      season = Season.find_by!(year: params[:year], term: params[:term])
+    elsif params[:year]
+      year = params[:year]
+    end
+
+    games = matchup.games_for(season: season, year: year)
+    subtitle = if season
+      "#{season.year} #{season.term.capitalize}"
+    elsif year
+      year.to_s
+    else
+      "All-time"
+    end
+
+    send_data MatchupOgImage.new(team0, team1, games, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+  end
+
   private
 
   def sort_games_array(games, sort, direction)

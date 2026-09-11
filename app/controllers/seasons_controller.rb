@@ -23,4 +23,16 @@ class SeasonsController < ApplicationController
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
   end
+
+  def index_og_image
+    send_data SiteOgImage.new(title: "Seasons").to_png, type: "image/png", disposition: "inline"
+  end
+
+  def og_image
+    season = Season.find_by!(year: params[:year], term: params[:term])
+    title = "#{season.year} #{season.term.capitalize}"
+    subtitle = params[:label].presence
+
+    send_data SiteOgImage.new(title: title, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+  end
 end

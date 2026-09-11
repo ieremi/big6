@@ -1,8 +1,21 @@
+<%
+  period_label = @season ? @season.title : (@year ? "#{@year}年" : nil)
+  content_for :title, "#{@team0.short_name} vs #{@team1.short_name}#{period_label ? " #{period_label}" : ""} - Big6"
+  content_for :description, "#{@team0.short_name}と#{@team1.short_name}の対戦成績・試合一覧"
+  content_for :image_url, if @season
+    matchup_season_og_image_url(@team0.slug, @team1.slug, @season.year, @season.term)
+  elsif @year
+    matchup_year_og_image_url(@team0.slug, @team1.slug, @year)
+  else
+    matchup_og_image_url(@team0.slug, @team1.slug)
+  end
+%>
+
 <%= link_to "← 対戦カード一覧", matchups_path, class: "back-link" %>
 
 <h1>
   <%= @team0.short_name %> vs <%= @team1.short_name %> 対戦カード
-  <%= @season ? @season.title : (@year ? "#{@year}年" : nil) %>
+  <%= period_label %>
 </h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>

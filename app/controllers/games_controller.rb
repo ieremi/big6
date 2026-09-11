@@ -71,4 +71,19 @@ class GamesController < ApplicationController
 
     send_data GameOgImage.new(game).to_png, type: "image/png", disposition: "inline"
   end
+
+  def index_og_image
+    send_data SiteOgImage.new(title: "Game Search").to_png, type: "image/png", disposition: "inline"
+  end
+
+  def team_og_image
+    team = University.find_by!(slug: params[:team0_slug])
+    subtitle = if params[:year] && params[:term]
+      "#{params[:year]} #{params[:term].capitalize}"
+    else
+      "All Seasons"
+    end
+
+    send_data TeamOgImage.new(team, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+  end
 end

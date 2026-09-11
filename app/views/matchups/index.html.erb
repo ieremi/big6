@@ -1,3 +1,9 @@
+<%
+  content_for :title, "対戦カード一覧 - Big6"
+  content_for :description, "東京六大学野球の対戦成績・対戦カード一覧"
+  content_for :image_url, matchups_index_og_image_url
+%>
+
 <h1>対戦カード</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>

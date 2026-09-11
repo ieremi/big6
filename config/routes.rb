@@ -1,23 +1,38 @@
 Rails.application.routes.draw do
-  resources :universities, only: [ :index ]
+  get "og/site.png", to: "home#og_image", as: :site_og_image
 
+  resources :universities, only: [ :index ]
+  get "universities/og.png", to: "universities#og_image", as: :universities_og_image
+
+  get "games/og.png", to: "games#index_og_image", as: :games_index_og_image
+  get "games/:team0_slug/:year/:term/og.png", to: "games#team_og_image", as: :team_season_og_image,
+    constraints: { team0_slug: /[a-z]+/, year: /\d{4}/, term: /spring|autumn/ }
   get "games/:team0_slug/:year/:term", to: "games#browse", as: :team_season_browse,
     constraints: { team0_slug: /[a-z]+/, year: /\d{4}/, term: /spring|autumn/ }
+  get "games/:team0_slug/og.png", to: "games#team_og_image", as: :team_og_image, constraints: { team0_slug: /[a-z]+/ }
   get "games/:team0_slug", to: "games#browse", as: :team_browse, constraints: { team0_slug: /[a-z]+/ }
   resources :games, only: [ :index ]
 
   resources :seasons, only: [ :index ]
+  get "seasons/og.png", to: "seasons#index_og_image", as: :seasons_index_og_image
+  get "seasons/:year/:term/og.png", to: "seasons#og_image", as: :season_og_image, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "matchups", to: "matchups#index", as: :matchups
+  get "matchups/og.png", to: "matchups#index_og_image", as: :matchups_index_og_image
   get "matchups/:team0_slug/:team1_slug/:year/:term/:game_number/og.png", to: "games#og_image", as: :game_og_image,
     constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
   get "matchups/:team0_slug/:team1_slug/:year/:term/:game_number", to: "matchups#show", as: :matchup_game,
     constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
+  get "matchups/:team0_slug/:team1_slug/:year/:term/og.png", to: "matchups#matchup_og_image", as: :matchup_season_og_image,
+    constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "matchups/:team0_slug/:team1_slug/:year/:term", to: "matchups#show", as: :matchup_season,
     constraints: { year: /\d{4}/, term: /spring|autumn/ }
+  get "matchups/:team0_slug/:team1_slug/:year/og.png", to: "matchups#matchup_og_image", as: :matchup_year_og_image,
+    constraints: { year: /\d{4}/ }
   get "matchups/:team0_slug/:team1_slug/:year", to: "matchups#show", as: :matchup_year,
     constraints: { year: /\d{4}/ }
+  get "matchups/:team0_slug/:team1_slug/og.png", to: "matchups#matchup_og_image", as: :matchup_og_image
   get "matchups/:team0_slug/:team1_slug", to: "matchups#show", as: :matchup
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

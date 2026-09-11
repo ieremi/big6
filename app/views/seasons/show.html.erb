@@ -1,3 +1,9 @@
+<%
+  content_for :title, "#{@season.title} - Big6"
+  content_for :description, "#{@season.title}の試合結果一覧"
+  content_for :image_url, season_og_image_url(@season.year, @season.term)
+%>
+
 <%= link_to "← シーズン一覧", seasons_path, class: "back-link" %>
 
 <h1><%= @season.title %></h1>
