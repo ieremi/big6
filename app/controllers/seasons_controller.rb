@@ -1,6 +1,6 @@
 class SeasonsController < ApplicationController
   def index
-    @seasons = Season.order(year: :desc, term: :asc)
+    @seasons = Season.order(year: :desc, term: :desc)
     @games_counts = Game.group(:season_id).count
     @attendance_totals = @seasons.each_with_object({}) do |season, totals|
       next if season.scorebook_games.blank?
