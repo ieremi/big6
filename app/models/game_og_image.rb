@@ -1,6 +1,7 @@
 class GameOgImage
   WIDTH = 1200
   HEIGHT = 630
+  SLOPE = 0.6
 
   def initialize(game)
     @game = game
@@ -10,23 +11,29 @@ class GameOgImage
     team0 = @game.team0
     team1 = @game.team1
 
-    left = solid_rect(WIDTH / 2, HEIGHT, team0.color)
-    right = solid_rect(WIDTH - WIDTH / 2, HEIGHT, team1.color)
-    bg = left.join(right, :horizontal).copy(interpretation: :srgb)
+    bg = diagonal_split(team0.color, team1.color)
 
     main_text = "#{team0.initial} #{@game.team0_score} - #{@game.team1_score} #{team1.initial}"
-    bg = overlay_text(bg, main_text, dpi: 300, y_offset: -40)
+    bg = overlay_text(bg, main_text, dpi: 560, y_offset: -110)
 
-    subtitle = "#{@game.season.year} #{@game.season.term.capitalize} · Round #{@game.game_number} · #{@game.played_on}"
-    bg = overlay_text(bg, subtitle, dpi: 130, y_offset: 90)
+    bg = overlay_text(bg, "#{@game.season.year} #{@game.season.term.capitalize} - Round #{@game.game_number}", dpi: 110, y_offset: 130)
+    bg = overlay_text(bg, @game.played_on.to_s, dpi: 100, y_offset: 175)
+    bg = overlay_text(bg, "Tokyo Big 6 Baseball", dpi: 90, y_offset: 220)
 
+    bg = bg.flatten(background: [ 30, 30, 30 ]) if bg.bands == 4
     bg.write_to_buffer(".png")
   end
 
   private
 
-  def solid_rect(w, h, hex)
-    (Vips::Image.black(w, h) + hex_to_rgb(hex)).cast(:uchar)
+  def diagonal_split(left_hex, right_hex)
+    xyz = Vips::Image.xyz(WIDTH, HEIGHT)
+    x = xyz[0]
+    y = xyz[1]
+    line_x = (y - HEIGHT / 2.0) * SLOPE + (WIDTH / 2.0)
+    mask = x < line_x
+
+    mask.ifthenelse(hex_to_rgb(left_hex), hex_to_rgb(right_hex)).cast(:uchar).copy(interpretation: :srgb)
   end
 
   def hex_to_rgb(hex)
