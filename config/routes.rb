@@ -1,6 +1,16 @@
 Rails.application.routes.draw do
   resources :universities, only: [ :index ]
-  resources :games, only: [ :index, :show ]
+
+  get "games/:team0_slug/:team1_slug/:year/:term/:game_number", to: "games#browse", as: :game_browse,
+    constraints: { year: /\d{4}/, term: /spring|autumn/, game_number: /\d+/ }
+  get "games/:team0_slug/:team1_slug/:year/:term", to: "games#browse", as: :matchup_season_browse,
+    constraints: { year: /\d{4}/, term: /spring|autumn/ }
+  get "games/:team0_slug/:team1_slug/:year", to: "games#browse", as: :matchup_year_browse,
+    constraints: { year: /\d{4}/ }
+  get "games/:team0_slug/:team1_slug", to: "games#browse", as: :matchup_browse
+  get "games/:team0_slug", to: "games#browse", as: :team_browse, constraints: { team0_slug: /[a-z]+/ }
+  resources :games, only: [ :index ]
+
   resources :seasons, only: [ :index ]
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
