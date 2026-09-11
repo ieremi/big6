@@ -1,0 +1,24 @@
+<%= link_to "← 大学一覧", games_path, class: "back-link" %>
+
+<h1><%= @team0.name %> シーズン一覧</h1>
+
+<div data-controller="decade-fold">
+  <div class="period-toolbar">
+    <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
+    <button type="button" class="period-btn" data-action="decade-fold#closeAll" data-shortcut="f" data-shortcut-label="すべて閉じる">すべて閉じる <kbd>f</kbd></button>
+  </div>
+
+  <% @seasons.group_by { |season| (season.year / 10) * 10 }.each_with_index do |(decade, seasons), index| %>
+    <%= tag.details class: "decade", open: index.zero?, data: { decade_fold_target: "decade" } do %>
+      <%= tag.summary "#{decade}〜#{decade + 9}年" %>
+      <ul class="list season-list">
+        <% seasons.each do |season| %>
+          <li>
+            <%= link_to season.title, team_season_browse_path(@team0.slug, season.year, season.term) %>
+            <span class="muted">(<%= @games_counts[season.id] %>試合)</span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+</div>

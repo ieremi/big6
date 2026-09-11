@@ -378,28 +378,6 @@ th.sortable.sorted-desc::after {
   margin: 0;
 }
 
-.filter-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.filter-form select {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.85rem;
-}
-
-.filter-form input[type="submit"] {
-  border: 1px solid var(--border);
-  font: inherit;
-}
-
 .period-toolbar {
   display: flex;
   align-items: center;

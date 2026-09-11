@@ -1,48 +1,15 @@
-<h1>試合結果</h1>
+<h1>試合</h1>
 
-<%= form_with url: games_path, method: :get, class: "filter-form", data: { controller: "auto-submit" } do %>
-  <%= select_tag :season_id,
-        options_for_select(@seasons.map { |s| [s.title, s.id] }, params[:season_id]),
-        include_blank: "シーズン",
-        data: { action: "change->auto-submit#submit" } %>
-  <%= select_tag :university_id,
-        options_for_select(@universities.map { |u| [u.short_name, u.id] }, params[:university_id]),
-        include_blank: "大学",
-        data: { action: "change->auto-submit#submit" } %>
-  <%= select_tag :game_number,
-        options_for_select((1..6).map { |n| [ "#{n}回戦", n ] }, params[:game_number]),
-        include_blank: "回戦",
-        data: { action: "change->auto-submit#submit" } %>
-  <noscript><%= submit_tag "絞り込む", class: "period-btn" %></noscript>
-  <% if params[:season_id].present? || params[:university_id].present? || params[:game_number].present? %>
-    <%= link_to "リセット", games_path, class: "back-link" %>
+<p class="muted">大学を選んでください。</p>
+
+<ul class="list">
+  <% @universities.each do |u| %>
+    <li>
+      <%= link_to team_browse_path(u.slug) do %>
+        <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+        <%= u.name %>
+        <span class="muted">(<%= @games_counts[u.id] %>試合)</span>
+      <% end %>
+    </li>
   <% end %>
-<% end %>
-
-<p class="muted"><%= @games.count %>試合</p>
-
-<table>
-  <thead>
-    <tr>
-      <th><%= games_sort_link("played_on", "日付") %></th>
-      <th><%= games_sort_link("game_number", "回戦") %></th>
-      <th>対戦</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% @games.each do |game| %>
-      <tr>
-        <td><%= game.played_on %></td>
-        <td><%= game.game_number %>回戦</td>
-        <td>
-          <%= link_to game_path(game) do %>
-            <%= game.team0.short_name %>
-            <%= score_span(game.team0_score, game.team1_score) %>
-            <%= game.team1.short_name %>
-          <% end %>
-        </td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+</ul>

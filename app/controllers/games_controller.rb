@@ -1,25 +1,9 @@
 class GamesController < ApplicationController
-  SORT_COLUMNS = {
-    "played_on" => :played_on,
-    "game_number" => :game_number
-  }.freeze
-
   def index
-    @games = Game.includes(:team0, :team1)
-    @games = @games.where(season_id: params[:season_id]) if params[:season_id].present?
-
-    if params[:university_id].present?
-      @games = @games.where(team0_id: params[:university_id]).or(@games.where(team1_id: params[:university_id]))
+    @universities = University.order(:id).to_a
+    @games_counts = @universities.each_with_object({}) do |u, counts|
+      counts[u.id] = Game.where(team0_id: u.id).or(Game.where(team1_id: u.id)).count
     end
-
-    @games = @games.where(game_number: params[:game_number]) if params[:game_number].present?
-
-    @sort = SORT_COLUMNS.key?(params[:sort]) ? params[:sort] : "played_on"
-    @direction = params[:direction] == "desc" ? "desc" : "asc"
-    @games = @games.order(SORT_COLUMNS[@sort] => @direction.to_sym).order(:id)
-
-    @universities = University.order(:id)
-    @seasons = Season.order(year: :desc, term: :asc)
   end
 
   def browse
@@ -47,6 +31,18 @@ class GamesController < ApplicationController
       render :show and return
     end
 
+    if @team1.nil? && @season.nil? && @year.nil?
+      @games_counts = scope.group(:season_id).count
+      @seasons = Season.where(id: @games_counts.keys).order(year: :desc, term: :desc)
+      render :team_seasons and return
+    end
+
     @games = scope.order(:played_on, :game_number)
+
+    if @team1.nil?
+      @games_by_opponent = @games
+        .group_by { |g| g.team0_id == @team0.id ? g.team1 : g.team0 }
+        .sort_by { |opponent, _| opponent.id }
+    end
   end
 end
