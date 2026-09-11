@@ -5,7 +5,7 @@ class University < ApplicationRecord
     "meiji" => "#5b2d82",
     "hosei" => "#f2861d",
     "tokyo" => "#5bb8e8",
-    "rikkyo" => "#9b7fc7"
+    "rikkio" => "#9b7fc7"
   }.freeze
 
   INITIALS = {
@@ -14,7 +14,7 @@ class University < ApplicationRecord
     "meiji" => "M",
     "hosei" => "H",
     "tokyo" => "T",
-    "rikkyo" => "R"
+    "rikkio" => "R"
   }.freeze
 
   def color

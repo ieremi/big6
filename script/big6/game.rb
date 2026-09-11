@@ -6,7 +6,7 @@ SCOREBOOK_TEAM_SLUGS = {
   3 => "meiji",
   4 => "hosei",
   5 => "tokyo",
-  6 => "rikkyo"
+  6 => "rikkio"
 }.freeze
 
 universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)

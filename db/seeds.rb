@@ -12,7 +12,7 @@ universities = [
   { name: "明治大学",     short_name: "明大", slug: "meiji" },
   { name: "早稲田大学",   short_name: "早大", slug: "waseda" },
   { name: "法政大学",     short_name: "法大", slug: "hosei" },
-  { name: "立教大学",     short_name: "立大", slug: "rikkyo" },
+  { name: "立教大学",     short_name: "立大", slug: "rikkio" },
   { name: "東京大学",     short_name: "東大", slug: "tokyo" }
 ]
 
