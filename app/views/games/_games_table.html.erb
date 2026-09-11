@@ -1,6 +1,9 @@
 <table>
   <thead>
     <tr>
+      <% if local_assigns[:show_season] %>
+        <th>シーズン</th>
+      <% end %>
       <th>日付</th>
       <th>回戦</th>
       <th>対戦</th>
@@ -10,6 +13,9 @@
   <tbody>
     <% games.each do |game| %>
       <tr>
+        <% if local_assigns[:show_season] %>
+          <td><%= game.season.title %></td>
+        <% end %>
         <td><%= game.played_on %></td>
         <td><%= game.game_number %>回戦</td>
         <td>

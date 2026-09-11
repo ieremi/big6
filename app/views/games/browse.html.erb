@@ -1,19 +1,14 @@
 <h1>
   <%= @team0.short_name %>
-  <%= "vs #{@team1.short_name}" if @team1 %>
   <%= @season ? @season.title : (@year ? "#{@year}年" : nil) %>
 </h1>
 
 <p class="muted"><%= @games.size %>試合</p>
 
-<% if @team1 %>
-  <%= render "games_table", games: @games %>
-<% else %>
-  <% @games_by_opponent.each do |opponent, games| %>
-    <h2>
-      <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
-      vs <%= opponent.short_name %>
-    </h2>
-    <%= render "games_table", games: games %>
-  <% end %>
+<% @games_by_opponent.each do |opponent, games| %>
+  <h2>
+    <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
+    vs <%= opponent.short_name %>
+  </h2>
+  <%= render "games_table", games: games %>
 <% end %>

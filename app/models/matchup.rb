@@ -39,6 +39,12 @@ class Matchup
     values.sum
   end
 
+  def games_for(season: nil, year: nil)
+    return games if season.nil? && year.nil?
+
+    games.select { |g| season ? g.season_id == season.id : g.season.year == year.to_i }
+  end
+
   private
 
   def attendance_values(since: nil, season_id: nil)

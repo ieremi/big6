@@ -1,0 +1,19 @@
+<h1>
+  <%= @team0.short_name %> vs <%= @team1.short_name %>
+  <%= @season ? @season.title : (@year ? "#{@year}年" : nil) %>
+</h1>
+
+<% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+
+<% if @season.nil? && @year.nil? %>
+  <p class="muted">
+    通算
+    <%= @team0.short_name %><%= @matchup.wins(@team0) %>勝（勝率<%= pct.call(@matchup.percentage(@team0)) %>）、
+    <%= @team1.short_name %><%= @matchup.wins(@team1) %>勝（勝率<%= pct.call(@matchup.percentage(@team1)) %>）、
+    引き分け<%= @matchup.draws %>
+  </p>
+<% end %>
+
+<p class="muted"><%= @games.size %>試合</p>
+
+<%= render "games_table", games: @games, show_season: @season.nil? %>
