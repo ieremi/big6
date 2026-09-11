@@ -34,6 +34,13 @@ class GamesController < ApplicationController
 
   def matchup_search
     @universities = University.order(:id).to_a
+
+    @matchups = {}
+    @universities.combination(2).each do |team0, team1|
+      matchup = Matchup.new(team0, team1)
+      @matchups[[ team0.id, team1.id ]] = matchup
+      @matchups[[ team1.id, team0.id ]] = matchup
+    end
   end
 
   def matchup

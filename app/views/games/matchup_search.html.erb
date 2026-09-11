@@ -27,7 +27,12 @@
               <% if row_university == col_university %>
                 <span class="dash">---</span>
               <% else %>
-                <%= link_to "対戦", matchup_browse_path(row_university.slug, col_university.slug) %>
+                <% matchup = @matchups[[ row_university.id, col_university.id ]] %>
+                <%= link_to matchup_browse_path(row_university.slug, col_university.slug) do %>
+                  <%= row_university.initial %><%= matchup.wins(row_university) %>勝
+                  <%= col_university.initial %><%= matchup.wins(col_university) %>勝
+                  分<%= matchup.draws %>
+                <% end %>
               <% end %>
             </td>
           <% end %>
