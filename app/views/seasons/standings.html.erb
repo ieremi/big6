@@ -6,7 +6,7 @@
   <p class="muted">試合データがありません。</p>
 <% else %>
   <p class="muted">
-    <%= link_to "試合一覧を見る", season_path(@season) %>
+    <%= link_to "試合一覧を見る", season_path(@season.year, @season.term) %>
   </p>
 
   <div data-controller="cell-toggle">

@@ -1,11 +1,9 @@
 Rails.application.routes.draw do
   resources :universities, only: [ :index ]
   resources :games, only: [ :index, :show ]
-  resources :seasons, only: [ :index, :show ] do
-    member do
-      get :standings
-    end
-  end
+  resources :seasons, only: [ :index ]
+  get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
+  get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "matchups", to: "matchups#index", as: :matchups
   get "matchups/:team0_slug/:team1_slug", to: "matchups#show", as: :matchup
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

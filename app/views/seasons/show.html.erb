@@ -3,7 +3,7 @@
 <h1><%= @season.title %></h1>
 
 <% if @games.any? %>
-  <p><%= link_to "順位表を見る", standings_season_path(@season) %></p>
+  <p><%= link_to "順位表を見る", standings_season_path(@season.year, @season.term) %></p>
 <% end %>
 
 <% if @games.any? %>

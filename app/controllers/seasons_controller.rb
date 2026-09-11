@@ -14,12 +14,12 @@ class SeasonsController < ApplicationController
   end
 
   def show
-    @season = Season.find(params[:id])
+    @season = Season.find_by!(year: params[:year], term: params[:term])
     @games = @season.games.includes(:team0, :team1).order(:played_on, :game_number)
   end
 
   def standings
-    @season = Season.find(params[:id])
+    @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
   end
 end
