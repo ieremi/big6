@@ -1,6 +1,6 @@
 class GamesController < ApplicationController
   def index
-    @universities = University.order(:id).to_a
+    @universities = University.order(:position).to_a
     @games_counts = @universities.each_with_object({}) do |u, counts|
       counts[u.id] = Game.where(team0_id: u.id).or(Game.where(team1_id: u.id)).count
     end
@@ -29,11 +29,11 @@ class GamesController < ApplicationController
     @games = scope.order(:played_on, :game_number)
     @games_by_opponent = @games
       .group_by { |g| g.team0_id == @team0.id ? g.team1 : g.team0 }
-      .sort_by { |opponent, _| opponent.id }
+      .sort_by { |opponent, _| opponent.position }
   end
 
   def matchup_search
-    @universities = University.order(:id).to_a
+    @universities = University.order(:position).to_a
 
     @matchups = {}
     @universities.combination(2).each do |team0, team1|

@@ -14,7 +14,7 @@ class Standings
 
   def initialize(season)
     @season = season
-    @universities = University.order(:id).to_a
+    @universities = University.order(:position).to_a
     compute
   end
 

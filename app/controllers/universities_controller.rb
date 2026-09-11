@@ -1,5 +1,5 @@
 class UniversitiesController < ApplicationController
   def index
-    @universities = University.all
+    @universities = University.order(:position)
   end
 end

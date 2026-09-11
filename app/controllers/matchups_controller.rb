@@ -2,7 +2,7 @@ class MatchupsController < ApplicationController
   CACHE_EXPIRY = 6.hours
 
   def index
-    @universities = University.order(:id).to_a
+    @universities = University.order(:position).to_a
     latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
 
     @periods = {
