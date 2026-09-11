@@ -2,11 +2,11 @@
   <thead>
     <tr>
       <% if local_assigns[:show_season] %>
-        <th>シーズン</th>
+        <%= sortable_game_header("season", "シーズン", "S") %>
       <% end %>
       <th>日付</th>
       <th>回戦</th>
-      <th>対戦</th>
+      <%= sortable_game_header("card", "カード", "C") %>
     </tr>
   </thead>
 

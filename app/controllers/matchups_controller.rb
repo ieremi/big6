@@ -42,7 +42,9 @@ class MatchupsController < ApplicationController
       render "games/show" and return
     end
 
-    @games = @matchup.games_for(season: @season, year: @year)
+    @sort = %w[season card].include?(params[:sort]) ? params[:sort] : nil
+    @sort_direction = params[:direction] == "desc" ? "desc" : "asc"
+    @games = sort_games_array(@matchup.games_for(season: @season, year: @year), @sort, @sort_direction)
 
     if @season.nil? && @year.nil?
       latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
@@ -58,6 +60,22 @@ class MatchupsController < ApplicationController
   end
 
   private
+
+  def sort_games_array(games, sort, direction)
+    return games unless sort
+
+    multiplier = direction == "desc" ? -1 : 1
+
+    case sort
+    when "season"
+      games.sort_by { |g| [ g.season.year * multiplier, (g.season.term == "autumn" ? 1 : 0) * multiplier, g.played_on, g.game_number ] }
+    when "card"
+      games.sort_by do |g|
+        lo, hi = [ g.team0.position, g.team1.position ].sort
+        [ lo * multiplier, hi * multiplier, g.played_on, g.game_number ]
+      end
+    end
+  end
 
   def build_data
     matchups = {}

@@ -1,15 +1,83 @@
-<h1>試合</h1>
+<h1>試合検索</h1>
 
-<p class="muted">大学を選んでください。</p>
+<%= form_with url: games_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+  <%= hidden_field_tag :filtered, "1" %>
 
-<ul class="list">
-  <% @universities.each do |u| %>
-    <li>
-      <%= link_to team_browse_path(u.slug) do %>
-        <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
-        <%= u.name %>
-        <span class="muted">(<%= @games_counts[u.id] %>試合)</span>
+  <fieldset>
+    <legend>大学</legend>
+    <div class="period-toolbar">
+      <button type="button" class="period-btn" data-action="search-filter#checkAllUniversities">すべて</button>
+      <button type="button" class="period-btn" data-action="search-filter#clearUniversities">クリア</button>
+    </div>
+    <div class="checkbox-group">
+      <% @universities.each do |u| %>
+        <label class="checkbox-label" data-shortcut="<%= u.initial %>" data-shortcut-label="<%= u.short_name %>を切替">
+          <%= check_box_tag "university_ids[]", u.id, @selected_university_ids.include?(u.id), data: { search_filter_target: "universityCheckbox" } %>
+          <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+          <%= u.short_name %>
+          <kbd><%= u.initial %></kbd>
+        </label>
       <% end %>
-    </li>
-  <% end %>
-</ul>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>年</legend>
+    <div class="period-toolbar">
+      <div class="year-range">
+        <%= number_field_tag :start_year, @start_year, placeholder: "開始年", min: 1925, max: 2026, data: { search_filter_target: "yearInput" } %>
+        〜
+        <%= number_field_tag :end_year, @end_year, placeholder: "終了年", min: 1925, max: 2026, data: { search_filter_target: "yearInput" } %>
+      </div>
+      <button type="button" class="period-btn" data-action="search-filter#clearYears">クリア</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>シーズン</legend>
+    <div class="period-toolbar">
+      <button type="button" class="period-btn" data-action="search-filter#checkAllTerms">すべて</button>
+      <button type="button" class="period-btn" data-action="search-filter#clearTerms">クリア</button>
+    </div>
+    <div class="checkbox-group">
+      <label class="checkbox-label" data-shortcut="s" data-shortcut-label="春を切替">
+        <%= check_box_tag "terms[]", "spring", @selected_terms.include?("spring"), data: { search_filter_target: "termCheckbox" } %>
+        春
+        <kbd>s</kbd>
+      </label>
+      <label class="checkbox-label" data-shortcut="a" data-shortcut-label="秋を切替">
+        <%= check_box_tag "terms[]", "autumn", @selected_terms.include?("autumn"), data: { search_filter_target: "termCheckbox" } %>
+        秋
+        <kbd>a</kbd>
+      </label>
+    </div>
+  </fieldset>
+
+  <noscript><%= submit_tag "検索" %></noscript>
+<% end %>
+
+<% if @searched %>
+  <p class="muted">
+    <% if @total_count.zero? %>
+      該当する試合はありません。
+    <% else %>
+      <%= @total_count %>試合中 <%= @range_start %>–<%= @range_end %>件を表示
+    <% end %>
+  </p>
+
+  <%= render "games_table", games: @games, show_season: true %>
+
+  <div class="period-toolbar">
+    <% if @page > 1 %>
+      <%= link_to "← 前へ", games_path(request.query_parameters.merge(page: @page - 1)), class: "period-btn" %>
+    <% end %>
+    <% if @total_pages > 0 %>
+      <span class="muted"><%= @page %> / <%= @total_pages %></span>
+    <% end %>
+    <% if @page < @total_pages %>
+      <%= link_to "次へ →", games_path(request.query_parameters.merge(page: @page + 1)), class: "period-btn" %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="muted">条件を指定して検索してください。</p>
+<% end %>
