@@ -33,6 +33,7 @@
             <th>日付</th>
             <th>回戦</th>
             <th>対戦</th>
+            <th>観衆</th>
           </tr>
         </thead>
 
@@ -48,6 +49,7 @@
                   <%= game.team1.short_name %>
                 <% end %>
               </td>
+              <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
             </tr>
           <% end %>
         </tbody>

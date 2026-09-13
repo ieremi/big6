@@ -7,6 +7,7 @@
       <th>日付</th>
       <th>回戦</th>
       <%= sortable_game_header("card", "カード", "C") %>
+      <th>観衆</th>
     </tr>
   </thead>
 
@@ -30,6 +31,7 @@
             <%= game.team1.short_name %>
           <% end %>
         </td>
+        <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
       <% end %>
     <% end %>
   </tbody>
