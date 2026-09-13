@@ -381,7 +381,7 @@ th.sortable.sorted-desc::after {
 
 .scoreboard-table th {
   background: transparent;
-  color: #fbbf24;
+  color: #60a5fa;
   font-size: 0.75rem;
   letter-spacing: 0.03em;
 }
@@ -397,7 +397,7 @@ th.sortable.sorted-desc::after {
 
 .scoreboard-table td.total {
   font-weight: 700;
-  color: #fbbf24;
+  color: #60a5fa;
   font-size: 1.1rem;
 }
 
