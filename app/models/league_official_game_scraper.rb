@@ -34,11 +34,32 @@ class LeagueOfficialGameScraper
     data = parse(Nokogiri::HTML(response.body))
     return nil unless data
 
-    @game.update!(league_official_data: data)
+    @game.update!(attrs_from(data))
     data
   end
 
   private
+
+  # Only fills in the game's actual score once the official site shows it as
+  # finished (finishTime present), and only if we don't already have a score
+  # from Scorebook — Scorebook stays the source of truth once it catches up.
+  # Without this, pages that read Game#team0_score/team1_score directly (the
+  # season schedule, standings, etc.) keep showing the game as not-yet-played
+  # even though the individual game page already has a provisional box score.
+  def attrs_from(data)
+    attrs = { league_official_data: data }
+
+    if data["finishTime"].present? && @game.team0_score.nil? && @game.team1_score.nil?
+      attrs[:team0_score] = data["runsTop"].compact.sum
+      attrs[:team1_score] = data["runsBottom"].compact.sum
+    end
+
+    if @game.attendance.nil? && data["attendance"].present?
+      attrs[:attendance] = data["attendance"].to_i
+    end
+
+    attrs
+  end
 
   # Mirrors GamesHelper#league_official_game_url without depending on a view
   # helper module from a plain model.
