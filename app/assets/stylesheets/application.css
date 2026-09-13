@@ -7,6 +7,10 @@
   --accent: #4338ca;
   --accent-hover: #3730a3;
   --row-alt: #f1f5f9;
+  --ics-keyword: #b45309;
+  --ics-prop: #1d4ed8;
+  --ics-param: #7c3aed;
+  --ics-continuation: #64748b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +23,10 @@
     --accent: #818cf8;
     --accent-hover: #a5b4fc;
     --row-alt: #172033;
+    --ics-keyword: #fbbf24;
+    --ics-prop: #93c5fd;
+    --ics-param: #c4b5fd;
+    --ics-continuation: #94a3b8;
   }
 }
 
@@ -353,6 +361,47 @@ th.sortable.sorted-desc::after {
 
 .decade .list {
   margin-top: 0.5rem;
+}
+
+.ics-preview-toggle summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.5rem 0.25rem;
+  color: var(--text);
+}
+
+.ics-preview-toggle summary:hover {
+  color: var(--accent);
+}
+
+.ics-preview {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.ics-keyword {
+  color: var(--ics-keyword);
+  font-weight: 700;
+}
+
+.ics-prop {
+  color: var(--ics-prop);
+  font-weight: 600;
+}
+
+.ics-param {
+  color: var(--ics-param);
+}
+
+.ics-continuation {
+  color: var(--ics-continuation);
 }
 
 .scoreboard {

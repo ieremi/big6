@@ -125,3 +125,4 @@
 <p class="muted">
   <%= link_to "カレンダーに追加 (.ics)", game_ics_path(@game) %>
 </p>
+<%= render "shared/ics_preview", url: game_ics_path(@game) %>

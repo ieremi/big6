@@ -19,6 +19,7 @@
 <% if @games.any? %>
   <p><%= link_to "順位表を見る", standings_season_path(@season.year, @season.term) %></p>
   <p><%= link_to "カレンダーに追加 (.ics)", season_path(@season.year, @season.term, format: :ics) %></p>
+  <%= render "shared/ics_preview", url: season_path(@season.year, @season.term, format: :ics) %>
 <% end %>
 
 <% if @games.any? %>
