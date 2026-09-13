@@ -23,7 +23,7 @@ class EstimatedGameSchedule
     official_start = @game.league_official_data&.dig("scheduledStartTime")
     return official_start if official_start.present?
 
-    game_order = detail_for(@game)["gameOrder"]
+    game_order = @game.game_order
     return nil unless game_order && game_order > 1
 
     first_game = sibling_game(game_order: 1)
@@ -50,10 +50,8 @@ class EstimatedGameSchedule
   end
 
   def sibling_game(game_order:)
-    @game.season.games
-      .where(played_on: @game.played_on)
-      .includes(:season)
-      .find { |g| detail_for(g)["gameOrder"] == game_order }
+    sibling = @game.season.games.find_by(played_on: @game.played_on, game_order: game_order)
+    sibling&.tap { |g| g.season = @game.season }
   end
 
   def add_minutes(hhmm, minutes)

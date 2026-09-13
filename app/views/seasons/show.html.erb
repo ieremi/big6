@@ -41,7 +41,7 @@
       <div data-week-sort-target="view" data-mode="date" hidden>
         <% week.games.group_by(&:played_on).each do |date, games| %>
           <h3 class="card-heading"><%= date %></h3>
-          <%= render "week_games_table", games: games.sort_by { |g| game_order(g) || Float::INFINITY } %>
+          <%= render "week_games_table", games: games.sort_by { |g| g.game_order || Float::INFINITY } %>
         <% end %>
       </div>
     <% end %>
