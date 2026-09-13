@@ -38,6 +38,14 @@ class MatchupsController < ApplicationController
         .where(team0_id: [ @team0.id, @team1.id ], team1_id: [ @team0.id, @team1.id ])
         .where(season_id: @season.id, game_number: params[:game_number])
         .first!
+
+      if request.format.symbol == :ics
+        calendar = IcsCalendar.new(name: "#{@game.team0.short_name} vs #{@game.team1.short_name}")
+        IcsGameEvent.add_to(calendar, @game)
+        send_data calendar.to_ics, type: "text/calendar", filename: "game-#{@game.id}.ics", disposition: "attachment"
+        return
+      end
+
       @scoreboard = GameScoreboard.new(@game)
       render "games/show" and return
     end

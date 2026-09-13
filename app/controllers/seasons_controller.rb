@@ -30,7 +30,15 @@ class SeasonsController < ApplicationController
 
   def show
     @season = Season.find_by!(year: params[:year], term: params[:term])
-    @games = @season.games.includes(:team0, :team1).order(:played_on, :game_number)
+    @games = @season.games.includes(:team0, :team1, :season).order(:played_on, :game_number)
+
+    if request.format.symbol == :ics
+      calendar = IcsCalendar.new(name: @season.title)
+      @games.each { |game| IcsGameEvent.add_to(calendar, game) }
+      send_data calendar.to_ics, type: "text/calendar", filename: "#{@season.year}-#{@season.term}.ics", disposition: "attachment"
+      return
+    end
+
     @weeks = SeasonWeeks.new(@games).weeks
     @tags = SeasonTags.new(@season).tags
   end

@@ -18,14 +18,17 @@ class GamesController < ApplicationController
     @start_year = params[:start_year].presence
     @end_year = params[:end_year].presence
 
+    if request.format.symbol == :ics
+      scope = filtered_scope
+      calendar = IcsCalendar.new(name: @searched ? "Big6 Games" : "Big6 All Games")
+      apply_game_sort(scope).each { |game| IcsGameEvent.add_to(calendar, game) }
+      send_data calendar.to_ics, type: "text/calendar", filename: "big6-games.ics", disposition: "attachment"
+      return
+    end
+
     return unless @searched
 
-    scope = Game.includes(:team0, :team1, :season)
-    scope = scope.where(team0_id: @selected_university_ids).or(scope.where(team1_id: @selected_university_ids))
-    scope = scope.where(season_id: Season.where(term: @selected_terms).select(:id))
-    scope = scope.where("played_on >= ?", Date.new(@start_year.to_i, 1, 1)) if @start_year.present?
-    scope = scope.where("played_on <= ?", Date.new(@end_year.to_i, 12, 31)) if @end_year.present?
-
+    scope = filtered_scope
     @total_count = scope.count
     @page = [ params[:page].to_i, 1 ].max
     @games = apply_game_sort(scope).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
@@ -85,5 +88,20 @@ class GamesController < ApplicationController
     end
 
     send_data TeamOgImage.new(team, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+  end
+
+  private
+
+  def filtered_scope
+    scope = Game.includes(:team0, :team1, :season)
+
+    if @searched
+      scope = scope.where(team0_id: @selected_university_ids).or(scope.where(team1_id: @selected_university_ids))
+      scope = scope.where(season_id: Season.where(term: @selected_terms).select(:id))
+    end
+
+    scope = scope.where("played_on >= ?", Date.new(@start_year.to_i, 1, 1)) if @start_year.present?
+    scope = scope.where("played_on <= ?", Date.new(@end_year.to_i, 12, 31)) if @end_year.present?
+    scope
   end
 end

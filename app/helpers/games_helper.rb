@@ -3,6 +3,10 @@ module GamesHelper
     matchup_game_path(game.team0.slug, game.team1.slug, game.season.year, game.season.term, game.game_number)
   end
 
+  def game_ics_path(game)
+    matchup_game_path(game.team0.slug, game.team1.slug, game.season.year, game.season.term, game.game_number, format: :ics)
+  end
+
   # Confirmed by spot-checking the league official site: seasons before 2005
   # spring return a page with the game framework but no actual score/box-score
   # data (empty template), so linking to them would be useless.
