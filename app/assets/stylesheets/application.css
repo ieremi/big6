@@ -411,22 +411,23 @@ th.sortable.sorted-desc::after {
 .attendance-chart {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
+  justify-content: center;
+  gap: 1px;
   height: 120px;
-  /* Extra top padding reserves room for the tooltip to pop up into without
-     being clipped by overflow-x: auto (which forces overflow-y to auto too). */
-  padding: 2.5rem 0.5rem 0.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow-x: auto;
   margin: 0.5rem 0 1rem;
+  /* No overflow-x here (unlike most scrollable tables in this app) —
+     bars shrink to fit instead of scrolling, and this also means the
+     tooltip below isn't clipped popping up above the container. */
 }
 
 .attendance-bar-wrap {
   position: relative;
-  flex: 0 0 auto;
-  width: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 24px;
   height: 100%;
   display: flex;
   align-items: flex-end;
