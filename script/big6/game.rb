@@ -1,4 +1,5 @@
 require "date"
+require_relative "known_game_number_overrides"
 
 SCOREBOOK_TEAM_SLUGS = {
   1 => "waseda",
@@ -37,7 +38,7 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     # so fall back to continuing the pair's own sequence for the season.
     pair_key = [ team0.id, team1.id ].sort
     match = info["round"].to_s.match(/(\d+)回戦/)
-    game_number = match ? match[1].to_i : pair_round_counts[pair_key] + 1
+    game_number = KNOWN_GAME_NUMBER_OVERRIDES[info["id"]] || (match ? match[1].to_i : pair_round_counts[pair_key] + 1)
     pair_round_counts[pair_key] = game_number
 
     game = Game.find_or_initialize_by(

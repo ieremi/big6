@@ -5,25 +5,16 @@
 # numbering slips). Keyed by scorebook_game_id (not local `Game#id`, which
 # differs per database) so this can run against any environment's data.
 #
+# game.rb already applies these same overrides on import (see
+# known_game_number_overrides.rb, shared with that script), so re-running
+# this after a fresh import should just confirm "no change" for all of
+# them — this script is a safety net for a database that hasn't been
+# re-synced since that fix landed.
+#
 # Run with: bin/rails runner script/big6/fix_duplicate_game_numbers.rb
+require_relative "known_game_number_overrides"
 
-RENUMBER = {
-  1963110401 => 4,
-  1951061901 => 3,
-  1955101801 => 3,
-  1952092301 => 3,
-  1949102402 => 3,
-  1976051001 => 3,
-  1948061101 => 4,
-  1949052202 => 3,
-  1955050901 => 3,
-  1995052201 => 4,
-  1959111201 => 3,
-  1990051501 => 4,
-  1957091502 => 4
-}.freeze
-
-RENUMBER.each do |scorebook_game_id, new_number|
+KNOWN_GAME_NUMBER_OVERRIDES.each do |scorebook_game_id, new_number|
   game = Game.find_by(scorebook_game_id: scorebook_game_id)
 
   unless game
