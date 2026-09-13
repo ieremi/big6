@@ -1,13 +1,14 @@
 class SiteOgImage < OgImage
   TITLE_MAX_DPI = 260
 
-  def initialize(title:, subtitle: nil)
+  def initialize(title:, subtitle: nil, stripe_colors: nil)
     @title = title
     @subtitle = subtitle
+    @stripe_colors = stripe_colors
   end
 
   def to_png
-    colors = University.order(:position).map(&:color)
+    colors = @stripe_colors || University.order(:position).map(&:color)
     bg = stripe_background(colors)
     bg = contrast_band(bg, center_y: 315, height: @subtitle.present? ? 260 : 180)
 
