@@ -18,6 +18,11 @@ class EstimatedGameSchedule
     own_start = detail_for(@game)["gameStartSchedule"]
     return own_start if own_start.present?
 
+    # Scorebook doesn't have this game yet (e.g. a just-added decisive third
+    # game) — fall back to what LeagueOfficialScheduleScraper published.
+    official_start = @game.league_official_data&.dig("scheduledStartTime")
+    return official_start if official_start.present?
+
     game_order = detail_for(@game)["gameOrder"]
     return nil unless game_order && game_order > 1
 
