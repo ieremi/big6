@@ -4,8 +4,6 @@
   content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Standings")
 %>
 
-<%= link_to "← シーズン一覧", seasons_path, class: "back-link" %>
-
 <h1><%= @season.title %> 順位表</h1>
 
 <% if @standings.rows.all? { |row| row.games.zero? } %>

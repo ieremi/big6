@@ -13,8 +13,6 @@
   content_for :image_url, game_og_image_url(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term, @game.game_number)
 %>
 
-<%= link_to "← 試合一覧", games_path, class: "back-link" %>
-
 <h1>
   <%= link_to @game.season.title, season_path(@game.season.year, @game.season.term) %>
   <%= link_to "#{@game.team0.short_name} vs #{@game.team1.short_name}", matchup_season_path(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term) %>
