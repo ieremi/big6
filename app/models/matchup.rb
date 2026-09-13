@@ -1,6 +1,4 @@
 class Matchup
-  Streak = Struct.new(:team, :length, :first_game, :last_game, keyword_init: true)
-
   attr_reader :team0, :team1, :games
 
   def initialize(team0, team1)

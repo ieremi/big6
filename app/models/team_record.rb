@@ -27,6 +27,46 @@ class TeamRecord
     decided.zero? ? nil : w.to_f / decided
   end
 
+  def longest_streak(since: nil, season_id: nil)
+    best = nil
+    length = 0
+    first_game = nil
+
+    scoped_games(since: since, season_id: season_id).each do |g|
+      if winner(g) == @university
+        length += 1
+        first_game ||= g
+        best = Streak.new(team: @university, length: length, first_game: first_game, last_game: g) if best.nil? || length > best.length
+      else
+        length = 0
+        first_game = nil
+      end
+    end
+
+    best
+  end
+
+  def current_streak(since: nil, season_id: nil)
+    games = scoped_games(since: since, season_id: season_id)
+    return nil if games.empty?
+
+    length = 0
+    first_game = nil
+    last_game = nil
+
+    games.reverse_each do |g|
+      break unless winner(g) == @university
+
+      length += 1
+      first_game = g
+      last_game ||= g
+    end
+
+    return nil if length.zero?
+
+    Streak.new(team: @university, length: length, first_game: first_game, last_game: last_game)
+  end
+
   def average_duration_minutes(since: nil, season_id: nil)
     values = duration_values(since: since, season_id: season_id)
     return nil if values.empty?

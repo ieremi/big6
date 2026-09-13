@@ -21,13 +21,24 @@ module MatchupsHelper
   private
 
   def streak_link(streak)
-    first_label = "#{streak.first_game.season.title} 第#{streak.first_game.game_number}回戦"
-    last_label = "#{streak.last_game.season.title} 第#{streak.last_game.game_number}回戦"
+    first_label = streak_game_label(streak, streak.first_game)
+    last_label = streak_game_label(streak, streak.last_game)
 
     if streak.first_game == streak.last_game
       safe_join([ "#{streak.length}連勝（", link_to(first_label, game_path(streak.first_game)), "）" ])
     else
       safe_join([ "#{streak.length}連勝（", link_to(first_label, game_path(streak.first_game)), " 〜 ", link_to(last_label, game_path(streak.last_game)), "）" ])
     end
+  end
+
+  def streak_game_label(streak, game)
+    opponent = game.team0 == streak.team ? game.team1 : game.team0
+    week_number = week_number_for(game)
+    "#{game.season.title} 第#{week_number}週 vs #{opponent.short_name} 第#{game.game_number}回戦"
+  end
+
+  def week_number_for(game)
+    weeks = SeasonWeeks.new(game.season.games.includes(:team0, :team1)).weeks
+    weeks.find { |w| w.games.any? { |g| g.id == game.id } }&.number
   end
 end
