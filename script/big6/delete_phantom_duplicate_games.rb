@@ -1,13 +1,26 @@
 # One-off cleanup for databases where game.rb was run before it learned to
 # skip "中止"/"ノーゲーム" Scorebook entries (see known_game_number_overrides.rb
 # and the CANCELLED_STATUSES skip in game.rb). Those runs left behind
-# "phantom" Game rows: no score, sharing (season, team pair, game_number)
-# with another row that has a real score. This finds and removes exactly
-# that pattern — it does NOT touch a genuine future/scheduled game (which
-# would also have nil scores) because it only considers duplicate groups
-# where a SIBLING already has a real result, and only rows dated in the past.
+# "phantom" Game rows sharing (season, team pair, game_number) with another
+# row that has a real result. This finds and removes exactly that pattern —
+# it does NOT touch a genuine future/scheduled game (which would also have
+# no score) because it only considers duplicate groups where a SIBLING
+# already has a real result, and only rows dated in the past.
+#
+# A phantom's score isn't always nil: Scorebook represents a cancelled
+# game's runsTotalTop/Bottom as "" (empty string), and the old game.rb did
+# `info["runsTotalTop"]&.to_i`, which turns "" into 0 (not nil) — so some
+# phantoms show as an oddly attendance-less "0-0" instead. Treat a 0-0 with
+# no recorded attendance as unscored too, since a real 0-0 tie would still
+# have had a real crowd on record.
 #
 # Run with: bin/rails runner script/big6/delete_phantom_duplicate_games.rb
+
+def phantom_score?(game)
+  return true if game.team0_score.nil? || game.team1_score.nil?
+
+  game.team0_score.zero? && game.team1_score.zero? && game.attendance.nil?
+end
 
 dupes = Game.group(:season_id, :team0_id, :team1_id, :game_number).having("count(*) > 1").count
 
@@ -17,7 +30,7 @@ remaining_ambiguous = []
 dupes.each_key do |season_id, team0_id, team1_id, game_number|
   games = Game.where(season_id: season_id, team0_id: team0_id, team1_id: team1_id, game_number: game_number).to_a
 
-  scored, unscored = games.partition { |g| g.team0_score.present? && g.team1_score.present? }
+  unscored, scored = games.partition { |g| phantom_score?(g) }
 
   if scored.size == 1 && unscored.all? { |g| g.played_on < Date.current }
     unscored.each do |g|
