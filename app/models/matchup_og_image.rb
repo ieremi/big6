@@ -25,6 +25,7 @@ class MatchupOgImage < OgImage
   private
 
   def winner(game)
+    return nil if game.team0_score.nil? || game.team1_score.nil?
     return nil if game.team0_score == game.team1_score
 
     game.team0_score > game.team1_score ? game.team0 : game.team1

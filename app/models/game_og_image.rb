@@ -11,7 +11,8 @@ class GameOgImage < OgImage
 
     bg = diagonal_split(team0.color, team1.color)
 
-    main_text = "#{team0.initial} #{@game.team0_score} - #{@game.team1_score} #{team1.initial}"
+    score_text = @game.team0_score && @game.team1_score ? "#{@game.team0_score} - #{@game.team1_score}" : "vs"
+    main_text = "#{team0.initial} #{score_text} #{team1.initial}"
     bg, = overlay_text(bg, main_text, dpi: dpi_to_fit(main_text, MAIN_TEXT_TARGET_WIDTH), center_y: 260)
 
     bg, = overlay_text(bg, "#{@game.season.year} #{@game.season.term.capitalize} - Round #{@game.game_number}", dpi: 115, center_y: 460)

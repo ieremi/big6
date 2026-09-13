@@ -33,7 +33,7 @@ class Standings
   private
 
   def compute
-    games = season.games.includes(:team0, :team1).order(:played_on, :game_number)
+    games = season.games.includes(:team0, :team1).order(:played_on, :game_number).select { |g| decided?(g) }
 
     tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0 } }
     pair_games = Hash.new { |h, k| h[k] = [] }
@@ -94,6 +94,10 @@ class Standings
     end
 
     @rows = @rows_by_id.values.sort_by { |r| [-r.points, -r.percentage] }
+  end
+
+  def decided?(game)
+    game.team0_score.present? && game.team1_score.present?
   end
 
   def winner_id(game)

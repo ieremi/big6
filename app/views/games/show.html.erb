@@ -1,5 +1,6 @@
 <%
-  game_score = "#{@game.team0.short_name} #{@game.team0_score}-#{@game.team1_score} #{@game.team1.short_name}"
+  in_progress = @game.team0_score.nil? || @game.team1_score.nil?
+  game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
   content_for :title, "#{game_score}（#{@game.season.title}第#{@game.game_number}回戦） - Big6"
   content_for :description, [
     @game.played_on.to_s,
@@ -17,6 +18,7 @@
   <%= @game.played_on %>　<%= @game.game_number %>回戦
   <% if @scoreboard.stadium.present? %>　<%= @scoreboard.stadium %><% end %>
   <% if @scoreboard.attendance.present? %>　観衆<%= @scoreboard.attendance %>人<% end %>
+  <% if in_progress %>　<span class="season-tag">試合中</span><% end %>
 </p>
 
 <% if @scoreboard.present? %>
@@ -43,7 +45,7 @@
           <% @scoreboard.innings.each do |n| %>
             <td><%= @scoreboard.top_runs(n) %></td>
           <% end %>
-          <td class="total"><%= @game.team0_score %></td>
+          <td class="total"><%= @game.team0_score.nil? ? "-" : @game.team0_score %></td>
           <td><%= @scoreboard.top_hits %></td>
           <td><%= @scoreboard.top_errors %></td>
         </tr>
@@ -55,7 +57,7 @@
           <% @scoreboard.innings.each do |n| %>
             <td><%= @scoreboard.bottom_runs(n) %></td>
           <% end %>
-          <td class="total"><%= @game.team1_score %></td>
+          <td class="total"><%= @game.team1_score.nil? ? "-" : @game.team1_score %></td>
           <td><%= @scoreboard.bottom_hits %></td>
           <td><%= @scoreboard.bottom_errors %></td>
         </tr>
@@ -86,7 +88,7 @@
   <p class="muted">詳細データはありません。</p>
 <% end %>
 
-<% if (url = official_game_url(@game)) %>
+<% if (url = league_official_game_url(@game)) %>
   <p class="muted">
     <%= link_to "東京六大学野球連盟のページで見る →", url, target: "_blank", rel: "noopener noreferrer" %>
   </p>

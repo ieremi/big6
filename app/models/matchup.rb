@@ -106,13 +106,14 @@ class Matchup
   end
 
   def scoped_games(since: nil, season_id: nil)
-    scoped = games
+    scoped = games.select { |g| g.team0_score.present? && g.team1_score.present? }
     scoped = scoped.select { |g| g.played_on >= since } if since
     scoped = scoped.select { |g| g.season_id == season_id } if season_id
     scoped
   end
 
   def winner(game)
+    return nil if game.team0_score.nil? || game.team1_score.nil?
     return nil if game.team0_score == game.team1_score
 
     game.team0_score > game.team1_score ? game.team0 : game.team1

@@ -15,8 +15,15 @@ Season.where.not(scorebook_games: nil).find_each do |season|
   pair_round_counts = Hash.new(0)
 
   season.scorebook_games.each do |info|
-    next if info["runsTotalTop"].nil? || info["runsTotalBottom"].nil?
     next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
+
+    # Skip games that haven't started yet (nothing scored in any inning). Once a
+    # game is underway, import it with whatever partial score is available so
+    # far, and let re-running this script pick up later updates (including the
+    # eventual final score) via the find_or_initialize_by below.
+    has_score_data = info["runsTotalTop"].present? || info["runsTotalBottom"].present? ||
+      (1..18).any? { |n| info["runs#{n}Top"].present? || info["runs#{n}Bottom"].present? }
+    next unless has_score_data
 
     team0 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("topTeamId")))
     team1 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
@@ -40,8 +47,8 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     attendance = info["attendance"].to_s.delete(",").strip
 
     game.game_number = game_number
-    game.team0_score = info["runsTotalTop"].to_i
-    game.team1_score = info["runsTotalBottom"].to_i
+    game.team0_score = info["runsTotalTop"]&.to_i
+    game.team1_score = info["runsTotalBottom"]&.to_i
     game.scorebook_game_id = info["id"]
     game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
     game.save!
