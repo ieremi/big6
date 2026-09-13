@@ -76,7 +76,7 @@
     <% if detail.started_at.present? %>
       <div>
         <dt>試合時間</dt>
-        <dd><%= detail.started_at %> 〜 <%= detail.finished_at %>（<%= detail.duration %>）</dd>
+        <dd><%= clock_time_12h(detail.started_at) %> 〜 <%= clock_time_12h(detail.finished_at) %>（<%= detail.duration %>）</dd>
       </div>
     <% end %>
     <% if detail.umpires.any? %>
@@ -109,7 +109,7 @@
      %>
     <% if start_time %>
       <p class="muted">
-        予想試合時間：<%= start_time %> 〜 <%= end_time %>（開始・所要時間はあくまで目安です）
+        予想試合時間：<%= clock_time_12h(start_time) %> 〜 <%= clock_time_12h(end_time) %>（開始・所要時間はあくまで目安です）
       </p>
     <% end %>
   <% end %>
