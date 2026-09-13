@@ -1,6 +1,6 @@
 <%
   in_progress = @game.team0_score.nil? || @game.team1_score.nil?
-  is_future = @game.played_on > Date.current
+  is_future = @game.played_on >= Date.current
   game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
   content_for :title, "#{game_score}（#{@game.season.title}第#{@game.game_number}回戦） - Big6"
   content_for :description, [

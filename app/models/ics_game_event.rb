@@ -27,7 +27,7 @@ module IcsGameEvent
       return [ start_time, end_time ] if start_time
     end
 
-    if game.played_on > Date.current
+    if game.played_on >= Date.current
       estimate = EstimatedGameSchedule.new(game)
       start_str = estimate.scheduled_start_time
       if start_str
