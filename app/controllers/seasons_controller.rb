@@ -14,7 +14,7 @@ class SeasonsController < ApplicationController
       totals[season.id] = total if total.positive?
     end
 
-    cache_key = "season_tags/v2/#{Game.maximum(:updated_at)&.to_i}"
+    cache_key = "season_tags/v3/#{Game.maximum(:updated_at)&.to_i}"
     @season_tags = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
       @seasons.each_with_object({}) { |season, tags| tags[season.id] = SeasonTags.new(season).tags }
     end

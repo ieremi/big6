@@ -10,4 +10,10 @@ class Season < ApplicationRecord
     def title
         "#{year}年#{term_ja}"
     end
+
+    def finished?
+        return true if scorebook_games.blank?
+
+        scorebook_games.none? { |g| g["gameStatus"] == "試合前" }
+    end
 end

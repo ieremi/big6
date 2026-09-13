@@ -31,6 +31,7 @@ class SeasonTags
 
   def tags
     return [] if @season.games.empty?
+    return [] unless @season.finished?
 
     [
       tokyo_won_a_point,
