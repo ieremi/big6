@@ -47,6 +47,7 @@ class MatchupsController < ApplicationController
       end
 
       @scoreboard = GameScoreboard.new(@game)
+      @official_scoreboard = LeagueOfficialScoreboard.new(@game)
       render "games/show" and return
     end
 

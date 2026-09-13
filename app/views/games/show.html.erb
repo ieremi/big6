@@ -1,12 +1,14 @@
 <%
   in_progress = @game.team0_score.nil? || @game.team1_score.nil?
   is_future = @game.played_on >= Date.current
+  detail = @scoreboard.innings.any? ? @scoreboard : @official_scoreboard
+  provisional = detail.innings.any? && !@scoreboard.innings.any?
   game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
   content_for :title, "#{game_score}（#{@game.season.title}第#{@game.game_number}回戦） - Big6"
   content_for :description, [
     @game.played_on.to_s,
     game_score,
-    (@scoreboard.attendance.present? ? "観衆#{@scoreboard.attendance.to_s.strip}人" : nil)
+    (detail.attendance.present? ? "観衆#{detail.attendance.to_s.strip}人" : nil)
   ].compact.join(" ")
   content_for :image_url, game_og_image_url(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term, @game.game_number)
 %>
@@ -20,18 +22,21 @@
 
 <p class="muted">
   <%= @game.played_on %>　<%= @game.game_number %>回戦
-  <% if @scoreboard.stadium.present? %>　<%= @scoreboard.stadium %><% end %>
-  <% if @scoreboard.attendance.present? %>　観衆<%= @scoreboard.attendance %>人<% end %>
+  <% if detail.stadium.present? %>　<%= detail.stadium %><% end %>
+  <% if detail.attendance.present? %>　観衆<%= detail.attendance %>人<% end %>
   <% if in_progress %>　<span class="season-tag"><%= is_future ? "試合前" : "試合中" %></span><% end %>
 </p>
 
-<% if @scoreboard.innings.any? %>
+<% if detail.innings.any? %>
+  <% if provisional %>
+    <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち）</p>
+  <% end %>
   <div class="scoreboard">
     <table class="scoreboard-table">
       <thead>
         <tr>
           <th class="team-col"></th>
-          <% @scoreboard.innings.each do |n| %>
+          <% detail.innings.each do |n| %>
             <th><%= n %></th>
           <% end %>
           <th>計</th>
@@ -46,40 +51,40 @@
             <span class="team-chip" style="background: <%= @game.team0.color %>"><%= @game.team0.initial %></span>
             <%= @game.team0.short_name %>
           </td>
-          <% @scoreboard.innings.each do |n| %>
-            <td><%= @scoreboard.top_runs(n) %></td>
+          <% detail.innings.each do |n| %>
+            <td><%= detail.top_runs(n) %></td>
           <% end %>
           <td class="total"><%= @game.team0_score.nil? ? "-" : @game.team0_score %></td>
-          <td><%= @scoreboard.top_hits %></td>
-          <td><%= @scoreboard.top_errors %></td>
+          <td><%= detail.top_hits %></td>
+          <td><%= detail.top_errors %></td>
         </tr>
         <tr>
           <td class="team-col">
             <span class="team-chip" style="background: <%= @game.team1.color %>"><%= @game.team1.initial %></span>
             <%= @game.team1.short_name %>
           </td>
-          <% @scoreboard.innings.each do |n| %>
-            <td><%= @scoreboard.bottom_runs(n) %></td>
+          <% detail.innings.each do |n| %>
+            <td><%= detail.bottom_runs(n) %></td>
           <% end %>
           <td class="total"><%= @game.team1_score.nil? ? "-" : @game.team1_score %></td>
-          <td><%= @scoreboard.bottom_hits %></td>
-          <td><%= @scoreboard.bottom_errors %></td>
+          <td><%= detail.bottom_hits %></td>
+          <td><%= detail.bottom_errors %></td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <dl class="scoreboard-meta">
-    <% if @scoreboard.started_at.present? %>
+    <% if detail.started_at.present? %>
       <div>
         <dt>試合時間</dt>
-        <dd><%= @scoreboard.started_at %> 〜 <%= @scoreboard.finished_at %>（<%= @scoreboard.duration %>）</dd>
+        <dd><%= detail.started_at %> 〜 <%= detail.finished_at %>（<%= detail.duration %>）</dd>
       </div>
     <% end %>
-    <% if @scoreboard.umpires.any? %>
+    <% if detail.umpires.any? %>
       <div>
         <dt>審判</dt>
-        <dd><%= @scoreboard.umpires.join("、") %></dd>
+        <dd><%= detail.umpires.join("、") %></dd>
       </div>
     <% end %>
   </dl>
