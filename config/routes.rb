@@ -1,4 +1,15 @@
 Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      resources :universities, only: [ :index, :show ], param: :slug
+      resources :games, only: [ :index, :show ]
+      get "seasons", to: "seasons#index"
+      get "seasons/:year/:term", to: "seasons#show", constraints: { year: /\d{4}/, term: /spring|autumn/ }
+      get "seasons/:year/:term/standings", to: "seasons#standings", constraints: { year: /\d{4}/, term: /spring|autumn/ }
+      get "matchups/:team0_slug/:team1_slug", to: "matchups#show"
+    end
+  end
+
   get "og/site.png", to: "home#og_image", as: :site_og_image
 
   get "universities/og.png", to: "universities#og_image", as: :universities_og_image
