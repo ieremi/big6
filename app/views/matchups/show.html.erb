@@ -14,7 +14,10 @@
 <%= link_to "← 対戦カード一覧", matchups_path, class: "back-link" %>
 
 <h1>
-  <%= link_to "#{@team0.short_name} vs #{@team1.short_name}", matchup_path(@team0.slug, @team1.slug) %> 対戦カード
+  <%= link_to @team0.short_name, university_path(@team0.slug) %>
+  vs
+  <%= link_to @team1.short_name, university_path(@team1.slug) %>
+  <%= link_to "対戦カード", matchup_path(@team0.slug, @team1.slug) %>
   <%= period_label %>
 </h1>
 
