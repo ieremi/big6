@@ -5,7 +5,7 @@ const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount", "statCell"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount", "statCell", "periodItem"]
   static values = {
     period: { type: String, default: "all" },
     metric: { type: String, default: "rate" }
@@ -150,7 +150,7 @@ export default class extends Controller {
     })
 
     this.periodPanelTargets.forEach((el) => {
-      el.hidden = el.dataset.period !== this.periodValue
+      el.classList.toggle("is-hidden", el.dataset.period !== this.periodValue)
     })
 
     if (this.hasGameRowTarget) {
@@ -158,7 +158,7 @@ export default class extends Controller {
       this.gameRowTargets.forEach((el) => {
         const periods = (el.dataset.periods || "").split(" ")
         const visible = periods.includes(this.periodValue)
-        el.hidden = !visible
+        el.classList.toggle("is-hidden", !visible)
         if (visible) visibleCount++
       })
 
@@ -166,6 +166,14 @@ export default class extends Controller {
         el.textContent = `${visibleCount}試合`
       })
     }
+
+    // Same show/hide-by-period as gameRow, but excluded from the gameCount
+    // tally (e.g. attendance chart bars, which represent the same games the
+    // table rows already count).
+    this.periodItemTargets.forEach((el) => {
+      const periods = (el.dataset.periods || "").split(" ")
+      el.classList.toggle("is-hidden", !periods.includes(this.periodValue))
+    })
 
     this.statCellTargets.forEach((el) => {
       el.textContent = el.getAttribute(`data-value-${this.periodValue}`) || "—"

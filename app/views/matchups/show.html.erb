@@ -36,14 +36,14 @@
     </div>
 
     <% @periods.each do |key, opts| %>
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
+      <%= tag.p class: ["muted", ("is-hidden" if key != @initial_period)], data: { period_filter_target: "periodPanel", period: key } do %>
         <%= labels[key] %>
         <%= @team0.short_name %><%= @matchup.wins(@team0, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@team0, **opts)) %>）、
         <%= @team1.short_name %><%= @matchup.wins(@team1, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@team1, **opts)) %>）、
         引き分け<%= @matchup.draws(**opts) %>
       <% end %>
 
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
+      <%= tag.p class: ["muted", ("is-hidden" if key != @initial_period)], data: { period_filter_target: "periodPanel", period: key } do %>
         最多連勝：
         <%= @team0.short_name %><%= streak_description(@matchup.longest_streak(@team0, **opts)) %>、
         <%= @team1.short_name %><%= streak_description(@matchup.longest_streak(@team1, **opts)) %>
@@ -51,7 +51,7 @@
 
       <% streak0 = @matchup.current_streak(@team0, **opts)
          streak1 = @matchup.current_streak(@team1, **opts) %>
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
+      <%= tag.p class: ["muted", ("is-hidden" if key != @initial_period)], data: { period_filter_target: "periodPanel", period: key } do %>
         現在の連勝：
         <% if streak0 %>
           <%= @team0.short_name %><%= current_streak_description(streak0) %>
@@ -62,7 +62,7 @@
         <% end %>
       <% end %>
 
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
+      <%= tag.p class: ["muted", ("is-hidden" if key != @initial_period)], data: { period_filter_target: "periodPanel", period: key } do %>
         試合時間：
         合計<%= duration_description(@matchup.total_duration_minutes(**opts)) %>、
         平均<%= duration_description(@matchup.average_duration_minutes(**opts)) %>、
@@ -74,10 +74,12 @@
 
     <p class="muted" data-period-filter-target="gameCount"><%= @games.size %>試合</p>
 
+    <%= render "attendance_chart", games: @games, game_periods: @game_periods %>
     <%= render "games/games_table", games: @games, show_season: @season.nil?, game_periods: @game_periods %>
   </div>
 <% else %>
   <p class="muted"><%= @games.size %>試合</p>
 
+  <%= render "attendance_chart", games: @games %>
   <%= render "games/games_table", games: @games, show_season: @season.nil? %>
 <% end %>

@@ -1,3 +1,7 @@
+.is-hidden {
+  display: none !important;
+}
+
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
@@ -402,6 +406,38 @@ th.sortable.sorted-desc::after {
   padding: 1.25rem;
   overflow-x: auto;
   margin-bottom: 1.5rem;
+}
+
+.attendance-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 120px;
+  padding: 0.75rem 0.5rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.5rem 0 1rem;
+}
+
+.attendance-bar-wrap {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.attendance-bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.attendance-bar-wrap:hover .attendance-bar {
+  background: var(--accent-hover);
 }
 
 .scoreboard-table {

@@ -24,13 +24,13 @@
   </div>
 
   <% @periods.each do |key, opts| %>
-    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
       <%= labels[key] %>
       <%= @record.wins(**opts) %>勝<%= @record.losses(**opts) %>敗<%= @record.draws(**opts) %>分
       （勝率<%= pct.call(@record.percentage(**opts)) %>）
     <% end %>
 
-    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
       試合時間：
       合計<%= duration_description(@record.total_duration_minutes(**opts)) %>、
       平均<%= duration_description(@record.average_duration_minutes(**opts)) %>、
@@ -39,11 +39,11 @@
       標準偏差<%= duration_description(@record.duration_stddev_minutes(**opts)) %>
     <% end %>
 
-    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
       最多連勝：<%= streak_description(@record.longest_streak(**opts)) %>
     <% end %>
 
-    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
       現在の連勝：<%= current_streak_description(@record.current_streak(**opts)) %>
     <% end %>
   <% end %>
