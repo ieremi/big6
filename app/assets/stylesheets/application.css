@@ -7,9 +7,9 @@
   --accent: #4338ca;
   --accent-hover: #3730a3;
   --row-alt: #f1f5f9;
-  --ics-keyword: #b45309;
-  --ics-prop: #1d4ed8;
-  --ics-param: #7c3aed;
+  --ics-keyword: #1d4ed8;
+  --ics-prop: #2563eb;
+  --ics-param: #475569;
   --ics-continuation: #64748b;
 }
 
@@ -23,9 +23,9 @@
     --accent: #818cf8;
     --accent-hover: #a5b4fc;
     --row-alt: #172033;
-    --ics-keyword: #fbbf24;
+    --ics-keyword: #60a5fa;
     --ics-prop: #93c5fd;
-    --ics-param: #c4b5fd;
+    --ics-param: #cbd5e1;
     --ics-continuation: #94a3b8;
   }
 }
