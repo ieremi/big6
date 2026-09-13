@@ -81,6 +81,37 @@ class Matchup
     values.sum
   end
 
+  def average_duration_minutes(since: nil, season_id: nil)
+    values = duration_values(since: since, season_id: season_id)
+    return nil if values.empty?
+
+    values.sum / values.size
+  end
+
+  def total_duration_minutes(since: nil, season_id: nil)
+    values = duration_values(since: since, season_id: season_id)
+    return nil if values.empty?
+
+    values.sum
+  end
+
+  def max_duration_minutes(since: nil, season_id: nil)
+    duration_values(since: since, season_id: season_id).max
+  end
+
+  def min_duration_minutes(since: nil, season_id: nil)
+    duration_values(since: since, season_id: season_id).min
+  end
+
+  def duration_stddev_minutes(since: nil, season_id: nil)
+    values = duration_values(since: since, season_id: season_id)
+    return nil if values.size < 2
+
+    mean = values.sum / values.size.to_f
+    variance = values.sum { |v| (v - mean)**2 } / values.size
+    Math.sqrt(variance).round
+  end
+
   def games_for(season: nil, year: nil)
     return games if season.nil? && year.nil?
 
@@ -103,6 +134,10 @@ class Matchup
 
   def attendance_values(since: nil, season_id: nil)
     scoped_games(since: since, season_id: season_id).filter_map(&:attendance)
+  end
+
+  def duration_values(since: nil, season_id: nil)
+    scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
   end
 
   def scoped_games(since: nil, season_id: nil)

@@ -14,7 +14,7 @@
 <%= link_to "← 対戦カード一覧", matchups_path, class: "back-link" %>
 
 <h1>
-  <%= @team0.short_name %> vs <%= @team1.short_name %> 対戦カード
+  <%= link_to "#{@team0.short_name} vs #{@team1.short_name}", matchup_path(@team0.slug, @team1.slug) %> 対戦カード
   <%= period_label %>
 </h1>
 
@@ -59,6 +59,15 @@
         <% else %>
           なし
         <% end %>
+      <% end %>
+
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+        試合時間：
+        合計<%= duration_description(@matchup.total_duration_minutes(**opts)) %>、
+        平均<%= duration_description(@matchup.average_duration_minutes(**opts)) %>、
+        最大<%= duration_description(@matchup.max_duration_minutes(**opts)) %>、
+        最小<%= duration_description(@matchup.min_duration_minutes(**opts)) %>、
+        標準偏差<%= duration_description(@matchup.duration_stddev_minutes(**opts)) %>
       <% end %>
     <% end %>
 

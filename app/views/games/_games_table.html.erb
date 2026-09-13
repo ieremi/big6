@@ -19,7 +19,7 @@
          end %>
       <%= tag.tr data: row_data do %>
         <% if local_assigns[:show_season] %>
-          <td><%= game.season.title %></td>
+          <td><%= link_to game.season.title, season_path(game.season.year, game.season.term) %></td>
         <% end %>
         <td><%= game.played_on %></td>
         <td><%= game.game_number %>回戦</td>

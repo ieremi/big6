@@ -11,6 +11,13 @@ module MatchupsHelper
     streak_link(streak)
   end
 
+  def duration_description(minutes)
+    return "—" if minutes.nil?
+
+    hours, mins = minutes.divmod(60)
+    hours.positive? ? "#{hours}時間#{mins}分" : "#{mins}分"
+  end
+
   private
 
   def streak_link(streak)

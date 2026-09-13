@@ -56,6 +56,13 @@ class GameScoreboard
     @detail["gameTimeNet"]
   end
 
+  def duration_minutes
+    match = duration.to_s.match(/(?:(\d+)時間)?(?:(\d+)分)?/)
+    return nil unless match && (match[1] || match[2])
+
+    match[1].to_i * 60 + match[2].to_i
+  end
+
   def umpires
     [
       @detail["umpirePlate"], @detail["umpire1b"], @detail["umpire2b"],
