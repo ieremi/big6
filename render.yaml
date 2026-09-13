@@ -14,6 +14,13 @@ services:
     envVars:
       - key: RAILS_MASTER_KEY
         sync: false
+      # Without this, Puma never boots the Solid Queue supervisor, so nothing
+      # in config/recurring.yml (and no other ActiveJob job) ever actually
+      # runs — jobs get enqueued but nothing dequeues them. There's only one
+      # web service here (no separate worker), so run the supervisor
+      # in-process inside Puma instead.
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: big6-db
