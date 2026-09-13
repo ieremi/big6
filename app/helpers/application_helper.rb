@@ -16,9 +16,12 @@ module ApplicationHelper
   # Undocumented but long-standing/widely-used — Google Calendar has no public
   # API for one-click subscription, this is the closest thing to it. ics_url
   # must be a full absolute URL (Google's server has to be able to fetch it),
-  # not a path.
+  # not a path. Must use webcal:// (not https://) in the cid value, or Google
+  # responds "Unable to subscribe... check the URL" even for a perfectly
+  # valid https feed.
   def google_calendar_subscribe_url(ics_url)
-    "https://calendar.google.com/calendar/render?cid=#{CGI.escape(ics_url)}"
+    webcal_url = ics_url.sub(/\Ahttps?:\/\//, "webcal://")
+    "https://calendar.google.com/calendar/render?cid=#{CGI.escape(webcal_url)}"
   end
 
   CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
