@@ -12,6 +12,15 @@ module ApplicationHelper
     format("%d:%02d %s", hour % 12, min, period)
   end
 
+  # Which game of the day this was (1st, 2nd, ...), straight from Scorebook's
+  # cached JSON (Season#scorebook_games, matched by scorebook_game_id) — not
+  # its own Game column. nil if we don't have a Scorebook entry for it (e.g.
+  # a decisive game LeagueOfficialScheduleScraper added), in which case
+  # there's usually only one game that day anyway.
+  def game_order(game)
+    game.season.scorebook_games&.find { |g| g["id"] == game.scorebook_game_id }&.dig("gameOrder")
+  end
+
   def score_span(team0_score, team1_score, played_on: nil)
     if team0_score.nil? || team1_score.nil?
       label = played_on && played_on >= Date.current ? "試合前" : "試合中"
