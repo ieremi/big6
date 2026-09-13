@@ -98,6 +98,18 @@
       詳細データはありません。
     <% end %>
   </p>
+
+  <% if is_future
+       estimate = EstimatedGameSchedule.new(@game)
+       start_time = estimate.scheduled_start_time
+       end_time = estimate.estimated_end_time
+     %>
+    <% if start_time %>
+      <p class="muted">
+        予想試合時間：<%= start_time %> 〜 <%= end_time %>（開始・所要時間はあくまで目安です）
+      </p>
+    <% end %>
+  <% end %>
 <% end %>
 
 <% if (url = league_official_game_url(@game)) %>
