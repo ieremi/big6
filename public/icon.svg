@@ -1,3 +1,5 @@
 <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+  <circle cx="256" cy="256" r="256" fill="#1d4ed8"/>
+  <path d="M 116 130 L 396 130 L 396 270 L 256 400 L 116 270 Z" fill="#ffffff"/>
+  <text x="256" y="290" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="220" fill="#1e293b">6</text>
 </svg>
