@@ -56,6 +56,7 @@ class MatchupsController < ApplicationController
         "r" => { season_id: latest_season_id }
       }
       @game_periods = @games.each_with_object({}) { |g, h| h[g.id] = @matchup.period_keys_for(g, @periods) }
+      @initial_period = @periods.key?(params[:period]) ? params[:period] : "all"
     end
   end
 

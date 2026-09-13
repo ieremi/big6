@@ -23,7 +23,7 @@
 <% if @periods %>
   <% labels = { "all" => "通算", "5" => "直近5年", "10" => "直近10年", "20" => "直近20年", "r" => "直近シーズン" } %>
 
-  <div data-controller="period-filter">
+  <div data-controller="period-filter" data-period-filter-period-value="<%= @initial_period %>">
     <div class="period-toolbar">
       <span class="muted">表示期間:</span>
       <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">通算 <kbd>a</kbd></button>
@@ -35,14 +35,14 @@
     </div>
 
     <% @periods.each do |key, opts| %>
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
         <%= labels[key] %>
         <%= @team0.short_name %><%= @matchup.wins(@team0, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@team0, **opts)) %>）、
         <%= @team1.short_name %><%= @matchup.wins(@team1, **opts) %>勝（勝率<%= pct.call(@matchup.percentage(@team1, **opts)) %>）、
         引き分け<%= @matchup.draws(**opts) %>
       <% end %>
 
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
         最多連勝：
         <%= @team0.short_name %><%= streak_description(@matchup.longest_streak(@team0, **opts)) %>、
         <%= @team1.short_name %><%= streak_description(@matchup.longest_streak(@team1, **opts)) %>
@@ -50,7 +50,7 @@
 
       <% streak0 = @matchup.current_streak(@team0, **opts)
          streak1 = @matchup.current_streak(@team1, **opts) %>
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
         現在の連勝：
         <% if streak0 %>
           <%= @team0.short_name %><%= current_streak_description(streak0) %>
@@ -61,7 +61,7 @@
         <% end %>
       <% end %>
 
-      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != @initial_period do %>
         試合時間：
         合計<%= duration_description(@matchup.total_duration_minutes(**opts)) %>、
         平均<%= duration_description(@matchup.average_duration_minutes(**opts)) %>、

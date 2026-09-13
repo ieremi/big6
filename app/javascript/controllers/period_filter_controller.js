@@ -15,6 +15,7 @@ export default class extends Controller {
     this.boundKeydown = this.handleKeydown.bind(this)
     window.addEventListener("keydown", this.boundKeydown)
     this.render()
+    this.hasConnected = true
   }
 
   disconnect() {
@@ -106,6 +107,13 @@ export default class extends Controller {
 
   periodValueChanged() {
     this.render()
+    if (this.hasConnected) this.updateUrl()
+  }
+
+  updateUrl() {
+    const url = new URL(window.location.href)
+    url.searchParams.set("period", this.periodValue)
+    window.history.replaceState({}, "", url)
   }
 
   metricValueChanged() {
