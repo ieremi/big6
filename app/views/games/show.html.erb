@@ -89,11 +89,13 @@
 <% else %>
   <p>
     <%= @game.team0.short_name %>
-    <%= score_span(@game.team0_score, @game.team1_score, played_on: @game.played_on) %>
+    <%= score_span(@game.team0_score, @game.team1_score, played_on: @game.played_on, status: @game.game_status) %>
     <%= @game.team1.short_name %>
   </p>
   <p class="muted">
-    <% if in_progress && is_future %>
+    <% if ApplicationHelper::CANCELLED_STATUSES.include?(@game.game_status) %>
+      この試合は<%= @game.game_status %>になりました。
+    <% elsif in_progress && is_future %>
       この試合はまだ行われていません。
     <% elsif in_progress %>
       試合中です。詳細データはまだありません。
@@ -102,7 +104,7 @@
     <% end %>
   </p>
 
-  <% if is_future
+  <% if is_future && !ApplicationHelper::CANCELLED_STATUSES.include?(@game.game_status)
        estimate = EstimatedGameSchedule.new(@game)
        start_time = estimate.scheduled_start_time
        end_time = estimate.estimated_end_time

@@ -12,9 +12,17 @@ module ApplicationHelper
     format("%d:%02d %s", hour % 12, min, period)
   end
 
-  def score_span(team0_score, team1_score, played_on: nil)
+  CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
+
+  def score_span(team0_score, team1_score, played_on: nil, status: nil)
     if team0_score.nil? || team1_score.nil?
-      label = played_on && played_on >= Date.current ? "試合前" : "試合中"
+      label = if CANCELLED_STATUSES.include?(status)
+        status
+      elsif played_on && played_on >= Date.current
+        "試合前"
+      else
+        "試合中"
+      end
       return tag.span(label, class: "score muted")
     end
 

@@ -21,6 +21,15 @@ class ScorebookSync
 
   TERM_JA = { "spring" => "春", "autumn" => "秋" }.freeze
 
+  # A "中止"/"ノーゲーム" entry is a rained-out (or otherwise voided) attempt,
+  # not a game that happened — it has no score, no duration, nothing worth
+  # tracking. It's also usually re-played under the very same round label
+  # (e.g. two separate Scorebook entries both called "1回戦"), so importing
+  # it as its own Game row creates a same-round duplicate: two Game rows
+  # sharing (season, team pair, game_number), which makes per-game URLs and
+  # routing ambiguous and can double-count games in aggregates.
+  CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
+
   def self.call(season)
     new(season).call
   end
@@ -55,6 +64,7 @@ class ScorebookSync
 
     scorebook_games.each do |info|
       next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
+      next if CANCELLED_STATUSES.include?(info["gameStatus"])
 
       team0 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("topTeamId")))
       team1 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
@@ -78,6 +88,7 @@ class ScorebookSync
       game.team1_score = info["runsTotalBottom"]&.to_i
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
+      game.game_status = info["gameStatus"]
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
       game.save!
     end
