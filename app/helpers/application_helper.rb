@@ -12,6 +12,15 @@ module ApplicationHelper
     format("%d:%02d %s", hour % 12, min, period)
   end
 
+  # Opens Google Calendar's own "subscribe to this URL" confirmation dialog.
+  # Undocumented but long-standing/widely-used — Google Calendar has no public
+  # API for one-click subscription, this is the closest thing to it. ics_url
+  # must be a full absolute URL (Google's server has to be able to fetch it),
+  # not a path.
+  def google_calendar_subscribe_url(ics_url)
+    "https://calendar.google.com/calendar/render?cid=#{CGI.escape(ics_url)}"
+  end
+
   CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
 
   def score_span(team0_score, team1_score, played_on: nil, status: nil)

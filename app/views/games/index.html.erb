@@ -86,13 +86,22 @@
   </div>
 
   <% if @total_count > 0 %>
-    <% filtered_ics_url = games_path(request.query_parameters.except("page").merge(format: :ics)) %>
-    <p class="muted"><%= link_to "検索結果をカレンダーに追加 (.ics)", filtered_ics_url %></p>
-    <%= render "shared/ics_preview", url: filtered_ics_url %>
+    <% filtered_ics_path = games_path(request.query_parameters.except("page").merge(format: :ics)) %>
+    <% filtered_ics_url = games_url(request.query_parameters.except("page").merge(format: :ics)) %>
+    <p class="muted">
+      <%= link_to "検索結果をカレンダーに追加 (.ics)", filtered_ics_path %>
+      ・
+      <%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(filtered_ics_url), target: "_blank", rel: "noopener noreferrer" %>
+    </p>
+    <%= render "shared/ics_preview", url: filtered_ics_path %>
   <% end %>
 <% else %>
   <p class="muted">条件を指定して検索してください。</p>
 <% end %>
 
-<p class="muted"><%= link_to "すべての試合をカレンダーに追加 (.ics)", games_path(format: :ics) %></p>
+<p class="muted">
+  <%= link_to "すべての試合をカレンダーに追加 (.ics)", games_path(format: :ics) %>
+  ・
+  <%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(games_url(format: :ics)), target: "_blank", rel: "noopener noreferrer" %>
+</p>
 <%= render "shared/ics_preview", url: games_path(format: :ics) %>
