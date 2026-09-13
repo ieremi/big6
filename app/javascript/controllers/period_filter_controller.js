@@ -5,7 +5,7 @@ const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount", "statCell"]
   static values = {
     period: { type: String, default: "all" },
     metric: { type: String, default: "rate" }
@@ -166,6 +166,10 @@ export default class extends Controller {
         el.textContent = `${visibleCount}試合`
       })
     }
+
+    this.statCellTargets.forEach((el) => {
+      el.textContent = el.getAttribute(`data-value-${this.periodValue}`) || "—"
+    })
 
     const ogPreview = document.querySelector(".og-preview")
     if (ogPreview) {

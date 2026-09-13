@@ -1,8 +1,8 @@
 Rails.application.routes.draw do
   get "og/site.png", to: "home#og_image", as: :site_og_image
 
-  resources :universities, only: [ :index ]
   get "universities/og.png", to: "universities#og_image", as: :universities_og_image
+  resources :universities, only: [ :index, :show ], param: :slug
 
   get "games/og.png", to: "games#index_og_image", as: :games_index_og_image
   get "games/:team0_slug/:year/:term/og.png", to: "games#team_og_image", as: :team_season_og_image,

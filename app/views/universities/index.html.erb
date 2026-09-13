@@ -9,8 +9,11 @@
 <ul class="list">
   <% @universities.each do |university| %>
     <li>
-      <strong><%= university.name %></strong>
-      <span class="muted">（<%= university.short_name %>）</span>
+      <%= link_to university_path(university.slug) do %>
+        <span class="team-chip" style="background: <%= university.color %>"><%= university.initial %></span>
+        <strong><%= university.name %></strong>
+        <span class="muted">（<%= university.short_name %>）</span>
+      <% end %>
     </li>
   <% end %>
 </ul>

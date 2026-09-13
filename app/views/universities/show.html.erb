@@ -1,0 +1,57 @@
+<%
+  content_for :title, "#{@university.name} - Big6"
+  content_for :description, "#{@university.name}の通算成績・試合時間統計"
+  content_for :image_url, team_og_image_url(@university.slug)
+%>
+
+<%= link_to "← 大学一覧", universities_path, class: "back-link" %>
+
+<h1>
+  <span class="team-chip" style="background: <%= @university.color %>"><%= @university.initial %></span>
+  <%= @university.name %>
+</h1>
+
+<% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
+<% labels = { "all" => "通算", "20" => "直近20年", "10" => "直近10年", "5" => "直近5年", "r" => "直近シーズン" } %>
+
+<div data-controller="period-filter">
+  <div class="period-toolbar">
+    <span class="muted">表示期間:</span>
+    <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">通算 <kbd>a</kbd></button>
+    <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
+    <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
+    <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
+    <button type="button" class="period-btn" data-period="r" data-period-filter-target="button" data-action="period-filter#setPeriod">直近シーズン <kbd>r</kbd></button>
+    <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
+  </div>
+
+  <% @periods.each do |key, opts| %>
+    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      <%= labels[key] %>
+      <%= @record.wins(**opts) %>勝<%= @record.losses(**opts) %>敗<%= @record.draws(**opts) %>分
+      （勝率<%= pct.call(@record.percentage(**opts)) %>）
+    <% end %>
+
+    <%= tag.p class: "muted", data: { period_filter_target: "periodPanel", period: key }, hidden: key != "all" do %>
+      試合時間：
+      合計<%= duration_description(@record.total_duration_minutes(**opts)) %>、
+      平均<%= duration_description(@record.average_duration_minutes(**opts)) %>、
+      最大<%= duration_description(@record.max_duration_minutes(**opts)) %>、
+      最小<%= duration_description(@record.min_duration_minutes(**opts)) %>、
+      標準偏差<%= duration_description(@record.duration_stddev_minutes(**opts)) %>
+    <% end %>
+  <% end %>
+</div>
+
+<h2 class="card-heading">対戦カード</h2>
+
+<ul class="list">
+  <% @opponents.each do |opponent| %>
+    <li>
+      <%= link_to matchup_path(@university.slug, opponent.slug) do %>
+        <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
+        <%= @university.short_name %> vs <%= opponent.short_name %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
