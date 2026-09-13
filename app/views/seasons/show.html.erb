@@ -21,41 +21,31 @@
 <% end %>
 
 <% if @games.any? %>
-  <% @weeks.each do |week| %>
-    <h2 class="week-heading">第<%= week.number %>週</h2>
+  <div data-controller="week-sort">
+    <div class="period-toolbar">
+      週のなかのならび：
+      <button type="button" class="period-btn active" data-week-sort-target="button" data-mode="card" data-action="week-sort#setMode" data-shortcut="c" data-shortcut-label="週内をカードごとに表示">カードごと <kbd>c</kbd></button>
+      <button type="button" class="period-btn" data-week-sort-target="button" data-mode="date" data-action="week-sort#setMode" data-shortcut="d" data-shortcut-label="週内を日付ごとに表示">日付ごと <kbd>d</kbd></button>
+    </div>
 
-    <% week.series.each do |s| %>
-      <h3 class="card-heading"><%= s.team0.short_name %> vs <%= s.team1.short_name %></h3>
+    <% @weeks.each do |week| %>
+      <h2 class="week-heading">第<%= week.number %>週</h2>
 
-      <table>
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>回戦</th>
-            <th>対戦</th>
-            <th>観衆</th>
-          </tr>
-        </thead>
+      <div data-week-sort-target="view" data-mode="card">
+        <% week.series.each do |s| %>
+          <h3 class="card-heading"><%= s.team0.short_name %> vs <%= s.team1.short_name %></h3>
+          <%= render "week_games_table", games: s.games %>
+        <% end %>
+      </div>
 
-        <tbody>
-          <% s.games.each do |game| %>
-            <tr>
-              <td><%= game.played_on %></td>
-              <td><%= game.game_number %>回戦</td>
-              <td>
-                <%= link_to game_path(game) do %>
-                  <%= game.team0.short_name %>
-                  <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on) %>
-                  <%= game.team1.short_name %>
-                <% end %>
-              </td>
-              <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+      <div data-week-sort-target="view" data-mode="date" hidden>
+        <% week.games.group_by(&:played_on).each do |date, games| %>
+          <h3 class="card-heading"><%= date %></h3>
+          <%= render "week_games_table", games: games %>
+        <% end %>
+      </div>
     <% end %>
-  <% end %>
+  </div>
 <% else %>
   <p class="muted">試合データがありません。</p>
 <% end %>
