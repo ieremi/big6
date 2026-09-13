@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-const ORDER = ["5", "10", "20", "all"]
+const ORDER = ["r", "5", "10", "20", "all"]
 const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
