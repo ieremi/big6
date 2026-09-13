@@ -60,6 +60,7 @@
 
     <main class="container">
       <%= yield %>
+      <%= image_tag page_image, class: "og-preview", alt: "", width: 1200, height: 630 %>
     </main>
 
     <div id="shortcuts-help" class="shortcuts-help" hidden data-shortcuts-target="help" data-action="click->shortcuts#backdropClick">
