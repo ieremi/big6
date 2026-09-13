@@ -1,7 +1,8 @@
 module ApplicationHelper
-  def score_span(team0_score, team1_score)
+  def score_span(team0_score, team1_score, played_on: nil)
     if team0_score.nil? || team1_score.nil?
-      return tag.span("試合中", class: "score muted")
+      label = played_on && played_on > Date.current ? "試合前" : "試合中"
+      return tag.span(label, class: "score muted")
     end
 
     tag.span class: "score" do

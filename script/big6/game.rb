@@ -17,14 +17,10 @@ Season.where.not(scorebook_games: nil).find_each do |season|
   season.scorebook_games.each do |info|
     next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
 
-    # Skip games that haven't started yet (nothing scored in any inning). Once a
-    # game is underway, import it with whatever partial score is available so
-    # far, and let re-running this script pick up later updates (including the
-    # eventual final score) via the find_or_initialize_by below.
-    has_score_data = info["runsTotalTop"].present? || info["runsTotalBottom"].present? ||
-      (1..18).any? { |n| info["runs#{n}Top"].present? || info["runs#{n}Bottom"].present? }
-    next unless has_score_data
-
+    # Import every scheduled game, even ones that haven't been played yet
+    # (nil scores) — this lets the site show the upcoming schedule. As a game
+    # goes from scheduled -> in progress -> final, re-running this script
+    # picks up each update via the find_or_initialize_by below.
     team0 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("topTeamId")))
     team1 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
 

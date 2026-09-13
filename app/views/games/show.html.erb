@@ -1,5 +1,6 @@
 <%
   in_progress = @game.team0_score.nil? || @game.team1_score.nil?
+  is_future = @game.played_on > Date.current
   game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
   content_for :title, "#{game_score}（#{@game.season.title}第#{@game.game_number}回戦） - Big6"
   content_for :description, [
@@ -21,10 +22,10 @@
   <%= @game.played_on %>　<%= @game.game_number %>回戦
   <% if @scoreboard.stadium.present? %>　<%= @scoreboard.stadium %><% end %>
   <% if @scoreboard.attendance.present? %>　観衆<%= @scoreboard.attendance %>人<% end %>
-  <% if in_progress %>　<span class="season-tag">試合中</span><% end %>
+  <% if in_progress %>　<span class="season-tag"><%= is_future ? "試合前" : "試合中" %></span><% end %>
 </p>
 
-<% if @scoreboard.present? %>
+<% if @scoreboard.innings.any? %>
   <div class="scoreboard">
     <table class="scoreboard-table">
       <thead>
@@ -85,10 +86,18 @@
 <% else %>
   <p>
     <%= @game.team0.short_name %>
-    <span class="score"><%= @game.team0_score %> - <%= @game.team1_score %></span>
+    <%= score_span(@game.team0_score, @game.team1_score, played_on: @game.played_on) %>
     <%= @game.team1.short_name %>
   </p>
-  <p class="muted">詳細データはありません。</p>
+  <p class="muted">
+    <% if in_progress && is_future %>
+      この試合はまだ行われていません。
+    <% elsif in_progress %>
+      試合中です。詳細データはまだありません。
+    <% else %>
+      詳細データはありません。
+    <% end %>
+  </p>
 <% end %>
 
 <% if (url = league_official_game_url(@game)) %>

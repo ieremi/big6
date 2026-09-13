@@ -6,12 +6,15 @@ url = URI("https://big6scorebook.jp/api/game/search")
 
 # Only re-scrape from the latest season we already have games for onward —
 # older seasons are final and won't change, so there's no need to refetch
-# all ~200 seasons every time. And if every game we know about on the most
-# recent played_on date is already final (both scores present), there's
-# nothing new to learn from the source until someone tells us a new game
-# happened, so skip entirely. (Multiple pairs can play on the same date, so
-# we check all of them, not just an arbitrary "latest" row.)
-latest_date = Game.maximum(:played_on)
+# all ~200 seasons every time. And if every game we know about that should
+# already have been played (played_on <= today) is final (both scores
+# present), there's nothing new to learn from the source until someone tells
+# us a new game happened, so skip entirely. Games scheduled for the future
+# are expected to be scoreless and don't count against this check — only
+# once their date arrives do they become eligible for it. (Multiple pairs
+# can play on the same date, so we check all of them, not just an arbitrary
+# "latest" row.)
+latest_date = Game.where("played_on <= ?", Date.current).maximum(:played_on)
 latest_games = latest_date ? Game.where(played_on: latest_date).includes(:season) : Game.none
 latest_game = latest_games.first
 

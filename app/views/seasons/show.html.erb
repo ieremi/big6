@@ -44,7 +44,7 @@
               <td>
                 <%= link_to game_path(game) do %>
                   <%= game.team0.short_name %>
-                  <%= score_span(game.team0_score, game.team1_score) %>
+                  <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on) %>
                   <%= game.team1.short_name %>
                 <% end %>
               </td>
