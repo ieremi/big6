@@ -8,9 +8,14 @@
     <% attendance_games.each do |game| %>
       <% height_pct = max_attendance.positive? ? (game.attendance.to_f / max_attendance * 100).round(1) : 0 %>
       <%= tag.div class: "attendance-bar-wrap",
-            title: "#{game.played_on} #{game.team0.short_name}vs#{game.team1.short_name} 観衆#{number_with_delimiter(game.attendance)}人",
+            tabindex: "0",
+            title: "#{game.season.title} #{game.played_on} 観衆#{number_with_delimiter(game.attendance)}人",
             data: (local_assigns[:game_periods] ? { period_filter_target: "periodItem", periods: local_assigns[:game_periods][game.id]&.join(" ") } : {}) do %>
         <div class="attendance-bar" style="height: <%= height_pct %>%;"></div>
+        <span class="attendance-tooltip">
+          <%= game.season.title %> <%= game.played_on %><br>
+          <%= number_with_delimiter(game.attendance) %>人
+        </span>
       <% end %>
     <% end %>
   </div>

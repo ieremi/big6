@@ -413,7 +413,9 @@ th.sortable.sorted-desc::after {
   align-items: flex-end;
   gap: 2px;
   height: 120px;
-  padding: 0.75rem 0.5rem 0.5rem;
+  /* Extra top padding reserves room for the tooltip to pop up into without
+     being clipped by overflow-x: auto (which forces overflow-y to auto too). */
+  padding: 2.5rem 0.5rem 0.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -422,6 +424,7 @@ th.sortable.sorted-desc::after {
 }
 
 .attendance-bar-wrap {
+  position: relative;
   flex: 0 0 auto;
   width: 6px;
   height: 100%;
@@ -434,6 +437,29 @@ th.sortable.sorted-desc::after {
   min-height: 2px;
   background: var(--accent);
   border-radius: 2px 2px 0 0;
+}
+
+.attendance-tooltip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  z-index: 10;
+}
+
+.attendance-bar-wrap:hover .attendance-tooltip,
+.attendance-bar-wrap:focus .attendance-tooltip {
+  opacity: 1;
 }
 
 .attendance-bar-wrap:hover .attendance-bar {
