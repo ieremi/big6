@@ -1,8 +1,27 @@
 class OgImage
   WIDTH = 1200
   HEIGHT = 630
+  CORNER_MARGIN = 50
 
   private
+
+  def text_width(text, dpi)
+    Vips::Image.text(text, dpi: dpi).width
+  end
+
+  def text_height(text, dpi)
+    Vips::Image.text(text, dpi: dpi).height
+  end
+
+  def corner_initials(bg, team0, team1, dpi:)
+    initial0_w = text_width(team0.initial, dpi)
+    initial0_h = text_height(team0.initial, dpi)
+    initial1_w = text_width(team1.initial, dpi)
+
+    bg, = overlay_text(bg, team0.initial, dpi: dpi, center_x: CORNER_MARGIN + initial0_w / 2.0, center_y: CORNER_MARGIN + initial0_h / 2.0)
+    bg, = overlay_text(bg, team1.initial, dpi: dpi, center_x: WIDTH - CORNER_MARGIN - initial1_w / 2.0, center_y: CORNER_MARGIN + initial0_h / 2.0)
+    bg
+  end
 
   def hex_to_rgb(hex)
     hex = hex.delete("#")
@@ -15,10 +34,10 @@ class OgImage
     max_dpi ? [ dpi, max_dpi ].min : dpi
   end
 
-  def overlay_text(bg, text, dpi:, center_y:)
+  def overlay_text(bg, text, dpi:, center_y:, center_x: bg.width / 2.0)
     rendered = Vips::Image.text(text, align: :centre, dpi: dpi)
     colored = rendered.new_from_image([ 255, 255, 255 ]).bandjoin(rendered).copy(interpretation: :srgb)
-    x = (bg.width - colored.width) / 2
+    x = center_x - colored.width / 2
     y = center_y - colored.height / 2
     [ bg.composite2(colored, :over, x: x, y: y), colored.height ]
   end

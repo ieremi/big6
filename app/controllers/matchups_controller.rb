@@ -63,6 +63,14 @@ class MatchupsController < ApplicationController
     send_data SiteOgImage.new(title: "Matchups").to_png, type: "image/png", disposition: "inline"
   end
 
+  PERIOD_LABELS = {
+    "all" => "All-time",
+    "20" => "Last 20 Years",
+    "10" => "Last 10 Years",
+    "5" => "Last 5 Years",
+    "r" => "Latest Season"
+  }.freeze
+
   def matchup_og_image
     team0 = University.find_by!(slug: params[:team0_slug])
     team1 = University.find_by!(slug: params[:team1_slug])
@@ -76,19 +84,32 @@ class MatchupsController < ApplicationController
       year = params[:year]
     end
 
-    games = matchup.games_for(season: season, year: year)
-    subtitle = if season
-      "#{season.year} #{season.term.capitalize}"
-    elsif year
-      year.to_s
+    if season || year
+      opts = season ? { season_id: season.id } : { year: year }
+      subtitle = season ? "for #{season.year} #{season.term.capitalize}" : "for #{year}"
     else
-      "All-time"
+      period = PERIOD_LABELS.key?(params[:period]) ? params[:period] : "all"
+      opts = period_opts(period)
+      subtitle = "for #{PERIOD_LABELS.fetch(period)}"
     end
 
-    send_data MatchupOgImage.new(team0, team1, games, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+    wins0 = matchup.wins(team0, **opts)
+    wins1 = matchup.wins(team1, **opts)
+
+    send_data MatchupOgImage.new(team0, team1, wins0: wins0, wins1: wins1, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
   end
 
   private
+
+  def period_opts(key)
+    case key
+    when "20" then { since: 20.years.ago.to_date }
+    when "10" then { since: 10.years.ago.to_date }
+    when "5" then { since: 5.years.ago.to_date }
+    when "r" then { season_id: Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id) }
+    else {}
+    end
+  end
 
   def sort_games_array(games, sort, direction)
     return games unless sort

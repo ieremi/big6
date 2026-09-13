@@ -158,5 +158,12 @@ export default class extends Controller {
         el.textContent = `${visibleCount}試合`
       })
     }
+
+    const ogPreview = document.querySelector(".og-preview")
+    if (ogPreview) {
+      const url = new URL(ogPreview.src, window.location.href)
+      url.searchParams.set("period", this.periodValue)
+      ogPreview.src = url.toString()
+    }
   }
 }

@@ -13,8 +13,8 @@ class Matchup
       .to_a
   end
 
-  def wins(team, since: nil, season_id: nil)
-    scoped_games(since: since, season_id: season_id).count { |g| winner(g) == team }
+  def wins(team, since: nil, season_id: nil, year: nil)
+    scoped_games(since: since, season_id: season_id, year: year).count { |g| winner(g) == team }
   end
 
   def draws(since: nil, season_id: nil)
@@ -140,10 +140,11 @@ class Matchup
     scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
   end
 
-  def scoped_games(since: nil, season_id: nil)
+  def scoped_games(since: nil, season_id: nil, year: nil)
     scoped = games.select { |g| g.team0_score.present? && g.team1_score.present? }
     scoped = scoped.select { |g| g.played_on >= since } if since
     scoped = scoped.select { |g| g.season_id == season_id } if season_id
+    scoped = scoped.select { |g| g.season.year == year.to_i } if year
     scoped
   end
 
