@@ -1,0 +1,9 @@
+<div class="api-sandbox" data-controller="api-sandbox" data-api-sandbox-prefix-value="<%= request.base_url %>/api/v1">
+  <div class="sandbox-row">
+    <span class="sandbox-prefix"><%= request.base_url %>/api/v1</span>
+    <input type="text" class="sandbox-url" data-api-sandbox-target="path" value="<%= path %>"
+           data-action="keydown.enter->api-sandbox#run">
+    <button type="button" class="period-btn" data-action="api-sandbox#run">試す</button>
+  </div>
+  <pre class="doc-code" data-api-sandbox-target="output" hidden></pre>
+</div>

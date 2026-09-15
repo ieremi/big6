@@ -145,12 +145,14 @@
 <p>全大学の一覧。</p>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities\"" %>
 <%= render "code_block", label: "レスポンス", content: universities_json %>
+<%= render "sandbox", path: "/universities" %>
 
 <h3><code>GET /api/v1/universities/:slug</code></h3>
 <p>1大学の情報＋通算成績（全対戦相手を合算）。</p>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities/keio\"" %>
 <%= render "code_block", label: "レスポンス", content: university_show_json %>
 <p class="muted">連勝が無い場合、<code>longest_streak</code>/<code>current_streak</code>は<code>null</code>。</p>
+<%= render "sandbox", path: "/universities/keio" %>
 
 <h2>シーズン</h2>
 
@@ -158,6 +160,7 @@
 <p>全シーズンの一覧（新しい順、実際には204件）。</p>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/seasons\"" %>
 <%= render "code_block", label: "レスポンス（先頭3件を抜粋）", content: seasons_index_json %>
+<%= render "sandbox", path: "/seasons" %>
 
 <h3><code>GET /api/v1/seasons/:year/:term</code></h3>
 <p>
@@ -168,11 +171,13 @@
 <p class="muted">
   まだ行われていない試合は<code>team0_score</code>/<code>team1_score</code>が<code>null</code>。
 </p>
+<%= render "sandbox", path: "/seasons/2025/spring" %>
 
 <h3><code>GET /api/v1/seasons/:year/:term/standings</code></h3>
 <p>そのシーズンの順位表。</p>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/seasons/2025/spring/standings\"" %>
 <%= render "code_block", label: "レスポンス", content: standings_json %>
+<%= render "sandbox", path: "/seasons/2025/spring/standings" %>
 
 <h2>試合</h2>
 
@@ -189,6 +194,7 @@
 </table>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/games?university[]=keio&term[]=spring&start_year=2020\"" %>
 <%= render "code_block", label: "レスポンス（games先頭2件を抜粋、この条件では実際には83件）", content: games_index_json %>
+<%= render "sandbox", path: "/games?university[]=keio&term[]=spring&start_year=2020" %>
 
 <h3><code>GET /api/v1/games/:id</code></h3>
 <p>1試合の情報＋詳細なスコアボード（データが無い場合は<code>scoreboard</code>が<code>null</code>）。</p>
@@ -197,6 +203,7 @@
 <p class="muted">
   <code>innings</code>/<code>hits</code>/<code>errors</code>の値は元データ（Scorebook）の都合で数値ではなく文字列です。
 </p>
+<%= render "sandbox", path: "/games/1850" %>
 
 <h2>対戦カード</h2>
 
@@ -211,8 +218,10 @@
 </table>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/matchups/keio/waseda?since_years=10\"" %>
 <%= render "code_block", label: "レスポンス", content: matchup_show_json %>
+<%= render "sandbox", path: "/matchups/keio/waseda?since_years=10" %>
 
 <h2>エラー</h2>
 <p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>
 <%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities/nonexistent\"" %>
 <%= render "code_block", label: "レスポンス", content: '{ "error": "not found" }' %>
+<%= render "sandbox", path: "/universities/nonexistent" %>
