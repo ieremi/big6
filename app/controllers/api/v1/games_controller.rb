@@ -43,7 +43,7 @@ module Api
 
         scoreboard = GameScoreboard.new(game)
 
-        render json: game_json(game).merge(scoreboard: scoreboard_json(scoreboard))
+        render json: game_json(game, include_id: false).merge(scoreboard: scoreboard_json(scoreboard))
       end
 
       private
