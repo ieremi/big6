@@ -1,0 +1,218 @@
+<%
+  content_for :title, "Web API - Big6"
+  content_for :description, "東京六大学野球データベースの公開Web API（読み取り専用・JSON・認証不要）のドキュメント"
+
+  universities_json = <<~JSON.strip
+    [
+      { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+      { "slug": "meiji", "name": "明治大学", "short_name": "明大", "initial": "M", "color": "#5b2d82", "position": 2 },
+      { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 },
+      { "slug": "hosei", "name": "法政大学", "short_name": "法大", "initial": "H", "color": "#f2861d", "position": 4 },
+      { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
+      { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 }
+    ]
+  JSON
+
+  university_show_json = <<~JSON.strip
+    {
+      "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1,
+      "record": {
+        "wins": 1111, "losses": 816, "draws": 102, "percentage": 0.5765438505448884,
+        "longest_streak": { "length": 13, "first_game_id": 5150, "last_game_id": 5187 },
+        "current_streak": { "length": 3, "first_game_id": 1962, "last_game_id": 6046 }
+      }
+    }
+  JSON
+
+  seasons_index_json = <<~JSON.strip
+    [
+      { "year": 2026, "term": "spring", "title": "2026年春季" },
+      { "year": 2026, "term": "autumn", "title": "2026年秋季" },
+      { "year": 2025, "term": "spring", "title": "2025年春季" }
+    ]
+  JSON
+
+  season_show_json = <<~JSON.strip
+    {
+      "year": 2025, "term": "spring", "title": "2025年春季",
+      "games": [
+        {
+          "id": 1849,
+          "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
+          "played_on": "2025-04-12", "game_number": 1,
+          "team0": { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 },
+          "team1": { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 },
+          "team0_score": 1, "team1_score": 4, "attendance": 10000
+        },
+        {
+          "id": 1850,
+          "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
+          "played_on": "2025-04-12", "game_number": 1,
+          "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+          "team1": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
+          "team0_score": 2, "team1_score": 1, "attendance": 12000
+        }
+      ]
+    }
+  JSON
+
+  standings_json = <<~JSON.strip
+    [
+      { "university": { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 }, "wins": 10, "losses": 4, "draws": 0, "points": 4, "games": 14, "percentage": 0.7142857142857143, "attendance_total": 160000, "average_attendance": 11428 },
+      { "university": { "slug": "meiji", "name": "明治大学", "short_name": "明大", "initial": "M", "color": "#5b2d82", "position": 2 }, "wins": 9, "losses": 5, "draws": 1, "points": 4, "games": 15, "percentage": 0.6428571428571429, "attendance_total": 131500, "average_attendance": 8766 },
+      { "university": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 }, "wins": 8, "losses": 5, "draws": 0, "points": 3, "games": 13, "percentage": 0.6153846153846154, "attendance_total": 98000, "average_attendance": 7538 },
+      { "university": { "slug": "hosei", "name": "法政大学", "short_name": "法大", "initial": "H", "color": "#f2861d", "position": 4 }, "wins": 6, "losses": 7, "draws": 1, "points": 2, "games": 14, "percentage": 0.46153846153846156, "attendance_total": 105500, "average_attendance": 7535 },
+      { "university": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 }, "wins": 5, "losses": 7, "draws": 2, "points": 2, "games": 14, "percentage": 0.4166666666666667, "attendance_total": 141500, "average_attendance": 10107 },
+      { "university": { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 }, "wins": 0, "losses": 10, "draws": 0, "points": 0, "games": 10, "percentage": 0.0, "attendance_total": 79500, "average_attendance": 7950 }
+    ]
+  JSON
+
+  games_index_json = <<~JSON.strip
+    {
+      "total": 83, "page": 1, "per_page": 100,
+      "games": [
+        {
+          "id": 1512,
+          "season": { "year": 2020, "term": "spring", "title": "2020年春季" },
+          "played_on": "2020-08-10", "game_number": 1,
+          "team0": { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 },
+          "team1": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+          "team0_score": 4, "team1_score": 5, "attendance": 2800
+        },
+        {
+          "id": 1516,
+          "season": { "year": 2020, "term": "spring", "title": "2020年春季" },
+          "played_on": "2020-08-12", "game_number": 1,
+          "team0": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
+          "team1": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+          "team0_score": 4, "team1_score": 6, "attendance": 2000
+        }
+      ]
+    }
+  JSON
+
+  game_show_json = <<~JSON.strip
+    {
+      "id": 1850,
+      "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
+      "played_on": "2025-04-12", "game_number": 1,
+      "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+      "team1": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
+      "team0_score": 2, "team1_score": 1, "attendance": 12000,
+      "scoreboard": {
+        "stadium": "神宮球場",
+        "innings": {
+          "1": { "top": "0", "bottom": "0" }, "2": { "top": "0", "bottom": "0" }, "3": { "top": "0", "bottom": "0" },
+          "4": { "top": "0", "bottom": "1" }, "5": { "top": "0", "bottom": "0" }, "6": { "top": "1", "bottom": "0" },
+          "7": { "top": "0", "bottom": "0" }, "8": { "top": "0", "bottom": "0" }, "9": { "top": "0", "bottom": "0" },
+          "10": { "top": "1", "bottom": "0" }
+        },
+        "hits": { "top": "9", "bottom": "10" },
+        "errors": { "top": "1", "bottom": "1" },
+        "started_at": "13時44分", "finished_at": "16時26分", "duration_minutes": 162,
+        "umpires": ["御手洗", "松永", "前田", "山口"]
+      }
+    }
+  JSON
+
+  matchup_show_json = <<~JSON.strip
+    {
+      "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
+      "team1": { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 },
+      "wins": { "keio": 23, "waseda": 24 },
+      "draws": 1,
+      "percentage": { "keio": 0.48936170212765956, "waseda": 0.5106382978723404 },
+      "attendance": { "average": 19135, "total": 918500 },
+      "duration_minutes": { "average": 151, "total": 3635, "max": 173, "min": 117, "stddev": 17 }
+    }
+  JSON
+%>
+
+<h1>Web API</h1>
+
+<p class="muted">
+  すべて読み取り専用（GET）・JSON・認証不要です。ベースURLは <code>/api/v1</code>。
+</p>
+
+<p class="muted">
+  大学の<code>slug</code>: <code>waseda</code>（早大）・<code>keio</code>（慶大）・<code>meiji</code>（明大）・
+  <code>hosei</code>（法大）・<code>tokyo</code>（東大）・<code>rikkio</code>（立大）
+</p>
+
+<h2>大学</h2>
+
+<h3><code>GET /api/v1/universities</code></h3>
+<p>全大学の一覧。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities\"" %>
+<%= render "code_block", label: "レスポンス", content: universities_json %>
+
+<h3><code>GET /api/v1/universities/:slug</code></h3>
+<p>1大学の情報＋通算成績（全対戦相手を合算）。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities/keio\"" %>
+<%= render "code_block", label: "レスポンス", content: university_show_json %>
+<p class="muted">連勝が無い場合、<code>longest_streak</code>/<code>current_streak</code>は<code>null</code>。</p>
+
+<h2>シーズン</h2>
+
+<h3><code>GET /api/v1/seasons</code></h3>
+<p>全シーズンの一覧（新しい順、実際には204件）。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/seasons\"" %>
+<%= render "code_block", label: "レスポンス（先頭3件を抜粋）", content: seasons_index_json %>
+
+<h3><code>GET /api/v1/seasons/:year/:term</code></h3>
+<p>
+  1シーズンの情報＋その全試合。<code>term</code>は<code>spring</code>または<code>autumn</code>。
+</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/seasons/2025/spring\"" %>
+<%= render "code_block", label: "レスポンス（games先頭2件を抜粋、実際には40件）", content: season_show_json %>
+<p class="muted">
+  まだ行われていない試合は<code>team0_score</code>/<code>team1_score</code>が<code>null</code>。
+</p>
+
+<h3><code>GET /api/v1/seasons/:year/:term/standings</code></h3>
+<p>そのシーズンの順位表。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/seasons/2025/spring/standings\"" %>
+<%= render "code_block", label: "レスポンス", content: standings_json %>
+
+<h2>試合</h2>
+
+<h3><code>GET /api/v1/games</code></h3>
+<p>試合の検索・一覧（ページネーションあり、1ページ100件）。</p>
+<table>
+  <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+  <tbody>
+    <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。指定した大学が絡む試合のみ</td></tr>
+    <tr><td><code>term</code></td><td><code>spring</code>/<code>autumn</code>（複数指定可）</td></tr>
+    <tr><td><code>start_year</code> / <code>end_year</code></td><td>試合日の年の範囲</td></tr>
+    <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
+  </tbody>
+</table>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/games?university[]=keio&term[]=spring&start_year=2020\"" %>
+<%= render "code_block", label: "レスポンス（games先頭2件を抜粋、この条件では実際には83件）", content: games_index_json %>
+
+<h3><code>GET /api/v1/games/:id</code></h3>
+<p>1試合の情報＋詳細なスコアボード（データが無い場合は<code>scoreboard</code>が<code>null</code>）。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/games/1850\"" %>
+<%= render "code_block", label: "レスポンス", content: game_show_json %>
+<p class="muted">
+  <code>innings</code>/<code>hits</code>/<code>errors</code>の値は元データ（Scorebook）の都合で数値ではなく文字列です。
+</p>
+
+<h2>対戦カード</h2>
+
+<h3><code>GET /api/v1/matchups/:team0_slug/:team1_slug</code></h3>
+<p>2大学の通算対戦成績。</p>
+<table>
+  <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+  <tbody>
+    <tr><td><code>since_years</code></td><td>直近N年に絞り込み</td></tr>
+    <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズンに絞り込み</td></tr>
+  </tbody>
+</table>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/matchups/keio/waseda?since_years=10\"" %>
+<%= render "code_block", label: "レスポンス", content: matchup_show_json %>
+
+<h2>エラー</h2>
+<p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>
+<%= render "code_block", label: "リクエスト", content: "curl \"#{request.base_url}/api/v1/universities/nonexistent\"" %>
+<%= render "code_block", label: "レスポンス", content: '{ "error": "not found" }' %>

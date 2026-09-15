@@ -524,6 +524,47 @@ th.sortable.sorted-desc::after {
   color: var(--accent);
 }
 
+code {
+  background: var(--row-alt);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.doc-code-block {
+  margin: 0.5rem 0 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.doc-code-label {
+  display: block;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background: var(--row-alt);
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-code {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.doc-code code {
+  background: none;
+  padding: 0;
+}
+
 .ics-preview {
   margin: 0.5rem 0 0;
   padding: 0.75rem 1rem;
