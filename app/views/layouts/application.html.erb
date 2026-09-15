@@ -44,19 +44,34 @@
   </head>
 
   <body data-controller="shortcuts" data-action="keydown@window->shortcuts#handleKeydown keydown.esc@window->shortcuts#closeHelp">
-    <header class="site-header">
-      <div class="container">
-        <%= link_to root_path, class: "brand", data: { shortcut: "0", shortcut_label: "トップ" } do %>
-          ⚾ Big6 <kbd>0</kbd>
+    <div data-controller="nav-drawer">
+      <header class="site-header">
+        <div class="container header-bar">
+          <button type="button" class="hamburger-btn" data-nav-drawer-target="button" data-action="nav-drawer#toggle" data-shortcut="-" data-shortcut-label="メニューを開閉" aria-label="メニューを開く" aria-expanded="false">
+            <span class="hamburger-icon"><span></span><span></span><span></span></span>
+            <kbd>-</kbd>
+          </button>
+          <%= link_to root_path, class: "brand", data: { shortcut: "0", shortcut_label: "トップ" } do %>
+            ⚾ Big6 <kbd>0</kbd>
+          <% end %>
+        </div>
+      </header>
+
+      <div class="nav-backdrop" data-nav-drawer-target="backdrop" data-action="click->nav-drawer#close"></div>
+      <nav class="nav-drawer" data-nav-drawer-target="drawer" aria-label="ナビゲーション">
+        <div class="nav-drawer-header">
+          <span class="nav-drawer-title">メニュー</span>
+          <button type="button" class="nav-drawer-close" data-action="nav-drawer#close" aria-label="閉じる">✕</button>
+        </div>
+        <% if (season = latest_season) %>
+          <%= link_to season_path(season.year, season.term), data: { shortcut: "1", shortcut_label: "最新シーズン" } do %>最新シーズン <kbd>1</kbd><% end %>
         <% end %>
-        <nav>
-          <%= link_to seasons_path, data: { shortcut: "1", shortcut_label: "シーズン" } do %>シーズン <kbd>1</kbd><% end %>
-          <%= link_to matchups_path, data: { shortcut: "2", shortcut_label: "対戦カード" } do %>対戦カード <kbd>2</kbd><% end %>
-          <%= link_to games_path, data: { shortcut: "3", shortcut_label: "試合" } do %>試合 <kbd>3</kbd><% end %>
-          <%= link_to universities_path, data: { shortcut: "4", shortcut_label: "大学" } do %>大学 <kbd>4</kbd><% end %>
-        </nav>
-      </div>
-    </header>
+        <%= link_to seasons_path, data: { shortcut: "2", shortcut_label: "すべてのシーズン" } do %>すべてのシーズン <kbd>2</kbd><% end %>
+        <%= link_to matchups_path, data: { shortcut: "3", shortcut_label: "対戦カード" } do %>対戦カード <kbd>3</kbd><% end %>
+        <%= link_to games_path, data: { shortcut: "4", shortcut_label: "試合" } do %>試合 <kbd>4</kbd><% end %>
+        <%= link_to universities_path, data: { shortcut: "5", shortcut_label: "大学" } do %>大学 <kbd>5</kbd><% end %>
+      </nav>
+    </div>
 
     <main class="container">
       <%= yield %>

@@ -1,4 +1,14 @@
 <% content_for :image_url, site_og_image_url %>
 
 <h1>Big6</h1>
-<p class="muted">東京六大学野球の記録データベース。上のナビゲーションから見たいページへ。</p>
+<p class="muted">東京六大学野球の記録データベース。左上のメニュー（<kbd>-</kbd>キー）、または下のリンクから見たいページへ。</p>
+
+<nav class="home-links">
+  <% if (season = latest_season) %>
+    <%= link_to season_path(season.year, season.term), class: "home-link" do %>最新シーズン <kbd>1</kbd><% end %>
+  <% end %>
+  <%= link_to seasons_path, class: "home-link" do %>すべてのシーズン <kbd>2</kbd><% end %>
+  <%= link_to matchups_path, class: "home-link" do %>対戦カード <kbd>3</kbd><% end %>
+  <%= link_to games_path, class: "home-link" do %>試合 <kbd>4</kbd><% end %>
+  <%= link_to universities_path, class: "home-link" do %>大学 <kbd>5</kbd><% end %>
+</nav>

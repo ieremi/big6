@@ -1,4 +1,17 @@
 module ApplicationHelper
+  # The season containing the most recently played game — used for the
+  # nav's "最新シーズン" link. Cached (rarely changes) so this doesn't add a
+  # query to every single page render.
+  def latest_season
+    return @latest_season if defined?(@latest_season)
+
+    season_id = Rails.cache.fetch("latest_season_id", expires_in: 1.hour) do
+      Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
+    end
+
+    @latest_season = season_id && Season.find_by(id: season_id)
+  end
+
   # "10:00" or "10時00分" -> "10:00 am"; "14:30" or "14時30分" -> "2:30 pm";
   # "12:06" -> "0:06 pm" (noon hour is 0, not 12, in this format).
   def clock_time_12h(text)
