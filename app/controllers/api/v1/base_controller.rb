@@ -40,6 +40,18 @@ module Api
         json.delete(:id) unless include_id
         json
       end
+
+      # Identifies a game the same way GET /api/v1/games/:year/:term/:team0/:team1/:round does,
+      # instead of exposing our internal database id.
+      def game_ref_json(game)
+        {
+          year: game.season.year,
+          term: game.season.term,
+          team0: game.team0.slug,
+          team1: game.team1.slug,
+          round: game.game_number
+        }
+      end
     end
   end
 end

@@ -27,7 +27,7 @@ module Api
       def streak_json(streak)
         return nil if streak.nil?
 
-        { length: streak.length, first_game_id: streak.first_game.id, last_game_id: streak.last_game.id }
+        { length: streak.length, first_game: game_ref_json(streak.first_game), last_game: game_ref_json(streak.last_game) }
       end
     end
   end
