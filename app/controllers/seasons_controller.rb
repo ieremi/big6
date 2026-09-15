@@ -33,9 +33,14 @@ class SeasonsController < ApplicationController
     @games = @season.games.includes(:team0, :team1, :season).order(:played_on, :game_number)
 
     if request.format.symbol == :ics
-      calendar = IcsCalendar.new(name: @season.title)
-      @games.each { |game| IcsGameEvent.add_to(calendar, game) }
-      send_data calendar.to_ics, type: "text/calendar", filename: "#{@season.year}-#{@season.term}.ics", disposition: "attachment"
+      cache_key = "season_ics/v1/#{@season.id}/#{@games.maximum(:updated_at)&.to_i}"
+      ics = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+        calendar = IcsCalendar.new(name: @season.title)
+        @games.each { |game| IcsGameEvent.add_to(calendar, game) }
+        calendar.to_ics
+      end
+
+      send_data ics, type: "text/calendar", filename: "#{@season.year}-#{@season.term}.ics", disposition: "attachment"
       return
     end
 

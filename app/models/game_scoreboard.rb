@@ -1,7 +1,7 @@
 class GameScoreboard
   def initialize(game)
     @game = game
-    @detail = game.season.scorebook_games&.find { |g| g["id"] == game.scorebook_game_id } || {}
+    @detail = game.season.scorebook_game(game.scorebook_game_id) || {}
   end
 
   def present?

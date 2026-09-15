@@ -19,10 +19,21 @@ class GamesController < ApplicationController
     @end_year = params[:end_year].presence
 
     if request.format.symbol == :ics
-      scope = filtered_scope
-      calendar = IcsCalendar.new(name: @searched ? "Big6 Games" : "Big6 All Games")
-      apply_game_sort(scope).each { |game| IcsGameEvent.add_to(calendar, game) }
-      send_data calendar.to_ics, type: "text/calendar", filename: "big6-games.ics", disposition: "attachment"
+      # Cheap to build per request (a handful of ids), but the ICS body
+      # itself can cover thousands of games — worth caching since this
+      # exact URL is what a Google Calendar subscription re-fetches
+      # periodically, unattended, for as long as anyone stays subscribed.
+      filter_key = request.query_parameters.except("page", "format").to_query
+      cache_key = "games_ics/v1/#{filter_key}/#{Game.maximum(:updated_at)&.to_i}"
+
+      ics = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+        scope = filtered_scope
+        calendar = IcsCalendar.new(name: @searched ? "Big6 Games" : "Big6 All Games")
+        apply_game_sort(scope).each { |game| IcsGameEvent.add_to(calendar, game) }
+        calendar.to_ics
+      end
+
+      send_data ics, type: "text/calendar", filename: "big6-games.ics", disposition: "attachment"
       return
     end
 

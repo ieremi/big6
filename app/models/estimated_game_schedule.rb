@@ -46,7 +46,7 @@ class EstimatedGameSchedule
   private
 
   def detail_for(game)
-    game.season.scorebook_games&.find { |g| g["id"] == game.scorebook_game_id } || {}
+    game.season.scorebook_game(game.scorebook_game_id) || {}
   end
 
   def sibling_game(game_order:)
