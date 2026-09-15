@@ -63,12 +63,13 @@
 </table>
 <%= render "sandbox", path: "/games?university[]=rikkio&university[]=tokyo&term[]=autumn&start_year=1997" %>
 
-<h3><code>/api/v1/games/:id</code></h3>
+<h3><code>/api/v1/games/:year/:term/:team0/:team1/:round</code></h3>
 <p>
   1試合の情報＋詳細なスコアボード（データが無い場合は<code>scoreboard</code>が<code>null</code>）。
+  <code>team0</code>/<code>team1</code>は順不同（どちらが先でもマッチします）。<code>round</code>は第何回戦か。
   <code>innings</code>/<code>hits</code>/<code>errors</code>の値は元データ（Scorebook）の都合で数値ではなく文字列です。
 </p>
-<%= render "sandbox", path: "/games/5862" %>
+<%= render "sandbox", path: "/games/1997/autumn/rikkio/tokyo/1" %>
 
 <h2>対戦カード</h2>
 

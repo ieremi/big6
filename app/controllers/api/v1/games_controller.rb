@@ -28,7 +28,19 @@ module Api
       end
 
       def show
-        game = Game.includes(:team0, :team1, :season).find(params[:id])
+        season = Season.find_by!(year: params[:year], term: params[:term])
+        team0 = University.find_by!(slug: params[:team0])
+        team1 = University.find_by!(slug: params[:team1])
+
+        game = Game.includes(:team0, :team1, :season)
+          .where(season: season, game_number: params[:round].to_i)
+          .where(
+            "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
+            team0_id: team0.id, team1_id: team1.id
+          )
+          .first
+        raise ActiveRecord::RecordNotFound unless game
+
         scoreboard = GameScoreboard.new(game)
 
         render json: game_json(game).merge(scoreboard: scoreboard_json(scoreboard))

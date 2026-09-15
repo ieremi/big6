@@ -2,7 +2,9 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :universities, only: [ :index, :show ], param: :slug
-      resources :games, only: [ :index, :show ]
+      resources :games, only: [ :index ]
+      get "games/:year/:term/:team0/:team1/:round", to: "games#show",
+        constraints: { year: /\d{4}/, term: /spring|autumn/, round: /\d+/ }
       get "seasons", to: "seasons#index"
       get "seasons/:year/:term", to: "seasons#show", constraints: { year: /\d{4}/, term: /spring|autumn/ }
       get "seasons/:year/:term/standings", to: "seasons#standings", constraints: { year: /\d{4}/, term: /spring|autumn/ }
