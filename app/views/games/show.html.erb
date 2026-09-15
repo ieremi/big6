@@ -128,6 +128,13 @@
   </p>
 <% end %>
 <p class="muted">
+  <% if @game.video_url.present? %>
+    <%= link_to "動画を見る →", @game.video_url, target: "_blank", rel: "noopener noreferrer" %>
+  <% else %>
+    動画はありません。
+  <% end %>
+</p>
+<p class="muted">
   <%= link_to "カレンダーに追加 (.ics)", game_ics_path(@game) %>
   ・
   <%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(game_ics_url(@game)), target: "_blank", rel: "noopener noreferrer" %>

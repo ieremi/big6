@@ -17,6 +17,11 @@
 # soon as the league adds it — that only happens after the first two games
 # split 1-1, so there's nothing to see until then, and it wouldn't be caught
 # by looking at already-known Game rows alone.
+#
+# Also scrapes sportsbull.jp's BIG6TV schedule (SportsbullVideoScraper) for
+# full match replay links for those same seasons — a game's replay usually
+# isn't posted until sometime after it's played, so this needs to keep
+# checking recent seasons rather than running once per game.
 class SyncRecentGamesJob < ApplicationJob
   queue_as :default
 
@@ -26,7 +31,9 @@ class SyncRecentGamesJob < ApplicationJob
     games = Game.where(played_on: (Date.current - LOOKBACK_DAYS)..Date.current).includes(:team0, :team1, :season)
     return if games.none?
 
-    games.map(&:season).uniq.each { |season| LeagueOfficialScheduleScraper.call(season) }
+    seasons = games.map(&:season).uniq
+    seasons.each { |season| LeagueOfficialScheduleScraper.call(season) }
+    seasons.each { |season| SportsbullVideoScraper.call(season) }
 
     incomplete_games = games.reject { |game| complete?(game) }
     return if incomplete_games.empty?
