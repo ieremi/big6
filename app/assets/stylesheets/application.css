@@ -596,6 +596,136 @@ th.sortable.sorted-desc::after {
   background: var(--accent-hover);
 }
 
+.attendance-trend-chart {
+  margin: 0.5rem 0 1.5rem;
+}
+
+.trend-chart-inner {
+  position: relative;
+}
+
+.attendance-trend-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Invisible hit-targets positioned over each SVG point (percentage-based,
+   so they track the responsive/scaled chart) — a plain HTML hover/focus
+   tooltip is more reliable across browsers than the SVG-native <title>. */
+.trend-hover-point {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  cursor: default;
+}
+
+.trend-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  z-index: 10;
+}
+
+.trend-tooltip-current {
+  background: var(--accent);
+  color: #fff;
+}
+
+.trend-tooltip-previous {
+  background: var(--text-muted);
+  color: #fff;
+}
+
+.trend-hover-point:hover .trend-tooltip,
+.trend-hover-point:focus .trend-tooltip {
+  opacity: 1;
+}
+
+.trend-gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.trend-axis-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.trend-axis-unit {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.trend-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.trend-line-current {
+  stroke: var(--accent);
+}
+
+.trend-line-previous {
+  stroke: var(--text-muted);
+  stroke-dasharray: 5 4;
+}
+
+.trend-point {
+  cursor: default;
+}
+
+.trend-point-current {
+  fill: var(--accent);
+}
+
+.trend-point-previous {
+  fill: var(--text-muted);
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.trend-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.trend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.trend-swatch-current {
+  background: var(--accent);
+}
+
+.trend-swatch-previous {
+  background: var(--text-muted);
+}
+
 .scoreboard-table {
   width: 100%;
   border-collapse: collapse;

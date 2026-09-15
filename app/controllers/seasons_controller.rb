@@ -46,6 +46,7 @@ class SeasonsController < ApplicationController
 
     @weeks = SeasonWeeks.new(@games).weeks
     @tags = SeasonTags.new(@season).tags
+    @attendance_trend = SeasonAttendanceTrend.new(@season)
   end
 
   def standings

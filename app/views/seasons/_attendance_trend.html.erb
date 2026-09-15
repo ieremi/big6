@@ -1,0 +1,79 @@
+<%
+  max_week = [ trend.current_points.map(&:week).max || 0, trend.previous_points.map(&:week).max || 0 ].max
+  max_cumulative = [ trend.current_points.map(&:cumulative).max || 0, trend.previous_points.map(&:cumulative).max || 0 ].max
+
+  chart_w = 640
+  chart_h = 240
+  pad_l = 55
+  pad_r = 10
+  pad_t = 20
+  pad_b = 26
+  plot_w = chart_w - pad_l - pad_r
+  plot_h = chart_h - pad_t - pad_b
+  week_span = [ max_week, 1 ].max
+
+  # Points start from a virtual "week 0" anchor (see SeasonAttendanceTrend),
+  # so the scale runs 0..max_week rather than 1..max_week.
+  x_for = ->(week) { pad_l + week.to_f / week_span * plot_w }
+  y_for = ->(cum) { max_cumulative.zero? ? pad_t + plot_h : pad_t + plot_h - (cum.to_f / max_cumulative * plot_h) }
+
+  current_poly = trend.current_points.map { |p| "#{x_for.call(p.week)},#{y_for.call(p.cumulative)}" }.join(" ")
+  previous_poly = trend.previous_points.map { |p| "#{x_for.call(p.week)},#{y_for.call(p.cumulative)}" }.join(" ")
+%>
+
+<p class="muted">週ごと累積観衆数（前年同期との比較）</p>
+<div class="attendance-trend-chart">
+  <div class="trend-chart-inner">
+  <svg viewBox="0 0 <%= chart_w %> <%= chart_h %>" preserveAspectRatio="xMidYMid meet" role="img" aria-label="週ごと累積観衆数の推移">
+    <text x="<%= pad_l %>" y="12" text-anchor="start" class="trend-axis-unit">[人]</text>
+
+    <% [ 0, 0.5, 1 ].each do |frac| %>
+      <% y = pad_t + plot_h - frac * plot_h %>
+      <line x1="<%= pad_l %>" y1="<%= y %>" x2="<%= chart_w - pad_r %>" y2="<%= y %>" class="trend-gridline" />
+      <text x="<%= pad_l - 8 %>" y="<%= y + 4 %>" text-anchor="end" class="trend-axis-label"><%= number_with_delimiter((max_cumulative * frac).round) %></text>
+    <% end %>
+
+    <% (1..max_week).each do |week| %>
+      <text x="<%= x_for.call(week) %>" y="<%= chart_h - 8 %>" text-anchor="middle" class="trend-axis-label">第<%= week %>週</text>
+    <% end %>
+
+    <% if trend.previous_points.any? %>
+      <polyline points="<%= previous_poly %>" class="trend-line trend-line-previous" />
+    <% end %>
+    <% if trend.current_points.any? %>
+      <polyline points="<%= current_poly %>" class="trend-line trend-line-current" />
+    <% end %>
+
+    <% trend.previous_points.each do |p| %>
+      <% next if p.week.zero? %>
+      <circle cx="<%= x_for.call(p.week) %>" cy="<%= y_for.call(p.cumulative) %>" r="4" class="trend-point trend-point-previous" />
+    <% end %>
+    <% trend.current_points.each do |p| %>
+      <% next if p.week.zero? %>
+      <circle cx="<%= x_for.call(p.week) %>" cy="<%= y_for.call(p.cumulative) %>" r="4" class="trend-point trend-point-current" />
+    <% end %>
+  </svg>
+
+  <% [ [ trend.previous_points, trend.previous_label, "trend-tooltip trend-tooltip-previous" ],
+       [ trend.current_points, trend.current_label, "trend-tooltip trend-tooltip-current" ] ].each do |points, label, tooltip_class| %>
+    <% points.each do |p| %>
+      <% next if p.week.zero? %>
+      <div class="trend-hover-point"
+           tabindex="0"
+           style="left: <%= (x_for.call(p.week) / chart_w * 100).round(2) %>%; top: <%= (y_for.call(p.cumulative) / chart_h * 100).round(2) %>%;">
+        <span class="<%= tooltip_class %>">
+          <%= label %>第<%= p.week %>週<br>
+          累積 <%= number_with_delimiter(p.cumulative) %>人
+        </span>
+      </div>
+    <% end %>
+  <% end %>
+  </div>
+
+  <div class="trend-legend">
+    <span class="trend-legend-item"><span class="trend-swatch trend-swatch-current"></span><%= trend.current_label %></span>
+    <% if trend.previous_label %>
+      <span class="trend-legend-item"><span class="trend-swatch trend-swatch-previous"></span><%= trend.previous_label %></span>
+    <% end %>
+  </div>
+</div>
