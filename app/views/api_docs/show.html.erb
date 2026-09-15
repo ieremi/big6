@@ -29,7 +29,7 @@
 
 <h3><code>/api/v1/universities/:slug</code></h3>
 <p>1大学の情報＋通算成績（全対戦相手を合算）。連勝が無い場合、<code>longest_streak</code>/<code>current_streak</code>は<code>null</code>。</p>
-<%= render "sandbox", path: "/universities/keio" %>
+<%= render "sandbox", path: "/universities/rikkio" %>
 
 <h2>シーズン</h2>
 
@@ -42,11 +42,11 @@
   1シーズンの情報＋その全試合。<code>term</code>は<code>spring</code>または<code>autumn</code>。
   まだ行われていない試合は<code>score</code>が<code>null</code>。
 </p>
-<%= render "sandbox", path: "/seasons/2025/spring" %>
+<%= render "sandbox", path: "/seasons/1997/autumn" %>
 
 <h3><code>/api/v1/seasons/:year/:term/standings</code></h3>
 <p>そのシーズンの順位表。</p>
-<%= render "sandbox", path: "/seasons/2025/spring/standings" %>
+<%= render "sandbox", path: "/seasons/1997/autumn/standings" %>
 
 <h2>試合</h2>
 
@@ -61,14 +61,14 @@
     <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
   </tbody>
 </table>
-<%= render "sandbox", path: "/games?university[]=keio&term[]=spring&start_year=2020" %>
+<%= render "sandbox", path: "/games?university[]=rikkio&university[]=tokyo&term[]=autumn&start_year=1997" %>
 
 <h3><code>/api/v1/games/:id</code></h3>
 <p>
   1試合の情報＋詳細なスコアボード（データが無い場合は<code>scoreboard</code>が<code>null</code>）。
   <code>innings</code>/<code>hits</code>/<code>errors</code>の値は元データ（Scorebook）の都合で数値ではなく文字列です。
 </p>
-<%= render "sandbox", path: "/games/1850" %>
+<%= render "sandbox", path: "/games/5862" %>
 
 <h2>対戦カード</h2>
 
@@ -81,7 +81,7 @@
     <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズンに絞り込み</td></tr>
   </tbody>
 </table>
-<%= render "sandbox", path: "/matchups/keio/waseda?since_years=10" %>
+<%= render "sandbox", path: "/matchups/rikkio/tokyo?year=1997&term=autumn" %>
 
 <h2>エラー</h2>
 <p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>
