@@ -15,6 +15,8 @@
   --ics-prop: #2563eb;
   --ics-param: #475569;
   --ics-continuation: #64748b;
+  --json-key: #2563eb;
+  --json-literal: #1d4ed8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +33,8 @@
     --ics-prop: #93c5fd;
     --ics-param: #cbd5e1;
     --ics-continuation: #94a3b8;
+    --json-key: #93c5fd;
+    --json-literal: #60a5fa;
   }
 }
 
@@ -648,6 +652,24 @@ code {
 
 .ics-continuation {
   color: var(--ics-continuation);
+}
+
+.json-key {
+  color: var(--json-key);
+  font-weight: 600;
+}
+
+.json-string {
+  color: var(--text);
+}
+
+.json-number {
+  color: var(--text-muted);
+}
+
+.json-literal {
+  color: var(--json-literal);
+  font-weight: 600;
 }
 
 .scoreboard {
