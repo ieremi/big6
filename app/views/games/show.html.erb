@@ -22,6 +22,9 @@
   <%= @game.played_on %>　<%= @game.game_number %>回戦
   <% if detail.stadium.present? %>　<%= detail.stadium %><% end %>
   <% if detail.attendance.present? %>　観衆<%= detail.attendance %>人<% end %>
+  <% if @game.weather_summary.present? %>　<%= @game.weather_summary %><% end %>
+  <% if @game.temp_high.present? %>　最高<%= @game.temp_high %>℃<% end %>
+  <% if @game.temp_low.present? %>　最低<%= @game.temp_low %>℃<% end %>
   <% if in_progress %>　<span class="season-tag"><%= is_future ? "試合前" : "試合中" %></span><% end %>
 </p>
 

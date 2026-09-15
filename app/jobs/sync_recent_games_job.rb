@@ -22,6 +22,10 @@
 # full match replay links for those same seasons — a game's replay usually
 # isn't posted until sometime after it's played, so this needs to keep
 # checking recent seasons rather than running once per game.
+#
+# And scrapes JMA's historical weather data (JmaWeatherScraper) for the
+# (year, month) of each recent game — JMA usually has a day's data up
+# within a day or so, not necessarily the same hour it's played.
 class SyncRecentGamesJob < ApplicationJob
   queue_as :default
 
@@ -34,6 +38,10 @@ class SyncRecentGamesJob < ApplicationJob
     seasons = games.map(&:season).uniq
     seasons.each { |season| LeagueOfficialScheduleScraper.call(season) }
     seasons.each { |season| SportsbullVideoScraper.call(season) }
+
+    games.map { |game| [ game.played_on.year, game.played_on.month ] }.uniq.each do |year, month|
+      JmaWeatherScraper.call(year, month)
+    end
 
     incomplete_games = games.reject { |game| complete?(game) }
     return if incomplete_games.empty?
