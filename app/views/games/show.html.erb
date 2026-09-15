@@ -127,13 +127,20 @@
     <%= link_to "Scorebookで見る →", url, target: "_blank", rel: "noopener noreferrer" %>
   </p>
 <% end %>
-<p class="muted">
-  <% if @game.video_url.present? %>
+<% youtube_url = @scoreboard.youtube_url %>
+<% if @game.video_url.blank? && youtube_url.blank? %>
+  <p class="muted">動画はありません。</p>
+<% end %>
+<% if @game.video_url.present? %>
+  <p class="muted">
     <%= link_to "動画を見る →", @game.video_url, target: "_blank", rel: "noopener noreferrer" %>
-  <% else %>
-    動画はありません。
-  <% end %>
-</p>
+  </p>
+<% end %>
+<% if youtube_url.present? %>
+  <p class="muted">
+    <%= link_to "YouTubeで見る →", youtube_url, target: "_blank", rel: "noopener noreferrer" %>
+  </p>
+<% end %>
 <p class="muted">
   <%= link_to "カレンダーに追加 (.ics)", game_ics_path(@game) %>
   ・

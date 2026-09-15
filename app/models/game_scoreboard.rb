@@ -69,4 +69,10 @@ class GameScoreboard
       @detail["umpire3b"], @detail["umpireLeft"], @detail["umpireRight"]
     ].compact
   end
+
+  def youtube_url
+    return nil if @detail["youtubeId"].blank?
+
+    "https://www.youtube.com/watch?v=#{@detail["youtubeId"]}"
+  end
 end
