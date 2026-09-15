@@ -1,17 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["path", "output"]
+  static targets = ["path", "output", "details"]
   static values = { prefix: String }
 
   async run() {
     const path = this.pathTarget.value.trim()
     if (!path) return
 
-    const url = this.prefixValue + path
-
-    this.outputTarget.hidden = false
+    this.detailsTarget.open = true
     this.outputTarget.textContent = "読み込み中…"
+
+    const url = this.prefixValue + path
 
     try {
       const response = await fetch(url, { headers: { Accept: "application/json" } })

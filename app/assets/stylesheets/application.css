@@ -532,25 +532,6 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-.doc-code-block {
-  margin: 0.5rem 0 1.25rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--surface);
-}
-
-.doc-code-label {
-  display: block;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  background: var(--row-alt);
-  border-bottom: 1px solid var(--border);
-}
-
 .doc-code {
   margin: 0;
   padding: 0.75rem 1rem;
@@ -566,7 +547,7 @@ code {
 }
 
 .api-sandbox {
-  margin: -0.75rem 0 1.25rem;
+  margin: 0.5rem 0 1.5rem;
 }
 
 .sandbox-row {
@@ -576,28 +557,59 @@ code {
   gap: 0.5rem;
 }
 
-.sandbox-prefix {
-  display: inline-flex;
+/* One bordered "window": the fixed GET/api/v1 part and the editable path
+   part sit side by side with different colors, so it's clear at a glance
+   which half you can actually type into. */
+.sandbox-bar {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sandbox-fixed {
+  display: flex;
   align-items: center;
   padding: 0.45rem 0.6rem;
-  border-radius: 6px;
   background: var(--row-alt);
   color: var(--text-muted);
   font-size: 0.8rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   white-space: nowrap;
+  border-right: 1px solid var(--border);
 }
 
-.sandbox-url {
+.sandbox-editable {
   flex: 1;
-  min-width: 120px;
+  min-width: 60px;
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: none;
   background: var(--surface);
-  color: var(--text);
+  color: var(--accent);
   font-size: 0.8rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.sandbox-editable:focus {
+  outline: none;
+  background: var(--bg);
+}
+
+.sandbox-output {
+  margin-top: 0.5rem;
+}
+
+.sandbox-output summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.sandbox-output summary:hover {
+  color: var(--accent);
 }
 
 .api-sandbox .doc-code {

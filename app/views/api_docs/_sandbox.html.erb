@@ -1,9 +1,14 @@
 <div class="api-sandbox" data-controller="api-sandbox" data-api-sandbox-prefix-value="<%= request.base_url %>/api/v1">
   <div class="sandbox-row">
-    <span class="sandbox-prefix"><%= request.base_url %>/api/v1</span>
-    <input type="text" class="sandbox-url" data-api-sandbox-target="path" value="<%= path %>"
-           data-action="keydown.enter->api-sandbox#run">
+    <div class="sandbox-bar">
+      <span class="sandbox-fixed">GET /api/v1</span>
+      <input type="text" class="sandbox-editable" data-api-sandbox-target="path" value="<%= path %>"
+             autocomplete="off" data-action="keydown.enter->api-sandbox#run">
+    </div>
     <button type="button" class="period-btn" data-action="api-sandbox#run">試す</button>
   </div>
-  <pre class="doc-code" data-api-sandbox-target="output" hidden></pre>
+  <details class="sandbox-output" data-api-sandbox-target="details">
+    <summary>レスポンス</summary>
+    <pre class="doc-code" data-api-sandbox-target="output"></pre>
+  </details>
 </div>
