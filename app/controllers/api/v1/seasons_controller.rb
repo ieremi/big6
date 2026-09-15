@@ -10,7 +10,7 @@ module Api
         season = Season.find_by!(year: params[:year], term: params[:term])
         games = season.games.includes(:team0, :team1, :season).order(:played_on, :game_number)
 
-        render json: season_json(season).merge(games: games.map { |g| game_json(g) })
+        render json: season_json(season).merge(games: games.map { |g| game_json(g, include_season: false) })
       end
 
       def standings

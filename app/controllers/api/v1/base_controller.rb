@@ -26,8 +26,8 @@ module Api
       # object) plus that team's own score — the same 6 universities repeat
       # across every game, so fetch /api/v1/universities once and look them
       # up by slug for name/color/etc.
-      def game_json(game)
-        {
+      def game_json(game, include_season: true)
+        json = {
           id: game.id,
           season: season_json(game.season),
           played_on: game.played_on,
@@ -36,6 +36,8 @@ module Api
           team1: { slug: game.team1.slug, score: game.team1_score },
           attendance: game.attendance
         }
+        json.delete(:season) unless include_season
+        json
       end
     end
   end
