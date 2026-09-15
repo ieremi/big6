@@ -22,16 +22,18 @@ module Api
         { year: season.year, term: season.term, title: season.title }
       end
 
+      # team0/team1 carry just a university slug (not a full embedded
+      # object) plus that team's own score — the same 6 universities repeat
+      # across every game, so fetch /api/v1/universities once and look them
+      # up by slug for name/color/etc.
       def game_json(game)
         {
           id: game.id,
           season: season_json(game.season),
           played_on: game.played_on,
           game_number: game.game_number,
-          team0: university_json(game.team0),
-          team1: university_json(game.team1),
-          team0_score: game.team0_score,
-          team1_score: game.team1_score,
+          team0: { slug: game.team0.slug, score: game.team0_score },
+          team1: { slug: game.team1.slug, score: game.team1_score },
           attendance: game.attendance
         }
       end

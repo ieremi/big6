@@ -40,17 +40,15 @@
           "id": 1849,
           "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
           "played_on": "2025-04-12", "game_number": 1,
-          "team0": { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 },
-          "team1": { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 },
-          "team0_score": 1, "team1_score": 4, "attendance": 10000
+          "team0": { "slug": "tokyo", "score": 1 }, "team1": { "slug": "waseda", "score": 4 },
+          "attendance": 10000
         },
         {
           "id": 1850,
           "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
           "played_on": "2025-04-12", "game_number": 1,
-          "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
-          "team1": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
-          "team0_score": 2, "team1_score": 1, "attendance": 12000
+          "team0": { "slug": "keio", "score": 2 }, "team1": { "slug": "rikkio", "score": 1 },
+          "attendance": 12000
         }
       ]
     }
@@ -75,17 +73,15 @@
           "id": 1512,
           "season": { "year": 2020, "term": "spring", "title": "2020年春季" },
           "played_on": "2020-08-10", "game_number": 1,
-          "team0": { "slug": "tokyo", "name": "東京大学", "short_name": "東大", "initial": "T", "color": "#5bb8e8", "position": 6 },
-          "team1": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
-          "team0_score": 4, "team1_score": 5, "attendance": 2800
+          "team0": { "slug": "tokyo", "score": 4 }, "team1": { "slug": "keio", "score": 5 },
+          "attendance": 2800
         },
         {
           "id": 1516,
           "season": { "year": 2020, "term": "spring", "title": "2020年春季" },
           "played_on": "2020-08-12", "game_number": 1,
-          "team0": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
-          "team1": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
-          "team0_score": 4, "team1_score": 6, "attendance": 2000
+          "team0": { "slug": "rikkio", "score": 4 }, "team1": { "slug": "keio", "score": 6 },
+          "attendance": 2000
         }
       ]
     }
@@ -96,9 +92,8 @@
       "id": 1850,
       "season": { "year": 2025, "term": "spring", "title": "2025年春季" },
       "played_on": "2025-04-12", "game_number": 1,
-      "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
-      "team1": { "slug": "rikkio", "name": "立教大学", "short_name": "立大", "initial": "R", "color": "#9b7fc7", "position": 5 },
-      "team0_score": 2, "team1_score": 1, "attendance": 12000,
+      "team0": { "slug": "keio", "score": 2 }, "team1": { "slug": "rikkio", "score": 1 },
+      "attendance": 12000,
       "scoreboard": {
         "stadium": "神宮球場",
         "innings": {
@@ -117,8 +112,7 @@
 
   matchup_show_json = <<~JSON.strip
     {
-      "team0": { "slug": "keio", "name": "慶應義塾大学", "short_name": "慶大", "initial": "K", "color": "#1e2a5e", "position": 1 },
-      "team1": { "slug": "waseda", "name": "早稲田大学", "short_name": "早大", "initial": "W", "color": "#7c1d3f", "position": 3 },
+      "team0": "keio", "team1": "waseda",
       "wins": { "keio": 23, "waseda": 24 },
       "draws": 1,
       "percentage": { "keio": 0.48936170212765956, "waseda": 0.5106382978723404 },
@@ -137,6 +131,12 @@
 <p class="muted">
   大学の<code>slug</code>: <code>waseda</code>（早大）・<code>keio</code>（慶大）・<code>meiji</code>（明大）・
   <code>hosei</code>（法大）・<code>tokyo</code>（東大）・<code>rikkio</code>（立大）
+</p>
+
+<p class="muted">
+  試合の<code>team0</code>/<code>team1</code>は<code>{ "slug": "...", "score": ... }</code>の形。
+  対戦カード（matchups）の<code>team0</code>/<code>team1</code>は<code>slug</code>の文字列そのものです。
+  どちらも名前や色などの詳細が必要な場合は<code>GET /api/v1/universities</code>を一度取得して<code>slug</code>で参照してください。
 </p>
 
 <h2>大学</h2>

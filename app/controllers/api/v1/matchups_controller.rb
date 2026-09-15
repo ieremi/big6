@@ -14,8 +14,8 @@ module Api
         end
 
         render json: {
-          team0: university_json(team0),
-          team1: university_json(team1),
+          team0: team0.slug,
+          team1: team1.slug,
           wins: { team0.slug => matchup.wins(team0, **opts), team1.slug => matchup.wins(team1, **opts) },
           draws: matchup.draws(**opts),
           percentage: { team0.slug => matchup.percentage(team0, **opts), team1.slug => matchup.percentage(team1, **opts) },
