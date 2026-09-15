@@ -276,6 +276,31 @@ table {
   overflow: hidden;
 }
 
+/* Each card within a week is its own separate <table>, so with the default
+   auto layout, every one sizes its columns independently based only on its
+   own content — the 対戦 column (score digit counts vary a lot: 6-2 vs
+   1-10) ends up a different width table to table, so 観衆 doesn't line up
+   between them. Fixed column widths keep every such table consistent. */
+.week-games-table {
+  table-layout: fixed;
+}
+
+.week-games-table .col-date {
+  width: 22%;
+}
+
+.week-games-table .col-round {
+  width: 13%;
+}
+
+.week-games-table .col-matchup {
+  width: 40%;
+}
+
+.week-games-table .col-attendance {
+  width: 25%;
+}
+
 th,
 td {
   padding: 0.65rem 1rem;
