@@ -12,10 +12,14 @@ class Standings
 
   attr_reader :season, :universities, :rows
 
-  def initialize(season)
+  # games/universities let a caller that already has these preloaded (e.g.
+  # SeasonsController#index, computing standings for every season at once)
+  # pass them in, instead of each Standings instance re-querying them —
+  # significant when this runs in a loop over every season.
+  def initialize(season, games: nil, universities: nil)
     @season = season
-    @universities = University.order(:position).to_a
-    compute
+    @universities = universities || University.order(:position).to_a
+    compute(games)
   end
 
   def row_for(university)
@@ -32,8 +36,8 @@ class Standings
 
   private
 
-  def compute
-    games = season.games.includes(:team0, :team1).order(:played_on, :game_number).select { |g| decided?(g) }
+  def compute(preloaded_games)
+    games = (preloaded_games || season.games.includes(:team0, :team1).order(:played_on, :game_number)).select { |g| decided?(g) }
 
     tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0 } }
     pair_games = Hash.new { |h, k| h[k] = [] }

@@ -2,22 +2,39 @@ class SeasonsController < ApplicationController
   TAGS_CACHE_EXPIRY = 6.hours
 
   def index
-    @seasons = Season.order(year: :desc, term: :desc)
+    @seasons = Season.order(year: :desc, term: :desc).to_a
     @games_counts = Game.group(:season_id).count
-    @attendance_totals = @seasons.each_with_object({}) do |season, totals|
-      next if season.scorebook_games.blank?
 
-      total = season.scorebook_games.sum do |g|
-        value = g["attendance"].to_s.delete(",").strip
-        value.match?(/\A\d+\z/) ? value.to_i : 0
+    # Both of these scan every season's full game history, so they're worth
+    # computing together, once, behind a cache — previously attendance_totals
+    # ran uncached on every request (parsing ~20MB of JSONB each time) and
+    # season_tags recomputed with an N+1 (one query per season) on every
+    # cache miss, which combined into occasional 502s under load.
+    cache_key = "season_index_data/v1/#{Game.maximum(:updated_at)&.to_i}"
+    data = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
+      universities = University.order(:position).to_a
+      games_by_season = Game.includes(:team0, :team1).order(:played_on, :game_number).group_by(&:season_id)
+
+      attendance_totals = @seasons.each_with_object({}) do |season, totals|
+        next if season.scorebook_games.blank?
+
+        total = season.scorebook_games.sum do |g|
+          value = g["attendance"].to_s.delete(",").strip
+          value.match?(/\A\d+\z/) ? value.to_i : 0
+        end
+        totals[season.id] = total if total.positive?
       end
-      totals[season.id] = total if total.positive?
+
+      season_tags = @seasons.each_with_object({}) do |season, tags|
+        games = games_by_season[season.id] || []
+        tags[season.id] = SeasonTags.new(season, games: games, universities: universities).tags
+      end
+
+      { attendance_totals: attendance_totals, season_tags: season_tags }
     end
 
-    cache_key = "season_tags/v3/#{Game.maximum(:updated_at)&.to_i}"
-    @season_tags = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
-      @seasons.each_with_object({}) { |season, tags| tags[season.id] = SeasonTags.new(season).tags }
-    end
+    @attendance_totals = data[:attendance_totals]
+    @season_tags = data[:season_tags]
 
     @selected_tags = Array(params[:tags]) & SeasonTags::LABELS
     if @selected_tags.any?

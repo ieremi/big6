@@ -25,12 +25,18 @@ class SeasonTags
     RIKKYO_A_CLASS
   ].freeze
 
-  def initialize(season)
+  # games/universities let a caller that already has these preloaded (e.g.
+  # SeasonsController#index, computing tags for every season at once) pass
+  # them in, instead of each SeasonTags instance re-querying them —
+  # significant when this runs in a loop over every season.
+  def initialize(season, games: nil, universities: nil)
     @season = season
+    @games = games
+    @universities = universities
   end
 
   def tags
-    return [] if @season.games.empty?
+    return [] if season_games.empty?
     return [] unless @season.finished?
 
     [
@@ -49,8 +55,12 @@ class SeasonTags
 
   private
 
+  def season_games
+    @games ||= @season.games.includes(:team0, :team1).order(:played_on, :game_number).to_a
+  end
+
   def standings
-    @standings ||= Standings.new(@season)
+    @standings ||= Standings.new(@season, games: season_games, universities: @universities)
   end
 
   def tokyo_won_a_point
@@ -74,16 +84,16 @@ class SeasonTags
   end
 
   def big_attendance
-    total = @season.games.where.not(attendance: nil).sum(:attendance)
+    total = season_games.sum { |g| g.attendance || 0 }
     Tag.new(label: BIG_ATTENDANCE) if total > 500_000
   end
 
   def many_games
-    Tag.new(label: MANY_GAMES) if @season.games.size >= 40
+    Tag.new(label: MANY_GAMES) if season_games.size >= 40
   end
 
   def no_round_3
-    Tag.new(label: NO_ROUND_3) if @season.games.where(game_number: 3).none?
+    Tag.new(label: NO_ROUND_3) if season_games.none? { |g| g.game_number == 3 }
   end
 
   def had_playoff
@@ -102,15 +112,19 @@ class SeasonTags
   end
 
   def row_for(slug)
-    university = University.find_by(slug: slug)
+    university = university_by_slug(slug)
     university && standings.row_for(university)
   end
 
   def rank_for(slug)
-    university = University.find_by(slug: slug)
+    university = university_by_slug(slug)
     return nil unless university
 
     standings.rows.index { |r| r.university == university }
+  end
+
+  def university_by_slug(slug)
+    @universities ? @universities.find { |u| u.slug == slug } : University.find_by(slug: slug)
   end
 
   def a_class?(slug)
