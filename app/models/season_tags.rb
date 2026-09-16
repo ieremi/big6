@@ -2,6 +2,7 @@ class SeasonTags
   Tag = Struct.new(:label, keyword_init: true)
 
   TOKYO_POINT = "東大が勝ち点"
+  TOKYO_NOT_LAST = "東大が最下位でなかった"
   CHAMPION_SWEPT = "勝ち点5で優勝"
   PERFECT_CHAMPION = "全勝で優勝"
   CHAMPION_NARROW = "勝ち点3で優勝"
@@ -14,6 +15,7 @@ class SeasonTags
 
   LABELS = [
     TOKYO_POINT,
+    TOKYO_NOT_LAST,
     CHAMPION_SWEPT,
     PERFECT_CHAMPION,
     CHAMPION_NARROW,
@@ -41,6 +43,7 @@ class SeasonTags
 
     [
       tokyo_won_a_point,
+      tokyo_not_last,
       champion_swept,
       perfect_champion,
       champion_narrow,
@@ -66,6 +69,11 @@ class SeasonTags
   def tokyo_won_a_point
     row = row_for("tokyo")
     Tag.new(label: TOKYO_POINT) if row && row.points.positive?
+  end
+
+  def tokyo_not_last
+    rank = rank_for("tokyo")
+    Tag.new(label: TOKYO_NOT_LAST) if rank && rank < standings.rows.size - 1
   end
 
   def champion_swept

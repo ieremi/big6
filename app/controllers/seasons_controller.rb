@@ -10,7 +10,7 @@ class SeasonsController < ApplicationController
     # ran uncached on every request (parsing ~20MB of JSONB each time) and
     # season_tags recomputed with an N+1 (one query per season) on every
     # cache miss, which combined into occasional 502s under load.
-    cache_key = "season_index_data/v1/#{Game.maximum(:updated_at)&.to_i}"
+    cache_key = "season_index_data/v2/#{Game.maximum(:updated_at)&.to_i}"
     data = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
       universities = University.order(:position).to_a
       games_by_season = Game.includes(:team0, :team1).order(:played_on, :game_number).group_by(&:season_id)
