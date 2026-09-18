@@ -1,5 +1,6 @@
 require "date"
 require_relative "known_game_number_overrides"
+require_relative "known_team_corrections"
 
 SCOREBOOK_TEAM_SLUGS = {
   1 => "waseda",
@@ -30,7 +31,8 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     # goes from scheduled -> in progress -> final, re-running this script
     # picks up each update via the find_or_initialize_by below.
     team0 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("topTeamId")))
-    team1 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
+    team_correction = KNOWN_TEAM_CORRECTIONS[info["id"]]
+    team1 = team_correction ? universities_by_slug.fetch(team_correction[:team1_slug]) : universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
 
     # info["round"] (e.g. "3回戦") is the game's position within that pair's series;
     # info["gameOrder"] is unrelated (position within that day's schedule for doubleheaders).
@@ -57,6 +59,7 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     game.game_order = info["gameOrder"]
     game.game_status = info["gameStatus"]
     game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
+    game.data_correction_note = team_correction[:note] if team_correction
     game.save!
   end
 end
