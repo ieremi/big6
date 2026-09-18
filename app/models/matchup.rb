@@ -11,7 +11,9 @@ class Matchup
     # Not team0_id/team1_id both IN [team0.id, team1.id] — a handful of Game
     # rows have team0_id == team1_id (bad source data, a team "playing
     # itself"), which that form would incorrectly match for every pair
-    # involving that one team.
+    # involving that one team. :season is preloaded in full (not just
+    # year/term) despite the memory cost, because duration_values needs
+    # each game's season for GameScoreboard's gameTimeNet lookup.
     @games = games || Game
       .where(
         "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
@@ -141,20 +143,30 @@ class Matchup
 
   private
 
+  # The matchup show page calls several of these (wins/percentage/streaks/
+  # attendance/duration) with the very same (since:, season_id:) for one
+  # period, each independently re-filtering @games (and, for duration,
+  # re-instantiating GameScoreboard per game) — memoized per distinct args
+  # instead, so a period's worth of stats costs one filter pass, not one per
+  # method call.
   def attendance_values(since: nil, season_id: nil)
-    scoped_games(since: since, season_id: season_id).filter_map(&:attendance)
+    (@attendance_values_cache ||= {})[[ since, season_id ]] ||=
+      scoped_games(since: since, season_id: season_id).filter_map(&:attendance)
   end
 
   def duration_values(since: nil, season_id: nil)
-    scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
+    (@duration_values_cache ||= {})[[ since, season_id ]] ||=
+      scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
   end
 
   def scoped_games(since: nil, season_id: nil, year: nil)
-    scoped = games.select { |g| g.team0_score.present? && g.team1_score.present? }
-    scoped = scoped.select { |g| g.played_on >= since } if since
-    scoped = scoped.select { |g| g.season_id == season_id } if season_id
-    scoped = scoped.select { |g| g.season.year == year.to_i } if year
-    scoped
+    (@scoped_games_cache ||= {})[[ since, season_id, year ]] ||= begin
+      scoped = games.select { |g| g.team0_score.present? && g.team1_score.present? }
+      scoped = scoped.select { |g| g.played_on >= since } if since
+      scoped = scoped.select { |g| g.season_id == season_id } if season_id
+      scoped = scoped.select { |g| g.season.year == year.to_i } if year
+      scoped
+    end
   end
 
   def winner(game)

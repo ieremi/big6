@@ -38,7 +38,17 @@ module MatchupsHelper
   end
 
   def week_number_for(game)
-    weeks = SeasonWeeks.new(game.season.games.includes(:team0, :team1)).weeks
+    weeks = weeks_for_season(game.season)
     weeks.find { |w| w.games.any? { |g| g.id == game.id } }&.number
+  end
+
+  # The matchup show page can ask for a week number for several streak
+  # endpoints across several periods, often landing back in the same
+  # season — memoized per season (within this one request/render) instead
+  # of SeasonWeeks re-querying and regrouping that season's full game list
+  # from scratch every time.
+  def weeks_for_season(season)
+    @weeks_by_season_id ||= {}
+    @weeks_by_season_id[season.id] ||= SeasonWeeks.new(season.games.includes(:team0, :team1)).weeks
   end
 end
