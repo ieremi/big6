@@ -648,6 +648,22 @@ body.table-zoom-open {
   background: #111827;
 }
 
+/* The 対戦成績/観衆数 toggle moved inside the panel (previous commit
+   moved it back out, then this repositioned it here) specifically so it
+   stays reachable while zoomed — outside the panel, .table-zoom-backdrop
+   (z-index: 60) sits on top of the toolbar's normal (unpositioned, so
+   effectively z-index: auto) stacking position and swallows its clicks.
+   The zoom/close button has the same problem, fixed the other way: kept
+   outside the panel (so it doesn't scroll away with the table), pinned to
+   the panel's own top-right corner above both the backdrop and the panel. */
+.table-zoom.is-zoomed .table-zoom-bar {
+  position: fixed;
+  top: calc(5vh + 0.5rem);
+  right: calc(5vw + 0.5rem);
+  z-index: 62;
+  margin: 0;
+}
+
 /* table-layout: fixed (the default, unzoomed sizing) is what keeps the
    table from ever exceeding its container — but that guarantee comes from
    force-splitting columns evenly regardless of content, which at nowrap
