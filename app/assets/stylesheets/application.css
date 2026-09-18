@@ -387,15 +387,30 @@ ul.list li {
   overflow-x: auto;
 }
 
+/* table-layout: fixed (not the default auto) means the table's overall
+   width is locked to its container regardless of content — col-rank/
+   col-team stay pinned narrow (width: 1%) and every other column (the 6
+   vs-cells, the result/attendance stat columns) splits the remainder
+   evenly. auto layout would instead grow the table past its container to
+   fit each column's natural content width, which is what forced
+   .table-scroll's scroll to kick in even after shrinking padding/font. */
+.standings-table {
+  table-layout: fixed;
+}
+
 .standings-table th,
 .standings-table td {
   text-align: center;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .standings-table th.col-team,
 .standings-table td.col-team {
   text-align: left;
+}
+
+.col-rank {
+  width: 1%;
 }
 
 .season-tag {
@@ -611,6 +626,7 @@ body.table-zoom-open {
 .table-zoom.is-zoomed .scoreboard-table td {
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
+  white-space: nowrap;
 }
 
 .table-zoom.is-zoomed .rank-badge,

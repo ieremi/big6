@@ -29,7 +29,7 @@
       <table class="standings-table">
         <thead>
           <tr>
-            <th>順位</th>
+            <th class="col-rank">順位</th>
             <th class="col-team"></th>
             <% @standings.rows.each do |col_row| %>
               <th>
@@ -52,7 +52,7 @@
         <tbody>
           <% @standings.rows.each_with_index do |row, index| %>
             <tr>
-              <td><span class="rank-badge"><%= index + 1 %></span></td>
+              <td class="col-rank"><span class="rank-badge"><%= index + 1 %></span></td>
               <td class="col-team">
                 <span class="team-chip" style="background: <%= row.university.color %>">
                   <%= row.university.initial %>
