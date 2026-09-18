@@ -415,10 +415,11 @@ ul.list li {
    the results grid needs — so unlike every other standings-table cell,
    let this one actually wrap. A "/" is already a Unicode line-break
    opportunity even under white-space: normal, so no <wbr>/zero-width-space
-   insertion is needed for it to break after each slash. Scoped to
-   attendance mode specifically (cell-toggle's mode value, reflected back
-   as this data attribute once picked) so results mode stays single-line. */
-[data-cell-toggle-mode-value="attendance"] .standings-table .result-cell {
+   insertion is needed for it to break after each slash. .cell-toggle-
+   attendance is set by cell_toggle_controller.js directly (not read from
+   Stimulus's own values-API attribute, which didn't take effect here) so
+   results mode reliably stays single-line. */
+.cell-toggle-attendance .standings-table .result-cell {
   white-space: normal;
 }
 

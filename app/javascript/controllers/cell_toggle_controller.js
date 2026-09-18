@@ -19,6 +19,8 @@ export default class extends Controller {
   render() {
     const attr = `data-${this.modeValue}`
 
+    this.element.classList.toggle("cell-toggle-attendance", this.modeValue === "attendance")
+
     this.cellTargets.forEach((el) => {
       el.textContent = el.getAttribute(attr) || "-"
     })
