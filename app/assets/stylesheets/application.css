@@ -410,6 +410,18 @@ ul.list li {
   text-align: left;
 }
 
+/* Attendance-mode cell text (e.g. "16,000/13,000/2,000") is much longer
+   than results-mode's "○●○" and would force the column far wider than
+   the results grid needs — so unlike every other standings-table cell,
+   let this one actually wrap. A "/" is already a Unicode line-break
+   opportunity even under white-space: normal, so no <wbr>/zero-width-space
+   insertion is needed for it to break after each slash. Scoped to
+   attendance mode specifically (cell-toggle's mode value, reflected back
+   as this data attribute once picked) so results mode stays single-line. */
+[data-cell-toggle-mode-value="attendance"] .standings-table .result-cell {
+  white-space: normal;
+}
+
 /* Wrapping instead of scrolling just traded one unreadable layout for
    another (○●○ splitting mid-cell, "勝ち点" stacking letter by letter).
    Fitting rank + team + the 6-team results grid on one line without
