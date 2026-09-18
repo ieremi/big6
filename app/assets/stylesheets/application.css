@@ -411,17 +411,9 @@ ul.list li {
 }
 
 /* Attendance-mode cell text (e.g. "16,000/13,000/2,000") is much longer
-   than results-mode's "○●○" and would force the column far wider than
-   the results grid needs — so unlike every other standings-table cell,
-   let this one actually wrap. A "/" is already a Unicode line-break
-   opportunity even under white-space: normal, so no <wbr>/zero-width-space
-   insertion is needed for it to break after each slash. .cell-toggle-
-   attendance is set by cell_toggle_controller.js directly (not read from
-   Stimulus's own values-API attribute, which didn't take effect here) so
-   results mode reliably stays single-line. */
-.cell-toggle-attendance .standings-table .result-cell {
-  white-space: normal;
-}
+   than results-mode's "○●○" — cell_toggle_controller.js inserts a real
+   <br> after each "/" for this mode, which breaks the line regardless of
+   white-space: nowrap, so no CSS wrapping rule is needed here. */
 
 /* Wrapping instead of scrolling just traded one unreadable layout for
    another (○●○ splitting mid-cell, "勝ち点" stacking letter by letter).

@@ -18,11 +18,21 @@ export default class extends Controller {
 
   render() {
     const attr = `data-${this.modeValue}`
+    const attendance = this.modeValue === "attendance"
 
-    this.element.classList.toggle("cell-toggle-attendance", this.modeValue === "attendance")
+    this.element.classList.toggle("cell-toggle-attendance", attendance)
 
     this.cellTargets.forEach((el) => {
-      el.textContent = el.getAttribute(attr) || "-"
+      const text = el.getAttribute(attr) || "-"
+
+      // Attendance text ("16,000/13,000/2,000") is long enough to need an
+      // actual line break after each "/" — relying on CSS white-space to
+      // wrap there didn't hold up, so insert real <br> elements instead.
+      if (attendance) {
+        el.innerHTML = text.split("/").map((part) => this.escapeHtml(part)).join("/<br>")
+      } else {
+        el.textContent = text
+      }
     })
 
     this.buttonTargets.forEach((el) => {
@@ -36,5 +46,11 @@ export default class extends Controller {
     this.attendanceColumnTargets.forEach((el) => {
       el.hidden = this.modeValue !== "attendance"
     })
+  }
+
+  escapeHtml(str) {
+    const div = document.createElement("div")
+    div.textContent = str
+    return div.innerHTML
   }
 }
