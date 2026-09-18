@@ -629,12 +629,18 @@ body.table-zoom-open {
   overflow: hidden;
 }
 
+/* top/max-height (not top+bottom) so the panel is only as tall as its
+   content needs — a short table (a 9-inning scoreboard) no longer leaves a
+   block of empty space down to a fixed bottom edge, while a genuinely tall
+   one still caps at 90vh and scrolls internally past that. Keeping the
+   same top: 5vh anchor as before means .table-zoom-bar's own fixed
+   position (pinned to that same 5vh/5vw corner) still lines up. */
 .table-zoom.is-zoomed [data-table-zoom-target="panel"] {
   position: fixed;
   top: 5vh;
   left: 5vw;
   right: 5vw;
-  bottom: 5vh;
+  max-height: 90vh;
   z-index: 61;
   margin: 0;
   padding: 1rem;
