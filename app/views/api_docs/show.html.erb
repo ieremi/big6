@@ -52,15 +52,17 @@
 
 <h3><code>/api/v1/games</code></h3>
 <p>試合の検索・一覧（ページネーションあり、1ページ100件）。</p>
-<table>
-  <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
-  <tbody>
-    <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。指定した大学が絡む試合のみ</td></tr>
-    <tr><td><code>term</code></td><td><code>spring</code>/<code>autumn</code>（複数指定可）</td></tr>
-    <tr><td><code>start_year</code> / <code>end_year</code></td><td>試合日の年の範囲</td></tr>
-    <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
-  </tbody>
-</table>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。指定した大学が絡む試合のみ</td></tr>
+      <tr><td><code>term</code></td><td><code>spring</code>/<code>autumn</code>（複数指定可）</td></tr>
+      <tr><td><code>start_year</code> / <code>end_year</code></td><td>試合日の年の範囲</td></tr>
+      <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
+    </tbody>
+  </table>
+</div>
 <%= render "sandbox", path: "/games?university[]=rikkio&university[]=tokyo&term[]=autumn&start_year=1997" %>
 
 <h3><code>/api/v1/games/:year/:term/:team0/:team1/:round</code></h3>
@@ -75,13 +77,15 @@
 
 <h3><code>/api/v1/matchups/:team0_slug/:team1_slug</code></h3>
 <p>2大学の通算対戦成績。</p>
-<table>
-  <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
-  <tbody>
-    <tr><td><code>since_years</code></td><td>直近N年に絞り込み</td></tr>
-    <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズンに絞り込み</td></tr>
-  </tbody>
-</table>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>since_years</code></td><td>直近N年に絞り込み</td></tr>
+      <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズンに絞り込み</td></tr>
+    </tbody>
+  </table>
+</div>
 <%= render "sandbox", path: "/matchups/rikkio/tokyo?year=1997&term=autumn" %>
 
 <h2>エラー</h2>

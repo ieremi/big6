@@ -42,8 +42,13 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -534,6 +539,7 @@ code {
   padding: 0.1rem 0.35rem;
   font-size: 0.85em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: break-word;
 }
 
 .doc-code {

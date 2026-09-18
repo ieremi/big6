@@ -1,38 +1,40 @@
-<table>
-  <thead>
-    <tr>
-      <% if local_assigns[:show_season] %>
-        <%= sortable_game_header("season", "シーズン", "S") %>
-      <% end %>
-      <th>日付</th>
-      <th>回戦</th>
-      <%= sortable_game_header("card", "カード", "C") %>
-      <th>観衆</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% games.each do |game| %>
-      <% row_data = if local_assigns[:game_periods]
-           { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" ") }
-         else
-           {}
-         end %>
-      <%= tag.tr data: row_data do %>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
         <% if local_assigns[:show_season] %>
-          <td><%= link_to game.season.title, season_path(game.season.year, game.season.term) %></td>
+          <%= sortable_game_header("season", "シーズン", "S") %>
         <% end %>
-        <td><%= game.played_on %></td>
-        <td><%= game.game_number %>回戦</td>
-        <td>
-          <%= link_to game_path(game) do %>
-            <%= game.team0.short_name %>
-            <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status) %>
-            <%= game.team1.short_name %>
+        <th>日付</th>
+        <th>回戦</th>
+        <%= sortable_game_header("card", "カード", "C") %>
+        <th>観衆</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% games.each do |game| %>
+        <% row_data = if local_assigns[:game_periods]
+             { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" ") }
+           else
+             {}
+           end %>
+        <%= tag.tr data: row_data do %>
+          <% if local_assigns[:show_season] %>
+            <td><%= link_to game.season.title, season_path(game.season.year, game.season.term) %></td>
           <% end %>
-        </td>
-        <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
+          <td><%= game.played_on %></td>
+          <td><%= game.game_number %>回戦</td>
+          <td>
+            <%= link_to game_path(game) do %>
+              <%= game.team0.short_name %>
+              <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status) %>
+              <%= game.team1.short_name %>
+            <% end %>
+          </td>
+          <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
+        <% end %>
       <% end %>
-    <% end %>
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>

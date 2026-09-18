@@ -1,27 +1,29 @@
-<table class="week-games-table">
-  <thead>
-    <tr>
-      <th class="col-date">日付</th>
-      <th class="col-round">回戦</th>
-      <th class="col-matchup">対戦</th>
-      <th class="col-attendance">観衆</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <% games.each do |game| %>
+<div class="table-scroll">
+  <table class="week-games-table">
+    <thead>
       <tr>
-        <td><%= game.played_on %></td>
-        <td><%= game.game_number %>回戦</td>
-        <td>
-          <%= link_to game_path(game) do %>
-            <%= game.team0.short_name %>
-            <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status) %>
-            <%= game.team1.short_name %>
-          <% end %>
-        </td>
-        <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
+        <th class="col-date">日付</th>
+        <th class="col-round">回戦</th>
+        <th class="col-matchup">対戦</th>
+        <th class="col-attendance">観衆</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+
+    <tbody>
+      <% games.each do |game| %>
+        <tr>
+          <td><%= game.played_on %></td>
+          <td><%= game.game_number %>回戦</td>
+          <td>
+            <%= link_to game_path(game) do %>
+              <%= game.team0.short_name %>
+              <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status) %>
+              <%= game.team1.short_name %>
+            <% end %>
+          </td>
+          <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
