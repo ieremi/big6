@@ -671,10 +671,16 @@ body.table-zoom-open {
    Zoomed, there's no such requirement (the panel already scrolls both
    ways), so let the table size itself to its actual nowrap content
    instead — wider than the panel is fine, that's what the scroll is for. */
-.table-zoom.is-zoomed .standings-table {
+.table-zoom.is-zoomed .standings-table,
+.table-zoom.is-zoomed .scoreboard-table {
   table-layout: auto;
   width: auto;
   min-width: 100%;
+}
+
+.table-zoom.is-zoomed .scoreboard-table th.team-col,
+.table-zoom.is-zoomed .scoreboard-table td.team-col {
+  width: auto;
 }
 
 .table-zoom.is-zoomed .standings-table th,
@@ -1069,8 +1075,14 @@ code {
   background: var(--text-muted);
 }
 
+/* table-layout: fixed for the same reason as .standings-table — width:
+   100% alone still lets the table grow past its container to fit every
+   inning column's natural (nowrap) width. team-col gets an explicit width
+   for the same reason col-rank/col-team do: a fixed-layout percentage/
+   auto share would be too narrow for the team chip + name. */
 .scoreboard-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   background: transparent;
   border: none;
@@ -1096,9 +1108,12 @@ code {
 .scoreboard-table td.team-col {
   text-align: left;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  width: 5.5rem;
+}
+
+.scoreboard-table td.team-col .team-chip {
+  margin-right: 0.4rem;
+  vertical-align: middle;
 }
 
 .scoreboard-table td.total {
