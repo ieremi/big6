@@ -8,20 +8,7 @@ class Matchup
   def initialize(team0, team1, games: nil)
     @team0 = team0
     @team1 = team1
-    # Not team0_id/team1_id both IN [team0.id, team1.id] — a handful of Game
-    # rows have team0_id == team1_id (bad source data, a team "playing
-    # itself"), which that form would incorrectly match for every pair
-    # involving that one team. :season is preloaded in full (not just
-    # year/term) despite the memory cost, because duration_values needs
-    # each game's season for GameScoreboard's gameTimeNet lookup.
-    @games = games || Game
-      .where(
-        "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
-        team0_id: team0.id, team1_id: team1.id
-      )
-      .includes(:team0, :team1, :season)
-      .order(:played_on, :game_number)
-      .to_a
+    @games = games || fetch_games
   end
 
   def wins(team, since: nil, season_id: nil, year: nil)
@@ -156,7 +143,7 @@ class Matchup
 
   def duration_values(since: nil, season_id: nil)
     (@duration_values_cache ||= {})[[ since, season_id ]] ||=
-      scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
+      scoped_games(since: since, season_id: season_id).filter_map(&:duration_minutes)
   end
 
   def scoped_games(since: nil, season_id: nil, year: nil)
@@ -174,5 +161,21 @@ class Matchup
     return nil if game.team0_score == game.team1_score
 
     game.team0_score > game.team1_score ? game.team0 : game.team1
+  end
+
+  def fetch_games
+    # Not team0_id/team1_id both IN [team0.id, team1.id] — a handful of Game
+    # rows have team0_id == team1_id (bad source data, a team "playing
+    # itself"), which that form would incorrectly match for every pair
+    # involving that one team.
+    games = Game
+      .where(
+        "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
+        team0_id: team0.id, team1_id: team1.id
+      )
+      .includes(:team0, :team1)
+      .order(:played_on, :game_number)
+      .to_a
+    LiteSeasonPreload.attach(games)
   end
 end

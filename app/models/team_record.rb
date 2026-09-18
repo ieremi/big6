@@ -1,11 +1,12 @@
 class TeamRecord
   def initialize(university)
     @university = university
-    @games = Game
+    games = Game
       .where(team0_id: university.id).or(Game.where(team1_id: university.id))
-      .includes(:team0, :team1, :season)
+      .includes(:team0, :team1)
       .order(:played_on, :game_number)
       .to_a
+    @games = LiteSeasonPreload.attach(games)
   end
 
   def wins(since: nil, season_id: nil)
@@ -100,15 +101,21 @@ class TeamRecord
 
   private
 
+  # See Matchup's equivalent comment — the university show page calls
+  # several of these with the same (since:, season_id:) per period, so
+  # memoize per distinct args instead of re-filtering @games each time.
   def duration_values(since: nil, season_id: nil)
-    scoped_games(since: since, season_id: season_id).filter_map { |g| GameScoreboard.new(g).duration_minutes }
+    (@duration_values_cache ||= {})[[ since, season_id ]] ||=
+      scoped_games(since: since, season_id: season_id).filter_map(&:duration_minutes)
   end
 
   def scoped_games(since: nil, season_id: nil)
-    scoped = @games.select { |g| g.team0_score.present? && g.team1_score.present? }
-    scoped = scoped.select { |g| g.played_on >= since } if since
-    scoped = scoped.select { |g| g.season_id == season_id } if season_id
-    scoped
+    (@scoped_games_cache ||= {})[[ since, season_id ]] ||= begin
+      scoped = @games.select { |g| g.team0_score.present? && g.team1_score.present? }
+      scoped = scoped.select { |g| g.played_on >= since } if since
+      scoped = scoped.select { |g| g.season_id == season_id } if season_id
+      scoped
+    end
   end
 
   def winner(game)

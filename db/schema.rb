@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_040718) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_043424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_040718) do
     t.integer "attendance"
     t.datetime "created_at", null: false
     t.text "data_correction_note"
+    t.integer "duration_minutes"
     t.integer "game_number", null: false
     t.integer "game_order"
     t.string "game_status"
