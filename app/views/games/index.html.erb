@@ -25,6 +25,16 @@
         </label>
       <% end %>
     </div>
+    <div class="checkbox-group">
+      <label class="checkbox-label">
+        <%= radio_button_tag :university_mode, "or", @university_mode != "and" %>
+        いずれかが出場（OR）
+      </label>
+      <label class="checkbox-label">
+        <%= radio_button_tag :university_mode, "and", @university_mode == "and" %>
+        選択した大学同士の対戦のみ（AND）
+      </label>
+    </div>
   </fieldset>
 
   <fieldset>

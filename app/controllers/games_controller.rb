@@ -10,9 +10,11 @@ class GamesController < ApplicationController
     if @searched
       @selected_university_ids = Array(params[:university_ids]).map(&:to_i)
       @selected_terms = Array(params[:terms])
+      @university_mode = params[:university_mode] == "and" ? "and" : "or"
     else
       @selected_university_ids = []
       @selected_terms = []
+      @university_mode = "or"
     end
 
     @start_year = params[:start_year].presence
@@ -107,7 +109,14 @@ class GamesController < ApplicationController
     scope = Game.includes(:team0, :team1, :season)
 
     if @searched
-      scope = scope.where(team0_id: @selected_university_ids).or(scope.where(team1_id: @selected_university_ids))
+      # AND only means something with 2+ teams selected (a single id can't
+      # be both team0_id and team1_id on the same game) — falls back to OR
+      # below otherwise, same as if AND were never chosen.
+      if @university_mode == "and" && @selected_university_ids.size >= 2
+        scope = scope.where(team0_id: @selected_university_ids, team1_id: @selected_university_ids)
+      else
+        scope = scope.where(team0_id: @selected_university_ids).or(scope.where(team1_id: @selected_university_ids))
+      end
       scope = scope.where(season_id: Season.where(term: @selected_terms).select(:id))
     end
 
