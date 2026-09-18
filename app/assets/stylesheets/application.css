@@ -505,38 +505,38 @@ th.sortable.sorted-desc::after {
 
 /* Every table's base th/td padding (0.65rem 1rem) is generous enough that
    dense tables (many short columns: standings, the matchup grid, a
-   scoreboard's per-inning columns) don't fit a phone screen even though
-   their actual content is narrow — most of the width is padding. Shrinking
-   padding and a couple of fixed-size chips here is usually enough to fit
-   entirely without needing .table-scroll's fallback scroll; a rare
-   extra-innings scoreboard or the full 6-team grid can still need it. */
+   scoreboard's per-inning columns) don't fit unless padding/font shrink —
+   not just on a phone: the standings/matchup grid (14 columns in the worst
+   case) is wide enough to still overflow well past typical phone
+   breakpoints, so these are unconditional, not gated to a narrow viewport.
+   .table-zoom's "拡大表示" (below) sizes back up for reading comfortably. */
+.standings-table th,
+.standings-table td {
+  padding: 0.35rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.rank-badge,
+.team-chip {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+  padding: 0.35rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.scoreboard-table td.total {
+  font-size: 1rem;
+}
+
 @media (max-width: 480px) {
   th,
   td {
     padding: 0.5rem 0.6rem;
-  }
-
-  .standings-table th,
-  .standings-table td {
-    padding: 0.35rem 0.4rem;
-    font-size: 0.85rem;
-  }
-
-  .rank-badge,
-  .team-chip {
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.75rem;
-  }
-
-  .scoreboard-table th,
-  .scoreboard-table td {
-    padding: 0.35rem 0.4rem;
-    font-size: 0.85rem;
-  }
-
-  .scoreboard-table td.total {
-    font-size: 1rem;
   }
 }
 
