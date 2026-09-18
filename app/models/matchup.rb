@@ -1,11 +1,22 @@
 class Matchup
   attr_reader :team0, :team1, :games
 
-  def initialize(team0, team1)
+  # games lets a caller that already has every team's games preloaded (e.g.
+  # MatchupsController#index, building the full 6-team grid at once) pass
+  # this pair's slice in, instead of each Matchup instance re-querying them
+  # — significant when this runs once per pair (15 of them).
+  def initialize(team0, team1, games: nil)
     @team0 = team0
     @team1 = team1
-    @games = Game
-      .where(team0_id: [ team0.id, team1.id ], team1_id: [ team0.id, team1.id ])
+    # Not team0_id/team1_id both IN [team0.id, team1.id] — a handful of Game
+    # rows have team0_id == team1_id (bad source data, a team "playing
+    # itself"), which that form would incorrectly match for every pair
+    # involving that one team.
+    @games = games || Game
+      .where(
+        "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
+        team0_id: team0.id, team1_id: team1.id
+      )
       .includes(:team0, :team1, :season)
       .order(:played_on, :game_number)
       .to_a

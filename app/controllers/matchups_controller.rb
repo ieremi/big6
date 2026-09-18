@@ -138,9 +138,19 @@ class MatchupsController < ApplicationController
   end
 
   def build_data
+    # One query for every game, instead of Matchup.new doing its own
+    # (games + team0 + team1 + season) query per pair — 15 pairs' worth
+    # otherwise. :season isn't preloaded since nothing on this page's path
+    # needs it (only Matchup#games_for/scoped_games's year: branch does,
+    # neither of which build_data exercises) — it would otherwise pull in
+    # every season's full scorebook_games JSONB (tens of MB) for nothing.
+    all_games = Game.includes(:team0, :team1).order(:played_on, :game_number).to_a
+    games_by_pair = all_games.group_by { |g| [ g.team0_id, g.team1_id ].sort }
+
     matchups = {}
     @universities.combination(2).each do |team0, team1|
-      matchup = Matchup.new(team0, team1)
+      games = games_by_pair[[ team0.id, team1.id ].sort] || []
+      matchup = Matchup.new(team0, team1, games: games)
       matchups[[ team0.id, team1.id ]] = matchup
       matchups[[ team1.id, team0.id ]] = matchup
     end
@@ -180,15 +190,15 @@ class MatchupsController < ApplicationController
       }
     end
 
-    { cells: cells, row_avg: row_avg, row_sum: row_sum, grand_attendance: grand_attendance }
+    { cells: cells, row_avg: row_avg, row_sum: row_sum, grand_attendance: grand_attendance(all_games) }
   end
 
-  def grand_attendance
+  def grand_attendance(all_games)
     @periods.transform_values do |opts|
-      scope = Game.all
-      scope = scope.where(season_id: opts[:season_id]) if opts[:season_id]
-      scope = scope.where("played_on >= ?", opts[:since]) if opts[:since]
-      values = scope.where.not(attendance: nil).pluck(:attendance)
+      scoped = all_games
+      scoped = scoped.select { |g| g.season_id == opts[:season_id] } if opts[:season_id]
+      scoped = scoped.select { |g| g.played_on >= opts[:since] } if opts[:since]
+      values = scoped.filter_map(&:attendance)
 
       { "avg" => values.empty? ? nil : values.sum / values.size, "sum" => values.empty? ? nil : values.sum }
     end
