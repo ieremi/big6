@@ -31,12 +31,13 @@
     観衆表示では各セルに平均・合計を2行で表示します。
   </p>
 
-  <div class="table-zoom-bar">
-    <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
-  </div>
   <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
 
   <div class="table-scroll" data-table-zoom-target="panel">
+    <div class="table-zoom-bar">
+      <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
+    </div>
+
     <table class="standings-table">
       <thead>
         <tr>

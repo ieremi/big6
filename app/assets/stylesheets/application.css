@@ -629,18 +629,20 @@ body.table-zoom-open {
   overflow: hidden;
 }
 
-/* top/max-height (not top+bottom) so the panel is only as tall as its
-   content needs — a short table (a 9-inning scoreboard) no longer leaves a
-   block of empty space down to a fixed bottom edge, while a genuinely tall
-   one still caps at 90vh and scrolls internally past that. Keeping the
-   same top: 5vh anchor as before means .table-zoom-bar's own fixed
-   position (pinned to that same 5vh/5vw corner) still lines up. */
+/* top: 50% + transform (not top+bottom) centers the panel vertically in
+   the original window and sizes it to its content, capped at 90vh — a
+   short table (a 9-inning scoreboard) no longer sits pinned near the top
+   with empty space below, or off-center once it's short enough not to
+   need the full 90vh. left/right stay fixed (not centered via transform
+   too) since that span is already exactly what "as wide as available,
+   capped" means; only height is content-driven here. */
 .table-zoom.is-zoomed [data-table-zoom-target="panel"] {
   position: fixed;
-  top: 5vh;
+  top: 50%;
   left: 5vw;
   right: 5vw;
   max-height: 90vh;
+  transform: translateY(-50%);
   z-index: 61;
   margin: 0;
   padding: 1rem;
@@ -654,20 +656,24 @@ body.table-zoom-open {
   background: #111827;
 }
 
-/* The 対戦成績/観衆数 toggle moved inside the panel (previous commit
-   moved it back out, then this repositioned it here) specifically so it
-   stays reachable while zoomed — outside the panel, .table-zoom-backdrop
-   (z-index: 60) sits on top of the toolbar's normal (unpositioned, so
-   effectively z-index: auto) stacking position and swallows its clicks.
-   The zoom/close button has the same problem, fixed the other way: kept
-   outside the panel (so it doesn't scroll away with the table), pinned to
-   the panel's own top-right corner above both the backdrop and the panel. */
+/* Both .table-zoom-bar (the zoom/close button) and .period-toolbar (on the
+   standings page) are children of the panel now, not fixed-positioned
+   siblings pinned to an assumed corner — the panel centers and resizes to
+   its content, so there's no longer a fixed corner to pin to. Outside the
+   panel, .table-zoom-backdrop (z-index: 60) would otherwise sit on top of
+   their normal (unpositioned) stacking position and swallow clicks;
+   sticky keeps the zoom/close button reachable at the top of the panel's
+   own scroll area without leaving the panel (so it travels with it). */
 .table-zoom.is-zoomed .table-zoom-bar {
-  position: fixed;
-  top: calc(5vh + 0.5rem);
-  right: calc(5vw + 0.5rem);
-  z-index: 62;
-  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  padding-bottom: 0.35rem;
+}
+
+.table-zoom.is-zoomed [data-table-zoom-target="panel"].scoreboard .table-zoom-bar {
+  background: #111827;
 }
 
 /* table-layout: fixed (the default, unzoomed sizing) is what keeps the

@@ -33,12 +33,13 @@
     <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち）</p>
   <% end %>
   <div class="table-zoom" data-controller="table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
-    <div class="table-zoom-bar">
-      <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
-    </div>
     <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
 
     <div class="scoreboard" data-table-zoom-target="panel">
+      <div class="table-zoom-bar">
+        <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
+      </div>
+
       <table class="scoreboard-table">
         <thead>
           <tr>
