@@ -14,6 +14,8 @@ Rails.application.routes.draw do
 
   get "api/docs", to: "api_docs#show", as: :api_docs
 
+  get "sitemap.xml", to: "sitemaps#show", as: :sitemap, defaults: { format: "xml" }
+
   get "og/site.png", to: "home#og_image", as: :site_og_image
 
   get "universities/og.png", to: "universities#og_image", as: :universities_og_image

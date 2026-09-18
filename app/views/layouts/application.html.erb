@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
     <meta charset="utf-8">
     <% page_title = content_for(:title) || "Big6" %>
     <% page_description = content_for(:description) || "東京六大学野球のシーズン・対戦成績・試合結果データベース" %>
     <% page_image = content_for(:image_url) || "#{request.base_url}/og-image.png" %>
+    <% canonical_url = content_for(:canonical_url) || request.original_url.split("?").first %>
 
     <title><%= page_title %></title>
     <meta name="description" content="<%= page_description %>">
@@ -14,6 +15,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <link rel="canonical" href="<%= canonical_url %>">
 
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Big6">
