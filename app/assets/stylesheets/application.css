@@ -540,6 +540,90 @@ th.sortable.sorted-desc::after {
   }
 }
 
+/* "拡大表示" — lets a dense table (still shrunk per above, still possibly
+   needing .table-scroll's own scroll) pop out into a full-viewport overlay
+   at a comfortably large, tap-friendly size instead. table-zoom-btn toggles
+   .is-zoomed on the .table-zoom wrapper; [data-table-zoom-target="panel"]
+   is whichever scroll container holds the table (.table-scroll or
+   .scoreboard — both already scrollable, this just also resizes/repositions
+   that same element, no cloning). */
+.table-zoom-bar {
+  text-align: right;
+  margin-bottom: 0.35rem;
+}
+
+.table-zoom-btn {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.table-zoom-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.table-zoom-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.table-zoom-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.table-zoom-open {
+  overflow: hidden;
+}
+
+.table-zoom.is-zoomed [data-table-zoom-target="panel"] {
+  position: fixed;
+  top: 5vh;
+  left: 5vw;
+  right: 5vw;
+  bottom: 5vh;
+  z-index: 61;
+  margin: 0;
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  overflow: auto;
+}
+
+.table-zoom.is-zoomed [data-table-zoom-target="panel"].scoreboard {
+  background: #111827;
+}
+
+.table-zoom.is-zoomed .standings-table th,
+.table-zoom.is-zoomed .standings-table td,
+.table-zoom.is-zoomed .scoreboard-table th,
+.table-zoom.is-zoomed .scoreboard-table td {
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+}
+
+.table-zoom.is-zoomed .rank-badge,
+.table-zoom.is-zoomed .team-chip {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.85rem;
+}
+
+.table-zoom.is-zoomed .scoreboard-table td.total {
+  font-size: 1.1rem;
+}
+
 .decade {
   margin-bottom: 0.75rem;
 }

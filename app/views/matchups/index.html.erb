@@ -9,7 +9,7 @@
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 <% num = ->(value) { value.nil? ? "—" : number_with_delimiter(value) } %>
 
-<div data-controller="period-filter">
+<div class="table-zoom" data-controller="period-filter table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
   <div class="period-toolbar">
     <span class="muted">表示指標:</span>
     <button type="button" class="period-btn" data-metric="rate" data-period-filter-target="metricButton" data-action="period-filter#setMetric">勝率 <kbd>w</kbd></button>
@@ -31,7 +31,12 @@
     観衆表示では各セルに平均・合計を2行で表示します。
   </p>
 
-  <div class="table-scroll">
+  <div class="table-zoom-bar">
+    <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
+  </div>
+  <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
+
+  <div class="table-scroll" data-table-zoom-target="panel">
     <table class="standings-table">
       <thead>
         <tr>

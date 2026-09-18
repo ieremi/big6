@@ -13,14 +13,19 @@
     <%= link_to "試合一覧を見る", season_path(@season.year, @season.term) %>
   </p>
 
-  <div data-controller="cell-toggle">
+  <div class="table-zoom" data-controller="cell-toggle table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
     <div class="period-toolbar">
       <span class="muted">セル表示:</span>
       <button type="button" class="period-btn" data-mode="results" data-cell-toggle-target="button" data-action="cell-toggle#setMode">対戦成績</button>
       <button type="button" class="period-btn" data-mode="attendance" data-cell-toggle-target="button" data-action="cell-toggle#setMode">観衆数</button>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-zoom-bar">
+      <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
+    </div>
+    <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
+
+    <div class="table-scroll" data-table-zoom-target="panel">
       <table class="standings-table">
         <thead>
           <tr>

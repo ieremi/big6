@@ -32,47 +32,54 @@
   <% if provisional %>
     <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち）</p>
   <% end %>
-  <div class="scoreboard">
-    <table class="scoreboard-table">
-      <thead>
-        <tr>
-          <th class="team-col"></th>
-          <% detail.innings.each do |n| %>
-            <th><%= n %></th>
-          <% end %>
-          <th>計</th>
-          <th>安</th>
-          <th>失</th>
-        </tr>
-      </thead>
+  <div class="table-zoom" data-controller="table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
+    <div class="table-zoom-bar">
+      <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
+    </div>
+    <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
 
-      <tbody>
-        <tr>
-          <td class="team-col">
-            <span class="team-chip" style="background: <%= @game.team0.color %>"><%= @game.team0.initial %></span>
-            <%= @game.team0.short_name %>
-          </td>
-          <% detail.innings.each do |n| %>
-            <td><%= detail.top_runs(n) %></td>
-          <% end %>
-          <td class="total"><%= @game.team0_score.nil? ? "-" : @game.team0_score %></td>
-          <td><%= detail.top_hits %></td>
-          <td><%= detail.top_errors %></td>
-        </tr>
-        <tr>
-          <td class="team-col">
-            <span class="team-chip" style="background: <%= @game.team1.color %>"><%= @game.team1.initial %></span>
-            <%= @game.team1.short_name %>
-          </td>
-          <% detail.innings.each do |n| %>
-            <td><%= detail.bottom_runs(n) %></td>
-          <% end %>
-          <td class="total"><%= @game.team1_score.nil? ? "-" : @game.team1_score %></td>
-          <td><%= detail.bottom_hits %></td>
-          <td><%= detail.bottom_errors %></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="scoreboard" data-table-zoom-target="panel">
+      <table class="scoreboard-table">
+        <thead>
+          <tr>
+            <th class="team-col"></th>
+            <% detail.innings.each do |n| %>
+              <th><%= n %></th>
+            <% end %>
+            <th>計</th>
+            <th>安</th>
+            <th>失</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td class="team-col">
+              <span class="team-chip" style="background: <%= @game.team0.color %>"><%= @game.team0.initial %></span>
+              <%= @game.team0.short_name %>
+            </td>
+            <% detail.innings.each do |n| %>
+              <td><%= detail.top_runs(n) %></td>
+            <% end %>
+            <td class="total"><%= @game.team0_score.nil? ? "-" : @game.team0_score %></td>
+            <td><%= detail.top_hits %></td>
+            <td><%= detail.top_errors %></td>
+          </tr>
+          <tr>
+            <td class="team-col">
+              <span class="team-chip" style="background: <%= @game.team1.color %>"><%= @game.team1.initial %></span>
+              <%= @game.team1.short_name %>
+            </td>
+            <% detail.innings.each do |n| %>
+              <td><%= detail.bottom_runs(n) %></td>
+            <% end %>
+            <td class="total"><%= @game.team1_score.nil? ? "-" : @game.team1_score %></td>
+            <td><%= detail.bottom_hits %></td>
+            <td><%= detail.bottom_errors %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <dl class="scoreboard-meta">
