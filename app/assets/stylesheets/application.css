@@ -402,12 +402,32 @@ ul.list li {
 .standings-table th,
 .standings-table td {
   text-align: center;
-  overflow-wrap: break-word;
+  white-space: nowrap;
 }
 
 .standings-table th.col-team,
 .standings-table td.col-team {
   text-align: left;
+}
+
+/* Wrapping instead of scrolling just traded one unreadable layout for
+   another (○●○ splitting mid-cell, "勝ち点" stacking letter by letter).
+   Fitting rank + team + the 6-team results grid on one line without
+   either wrapping or scrolling is realistic; fitting that AND 6-8 more
+   stat columns is not without shrinking text past legibility. So those
+   trailing columns (試合/勝利/敗戦/引分/勝ち点/勝率 or 総観衆/平均観衆,
+   whichever cell-toggle has selected) are hidden outside "拡大表示" —
+   the zoomed overlay has the room to show them on one line at a normal
+   size. :not([hidden]) still defers to cell-toggle's own results-vs-
+   attendance choice once zoomed. */
+.standings-table [data-cell-toggle-target="resultsColumn"],
+.standings-table [data-cell-toggle-target="attendanceColumn"] {
+  display: none;
+}
+
+.table-zoom.is-zoomed .standings-table [data-cell-toggle-target="resultsColumn"]:not([hidden]),
+.table-zoom.is-zoomed .standings-table [data-cell-toggle-target="attendanceColumn"]:not([hidden]) {
+  display: table-cell;
 }
 
 /* table-layout: fixed takes a percentage width literally (unlike auto
