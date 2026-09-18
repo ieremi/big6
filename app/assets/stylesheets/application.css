@@ -643,6 +643,19 @@ body.table-zoom-open {
   background: #111827;
 }
 
+/* table-layout: fixed (the default, unzoomed sizing) is what keeps the
+   table from ever exceeding its container — but that guarantee comes from
+   force-splitting columns evenly regardless of content, which at nowrap
+   can clip/overlap text if a column ends up narrower than what's in it.
+   Zoomed, there's no such requirement (the panel already scrolls both
+   ways), so let the table size itself to its actual nowrap content
+   instead — wider than the panel is fine, that's what the scroll is for. */
+.table-zoom.is-zoomed .standings-table {
+  table-layout: auto;
+  width: auto;
+  min-width: 100%;
+}
+
 .table-zoom.is-zoomed .standings-table th,
 .table-zoom.is-zoomed .standings-table td,
 .table-zoom.is-zoomed .scoreboard-table th,
