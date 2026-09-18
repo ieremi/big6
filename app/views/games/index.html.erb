@@ -15,6 +15,16 @@
       <button type="button" class="period-btn" data-action="search-filter#checkAllUniversities">すべて</button>
       <button type="button" class="period-btn" data-action="search-filter#clearUniversities">クリア</button>
     </div>
+    <div class="period-toolbar">
+      <span class="muted">条件:</span>
+      <%= tag.button "いずれかが出場", type: "button",
+            class: [ "period-btn", ("active" if @university_mode != "and") ],
+            data: { mode: "or", search_filter_target: "universityModeButton", action: "search-filter#setUniversityMode" } %>
+      <%= tag.button "対戦のみ", type: "button",
+            class: [ "period-btn", ("active" if @university_mode == "and") ],
+            data: { mode: "and", search_filter_target: "universityModeButton", action: "search-filter#setUniversityMode" } %>
+      <%= hidden_field_tag :university_mode, @university_mode, data: { search_filter_target: "universityModeInput" } %>
+    </div>
     <div class="checkbox-group">
       <% @universities.each do |u| %>
         <label class="checkbox-label" data-shortcut="<%= u.initial %>" data-shortcut-label="<%= u.short_name %>を切替">
@@ -24,16 +34,6 @@
           <kbd><%= u.initial %></kbd>
         </label>
       <% end %>
-    </div>
-    <div class="checkbox-group">
-      <label class="checkbox-label">
-        <%= radio_button_tag :university_mode, "or", @university_mode != "and" %>
-        いずれかが出場（OR）
-      </label>
-      <label class="checkbox-label">
-        <%= radio_button_tag :university_mode, "and", @university_mode == "and" %>
-        選択した大学同士の対戦のみ（AND）
-      </label>
     </div>
   </fieldset>
 
