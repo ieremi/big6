@@ -17,10 +17,10 @@
     </div>
     <div class="period-toolbar">
       <span class="muted">条件:</span>
-      <%= tag.button "いずれかが出場", type: "button",
+      <%= tag.button "いずれかが出場 (or)", type: "button",
             class: [ "period-btn", ("active" if @university_mode != "and") ],
             data: { mode: "or", search_filter_target: "universityModeButton", action: "search-filter#setUniversityMode" } %>
-      <%= tag.button "対戦のみ", type: "button",
+      <%= tag.button "対戦のみ (and)", type: "button",
             class: [ "period-btn", ("active" if @university_mode == "and") ],
             data: { mode: "and", search_filter_target: "universityModeButton", action: "search-filter#setUniversityMode" } %>
       <%= hidden_field_tag :university_mode, @university_mode, data: { search_filter_target: "universityModeInput" } %>
