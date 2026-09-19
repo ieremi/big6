@@ -46,6 +46,7 @@ class MatchupsController < ApplicationController
         return
       end
 
+      @game_members_by_university = @game.game_members.includes(:player).group_by(&:university_id)
       @scoreboard = GameScoreboard.new(@game)
       @official_scoreboard = LeagueOfficialScoreboard.new(@game)
       render "games/show" and return

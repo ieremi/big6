@@ -1,0 +1,112 @@
+<%
+  content_for :title, "選手一覧 - Big6"
+  content_for :description, "東京六大学野球の選手・スタッフの名簿（1872年入学〜）"
+%>
+
+<h1>選手一覧</h1>
+
+<%= form_with url: players_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+  <fieldset>
+    <legend>キーワード</legend>
+    <%= search_field_tag :q, @keyword, placeholder: "氏名・よみ・出身高校", class: "keyword-input", autocomplete: "off" %>
+  </fieldset>
+
+  <fieldset>
+    <legend>大学</legend>
+    <div class="period-toolbar">
+      <button type="button" class="period-btn" data-action="search-filter#checkAllUniversities">すべて</button>
+      <button type="button" class="period-btn" data-action="search-filter#clearUniversities">クリア</button>
+    </div>
+    <div class="checkbox-group">
+      <% @universities.each do |u| %>
+        <label class="checkbox-label" data-shortcut="<%= u.initial %>" data-shortcut-label="<%= u.short_name %>を切替">
+          <%= check_box_tag "university_ids[]", u.id, @selected_university_ids.include?(u.id), data: { search_filter_target: "universityCheckbox" } %>
+          <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+          <%= u.short_name %>
+          <kbd><%= u.initial %></kbd>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>入学年</legend>
+    <div class="period-toolbar">
+      <div class="year-range">
+        <%= number_field_tag :start_year, @start_year, placeholder: "開始年", min: 1872, max: Date.current.year, data: { search_filter_target: "yearInput" } %>
+        〜
+        <%= number_field_tag :end_year, @end_year, placeholder: "終了年", min: 1872, max: Date.current.year, data: { search_filter_target: "yearInput" } %>
+      </div>
+      <button type="button" class="period-btn" data-action="search-filter#clearYears">クリア</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>絞り込み</legend>
+    <div class="period-toolbar">
+      <%= select_tag :role,
+            options_for_select([ [ "役割：すべて", "" ] ] + PlayersHelper::ROLE_GROUP_LABELS.map { |key, label| [ label, key ] }, @role_group),
+            "aria-label": "役割" %>
+      <%= select_tag :status,
+            options_for_select([ [ "在籍：すべて", "" ], [ "現役", "active" ], [ "卒業生", "alumni" ] ], @status),
+            "aria-label": "在籍状況" %>
+    </div>
+  </fieldset>
+
+  <noscript><%= submit_tag "検索" %></noscript>
+<% end %>
+
+<p class="muted">
+  <%= number_with_delimiter(@total_count) %>人
+  <% if @last_page > 1 %>（<%= @page %> / <%= @last_page %> ページ）<% end %>
+</p>
+
+<% if @players.any? %>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>大学</th>
+          <th>氏名</th>
+          <th>入学年</th>
+          <th>役割</th>
+          <th>位置</th>
+          <th>投打</th>
+          <th>出身高校</th>
+          <th>在籍</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @players.each do |player| %>
+          <tr>
+            <td>
+              <span class="team-chip" style="background: <%= player.university.color %>"><%= player.university.initial %></span>
+              <%= player.university.short_name %>
+            </td>
+            <td><%= link_to player.name, player_path(player) %></td>
+            <td><%= player.enter_year || "—" %></td>
+            <td><%= player.role %></td>
+            <td><%= player.position %></td>
+            <td><%= hands_label(player) %></td>
+            <td><%= player.high_school %></td>
+            <td><%= enrollment_label(player.enrollment_status) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @last_page > 1 %>
+    <nav class="pagination" aria-label="ページ送り">
+      <% if @page > 1 %>
+        <%= link_to "← 前へ", players_page_path(@page - 1), rel: "prev" %>
+      <% end %>
+      <span class="muted"><%= @page %> / <%= @last_page %></span>
+      <% if @page < @last_page %>
+        <%= link_to "次へ →", players_page_path(@page + 1), rel: "next" %>
+      <% end %>
+    </nav>
+  <% end %>
+<% else %>
+  <p>条件に合う選手はいません。</p>
+<% end %>

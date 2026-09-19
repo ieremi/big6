@@ -1,0 +1,91 @@
+<%
+  title = "#{@player.name}（#{@player.university.short_name}）"
+  content_for :title, "#{title} - Big6"
+  content_for :description, [ @player.university.name, ("#{@player.enter_year}年入学" if @player.enter_year), @player.role, @player.position ].compact.join(" ")
+%>
+
+<h1>
+  <span class="team-chip" style="background: <%= @player.university.color %>"><%= @player.university.initial %></span>
+  <%= @player.name %>
+</h1>
+<% if @player.name_kana.present? %>
+  <p class="muted"><%= @player.name_kana %></p>
+<% end %>
+
+<dl class="scoreboard-meta">
+  <div>
+    <dt>大学</dt>
+    <dd><%= link_to @player.university.name, university_path(@player.university.slug) %></dd>
+  </div>
+  <% if @player.enter_year %>
+    <div>
+      <dt>入学年</dt>
+      <dd>
+        <%= link_to "#{@player.enter_year}年", players_path(university_ids: [ @player.university_id ], start_year: @player.enter_year, end_year: @player.enter_year) %>
+      </dd>
+    </div>
+  <% end %>
+  <% if @player.role.present? %>
+    <div><dt>役割</dt><dd><%= @player.role %></dd></div>
+  <% end %>
+  <% if @player.position.present? %>
+    <div><dt>位置</dt><dd><%= @player.position %></dd></div>
+  <% end %>
+  <% if hands_label(@player).present? %>
+    <div><dt>投打</dt><dd><%= hands_label(@player) %></dd></div>
+  <% end %>
+  <% if @player.high_school.present? %>
+    <div><dt>出身高校</dt><dd><%= @player.high_school %></dd></div>
+  <% end %>
+  <% if @player.faculty.present? %>
+    <div><dt>学部</dt><dd><%= @player.faculty %></dd></div>
+  <% end %>
+  <% if enrollment_label(@player.enrollment_status) %>
+    <div><dt>在籍</dt><dd><%= enrollment_label(@player.enrollment_status) %></dd></div>
+  <% end %>
+</dl>
+
+<p class="muted">
+  <%= link_to "Scorebookで成績を見る →", "https://big6scorebook.jp/member/#{@player.scorebook_id}", target: "_blank", rel: "noopener noreferrer" %>
+</p>
+
+<h2 class="card-heading">ベンチ入りした試合</h2>
+
+<% if @game_members.any? %>
+  <p class="muted">Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です。</p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>試合</th>
+          <th>背番号</th>
+          <th>学年</th>
+          <th>役割</th>
+          <th>打順</th>
+          <th>守備</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @game_members.each do |member| %>
+          <% game = member.game %>
+          <tr>
+            <td><%= game.played_on %></td>
+            <td>
+              <%= link_to "#{game.season.title} #{game.team0.short_name} vs #{game.team1.short_name}（#{game.game_number}回戦）", player_game_path(game) %>
+            </td>
+            <td><%= member.uniform_number %></td>
+            <td><%= member.grade %></td>
+            <td><%= member.role %></td>
+            <td><%= member.batting_order %></td>
+            <td><%= member.fielding_position %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="muted">ベンチ入りの記録はありません（Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です）。</p>
+<% end %>
+
+<p><%= link_to "← 選手一覧へ", players_path %></p>

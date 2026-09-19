@@ -128,6 +128,8 @@
   <% end %>
 <% end %>
 
+<%= render "games/members", game: @game, members_by_university: @game_members_by_university %>
+
 <% if (url = league_official_game_url(@game)) %>
   <p class="muted">
     <%= link_to "東京六大学野球連盟のページで見る →", url, target: "_blank", rel: "noopener noreferrer" %>

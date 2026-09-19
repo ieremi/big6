@@ -1,0 +1,37 @@
+<%# Each team's roster for the game (bench included), from Scorebook. Only games from 2021 on have one. %>
+<% [ game.team0, game.team1 ].each do |team| %>
+  <% members = GameMember.roster_order(members_by_university.fetch(team.id, [])) %>
+  <% next if members.empty? %>
+
+  <h2 class="card-heading">
+    <span class="team-chip" style="background: <%= team.color %>"><%= team.initial %></span>
+    <%= team.short_name %> ベンチ入りメンバー
+  </h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>背番号</th>
+          <th>氏名</th>
+          <th>学年</th>
+          <th>役割</th>
+          <th>打順</th>
+          <th>守備</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% members.each do |member| %>
+          <tr>
+            <td><%= member.uniform_number %></td>
+            <td><%= link_to member.player.name, player_path(member.player) %></td>
+            <td><%= member.grade %></td>
+            <td><%= member.role %></td>
+            <td><%= member.batting_order %></td>
+            <td><%= member.fielding_position %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

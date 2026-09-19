@@ -1,0 +1,31 @@
+<%# The university's current roster: staff from its latest game roster, then students by entry year. %>
+<% if roster.staff.any? || roster.student_count.positive? %>
+  <h2 class="card-heading">部員名簿</h2>
+
+  <% if roster.staff.any? %>
+    <h3>監督・コーチ・部長</h3>
+    <ul class="list">
+      <% roster.staff.each do |member| %>
+        <li>
+          <%= link_to member.player.name, player_path(member.player) %>
+          <span class="muted"><%= member.role %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% roster.students_by_entry_year.each do |enter_year, players| %>
+    <h3><%= enter_year ? "#{enter_year}年入学" : "入学年不明" %>（<%= players.size %>人）</h3>
+    <ul class="list">
+      <% players.each do |player| %>
+        <li>
+          <%= link_to player.name, player_path(player) %>
+          <% details = [ (player.role unless player.role == "選手"), player.position, hands_label(player).presence, player.high_school ].compact_blank %>
+          <% if details.any? %><span class="muted"><%= details.join("・") %></span><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <p><%= link_to "この大学の選手をすべて見る →", players_path(university_ids: [ university.id ]) %></p>
+<% end %>

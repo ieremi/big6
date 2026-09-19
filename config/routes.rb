@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   get "universities/:slug/og.png", to: "universities#show_og_image", as: :university_og_image
   resources :universities, only: [ :index, :show ], param: :slug
 
+  resources :players, only: [ :index, :show ]
+
   get "games/og.png", to: "games#index_og_image", as: :games_index_og_image
   get "games/:team0_slug/:year/:term/og.png", to: "games#team_og_image", as: :team_season_og_image,
     constraints: { team0_slug: /[a-z]+/, year: /\d{4}/, term: /spring|autumn/ }

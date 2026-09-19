@@ -7,6 +7,7 @@ class UniversitiesController < ApplicationController
     @university = University.find_by!(slug: params[:slug])
     @opponents = University.where.not(id: @university.id).order(:position).to_a
     @record = TeamRecord.new(@university)
+    @roster = UniversityRoster.new(@university)
 
     latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
     @periods = {
