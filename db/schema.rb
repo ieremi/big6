@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_054040) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "game_members", force: :cascade do |t|
+    t.integer "batting_order"
+    t.datetime "created_at", null: false
+    t.string "fielding_position"
+    t.bigint "game_id", null: false
+    t.integer "grade"
+    t.bigint "player_id", null: false
+    t.string "role"
+    t.integer "uniform_number"
+    t.bigint "university_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "player_id"], name: "index_game_members_on_game_id_and_player_id", unique: true
+    t.index ["game_id"], name: "index_game_members_on_game_id"
+    t.index ["player_id"], name: "index_game_members_on_player_id"
+    t.index ["university_id"], name: "index_game_members_on_university_id"
+  end
 
   create_table "games", force: :cascade do |t|
     t.integer "attendance"
@@ -48,6 +65,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_054040) do
     t.index ["year"], name: "index_gdp_per_capita_years_on_year", unique: true
   end
 
+  create_table "players", force: :cascade do |t|
+    t.string "batting_hand"
+    t.datetime "created_at", null: false
+    t.integer "enrollment_status"
+    t.integer "enter_year"
+    t.string "faculty"
+    t.integer "grade"
+    t.string "high_school"
+    t.string "name", null: false
+    t.string "name_kana"
+    t.string "pitching_hand"
+    t.string "position"
+    t.string "role"
+    t.bigint "scorebook_id", null: false
+    t.bigint "university_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["enter_year"], name: "index_players_on_enter_year"
+    t.index ["scorebook_id"], name: "index_players_on_scorebook_id", unique: true
+    t.index ["university_id", "enter_year"], name: "index_players_on_university_id_and_enter_year"
+    t.index ["university_id"], name: "index_players_on_university_id"
+  end
+
   create_table "prime_minister_terms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "end_on"
@@ -77,7 +116,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_054040) do
     t.index ["slug"], name: "index_universities_on_slug", unique: true
   end
 
+  add_foreign_key "game_members", "games"
+  add_foreign_key "game_members", "players"
+  add_foreign_key "game_members", "universities"
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "universities", column: "team0_id"
   add_foreign_key "games", "universities", column: "team1_id"
+  add_foreign_key "players", "universities"
 end

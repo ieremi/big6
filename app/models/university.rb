@@ -1,4 +1,6 @@
 class University < ApplicationRecord
+  has_many :players, dependent: :destroy
+
   COLORS = {
     "waseda" => "#7c1d3f",
     "keio" => "#1e2a5e",

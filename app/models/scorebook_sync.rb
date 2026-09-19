@@ -44,6 +44,7 @@ class ScorebookSync
 
     @season.update!(scorebook_games: scorebook_games)
     import_games(scorebook_games)
+    GameMemberImport.call(Season.where(id: @season.id))
   end
 
   private
