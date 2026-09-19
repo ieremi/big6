@@ -1,6 +1,7 @@
 require "net/http"
 require "uri"
 require "json"
+require_relative "season_batch"
 
 url = URI("https://big6scorebook.jp/api/game/search")
 
@@ -18,12 +19,18 @@ latest_date = Game.where("played_on <= ?", Date.current).maximum(:played_on)
 latest_games = latest_date ? Game.where(played_on: latest_date).includes(:season) : Game.none
 latest_game = latest_games.first
 
-if latest_game && latest_games.all? { |g| g.team0_score.present? && g.team1_score.present? }
+# FROM_YEAR/SEASON_LIMIT restrict this run to a fixed slice of seasons
+# (see season_batch.rb); nil means the normal "latest onward" behavior.
+batch = SeasonBatch.pairs
+
+if batch&.empty?
+  puts "no seasons from FROM_YEAR onward; nothing to scrape."
+elsif batch.nil? && latest_game && latest_games.all? { |g| g.team0_score.present? && g.team1_score.present? }
   puts "All known games on #{latest_date} (#{latest_game.season.title}) are already final; nothing to re-scrape."
 else
-  start_year = latest_game&.season&.year || Season.minimum(:year) || 1925
-  start_term = latest_game&.season&.term || "spring"
-  end_year = Season.maximum(:year) || start_year
+  start_year = batch ? batch.first[0] : latest_game&.season&.year || Season.minimum(:year) || 1925
+  start_term = batch ? batch.first[1] : latest_game&.season&.term || "spring"
+  end_year = batch ? batch.last[0] : Season.maximum(:year) || start_year
   term_order = { "spring" => 0, "autumn" => 1 }
 
   (start_year..end_year).each do |year|
@@ -32,6 +39,7 @@ else
       "秋" => "autumn"
     }.each do |term_ja, term|
       next if year == start_year && term_order[term] < term_order[start_term]
+      next if batch && !batch.include?([ year, term ])
 
       url.query = URI.encode_www_form(
         league: "リーグ戦",
