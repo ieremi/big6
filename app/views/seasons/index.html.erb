@@ -35,7 +35,7 @@
             <% if @games_counts[season.id].to_i > 0 %>
               <%= link_to season.title, season_path(season.year, season.term) %>
               <span class="muted">
-                (<%= @games_counts[season.id] %>試合<% if @attendance_totals[season.id] %>・総観衆<%= number_with_delimiter(@attendance_totals[season.id]) %>人<% end %>)
+                (<%= @games_counts[season.id] %>試合)
               </span>
               ・<%= link_to "順位表", standings_season_path(season.year, season.term) %>
               <% @season_tags[season.id]&.each do |t| %>

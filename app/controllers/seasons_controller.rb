@@ -1,40 +1,16 @@
 class SeasonsController < ApplicationController
-  TAGS_CACHE_EXPIRY = 6.hours
+  # Past seasons never change and each season's tags are cached on their own
+  # (keyed on that season's latest game update), so this can be long — a short
+  # expiry would recompute every season at once, which is what used to exhaust
+  # CPU/memory and get the instance restarted (502s).
+  TAGS_CACHE_EXPIRY = 7.days
 
   def index
-    @seasons = Season.order(year: :desc, term: :desc).to_a
+    # Only the columns the list needs: scorebook_data/scorebook_games are large
+    # JSONB blobs (~20MB across all seasons) that nothing on this page reads.
+    @seasons = Season.select(:id, :year, :term).order(year: :desc, term: :desc).to_a
     @games_counts = Game.group(:season_id).count
-
-    # Both of these scan every season's full game history, so they're worth
-    # computing together, once, behind a cache — previously attendance_totals
-    # ran uncached on every request (parsing ~20MB of JSONB each time) and
-    # season_tags recomputed with an N+1 (one query per season) on every
-    # cache miss, which combined into occasional 502s under load.
-    cache_key = "season_index_data/v2/#{Game.maximum(:updated_at)&.to_i}"
-    data = Rails.cache.fetch(cache_key, expires_in: TAGS_CACHE_EXPIRY) do
-      universities = University.order(:position).to_a
-      games_by_season = Game.includes(:team0, :team1).order(:played_on, :game_number).group_by(&:season_id)
-
-      attendance_totals = @seasons.each_with_object({}) do |season, totals|
-        next if season.scorebook_games.blank?
-
-        total = season.scorebook_games.sum do |g|
-          value = g["attendance"].to_s.delete(",").strip
-          value.match?(/\A\d+\z/) ? value.to_i : 0
-        end
-        totals[season.id] = total if total.positive?
-      end
-
-      season_tags = @seasons.each_with_object({}) do |season, tags|
-        games = games_by_season[season.id] || []
-        tags[season.id] = SeasonTags.new(season, games: games, universities: universities).tags
-      end
-
-      { attendance_totals: attendance_totals, season_tags: season_tags }
-    end
-
-    @attendance_totals = data[:attendance_totals]
-    @season_tags = data[:season_tags]
+    @season_tags = season_tags_by_id(@seasons)
 
     @selected_tags = Array(params[:tags]) & SeasonTags::LABELS
     if @selected_tags.any?
@@ -82,5 +58,28 @@ class SeasonsController < ApplicationController
     stripe_colors = Standings.new(season).rows.map { |row| row.university.color }
 
     send_data SiteOgImage.new(title: title, subtitle: subtitle, stripe_colors: stripe_colors).to_png, type: "image/png", disposition: "inline"
+  end
+
+  private
+
+  # { season_id => [Tag, ...] } for the seasons that have games. Each season is
+  # cached separately (one multi-read), so a warm request loads no game or
+  # scorebook data at all; on a miss only that one season is loaded and
+  # computed, keeping peak memory to a single season instead of every game
+  # plus every season's JSONB at once.
+  def season_tags_by_id(seasons)
+    latest_update_by_season = Game.group(:season_id).maximum(:updated_at)
+    season_id_by_key = seasons.filter_map do |season|
+      updated_at = latest_update_by_season[season.id]
+      [ "season_tags/v3/#{season.id}/#{updated_at.to_i}", season.id ] if updated_at
+    end.to_h
+
+    universities = nil
+    tags_by_key = Rails.cache.fetch_multi(*season_id_by_key.keys, expires_in: TAGS_CACHE_EXPIRY) do |key|
+      universities ||= University.order(:position).to_a
+      SeasonTags.new(Season.find(season_id_by_key.fetch(key)), universities: universities).tags
+    end
+
+    season_id_by_key.to_h { |key, season_id| [ season_id, tags_by_key.fetch(key) ] }
   end
 end
