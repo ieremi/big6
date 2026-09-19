@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_043424) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_054040) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,6 +38,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_043424) do
     t.index ["season_id"], name: "index_games_on_season_id"
     t.index ["team0_id"], name: "index_games_on_team0_id"
     t.index ["team1_id"], name: "index_games_on_team1_id"
+  end
+
+  create_table "gdp_per_capita_years", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "usd", null: false
+    t.integer "year", null: false
+    t.index ["year"], name: "index_gdp_per_capita_years_on_year", unique: true
+  end
+
+  create_table "prime_minister_terms", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "end_on"
+    t.string "name", null: false
+    t.date "start_on", null: false
+    t.datetime "updated_at", null: false
+    t.index ["start_on"], name: "index_prime_minister_terms_on_start_on"
   end
 
   create_table "seasons", force: :cascade do |t|

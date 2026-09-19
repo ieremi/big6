@@ -36,7 +36,7 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match "内閣総理大臣：村山富市", response.body
-    assert_match(/日本の1人あたりGDP：[\d,]+ USD\/y/, response.body)
+    assert_match "日本の1人あたりGDP：44,000 USD/y", response.body
   end
 
   test "show joins Prime Ministers with an arrow when the office changed during the season" do
