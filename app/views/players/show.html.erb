@@ -50,6 +50,8 @@
   <%= link_to "Scorebookで成績を見る →", "https://big6scorebook.jp/member/#{@player.scorebook_id}", target: "_blank", rel: "noopener noreferrer" %>
 </p>
 
+<%= render "players/stats", stats: @stats %>
+
 <h2 class="card-heading">ベンチ入りした試合</h2>
 
 <% if @game_members.any? %>

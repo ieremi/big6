@@ -58,6 +58,7 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     game.scorebook_game_id = info["id"]
     game.game_order = info["gameOrder"]
     game.game_status = info["gameStatus"]
+    game.counted_in_stats = info["isCounted"] != false
     game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
     game.data_correction_note = team_correction[:note] if team_correction
     game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])

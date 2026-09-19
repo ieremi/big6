@@ -23,6 +23,8 @@ class Player < ApplicationRecord
 
   belongs_to :university
   has_many :game_members, dependent: :destroy
+  has_many :batting_lines, dependent: :destroy
+  has_many :pitching_lines, dependent: :destroy
 
   scope :active, -> { where(enrollment_status: ACTIVE_ENROLLMENT_STATUS) }
   scope :students, -> { where("players.role IS NULL OR players.role NOT IN (?)", STAFF_ROLES) }

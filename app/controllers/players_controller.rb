@@ -21,6 +21,7 @@ class PlayersController < ApplicationController
 
   def show
     @player = Player.includes(:university).find_by!(scorebook_id: params[:id])
+    @stats = PlayerStats.new(@player)
     @game_members = @player.game_members.joins(:game)
       .includes(game: [ :season, :team0, :team1 ])
       .order("games.played_on DESC", "games.game_number DESC")

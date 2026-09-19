@@ -1380,3 +1380,8 @@ legend {
   background: var(--surface);
   color: var(--text);
 }
+
+.stats-total td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}

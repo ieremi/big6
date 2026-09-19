@@ -10,9 +10,38 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_101811) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "batting_lines", force: :cascade do |t|
+    t.integer "ab", default: 0, null: false
+    t.integer "caught_stealing", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "doubles", default: 0, null: false
+    t.integer "fielding_errors", default: 0, null: false
+    t.bigint "game_id", null: false
+    t.integer "gidp", default: 0, null: false
+    t.integer "hits", default: 0, null: false
+    t.integer "home_runs", default: 0, null: false
+    t.integer "pa", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.string "position"
+    t.integer "rbi", default: 0, null: false
+    t.integer "runs", default: 0, null: false
+    t.integer "sacrifices", default: 0, null: false
+    t.integer "stolen_bases", default: 0, null: false
+    t.integer "strikeouts", default: 0, null: false
+    t.integer "total_bases", default: 0, null: false
+    t.integer "triples", default: 0, null: false
+    t.bigint "university_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "walks", default: 0, null: false
+    t.index ["game_id", "player_id"], name: "index_batting_lines_on_game_id_and_player_id", unique: true
+    t.index ["game_id"], name: "index_batting_lines_on_game_id"
+    t.index ["player_id"], name: "index_batting_lines_on_player_id"
+    t.index ["university_id"], name: "index_batting_lines_on_university_id"
+  end
 
   create_table "game_members", force: :cascade do |t|
     t.integer "batting_order"
@@ -33,6 +62,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
 
   create_table "games", force: :cascade do |t|
     t.integer "attendance"
+    t.boolean "counted_in_stats", default: true, null: false
     t.datetime "created_at", null: false
     t.text "data_correction_note"
     t.integer "duration_minutes"
@@ -43,6 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
     t.date "played_on", null: false
     t.bigint "scorebook_game_id"
     t.bigint "season_id", null: false
+    t.datetime "stats_checked_at"
     t.bigint "team0_id", null: false
     t.integer "team0_score"
     t.bigint "team1_id", null: false
@@ -63,6 +94,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
     t.integer "usd", null: false
     t.integer "year", null: false
     t.index ["year"], name: "index_gdp_per_capita_years_on_year", unique: true
+  end
+
+  create_table "pitching_lines", force: :cascade do |t|
+    t.integer "batters_faced", default: 0, null: false
+    t.integer "complete_game", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "earned_runs", default: 0, null: false
+    t.bigint "game_id", null: false
+    t.integer "hits", default: 0, null: false
+    t.integer "home_runs", default: 0, null: false
+    t.integer "losses", default: 0, null: false
+    t.integer "outs", default: 0, null: false
+    t.integer "pitches", default: 0, null: false
+    t.bigint "player_id", null: false
+    t.integer "runs", default: 0, null: false
+    t.integer "shutout", default: 0, null: false
+    t.integer "started", default: 0, null: false
+    t.integer "strikeouts", default: 0, null: false
+    t.bigint "university_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "walks", default: 0, null: false
+    t.integer "wins", default: 0, null: false
+    t.index ["game_id", "player_id"], name: "index_pitching_lines_on_game_id_and_player_id", unique: true
+    t.index ["game_id"], name: "index_pitching_lines_on_game_id"
+    t.index ["player_id"], name: "index_pitching_lines_on_player_id"
+    t.index ["university_id"], name: "index_pitching_lines_on_university_id"
   end
 
   create_table "players", force: :cascade do |t|
@@ -116,11 +173,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_082226) do
     t.index ["slug"], name: "index_universities_on_slug", unique: true
   end
 
+  add_foreign_key "batting_lines", "games"
+  add_foreign_key "batting_lines", "players"
+  add_foreign_key "batting_lines", "universities"
   add_foreign_key "game_members", "games"
   add_foreign_key "game_members", "players"
   add_foreign_key "game_members", "universities"
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "universities", column: "team0_id"
   add_foreign_key "games", "universities", column: "team1_id"
+  add_foreign_key "pitching_lines", "games"
+  add_foreign_key "pitching_lines", "players"
+  add_foreign_key "pitching_lines", "universities"
   add_foreign_key "players", "universities"
 end

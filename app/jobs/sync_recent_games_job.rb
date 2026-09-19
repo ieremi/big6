@@ -26,6 +26,9 @@
 # And scrapes JMA's historical weather data (JmaWeatherScraper) for the
 # (year, month) of each recent game — JMA usually has a day's data up
 # within a day or so, not necessarily the same hour it's played.
+#
+# Finally, fetches each final game's player box score from Scorebook
+# (GameStatsImport) once it has none, for the players' season and career stats.
 class SyncRecentGamesJob < ApplicationJob
   queue_as :default
 
@@ -44,13 +47,23 @@ class SyncRecentGamesJob < ApplicationJob
     end
 
     incomplete_games = games.reject { |game| complete?(game) }
-    return if incomplete_games.empty?
+    if incomplete_games.any?
+      incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
+      incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }
+    end
 
-    incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
-    incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }
+    import_player_stats(games)
   end
 
   private
+
+  # Fetches player box scores for games that are now final but have none yet.
+  # Scorebook can publish them a day late, so a game is retried on each run
+  # while it is inside the lookback window.
+  def import_player_stats(games)
+    pending = Game.needing_stats.where(id: games.map(&:id)).to_a
+    GameStatsImport.call(pending) if pending.any?
+  end
 
   def complete?(game)
     game.team0_score.present? && game.team1_score.present? && GameScoreboard.new(game).innings.any?

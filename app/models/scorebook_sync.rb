@@ -90,6 +90,7 @@ class ScorebookSync
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
       game.game_status = info["gameStatus"]
+      game.counted_in_stats = info["isCounted"] != false
       game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
       game.save!

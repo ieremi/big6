@@ -139,4 +139,43 @@ test "og_image returns 404 for an unknown player" do
 
   assert_response :not_found
 end
+
+test "show displays season and career stats and the per-game lines" do
+  game = games(:one)
+  other = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-08-11", game_number: 2)
+  BattingLine.create!(game: game, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 2, home_runs: 1, rbi: 3)
+  BattingLine.create!(game: other, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 1)
+  PitchingLine.create!(game: game, player: @ochiai, university: @alpha, outs: 10, earned_runs: 3, losses: 1, started: 1)
+
+  get player_url(@ochiai)
+
+  assert_response :success
+  assert_select "h2", "打撃成績"
+  assert_select "h2", "投手成績"
+  assert_select "tr.stats-total td", text: ".375" # 3 hits in 8 at-bats
+  assert_select "tr.stats-total td", text: "3 1/3"
+  assert_select "details.decade summary", text: /打撃 試合別成績（2試合）/
+  assert_select "details.decade summary", text: /投手 試合別成績（1試合）/
+  assert_select "button[data-shortcut=u]", text: /すべて開く/
+  assert_select "details.decade[open]", 0
+end
+
+test "show marks games not counted toward stats" do
+  playoff = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-06-04", game_number: 5, counted_in_stats: false)
+  BattingLine.create!(game: playoff, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 4)
+
+  get player_url(@ochiai)
+
+  assert_select ".season-tag", text: "通算に含まず"
+  assert_select "tr.stats-total td", text: ".---", count: 0
+  assert_select "tr.stats-total td", text: "---" # no counted at-bats, so no average
+end
+
+test "show has no stats sections for a player with no lines" do
+  get player_url(@imazu)
+
+  assert_select "h2", text: "打撃成績", count: 0
+  assert_select "h2", text: "投手成績", count: 0
+  assert_select "details.decade", 0
+end
 end
