@@ -3,7 +3,7 @@
 one:
   season: one
   team0: one
-  team1: one
+  team1: two
   played_on: 2026-08-10
   game_number: 1
   team0_score: 1
@@ -12,7 +12,7 @@ one:
 two:
   season: two
   team0: two
-  team1: two
+  team1: one
   played_on: 2026-08-10
   game_number: 1
   team0_score: 1
