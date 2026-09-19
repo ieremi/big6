@@ -120,4 +120,23 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+test "show points its OG image at the player's image" do
+  get player_url(@ochiai)
+
+  assert_select "meta[property='og:image'][content=?]", player_og_image_url(@ochiai)
+end
+
+test "og_image returns a PNG" do
+  get player_og_image_url(@ochiai)
+
+  assert_response :success
+  assert_equal "image/png", response.media_type
+  assert_equal "\x89PNG".b, response.body.b[0, 4]
+end
+
+test "og_image returns 404 for an unknown player" do
+  get player_og_image_url(id: 1)
+
+  assert_response :not_found
+end
 end

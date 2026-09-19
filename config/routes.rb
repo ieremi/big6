@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   get "universities/:slug/og.png", to: "universities#show_og_image", as: :university_og_image
   resources :universities, only: [ :index, :show ], param: :slug
 
+  get "players/:id/og.png", to: "players#og_image", as: :player_og_image, constraints: { id: /\d+/ }
   resources :players, only: [ :index, :show ]
 
   get "games/og.png", to: "games#index_og_image", as: :games_index_og_image

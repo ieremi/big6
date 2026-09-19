@@ -46,6 +46,11 @@ class Player < ApplicationRecord
     )
   }
 
+  # "右投左打" style; whichever half is known when only one is.
+  def hands_label
+    [ ("#{pitching_hand}投" if pitching_hand), ("#{batting_hand}打" if batting_hand) ].compact.join
+  end
+
   # The Scorebook id is what identifies a player in URLs.
   def to_param
     scorebook_id.to_s

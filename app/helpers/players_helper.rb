@@ -6,9 +6,8 @@ module PlayersHelper
     "other" => "その他（学生コーチ・アナリストなど）"
   }.freeze
 
-  # "右投左打" style; whichever half is known when only one is.
   def hands_label(player)
-    [ ("#{player.pitching_hand}投" if player.pitching_hand), ("#{player.batting_hand}打" if player.batting_hand) ].compact.join
+    player.hands_label
   end
 
   def enrollment_label(status)

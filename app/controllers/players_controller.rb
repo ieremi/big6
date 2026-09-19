@@ -26,6 +26,12 @@ class PlayersController < ApplicationController
       .order("games.played_on DESC", "games.game_number DESC")
   end
 
+  def og_image
+    player = Player.includes(:university).find_by!(scorebook_id: params[:id])
+
+    send_data PlayerOgImage.new(player).to_png, type: "image/png", disposition: "inline"
+  end
+
   private
 
   def filtered_players

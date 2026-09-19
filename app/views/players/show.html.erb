@@ -2,6 +2,7 @@
   title = "#{@player.name}（#{@player.university.short_name}）"
   content_for :title, "#{title} - Big6"
   content_for :description, [ @player.university.name, ("#{@player.enter_year}年入学" if @player.enter_year), @player.role, @player.position ].compact.join(" ")
+  content_for :image_url, player_og_image_url(@player)
 %>
 
 <h1>
