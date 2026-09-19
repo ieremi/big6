@@ -12,14 +12,15 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     GameMember.create!({ game: @game, player: player, university: university }.merge(attributes))
   end
 
-  test "game page lists each team's bench members in collapsible sections, open by default" do
+  test "game page lists each team's bench members in collapsible sections, closed by default" do
     add_member(1, @alpha, "落合 智哉", uniform_number: 27, role: "捕手")
     add_member(2, @beta, "今津 慶介", uniform_number: 6, role: "遊撃手")
 
     get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 
     assert_response :success
-    assert_select "[data-controller=decade-fold] details.decade[open][data-decade-fold-target=decade]", 2
+    assert_select "[data-controller=decade-fold] details.decade[data-decade-fold-target=decade]", 2
+    assert_select "details.decade[open]", 0
     assert_select "details.decade summary", text: /#{Regexp.escape(@alpha.short_name)}（1人）/
     assert_select "details.decade summary", text: /#{Regexp.escape(@beta.short_name)}（1人）/
     assert_select "details.decade a[href=?]", player_path(Player.find_by!(scorebook_id: 1)), text: "落合 智哉"

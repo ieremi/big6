@@ -1,4 +1,4 @@
-<%# Each team's roster for the game (bench included), from Scorebook, in a collapsible section. Only games from 2021 on have one. %>
+<%# Each team's roster for the game (bench included), from Scorebook, in a collapsible section (closed until opened). Only games from 2021 on have one. %>
 <% rosters = [ game.team0, game.team1 ].filter_map do |team|
      members = GameMember.roster_order(members_by_university.fetch(team.id, []))
      [ team, members ] if members.any?
@@ -14,7 +14,7 @@
     </div>
 
     <% rosters.each do |team, members| %>
-      <%= tag.details class: "decade", open: true, data: { decade_fold_target: "decade" } do %>
+      <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
         <summary>
           <span class="team-chip" style="background: <%= team.color %>"><%= team.initial %></span>
           <%= team.short_name %>（<%= members.size %>人）
