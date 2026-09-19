@@ -6,6 +6,18 @@
 
 <h1><%= @season.title %></h1>
 
+<% if @prime_ministers.any? || @gdp_per_capita %>
+  <p class="muted">
+    <% if @prime_ministers.any? %>
+      内閣総理大臣：<%= @prime_ministers.map(&:name).join(" → ") %>
+    <% end %>
+    <% if @prime_ministers.any? && @gdp_per_capita %><br><% end %>
+    <% if @gdp_per_capita %>
+      日本の1人あたりGDP：<%= number_with_delimiter(@gdp_per_capita) %> USD/y
+    <% end %>
+  </p>
+<% end %>
+
 <% if @tags.any? %>
   <p>
     <% @tags.each do |t| %>

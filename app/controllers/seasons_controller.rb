@@ -38,6 +38,8 @@ class SeasonsController < ApplicationController
     end
 
     @weeks = SeasonWeeks.new(@games).weeks
+    @prime_ministers = PrimeMinister.serving_between(*@games.map(&:played_on).minmax)
+    @gdp_per_capita = GdpPerCapita.for_year(@season.year)
     @tags = SeasonTags.new(@season).tags
     @attendance_trend = SeasonAttendanceTrend.new(@season)
   end
