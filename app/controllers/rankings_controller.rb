@@ -1,0 +1,22 @@
+class RankingsController < ApplicationController
+  PER_PAGE = 50
+
+  def index
+    @kind = PlayerRanking::KINDS.include?(params[:kind]) ? params[:kind] : "batting"
+    @seasons = PlayerRanking.seasons_with_stats(@kind).to_a
+    @season = @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] } # nil ranks whole careers
+    @universities = University.order(:position)
+    @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
+
+    ranking = PlayerRanking.new(@kind, season: @season, university_ids: @selected_university_ids.presence)
+    @minimum = ranking.minimum
+    @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"
+    @direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(@kind, @sort)
+    @custom_sort = @sort != "rank" || @direction != "asc" # anything but the ranking's own order
+    entries = ranking.entries_sorted_by(@sort, @direction)
+    @total_count = entries.size
+    @last_page = [ (@total_count / PER_PAGE.to_f).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @last_page)
+    @entries = entries.slice((@page - 1) * PER_PAGE, PER_PAGE) || []
+  end
+end

@@ -94,4 +94,24 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
     %w[obp slg ops total_bases].each { |field| assert_select "p code", text: field }
     assert_match "犠飛は含めていません", response.body
   end
+
+  test "documents the rankings endpoint, its minimums, and gives try-it boxes" do
+    get api_docs_url
+
+    assert_select "h2", text: "ランキング"
+    assert_select "h3 code", text: "/api/v1/rankings/:kind"
+    assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn"
+    assert_select ".api-sandbox input[value=?]", "/rankings/pitching?year=1997&term=autumn&university[]=rikkio"
+    assert_match "30打席・15投球回", response.body
+    assert_match "200打席・100投球回", response.body
+  end
+
+  test "documents the rankings sort and direction parameters and the columns" do
+    get api_docs_url
+
+    assert_select "table td code", text: "sort"
+    assert_select "table td code", text: "direction"
+    assert_match "default_rank", response.body
+    assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn&sort=home_runs"
+  end
 end

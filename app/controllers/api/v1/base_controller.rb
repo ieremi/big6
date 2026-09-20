@@ -7,6 +7,14 @@ module Api
 
       private
 
+      # nil (any university) unless university[] is given; slugs that match no
+      # university leave nobody, as the games search does.
+      def university_ids_from_params
+        return nil if params[:university].blank?
+
+        University.where(slug: Array(params[:university])).pluck(:id)
+      end
+
       def university_json(university)
         {
           slug: university.slug,

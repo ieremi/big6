@@ -1,0 +1,111 @@
+<%
+  kind_title = @kind == "batting" ? "打者ランキング" : "投手ランキング"
+  period_title = @season ? @season.title : "通算"
+  content_for :title, "#{kind_title}（#{period_title}） - Big6"
+  content_for :description, "東京六大学野球の#{kind_title}（#{period_title}、#{ranking_minimum_label(@kind, @minimum)}以上）"
+%>
+
+<h1><%= kind_title %></h1>
+
+<div class="period-toolbar">
+  <% RankingsHelper::KIND_LABELS.each do |kind, label| %>
+    <%= link_to label, rankings_kind_path(kind), class: [ "period-btn", ("active" if @kind == kind) ] %>
+  <% end %>
+</div>
+
+<%= form_with url: ranking_path(@kind), method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+  <fieldset>
+    <legend>期間</legend>
+    <%= select_tag :season,
+          options_for_select([ [ "通算", "" ] ] + @seasons.map { |season| [ season.title, "#{season.year}-#{season.term}" ] }, @season && "#{@season.year}-#{@season.term}"),
+          "aria-label": "期間" %>
+  </fieldset>
+
+  <fieldset>
+    <legend>大学</legend>
+    <div class="period-toolbar">
+      <button type="button" class="period-btn" data-action="search-filter#checkAllUniversities">すべて</button>
+      <button type="button" class="period-btn" data-action="search-filter#clearUniversities">クリア</button>
+    </div>
+    <div class="checkbox-group">
+      <% @universities.each do |u| %>
+        <label class="checkbox-label">
+          <%= check_box_tag "university_ids[]", u.id, @selected_university_ids.include?(u.id), data: { search_filter_target: "universityCheckbox" } %>
+          <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+          <%= u.short_name %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <% if @custom_sort %>
+    <%= hidden_field_tag :sort, @sort %>
+    <%= hidden_field_tag :direction, @direction %>
+  <% end %>
+
+  <noscript><%= submit_tag "表示" %></noscript>
+<% end %>
+
+<p class="muted">
+  <%= @season ? "シーズン" : "通算" %>で<%= ranking_minimum_label(@kind, @minimum) %>以上の<%= @kind == "batting" ? "打者" : "投手" %>が対象です。
+  Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。
+  <% if @kind == "batting" %>OPS ＝ 出塁率 ＋ 長打率（出塁率は犠飛を含めない簡易式です）。<% end %>
+  見出しをクリックすると並べ替えられ、順位もその列の順につけ直されます（同じ値は同順位）。
+</p>
+
+<p class="muted">
+  <%= number_with_delimiter(@total_count) %>人
+  <% if @last_page > 1 %>（<%= @page %> / <%= @last_page %> ページ）<% end %>
+</p>
+
+<% if @entries.any? %>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <% RankingsHelper::COLUMNS.fetch(@kind).each do |key, label| %>
+            <%= ranking_column_header(key, label) %>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @entries.each do |entry| %>
+          <% totals = entry.totals %>
+          <tr>
+            <td><%= entry.rank %></td>
+            <td><%= link_to entry.player.name, player_path(entry.player) %></td>
+            <td>
+              <span class="team-chip" style="background: <%= entry.player.university.color %>"><%= entry.player.university.initial %></span>
+              <%= entry.player.university.short_name %>
+            </td>
+            <% if @kind == "batting" %>
+              <td><%= ops_label(totals.ops) %></td>
+              <td><%= batting_average_label(totals.average) %></td>
+              <td><%= batting_average_label(totals.on_base_percentage) %></td>
+              <td><%= batting_average_label(totals.slugging_percentage) %></td>
+              <td><%= totals.games %></td><td><%= totals.pa %></td><td><%= totals.ab %></td><td><%= totals.hits %></td><td><%= totals.home_runs %></td>
+            <% else %>
+              <td><%= era_label(totals.era) %></td>
+              <td><%= totals.games %></td><td><%= innings_label(totals.outs) %></td><td><%= totals.wins %></td><td><%= totals.losses %></td>
+              <td><%= totals.hits %></td><td><%= totals.strikeouts %></td><td><%= totals.walks %></td><td><%= totals.earned_runs %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @last_page > 1 %>
+    <nav class="pagination" aria-label="ページ送り">
+      <% if @page > 1 %>
+        <%= link_to "← 前へ", rankings_page_path(@page - 1), rel: "prev" %>
+      <% end %>
+      <span class="muted"><%= @page %> / <%= @last_page %></span>
+      <% if @page < @last_page %>
+        <%= link_to "次へ →", rankings_page_path(@page + 1), rel: "next" %>
+      <% end %>
+    </nav>
+  <% end %>
+<% else %>
+  <p>条件に合う選手はいません。</p>
+<% end %>

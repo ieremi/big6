@@ -78,7 +78,7 @@
   <table>
     <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
     <tbody>
-      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。指定した大学が絡む試合のみ</td></tr>
+      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=rikkio&amp;university[]=tokyo</code>）。指定した大学が絡む試合のみ</td></tr>
       <tr><td><code>term</code></td><td><code>spring</code>/<code>autumn</code>（複数指定可）</td></tr>
       <tr><td><code>start_year</code> / <code>end_year</code></td><td>試合日の年の範囲</td></tr>
       <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
@@ -145,7 +145,7 @@
     <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
     <tbody>
       <tr><td><code>q</code></td><td>氏名（姓名の間の空白は無視）・よみ・出身高校のキーワード</td></tr>
-      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。該当する大学がなければ0件</td></tr>
+      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=rikkio&amp;university[]=tokyo</code>）。該当する大学がなければ0件</td></tr>
       <tr><td><code>start_year</code> / <code>end_year</code></td><td>入学年の範囲</td></tr>
       <tr><td><code>role</code></td><td><code>player</code>（選手）/ <code>manager</code>（マネージャー）/ <code>staff</code>（監督・コーチ・部長など）/ <code>other</code>（学生コーチ・アナリストなど）</td></tr>
       <tr><td><code>status</code></td><td><code>active</code>（現役）/ <code>alumni</code>（卒業生）</td></tr>
@@ -188,6 +188,37 @@
 <h3><code>/api/v1/players/:id/og.png</code></h3>
 <p>選手ページのOGP画像（PNG、1200×630）。サイトの選手ページの<code>og:image</code>と同じ画像で、JSONの<code>og_image_url</code>からも辿れます。</p>
 <%= render "image_preview", path: "/players/20236010/og.png", alt: "落合 智哉のOGP画像" %>
+
+<h2>ランキング</h2>
+
+<p class="muted">
+  OPS（打者）と防御率（投手）のランキング。期間は、<code>year</code>と<code>term</code>でシーズンを指定した場合はそのシーズン、指定しなければ通算です。
+  規定として、シーズンは<strong>30打席・15投球回</strong>以上、通算は<strong>200打席・100投球回</strong>以上の選手だけを載せます（レスポンスの<code>minimum</code>）。
+  Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。OPSの出塁率は犠飛を含めない簡易式です。
+  表示される値（OPSは小数第3位、防御率は第2位）が同じ選手は、同じ<code>rank</code>になります。
+</p>
+
+<h3><code>/api/v1/rankings/:kind</code></h3>
+<p>
+  <code>kind</code>は<code>batting</code>（打者。既定の順はOPSの高い順）または<code>pitching</code>（投手。既定の順は防御率の低い順）。ページネーションあり、1ページ100件。
+  <code>batting</code>の各行は<code>ops</code>/<code>obp</code>/<code>slg</code>/<code>average</code>など、<code>pitching</code>の各行は<code>era</code>/<code>innings</code>/<code>wins</code>/<code>losses</code>などを持ちます。
+  <code>player.id</code>は<code>/players/:id</code>と同じ選手IDです。
+</p>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code> / <code>term</code></td><td>シーズンを指定（両方）。省略すると通算。存在しないシーズンは404</td></tr>
+      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=rikkio&amp;university[]=tokyo</code>）。該当する大学がなければ0件</td></tr>
+      <tr><td><code>sort</code></td><td>並べ替える列。<code>batting</code>: <code>rank</code>（既定）/ <code>player</code>（選手名）/ <code>university</code> / <code>ops</code> / <code>average</code> / <code>obp</code> / <code>slg</code> / <code>games</code> / <code>pa</code> / <code>ab</code> / <code>hits</code> / <code>home_runs</code>。<code>pitching</code>: <code>rank</code>（既定）/ <code>player</code> / <code>university</code> / <code>era</code> / <code>games</code> / <code>outs</code> / <code>wins</code> / <code>losses</code> / <code>hits</code> / <code>strikeouts</code> / <code>walks</code> / <code>earned_runs</code>。並べ替えると、<code>rank</code>もその列の順につけ直されます（同じ値は同順位。<code>rank</code>列での並べ替えは既定の順位のまま）。既定の順（OPS／防御率）での順位は、常に<code>default_rank</code>に入っています</td></tr>
+      <tr><td><code>direction</code></td><td><code>asc</code>（小さい順）/ <code>desc</code>（大きい順）。省略すると列ごとの既定（<code>rank</code>・<code>player</code>・<code>university</code>・<code>era</code>は<code>asc</code>、それ以外は<code>desc</code>）。<code>university</code>はリーグの標準順（慶・明・早・法・立・東）</td></tr>
+      <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
+    </tbody>
+  </table>
+</div>
+<%= render "sandbox", path: "/rankings/batting?year=1997&term=autumn" %>
+<%= render "sandbox", path: "/rankings/batting?year=1997&term=autumn&sort=home_runs" %>
+<%= render "sandbox", path: "/rankings/pitching?year=1997&term=autumn&university[]=rikkio" %>
 
 <h2>エラー</h2>
 <p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>

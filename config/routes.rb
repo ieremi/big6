@@ -18,6 +18,7 @@ Rails.application.routes.draw do
       resources :players, only: [ :index, :show ], constraints: { id: /\d+/ }
       get "players/:id/games", to: "players#games", as: :player_games, constraints: { id: /\d+/ }
       get "players/:id/og.png", to: "players#og_image", as: :player_og_image, constraints: { id: /\d+/ }
+      get "rankings/:kind", to: "rankings#show", as: :ranking, constraints: { kind: /batting|pitching/ }
     end
   end
 
@@ -33,6 +34,9 @@ Rails.application.routes.draw do
 
   get "players/:id/og.png", to: "players#og_image", as: :player_og_image, constraints: { id: /\d+/ }
   resources :players, only: [ :index, :show ]
+
+  get "rankings", to: "rankings#index", as: :rankings
+  get "rankings/:kind", to: "rankings#index", as: :ranking, constraints: { kind: /batting|pitching/ }
 
   get "games/og.png", to: "games#index_og_image", as: :games_index_og_image
   get "games/:team0_slug/:year/:term/og.png", to: "games#team_og_image", as: :team_season_og_image,

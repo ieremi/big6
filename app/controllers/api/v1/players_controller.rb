@@ -49,14 +49,6 @@ module Api
         Player.includes(:university).find_by!(scorebook_id: params[:id])
       end
 
-      # nil (any university) unless university[] is given; slugs that match no
-      # university leave nobody, as the games search does.
-      def university_ids_from_params
-        return nil if params[:university].blank?
-
-        University.where(slug: Array(params[:university])).pluck(:id)
-      end
-
       # The id is the player's Scorebook id, as in the site's /players/:id URLs,
       # rather than our internal database id.
       def player_json(player)

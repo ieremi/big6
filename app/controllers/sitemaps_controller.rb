@@ -25,6 +25,8 @@ class SitemapsController < ApplicationController
       Entry.new(loc: games_url, changefreq: "daily", priority: "0.8"),
       Entry.new(loc: universities_url, changefreq: "weekly", priority: "0.6"),
       Entry.new(loc: players_url, changefreq: "weekly", priority: "0.5"),
+      Entry.new(loc: rankings_url, changefreq: "weekly", priority: "0.5"),
+      Entry.new(loc: ranking_url("pitching"), changefreq: "weekly", priority: "0.4"),
       Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3")
     ]
 
