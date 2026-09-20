@@ -28,6 +28,24 @@ module Api
       end
 
       def show
+        game = find_game
+        scoreboard = GameScoreboard.new(game)
+
+        render json: game_json(game, include_id: false).merge(
+          og_image_url: api_v1_game_og_image_url(game.season.year, game.season.term, game.team0.slug, game.team1.slug, game.game_number),
+          scoreboard: scoreboard_json(scoreboard)
+        )
+      end
+
+      # The same image the game page uses for og:image.
+      def og_image
+        send_data OgImages.game(find_game), type: "image/png", disposition: "inline"
+      end
+
+      private
+
+      # The game named by year/term/team0/team1/round; the two teams may be given in either order.
+      def find_game
         season = Season.find_by!(year: params[:year], term: params[:term])
         team0 = University.find_by!(slug: params[:team0])
         team1 = University.find_by!(slug: params[:team1])
@@ -41,12 +59,8 @@ module Api
           .first
         raise ActiveRecord::RecordNotFound unless game
 
-        scoreboard = GameScoreboard.new(game)
-
-        render json: game_json(game, include_id: false).merge(scoreboard: scoreboard_json(scoreboard))
+        game
       end
-
-      private
 
       def scoreboard_json(scoreboard)
         return nil unless scoreboard.present?

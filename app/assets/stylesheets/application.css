@@ -1393,3 +1393,20 @@ legend {
   margin-top: 0.5rem;
   border-radius: 6px;
 }
+
+.api-image img {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  aspect-ratio: 1200 / 630;
+  margin: 0.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--row-alt);
+}
+
+.api-image .sandbox-message {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}

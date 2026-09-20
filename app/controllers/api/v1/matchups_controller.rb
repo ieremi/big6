@@ -16,6 +16,7 @@ module Api
         render json: {
           team0: team0.slug,
           team1: team1.slug,
+          og_image_url: api_v1_matchup_og_image_url(team0.slug, team1.slug, **params.permit(:year, :term).to_h.symbolize_keys),
           wins: { team0.slug => matchup.wins(team0, **opts), team1.slug => matchup.wins(team1, **opts) },
           draws: matchup.draws(**opts),
           percentage: { team0.slug => matchup.percentage(team0, **opts), team1.slug => matchup.percentage(team1, **opts) },
@@ -31,6 +32,18 @@ module Api
             stddev: matchup.duration_stddev_minutes(**opts)
           }
         }
+      end
+
+      # The same image the matchup pages use for og:image: the pair's record for
+      # a season (year and term), for a year (year alone), or over a period
+      # (all, 20, 10, 5, or r for the latest season; "all" when absent).
+      def og_image
+        team0 = University.find_by!(slug: params[:team0_slug])
+        team1 = University.find_by!(slug: params[:team1_slug])
+        season = Season.find_by!(year: params[:year], term: params[:term]) if params[:year].present? && params[:term].present?
+        year = params[:year] if params[:year].present? && !season
+
+        send_data OgImages.matchup(team0, team1, season: season, year: year, period: params[:period]), type: "image/png", disposition: "inline"
       end
     end
   end

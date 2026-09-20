@@ -19,11 +19,12 @@ class PitchingLineTest < ActiveSupport::TestCase
   test "era is nil when no out was recorded" do
     assert_nil PitchingLine.totals([ line(outs: 0, earned_runs: 2) ]).era
   end
-test "innings_label writes outs the way baseball writes innings" do
-  assert_equal "0", PitchingLine.innings_label(0)
-  assert_equal "0 2/3", PitchingLine.innings_label(2)
-  assert_equal "3", PitchingLine.innings_label(9)
-  assert_equal "3 1/3", PitchingLine.innings_label(10)
-  assert_equal "50 1/3", PitchingLine.innings_label(151)
-end
+
+  test "innings_label writes outs the way baseball writes innings" do
+    assert_equal "0", PitchingLine.innings_label(0)
+    assert_equal "0 2/3", PitchingLine.innings_label(2)
+    assert_equal "3", PitchingLine.innings_label(9)
+    assert_equal "3 1/3", PitchingLine.innings_label(10)
+    assert_equal "50 1/3", PitchingLine.innings_label(151)
+  end
 end

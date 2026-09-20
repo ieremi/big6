@@ -1,0 +1,18 @@
+<%# An image endpoint's box: the same request bar and 試す button as the JSON ones, but the image stays
+    hidden until 試す fetches it, and no response text is shown (only "loading" and failure messages).
+    path is relative to /api/v1. %>
+<% url = "/api/v1#{path}" %>
+<div class="api-sandbox api-image" data-controller="api-sandbox" data-api-sandbox-prefix-value="<%= request.base_url %>/api/v1">
+  <div class="sandbox-row">
+    <div class="sandbox-bar">
+      <span class="sandbox-fixed">GET /api/v1</span>
+      <input type="text" class="sandbox-editable" data-api-sandbox-target="path" value="<%= path %>"
+             autocomplete="off" data-action="keydown.enter->api-sandbox#run">
+    </div>
+    <button type="button" class="period-btn" data-action="api-sandbox#run">試す</button>
+  </div>
+  <p class="muted sandbox-message" data-api-sandbox-target="message" hidden></p>
+  <%= link_to url, target: "_blank", rel: "noopener", hidden: true, data: { api_sandbox_target: "previewLink" } do %>
+    <%= tag.img alt: local_assigns.fetch(:alt, "OGP画像"), width: 1200, height: 630, data: { api_sandbox_target: "preview" } %>
+  <% end %>
+</div>

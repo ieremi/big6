@@ -2,13 +2,18 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :universities, only: [ :index, :show ], param: :slug
+      get "universities/:slug/og.png", to: "universities#og_image", as: :university_og_image
       resources :games, only: [ :index ]
       get "games/:year/:term/:team0/:team1/:round", to: "games#show",
+        constraints: { year: /\d{4}/, term: /spring|autumn/, round: /\d+/ }
+      get "games/:year/:term/:team0/:team1/:round/og.png", to: "games#og_image", as: :game_og_image,
         constraints: { year: /\d{4}/, term: /spring|autumn/, round: /\d+/ }
       get "seasons", to: "seasons#index"
       get "seasons/:year/:term", to: "seasons#show", constraints: { year: /\d{4}/, term: /spring|autumn/ }
       get "seasons/:year/:term/standings", to: "seasons#standings", constraints: { year: /\d{4}/, term: /spring|autumn/ }
+      get "seasons/:year/:term/og.png", to: "seasons#og_image", as: :season_og_image, constraints: { year: /\d{4}/, term: /spring|autumn/ }
       get "matchups/:team0_slug/:team1_slug", to: "matchups#show"
+      get "matchups/:team0_slug/:team1_slug/og.png", to: "matchups#og_image", as: :matchup_og_image
       # :id is the player's Scorebook id, the same one the site's /players/:id uses.
       resources :players, only: [ :index, :show ], constraints: { id: /\d+/ }
       get "players/:id/games", to: "players#games", as: :player_games, constraints: { id: /\d+/ }

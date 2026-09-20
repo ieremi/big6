@@ -11,6 +11,7 @@ module Api
         record = TeamRecord.new(university)
 
         render json: university_json(university).merge(
+          og_image_url: api_v1_university_og_image_url(university.slug),
           record: {
             wins: record.wins,
             losses: record.losses,
@@ -20,6 +21,11 @@ module Api
             current_streak: streak_json(record.current_streak)
           }
         )
+      end
+
+      # The same image the university page uses for og:image.
+      def og_image
+        send_data OgImages.university(University.find_by!(slug: params[:slug])), type: "image/png", disposition: "inline"
       end
 
       private

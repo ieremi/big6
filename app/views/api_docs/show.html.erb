@@ -21,6 +21,12 @@
   どちらも名前や色などの詳細が必要な場合は<code>GET /api/v1/universities</code>を一度取得して<code>slug</code>で参照してください。
 </p>
 
+<p class="muted">
+  OGP画像（PNG、1200×630）は、大学・シーズン・試合・対戦カード・選手のそれぞれに<code>…/og.png</code>があり、サイトのページの<code>og:image</code>と同じ画像です。
+  1つずつのJSON（<code>show</code>系）には、その画像のURLが<code>og_image_url</code>として入っています。
+  画像の項目は、最初は画像を表示せず、「試す」を押すとその下に画像を表示します（パスを書き換えれば、別の画像も試せます）。
+</p>
+
 <h2>大学</h2>
 
 <h3><code>/api/v1/universities</code></h3>
@@ -30,6 +36,10 @@
 <h3><code>/api/v1/universities/:slug</code></h3>
 <p>1大学の情報＋通算成績（全対戦相手を合算）。連勝が無い場合、<code>longest_streak</code>/<code>current_streak</code>は<code>null</code>。</p>
 <%= render "sandbox", path: "/universities/rikkio" %>
+
+<h3><code>/api/v1/universities/:slug/og.png</code></h3>
+<p>大学ページのOGP画像。通算の最多連勝と勝率を大学の色で描いたものです。</p>
+<%= render "image_preview", path: "/universities/rikkio/og.png", alt: "立教大学のOGP画像" %>
 
 <h2>シーズン</h2>
 
@@ -47,6 +57,18 @@
 <h3><code>/api/v1/seasons/:year/:term/standings</code></h3>
 <p>そのシーズンの順位表。</p>
 <%= render "sandbox", path: "/seasons/1997/autumn/standings" %>
+
+<h3><code>/api/v1/seasons/:year/:term/og.png</code></h3>
+<p>シーズンページのOGP画像。そのシーズンの順位順に並べた6大学の色と、シーズン名です。</p>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>label</code></td><td>画像に入れる小見出し（任意）。例: <code>label=優勝 慶大</code></td></tr>
+    </tbody>
+  </table>
+</div>
+<%= render "image_preview", path: "/seasons/1997/autumn/og.png", alt: "1997年秋季のOGP画像" %>
 
 <h2>試合</h2>
 
@@ -73,6 +95,10 @@
 </p>
 <%= render "sandbox", path: "/games/1997/autumn/rikkio/tokyo/1" %>
 
+<h3><code>/api/v1/games/:year/:term/:team0/:team1/:round/og.png</code></h3>
+<p>試合ページのOGP画像。2大学の色と、スコア（試合前は「vs」）です。<code>team0</code>/<code>team1</code>は順不同です。</p>
+<%= render "image_preview", path: "/games/1997/autumn/rikkio/tokyo/1/og.png", alt: "1997年秋季 立大対東大 1回戦のOGP画像" %>
+
 <h2>対戦カード</h2>
 
 <h3><code>/api/v1/matchups/:team0_slug/:team1_slug</code></h3>
@@ -87,6 +113,19 @@
   </table>
 </div>
 <%= render "sandbox", path: "/matchups/rikkio/tokyo?year=1997&term=autumn" %>
+
+<h3><code>/api/v1/matchups/:team0_slug/:team1_slug/og.png</code></h3>
+<p>対戦カードのOGP画像。2大学の色と、その期間の勝ち数です。</p>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズン（両方）、または特定の年（<code>year</code>のみ）の勝ち数にする</td></tr>
+      <tr><td><code>period</code></td><td><code>year</code>を指定しないとき、<code>all</code>（通算・省略時）/ <code>20</code> / <code>10</code> / <code>5</code>（直近N年）/ <code>r</code>（直近シーズン）</td></tr>
+    </tbody>
+  </table>
+</div>
+<%= render "image_preview", path: "/matchups/rikkio/tokyo/og.png?period=10", alt: "立大と東大の直近10年のOGP画像" %>
 
 <h2>選手</h2>
 
@@ -146,7 +185,7 @@
 
 <h3><code>/api/v1/players/:id/og.png</code></h3>
 <p>選手ページのOGP画像（PNG、1200×630）。サイトの選手ページの<code>og:image</code>と同じ画像で、JSONの<code>og_image_url</code>からも辿れます。</p>
-<%= render "sandbox", path: "/players/20236010/og.png" %>
+<%= render "image_preview", path: "/players/20236010/og.png", alt: "落合 智哉のOGP画像" %>
 
 <h2>エラー</h2>
 <p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>

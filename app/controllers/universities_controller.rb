@@ -25,13 +25,7 @@ class UniversitiesController < ApplicationController
 
   def show_og_image
     university = University.find_by!(slug: params[:slug])
-    record = TeamRecord.new(university)
 
-    send_data UniversityStatsOgImage.new(
-      university,
-      streak_length: record.longest_streak&.length,
-      rate: record.percentage,
-      subtitle: "for All Seasons"
-    ).to_png, type: "image/png", disposition: "inline"
+    send_data OgImages.university(university), type: "image/png", disposition: "inline"
   end
 end

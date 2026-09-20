@@ -55,11 +55,8 @@ class SeasonsController < ApplicationController
 
   def og_image
     season = Season.find_by!(year: params[:year], term: params[:term])
-    title = "#{season.year} #{season.term.capitalize}"
-    subtitle = params[:label].presence
-    stripe_colors = Standings.new(season).rows.map { |row| row.university.color }
 
-    send_data SiteOgImage.new(title: title, subtitle: subtitle, stripe_colors: stripe_colors).to_png, type: "image/png", disposition: "inline"
+    send_data OgImages.season(season, label: params[:label]), type: "image/png", disposition: "inline"
   end
 
   private
