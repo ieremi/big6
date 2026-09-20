@@ -1,7 +1,6 @@
 require "net/http"
 require "uri"
 require "json"
-require "nokogiri"
 
 # Imports each game's player box score (BattingLine and PitchingLine rows) from
 # its Scorebook game page, which embeds every batter and pitcher of both teams
@@ -20,6 +19,21 @@ class GameStatsImport
 
   def self.call(games, sleep_seconds: SLEEP_SECONDS)
     new(games, sleep_seconds: sleep_seconds).call
+  end
+
+  # The gameStats hash from a game page's HTML ({} when the page has none), or
+  # nil when the page has no embedded data or it can't be parsed. The JSON is
+  # cut out of the page as a string rather than parsing the whole document,
+  # which keeps a long run's memory flat (a DOM per page adds up over 5,000+).
+  def self.game_stats_from(html)
+    html = html.dup.force_encoding(Encoding::UTF_8)
+    marker = html.index('id="__NEXT_DATA__"') or return nil
+    start = html.index(">", marker) or return nil
+    finish = html.index("</script>", start) or return nil
+
+    JSON.parse(html[(start + 1)...finish]).dig("props", "pageProps", "gameStats") || {}
+  rescue JSON::ParserError
+    nil
   end
 
   def initialize(games, sleep_seconds:)
@@ -58,7 +72,7 @@ class GameStatsImport
         totals[:batting_lines] += batting.size
         totals[:pitching_lines] += pitching.size
       end
-      game.update_column(:stats_checked_at, Time.current)
+      Game.where(id: game.id).update_all(stats_checked_at: Time.current) # by id, so a game loaded with only a few columns works
     end
 
     totals
@@ -122,11 +136,8 @@ class GameStatsImport
     sleep(@sleep_seconds)
     return nil unless response.is_a?(Net::HTTPSuccess)
 
-    data = Nokogiri::HTML(response.body).at_css("script#__NEXT_DATA__")&.text
-    return nil unless data
-
-    JSON.parse(data).dig("props", "pageProps", "gameStats") || {}
-  rescue JSON::ParserError, SocketError, Timeout::Error, SystemCallError
+    self.class.game_stats_from(response.body)
+  rescue SocketError, Timeout::Error, SystemCallError
     nil
   end
 end

@@ -126,4 +126,38 @@ class GameStatsImportTest < ActiveSupport::TestCase
     assert_equal 1, @game.batting_lines.count
     assert_nil @game.reload.stats_checked_at
   end
+
+  def page(next_data_tag)
+    "<html><head><title>t</title></head><body><div>ignored</div>#{next_data_tag}<script>other()</script></body></html>"
+  end
+
+  test "game_stats_from cuts the gameStats out of the embedded page data" do
+    html = page(%(<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"gameInfo":{"id":1},"gameStats":{"batterTop":[{"memberId":7}]}}}}</script>))
+
+    assert_equal({ "batterTop" => [ { "memberId" => 7 } ] }, GameStatsImport.game_stats_from(html))
+  end
+
+  test "game_stats_from does not depend on the attribute order or spacing of the script tag" do
+    html = page(%(<script type="application/json"  id="__NEXT_DATA__">{"props":{"pageProps":{"gameStats":{"pitcherTop":[]}}}}</script>))
+
+    assert_equal({ "pitcherTop" => [] }, GameStatsImport.game_stats_from(html))
+  end
+
+  test "game_stats_from returns an empty hash when the page has no player stats" do
+    html = page(%(<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"gameInfo":{}}}}</script>))
+
+    assert_equal({}, GameStatsImport.game_stats_from(html))
+  end
+
+  test "game_stats_from returns nil when there is no embedded data or it is not JSON" do
+    assert_nil GameStatsImport.game_stats_from("<html><body>no data here</body></html>")
+    assert_nil GameStatsImport.game_stats_from(page(%(<script id="__NEXT_DATA__" type="application/json">{not json</script>)))
+    assert_nil GameStatsImport.game_stats_from(page(%(<script id="__NEXT_DATA__" type="application/json">{"props":)))
+  end
+
+  test "game_stats_from reads Japanese text from a binary response body" do
+    html = page(%(<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"gameStats":{"batterTop":[{"nameIdentification":"落合"}]}}}}</script>)).b
+
+    assert_equal "落合", GameStatsImport.game_stats_from(html).dig("batterTop", 0, "nameIdentification")
+  end
 end

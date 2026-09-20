@@ -24,8 +24,11 @@ class GameMemberImport
     university_ids = university_ids_by_scorebook_team_id
     totals = { games: 0, members: 0, skipped: 0 }
 
-    @seasons.find_each do |season|
-      games_by_scorebook_id = season.games.where.not(scorebook_game_id: nil).index_by(&:scorebook_game_id)
+    # One season at a time: each carries a whole season of games as JSON, and
+    # find_each would hold every season (up to 1,000 at once) in memory together.
+    @seasons.pluck(:id).each do |season_id|
+      season = Season.find(season_id)
+      games_by_scorebook_id = season.games.where.not(scorebook_game_id: nil).select(:id, :scorebook_game_id).index_by(&:scorebook_game_id)
 
       season.scorebook_games.each do |info|
         game = games_by_scorebook_id[info["id"]]
