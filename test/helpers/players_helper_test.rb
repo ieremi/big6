@@ -34,4 +34,10 @@ class PlayersHelperTest < ActionView::TestCase
     assert_equal beta.short_name, opponent_name(BattingLine.new(game: game, university: alpha))
     assert_equal alpha.short_name, opponent_name(BattingLine.new(game: game, university: beta))
   end
+
+  test "ops_label is written like a batting average" do
+    assert_equal ".763", ops_label(0.7631)
+    assert_equal "1.024", ops_label(1.0243)
+    assert_equal "---", ops_label(nil)
+  end
 end

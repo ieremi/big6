@@ -59,6 +59,19 @@ class GameStatsImportTest < ActiveSupport::TestCase
     assert_equal [ 27, 1 ], PitchingLine.find_by!(player: @ochiai).values_at(:outs, :complete_game)
   end
 
+  test "works total bases out from the hits, since Scorebook's tb is often 0" do
+    # a double, a triple, and a home run: 2 + 3 + 4 bases
+    import({ "batterTop" => [ batter(20231007, 2, "hb" => 3, "twob" => 1, "threeb" => 1, "hrb" => 1, "tb" => 0) ] })
+
+    assert_equal 2 + 3 + 4, BattingLine.find_by!(player: @imazu).total_bases
+  end
+
+  test "total bases ignore Scorebook's tb even when it is filled in" do
+    import({ "batterTop" => [ batter(20231007, 2, "hb" => 2, "twob" => 1, "threeb" => 0, "hrb" => 0, "tb" => 99) ] })
+
+    assert_equal 3, BattingLine.find_by!(player: @imazu).total_bases # a single and a double
+  end
+
   test "reads innings pitched however Scorebook writes them" do
     [
       [ "9 2/3", 0, 29 ], # the fraction is in the text

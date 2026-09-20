@@ -5,7 +5,7 @@
     <table>
       <thead>
         <tr>
-          <th>シーズン</th><th>打率</th><th>試合</th><th>打席</th><th>打数</th><th>安打</th><th>二塁打</th><th>三塁打</th><th>本塁打</th>
+          <th>シーズン</th><th>打率</th><th title="出塁率＋長打率">OPS</th><th>試合</th><th>打席</th><th>打数</th><th>安打</th><th>二塁打</th><th>三塁打</th><th>本塁打</th>
           <th>打点</th><th>得点</th><th>三振</th><th>四死球</th><th>犠打・犠飛</th><th>盗塁</th><th>併殺打</th><th>失策</th>
         </tr>
       </thead>
@@ -23,6 +23,7 @@
       </tbody>
     </table>
   </div>
+  <p class="muted">OPS ＝ 出塁率 ＋ 長打率。出塁率は（安打＋四死球）÷（打数＋四死球）で計算しています。犠飛だけの記録がないため、犠飛は含めていません。</p>
 <% end %>
 
 <% if stats.pitching? %>

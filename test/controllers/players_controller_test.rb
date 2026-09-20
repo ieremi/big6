@@ -161,6 +161,21 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_select "details.decade[open]", 0
   end
 
+  test "show gives OPS next to the batting average, with how the on-base part is worked out" do
+    game = games(:one)
+    other = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-08-11", game_number: 2)
+    BattingLine.create!(game: game, player: @ochiai, university: @alpha, pa: 5, ab: 4, hits: 2, doubles: 1, total_bases: 5, walks: 1)
+    BattingLine.create!(game: other, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 1, total_bases: 1)
+
+    get player_url(@ochiai)
+
+    assert_select "th", text: "OPS"
+    # AB 8, hits 3, walks 1, total bases 6: on-base 4/9, slugging 6/8, OPS 1.194
+    assert_select "tr.stats-total td", text: "1.194"
+    assert_select "tr.stats-total td", text: ".375"
+    assert_select "p.muted", text: /犠飛は含めていません/
+  end
+
   test "show marks games not counted toward stats" do
     playoff = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-06-04", game_number: 5, counted_in_stats: false)
     BattingLine.create!(game: playoff, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 4)

@@ -100,6 +100,7 @@ module Api
       def batting_totals_json(totals)
         {
           games: totals.games, average: totals.average,
+          obp: totals.on_base_percentage, slg: totals.slugging_percentage, ops: totals.ops,
           **batting_counts_json(totals)
         }
       end
@@ -116,7 +117,7 @@ module Api
       def batting_counts_json(source)
         {
           pa: source.pa, ab: source.ab, runs: source.runs, hits: source.hits, doubles: source.doubles, triples: source.triples,
-          home_runs: source.home_runs, rbi: source.rbi, strikeouts: source.strikeouts, walks: source.walks,
+          home_runs: source.home_runs, total_bases: source.total_bases, rbi: source.rbi, strikeouts: source.strikeouts, walks: source.walks,
           sacrifices: source.sacrifices, stolen_bases: source.stolen_bases, gidp: source.gidp, fielding_errors: source.fielding_errors
         }
       end

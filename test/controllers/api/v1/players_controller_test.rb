@@ -145,6 +145,30 @@ class Api::V1::PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "show gives on-base, slugging, OPS, and total bases with the batting average" do
+    game = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-05-02", game_number: 1)
+    BattingLine.create!(game: game, player: @ochiai, university: @alpha, pa: 5, ab: 4, hits: 2, doubles: 1, total_bases: 3, walks: 1)
+
+    get api_v1_player_url(@ochiai)
+
+    [ json["batting"]["career"], json["batting"]["seasons"].first ].each do |totals|
+      assert_in_delta 0.5, totals["average"], 0.0001    # 2 / 4
+      assert_in_delta 0.6, totals["obp"], 0.0001        # (2 + 1) / (4 + 1)
+      assert_in_delta 0.75, totals["slg"], 0.0001       # 3 / 4
+      assert_in_delta 1.35, totals["ops"], 0.0001
+      assert_equal 3, totals["total_bases"]
+    end
+  end
+
+  test "games includes the total bases of each batting line" do
+    game = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-05-02", game_number: 1)
+    BattingLine.create!(game: game, player: @ochiai, university: @alpha, hits: 2, doubles: 1, total_bases: 3)
+
+    get api_v1_player_games_url(@ochiai)
+
+    assert_equal 3, json.first["batting"]["total_bases"]
+  end
+
   # ---- games
 
   test "games merges the roster entry, batting line, and pitching line of each game, newest first" do

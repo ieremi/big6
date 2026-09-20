@@ -87,4 +87,11 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "p.muted code", text: "og_image_url"
   end
+
+  test "documents obp, slg, and ops, and that sacrifice flies are left out of on-base" do
+    get api_docs_url
+
+    %w[obp slg ops total_bases].each { |field| assert_select "p code", text: field }
+    assert_match "犠飛は含めていません", response.body
+  end
 end

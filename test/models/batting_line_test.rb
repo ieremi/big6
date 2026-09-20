@@ -19,4 +19,38 @@ class BattingLineTest < ActiveSupport::TestCase
     assert_nil BattingLine.totals([ line(ab: 0, hits: 0) ]).average
     assert_nil BattingLine.totals([]).average
   end
+
+  # AB 8, hits 3, walks 1, total bases 6 across two games.
+  def ops_totals
+    BattingLine.totals([ line(ab: 4, hits: 2, walks: 1, total_bases: 5), line(ab: 4, hits: 1, walks: 0, total_bases: 1) ])
+  end
+
+  test "on-base percentage is hits plus walks over at-bats plus walks" do
+    assert_in_delta 4 / 9.0, ops_totals.on_base_percentage, 0.0001
+  end
+
+  test "slugging percentage is total bases over at-bats" do
+    assert_in_delta 6 / 8.0, ops_totals.slugging_percentage, 0.0001
+  end
+
+  test "ops is on-base plus slugging, worked out from the summed totals" do
+    assert_in_delta 4 / 9.0 + 6 / 8.0, ops_totals.ops, 0.0001
+  end
+
+  test "with walks but no at-bats, on-base is 1.0 and slugging and ops are nil" do
+    totals = BattingLine.totals([ line(ab: 0, hits: 0, walks: 2) ])
+
+    assert_in_delta 1.0, totals.on_base_percentage, 0.0001
+    assert_nil totals.slugging_percentage
+    assert_nil totals.ops
+  end
+
+  test "with no plate appearances at all, every rate is nil" do
+    totals = BattingLine.totals([])
+
+    assert_nil totals.average
+    assert_nil totals.on_base_percentage
+    assert_nil totals.slugging_percentage
+    assert_nil totals.ops
+  end
 end

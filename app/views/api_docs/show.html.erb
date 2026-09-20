@@ -165,7 +165,9 @@
   <code>batting</code>（打撃）と<code>pitching</code>（投手）は、成績が無ければ<code>null</code>。あれば、
   シーズンごとの<code>seasons</code>（古い順）と通算の<code>career</code>を返します。
   優勝決定戦は、Scorebook に合わせて、どちらにも含めません。
-  <code>average</code>（打率）と<code>era</code>（防御率）は計算値で、打数・アウトが0のときは<code>null</code>。
+  <code>average</code>（打率）・<code>obp</code>（出塁率）・<code>slg</code>（長打率）・<code>ops</code>（<code>obp</code>＋<code>slg</code>）と<code>era</code>（防御率）は計算値で、
+  分母（打数・アウト）が0のときは<code>null</code>。<code>total_bases</code>は塁打数です。
+  <code>obp</code>は（安打＋四死球）÷（打数＋四死球）で、元データに犠飛だけの記録がないため、犠飛は含めていません（犠打と犠飛を合わせた<code>sacrifices</code>だけがあります）。
   <code>innings</code>は<code>outs</code>（アウト数）を「3 1/3」のように書いたものです。
 </p>
 <p class="muted">

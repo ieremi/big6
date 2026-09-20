@@ -99,11 +99,15 @@ class GameStatsImport
     rows.uniq { |attributes| attributes[:player_id] }
   end
 
+  # total_bases is worked out from the hits rather than read from Scorebook's tb,
+  # which is 0 on about a third of its rows (and matches the hits wherever it isn't).
   def batting_attributes(row)
+    hits, doubles, triples, home_runs = row["hb"].to_i, row["twob"].to_i, row["threeb"].to_i, row["hrb"].to_i
+
     {
       position: row["position"].presence,
-      pa: row["pa"].to_i, ab: row["ab"].to_i, runs: row["rb"].to_i, hits: row["hb"].to_i,
-      doubles: row["twob"].to_i, triples: row["threeb"].to_i, home_runs: row["hrb"].to_i, total_bases: row["tb"].to_i,
+      pa: row["pa"].to_i, ab: row["ab"].to_i, runs: row["rb"].to_i, hits: hits,
+      doubles: doubles, triples: triples, home_runs: home_runs, total_bases: hits + doubles + 2 * triples + 3 * home_runs,
       rbi: row["rbi"].to_i, strikeouts: row["sob"].to_i, walks: row["bbTotal"].to_i, sacrifices: row["sac"].to_i,
       stolen_bases: row["sb"].to_i, caught_stealing: row["cs"].to_i, gidp: row["gidp"].to_i, fielding_errors: row["error"].to_i
     }

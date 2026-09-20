@@ -33,6 +33,11 @@ module PlayersHelper
     format("%.3f", average).sub(/\A0(?=\.)/, "")
   end
 
+  # OPS is written like a batting average: ".763", or "1.024" above 1.
+  def ops_label(ops)
+    batting_average_label(ops)
+  end
+
   # Innings pitched from outs: 10 outs is "3 1/3".
   def innings_label(outs)
     PitchingLine.innings_label(outs)
