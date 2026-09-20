@@ -1,12 +1,12 @@
 <%# The stat cells of a pitching row for a PitchingLine::Totals, in the column order of the stats tables. %>
-<td><%= era_label(totals.era) %></td>
+<%= sort_cell era_label(totals.era), totals.era %>
 <td><%= totals.games %></td>
 <td><%= totals.started %></td>
 <td><%= totals.complete_game %></td>
 <td><%= totals.shutout %></td>
 <td><%= totals.wins %></td>
 <td><%= totals.losses %></td>
-<td><%= innings_label(totals.outs) %></td>
+<%= sort_cell innings_label(totals.outs), totals.outs %>
 <td><%= totals.hits %></td>
 <td><%= totals.home_runs %></td>
 <td><%= totals.strikeouts %></td>

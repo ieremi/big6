@@ -1,4 +1,4 @@
-<%# The university's current roster: staff from its latest game roster, then students by entry year. %>
+<%# The university's current roster: staff from its latest game roster, then the students in a table sorted in the browser (newest entry year first at first). %>
 <% if roster.staff.any? || roster.student_count.positive? %>
   <h2 class="card-heading">部員名簿</h2>
 
@@ -14,17 +14,27 @@
     </ul>
   <% end %>
 
-  <% roster.students_by_entry_year.each do |enter_year, players| %>
-    <h3><%= enter_year ? "#{enter_year}年入学" : "入学年不明" %>（<%= players.size %>人）</h3>
-    <ul class="list">
-      <% players.each do |player| %>
-        <li>
-          <%= link_to player.name, player_path(player) %>
-          <% details = [ (player.role unless player.role == "選手"), player.position, hands_label(player).presence, player.high_school ].compact_blank %>
-          <% if details.any? %><span class="muted"><%= details.join("・") %></span><% end %>
-        </li>
-      <% end %>
-    </ul>
+  <% if roster.student_count.positive? %>
+    <h3>部員（<%= roster.student_count %>人）</h3>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr><%= sortable_headers PlayersHelper::ROSTER_COLUMNS, *%w[入学年 氏名 役割 位置 投打 出身高校] %></tr>
+        </thead>
+        <tbody>
+          <% roster.students_by_entry_year.values.flatten.each do |player| %>
+            <tr>
+              <%= sort_cell player.enter_year || "—", player.enter_year %>
+              <%= sort_cell link_to(player.name, player_path(player)), player.name_kana.presence || player.name %>
+              <%= sort_cell player.role, PlayerSearch.role_rank(player.role) %>
+              <%= sort_cell player.position, PlayerSearch.position_rank(player.position) %>
+              <%= sort_cell hands_label(player), PlayerSearch.hands_rank(player) %>
+              <td><%= player.high_school %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 
   <p><%= link_to "この大学の選手をすべて見る →", players_path(university_ids: [ university.id ]) %></p>

@@ -1420,3 +1420,18 @@ legend {
 .sort-link:hover {
   text-decoration: underline;
 }
+
+/* Headings of tables sorted in the browser (the sortable-table controller). */
+th.sortable .sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+th.sortable .sort-button:hover {
+  color: var(--accent);
+}

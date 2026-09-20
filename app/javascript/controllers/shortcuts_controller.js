@@ -19,11 +19,15 @@ export default class extends Controller {
 
     if (!this.helpTarget.hidden) return
 
-    const el = document.querySelector(`[data-shortcut="${window.CSS.escape(event.key)}"]`)
-    if (el) {
-      event.preventDefault()
-      el.click()
-    }
+    const matches = Array.from(document.querySelectorAll(`[data-shortcut="${window.CSS.escape(event.key)}"]`))
+    if (matches.length === 0) return
+
+    event.preventDefault()
+    // A key normally does one thing: the first element that has it. The headings
+    // of sortable tables mark themselves data-shortcut-all, so that one key sorts
+    // the same column of every table on the page.
+    const targets = matches[0].hasAttribute("data-shortcut-all") ? matches : [ matches[0] ]
+    targets.forEach((el) => el.click())
   }
 
   backdropClick(event) {
@@ -49,11 +53,15 @@ export default class extends Controller {
 
   renderHelpList() {
     const items = Array.from(document.querySelectorAll("[data-shortcut]"))
+    const seen = new Set()
 
     this.helpListTarget.innerHTML = items
       .map((el) => {
         const key = el.dataset.shortcut
         const label = el.dataset.shortcutLabel || el.textContent.trim()
+        // The same key and label on several tables is one line of help.
+        if (seen.has(`${key}\t${label}`)) return ""
+        seen.add(`${key}\t${label}`)
         const li = document.createElement("li")
         const kbd = document.createElement("kbd")
         kbd.textContent = key

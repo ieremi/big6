@@ -66,14 +66,16 @@
     <table>
       <thead>
         <tr>
-          <th>大学</th>
-          <th>氏名</th>
-          <th>入学年</th>
-          <th>役割</th>
-          <th>位置</th>
-          <th>投打</th>
-          <th>出身高校</th>
-          <th>在籍</th>
+          <%# Unsorted, the players are newest entry year first. %>
+          <% sort, direction = @sort ? [ @sort, @direction ] : [ "enter_year", "desc" ] %>
+          <%= sortable_link_header("university", "大学", "U", sort: sort, direction: direction) %>
+          <%= sortable_link_header("name", "氏名", "N", sort: sort, direction: direction) %>
+          <%= sortable_link_header("enter_year", "入学年", "Y", sort: sort, direction: direction, first: "desc") %>
+          <%= sortable_link_header("role", "役割", "O", sort: sort, direction: direction) %>
+          <%= sortable_link_header("position", "位置", "P", sort: sort, direction: direction) %>
+          <%= sortable_link_header("hands", "投打", "B", sort: sort, direction: direction) %>
+          <%= sortable_link_header("high_school", "出身高校", "S", sort: sort, direction: direction) %>
+          <%= sortable_link_header("status", "在籍", "E", sort: sort, direction: direction) %>
         </tr>
       </thead>
       <tbody>

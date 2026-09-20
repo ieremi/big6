@@ -5,10 +5,10 @@
         <% if local_assigns[:show_season] %>
           <%= sortable_game_header("season", "シーズン", "S") %>
         <% end %>
-        <th>日付</th>
-        <th>回戦</th>
+        <%= sortable_game_header("date", "日付", "D") %>
+        <%= sortable_game_header("round", "回戦", "N") %>
         <%= sortable_game_header("card", "カード", "C") %>
-        <th>観衆</th>
+        <%= sortable_game_header("attendance", "観衆", "A", first: "desc") %>
       </tr>
     </thead>
 

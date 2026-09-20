@@ -1,4 +1,6 @@
 class MatchupsController < ApplicationController
+  include GameSortable
+
   CACHE_EXPIRY = 6.hours
 
   def index
@@ -52,8 +54,7 @@ class MatchupsController < ApplicationController
       render "games/show" and return
     end
 
-    @sort = %w[season card].include?(params[:sort]) ? params[:sort] : nil
-    @sort_direction = params[:direction] == "desc" ? "desc" : "asc"
+    read_game_sort
     @games = sort_games_array(@matchup.games_for(season: @season, year: @year), @sort, @sort_direction)
 
     if @season.nil? && @year.nil?
@@ -85,6 +86,7 @@ class MatchupsController < ApplicationController
 
   private
 
+  # The same orders as GameSortable#apply_game_sort, for a list already loaded.
   def sort_games_array(games, sort, direction)
     return games unless sort
 
@@ -93,11 +95,17 @@ class MatchupsController < ApplicationController
     case sort
     when "season"
       games.sort_by { |g| [ g.season.year * multiplier, (g.season.term == "autumn" ? 1 : 0) * multiplier, g.played_on, g.game_number ] }
+    when "date"
+      games.sort_by { |g| [ g.played_on.jd * multiplier, g.game_number * multiplier ] }
+    when "round"
+      games.sort_by { |g| [ g.game_number * multiplier, g.played_on ] }
     when "card"
       games.sort_by do |g|
         lo, hi = [ g.team0.position, g.team1.position ].sort
         [ lo * multiplier, hi * multiplier, g.played_on, g.game_number ]
       end
+    when "attendance"
+      games.sort_by { |g| [ g.attendance.nil? ? 1 : 0, g.attendance.to_i * multiplier, g.played_on, g.game_number ] }
     end
   end
 

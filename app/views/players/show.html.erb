@@ -57,16 +57,10 @@
 <% if @game_members.any? %>
   <p class="muted">Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です。</p>
   <div class="table-scroll">
-    <table>
+    <table data-controller="sortable-table">
       <thead>
         <tr>
-          <th>日付</th>
-          <th>試合</th>
-          <th>背番号</th>
-          <th>学年</th>
-          <th>役割</th>
-          <th>打順</th>
-          <th>守備</th>
+          <%= sortable_headers PlayersHelper::BENCH_COLUMNS, *%w[日付 試合 背番号 学年 役割 打順 守備] %>
         </tr>
       </thead>
       <tbody>

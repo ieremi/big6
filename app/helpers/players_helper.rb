@@ -52,4 +52,56 @@ module PlayersHelper
     game = line.game
     (game.team0_id == line.university_id ? game.team1 : game.team0).short_name
   end
+
+  # The columns of the sortable tables on the player page: heading => [shortcut,
+  # direction of the first click]. Batting columns have capital shortcuts and
+  # pitching columns lower-case ones. A column that two tables have (the season
+  # and the game-by-game table) has one shortcut, which sorts both; the date and
+  # opponent shortcuts are shared by every table on the page.
+  BATTING_COLUMNS = {
+    "シーズン" => [ "D", "desc" ], "日付" => [ "D", "desc" ], "相手" => [ "V", "asc" ],
+    "打率" => [ "A", "desc" ], "OPS" => [ "O", "desc" ], "試合" => [ "G", "desc" ], "打席" => [ "P", "desc" ], "打数" => [ "B", "desc" ],
+    "安打" => [ "H", "desc" ], "二塁打" => [ "N", "desc" ], "三塁打" => [ "E", "desc" ], "本塁打" => [ "M", "desc" ], "打点" => [ "I", "desc" ],
+    "得点" => [ "R", "desc" ], "三振" => [ "K", "desc" ], "四死球" => [ "W", "desc" ], "犠打・犠飛" => [ "C", "desc" ], "盗塁" => [ "S", "desc" ],
+    "併殺打" => [ "L", "desc" ], "失策" => [ "F", "desc" ]
+  }.freeze
+
+  PITCHING_COLUMNS = {
+    "シーズン" => [ "D", "desc" ], "日付" => [ "D", "desc" ], "相手" => [ "V", "asc" ],
+    "防御率" => [ "e", "asc" ], "登板" => [ "g", "desc" ], "先発" => [ "s", "desc" ], "完投" => [ "c", "desc" ], "完封" => [ "x", "desc" ],
+    "勝" => [ "w", "desc" ], "敗" => [ "l", "desc" ], "結果" => [ "y", "asc" ], "投球回" => [ "i", "desc" ], "打者" => [ "t", "desc" ],
+    "球数" => [ "p", "desc" ], "被安打" => [ "h", "desc" ], "被本塁打" => [ "m", "desc" ], "奪三振" => [ "k", "desc" ], "与四死球" => [ "b", "desc" ],
+    "失点" => [ "r", "desc" ], "自責点" => [ "a", "desc" ]
+  }.freeze
+
+  BENCH_COLUMNS = {
+    "日付" => [ "D", "asc" ], "試合" => [ "V", "asc" ], "背番号" => [ "U", "asc" ], "学年" => [ "Y", "asc" ],
+    "役割" => [ "T", "asc" ], "打順" => [ "Q", "asc" ], "守備" => [ "Z", "asc" ]
+  }.freeze
+
+  # The roster on a university page: the same shortcuts as the players page.
+  ROSTER_COLUMNS = {
+    "入学年" => [ "Y", "desc" ], "氏名" => [ "N", "asc" ], "役割" => [ "O", "asc" ],
+    "位置" => [ "P", "asc" ], "投打" => [ "B", "asc" ], "出身高校" => [ "S", "asc" ]
+  }.freeze
+
+  HEADING_TITLES = { "OPS" => "出塁率＋長打率" }.freeze
+
+  # The headings for these columns (labels of one of the column tables above), in order.
+  def sortable_headers(columns, *labels)
+    safe_join(labels.map do |label|
+      shortcut, first = columns.fetch(label)
+      sortable_column_header(label, shortcut, first: first, title: HEADING_TITLES[label])
+    end)
+  end
+
+  # Season rows sort in time order: 1997 spring, then autumn.
+  def season_sort_value(season)
+    season.year + (season.term == "autumn" ? 0.5 : 0)
+  end
+
+  # A pitching line's result sorts wins first, then losses, then none.
+  def pitching_result_sort_value(line)
+    line.wins.positive? ? 0 : (line.losses.positive? ? 1 : nil)
+  end
 end

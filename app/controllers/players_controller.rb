@@ -13,7 +13,9 @@ class PlayersController < ApplicationController
     @total_count = search.players.count
     @last_page = [ (@total_count / PER_PAGE.to_f).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @last_page)
-    @players = search.ordered.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @sort = PlayerSearch::SORT_KEYS.include?(params[:sort]) ? params[:sort] : nil
+    @direction = @sort && params[:direction] == "desc" ? "desc" : "asc"
+    @players = search.ordered(sort: @sort, direction: @direction).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
   end
 
   def show

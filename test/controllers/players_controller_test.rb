@@ -169,7 +169,7 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
 
     get player_url(@ochiai)
 
-    assert_select "th", text: "OPS"
+    assert_select "th[title=?] button", "出塁率＋長打率", text: /OPS/
     # AB 8, hits 3, walks 1, total bases 6: on-base 4/9, slugging 6/8, OPS 1.194
     assert_select "tr.stats-total td", text: "1.194"
     assert_select "tr.stats-total td", text: ".375"
@@ -193,5 +193,190 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "打撃成績", count: 0
     assert_select "h2", text: "投手成績", count: 0
     assert_select "details.decade", 0
+  end
+
+  # ---- sorting the table by any column
+
+  def sorted_names(sort, direction = nil)
+    get players_url, params: { sort: sort, direction: direction }.compact
+    assert_response :success
+    listed_names
+  end
+
+  # Every player with a reading, so the order by name doesn't depend on how the
+  # database compares kanji.
+  def give_readings
+    @old.update!(name_kana: "ヤマダ タロウ")
+    @coach.update!(name_kana: "ヒノ アイロウ")
+  end
+
+  test "index sorts by the reading of the name" do
+    give_readings
+
+    assert_equal [ "今津 慶介", "落合 智哉", "日野 愛郎", "山田 太郎" ], sorted_names("name", "asc")
+    assert_equal [ "山田 太郎", "日野 愛郎", "落合 智哉", "今津 慶介" ], sorted_names("name", "desc")
+  end
+
+  test "index sorts by entry year, with those without one last either way, equal years in the usual order" do
+    assert_equal [ "山田 太郎", "落合 智哉", "今津 慶介", "日野 愛郎" ], sorted_names("enter_year", "asc")
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("enter_year", "desc")
+  end
+
+  test "index sorts by university in the league's order" do
+    assert_equal [ "落合 智哉", "山田 太郎", "日野 愛郎", "今津 慶介" ], sorted_names("university", "asc")
+    assert_equal [ "今津 慶介", "落合 智哉", "山田 太郎", "日野 愛郎" ], sorted_names("university", "desc")
+  end
+
+  test "index sorts positions in fielding order, not alphabetically, with blanks last" do
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("position", "asc") # 捕手, 遊撃手
+    assert_equal [ "今津 慶介", "落合 智哉", "山田 太郎", "日野 愛郎" ], sorted_names("position", "desc")
+  end
+
+  test "index sorts roles with players before staff" do
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("role", "asc")
+    assert_equal [ "日野 愛郎", "落合 智哉", "今津 慶介", "山田 太郎" ], sorted_names("role", "desc")
+  end
+
+  test "index sorts by status and by hands, and leaves blank high schools and hands last" do
+    @ochiai.update!(pitching_hand: "左", batting_hand: "右")
+    @imazu.update!(pitching_hand: "右", batting_hand: "右")
+
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("status", "asc")
+    assert_equal [ "日野 愛郎", "山田 太郎", "落合 智哉", "今津 慶介" ], sorted_names("status", "desc")
+    assert_equal [ "今津 慶介", "落合 智哉", "山田 太郎", "日野 愛郎" ], sorted_names("hands", "asc")
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("hands", "desc")
+    assert_equal "日野 愛郎", sorted_names("high_school", "asc").last
+    assert_equal "日野 愛郎", sorted_names("high_school", "desc").last
+  end
+
+  test "index ignores a sort it does not know, and a direction without a sort" do
+    default = [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ]
+
+    assert_equal default, sorted_names("bogus", "desc")
+    get players_url, params: { direction: "desc" }
+    assert_equal default, listed_names
+  end
+
+  test "index headings are sort links with a capital-letter shortcut each" do
+    get players_url, params: { q: "落合" }
+
+    { "university" => "U", "name" => "N", "enter_year" => "Y", "role" => "O", "position" => "P",
+      "hands" => "B", "high_school" => "S", "status" => "E" }.each do |key, shortcut|
+      assert_select "th.sortable a[data-shortcut=?][href*=?]", shortcut, "sort=#{key}"
+    end
+    assert_select "th.sortable a[href*=?]", "q=", 8 # the search is kept
+  end
+
+  test "index shows entry year, newest first, as sorted when nothing is asked for, and a second click reverses" do
+    get players_url
+
+    assert_select "th.sortable.sorted-desc a[data-shortcut=Y][href*=?]", "direction=asc"
+    assert_select "th.sortable.sorted-desc, th.sortable.sorted-asc", 1
+
+    get players_url, params: { sort: "name", direction: "asc" }
+
+    assert_select "th.sortable.sorted-asc a[data-shortcut=N][href*=?]", "direction=desc"
+    assert_select "th[aria-sort=ascending]", 1
+    assert_select "th.sortable.sorted-desc", 0
+  end
+
+  test "index paging keeps the sort" do
+    50.times { |i| create_player(30000000 + i, @beta, "選手#{i}", name_kana: "センシュ#{i.to_s.rjust(2, '0')}", enter_year: 2020) }
+
+    get players_url, params: { sort: "name", direction: "desc" }
+
+    assert_select "nav.pagination a[rel=next][href*=?]", "sort=name"
+    assert_select "nav.pagination a[rel=next][href*=?]", "direction=desc"
+  end
+
+  # ---- the player page's tables are sorted in the browser
+
+  def stats_for_ochiai
+    game = games(:one)
+    other = Game.create!(season: seasons(:two), team0: @alpha, team1: @beta, played_on: "2026-09-12", game_number: 1)
+    BattingLine.create!(game: game, player: @ochiai, university: @alpha, pa: 5, ab: 4, hits: 2, walks: 1)
+    BattingLine.create!(game: other, player: @ochiai, university: @alpha, pa: 4, ab: 4, hits: 1)
+    PitchingLine.create!(game: game, player: @ochiai, university: @alpha, outs: 10, earned_runs: 3, wins: 1, started: 1)
+    PitchingLine.create!(game: other, player: @ochiai, university: @alpha, outs: 4, earned_runs: 0, losses: 1)
+    GameMember.create!(game: game, player: @ochiai, university: @alpha, uniform_number: 27, grade: 3, role: "捕手", batting_order: 5, fielding_position: "捕")
+  end
+
+  test "show puts every table in a sortable-table, each with sort buttons and shortcut keys" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    assert_select "table[data-controller=sortable-table]", 5 # batting and pitching seasons, both game tables, the bench
+    assert_select "table[data-controller=sortable-table] th.sortable button[data-action=?]", "sortable-table#sort", minimum: 40
+    assert_select "th.sortable button[data-shortcut][data-shortcut-all]", minimum: 40
+  end
+
+  test "show gives batting capital shortcuts and pitching lower-case ones" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    shortcuts = ->(labels) { labels.map { |label| css_select("th.sortable button").find { |button| button.text.strip.start_with?("#{label} ") }["data-shortcut"] } }
+    assert_equal %w[A O P H M], shortcuts.call(%w[打率 OPS 打席 安打 本塁打])
+    assert_equal %w[e w l i k], shortcuts.call(%w[防御率 勝 敗 投球回 奪三振])
+  end
+
+  test "show shares a shortcut between the tables that have the column, and never uses one twice for different columns" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    by_shortcut = css_select("th.sortable button[data-shortcut]").group_by { |button| button["data-shortcut"] }
+    # D is the date or season of every table, V the opponent or game
+    assert_equal 5, by_shortcut.fetch("D").size
+    assert_equal 3, by_shortcut.fetch("V").size # both game tables and the bench
+    # the batting season and game tables both have 安打, and so on: two of each
+    assert_equal 2, by_shortcut.fetch("H").size
+    # otherwise one key is one column, told by its heading
+    by_shortcut.except("D", "V").each do |key, buttons|
+      assert_equal 1, buttons.map { |button| button.text.strip.delete_suffix(" #{key}") }.uniq.size, "#{key} is used for different columns: #{buttons.map(&:text)}"
+    end
+  end
+
+  test "show does not take a key that the page or the site already uses" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    sort_keys = css_select("th.sortable button[data-shortcut]").map { |button| button["data-shortcut"] }.uniq
+    other_keys = css_select("[data-shortcut]").reject { |el| el.name == "button" && el["class"].to_s.include?("sort-button") }.map { |el| el["data-shortcut"] }
+    assert_empty sort_keys & other_keys # 0-8, -, u and f
+  end
+
+  test "show keeps the totals row fixed and gives cells their sort values" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    assert_select "tr.stats-total[data-sort-fixed]", 2
+    assert_select "table td[data-sort-value=?]", "2026" # the spring season sorts by year
+    assert_select "table td[data-sort-value=?]", "2026.5" # and the autumn one half a year later
+    assert_select "table td[data-sort-value=?]", "10" # innings 3 1/3, as outs
+    assert_select "td[data-sort-value=?]", "0.5", text: ".500" # the batting average sorts as a number, not as ".500"
+  end
+
+  test "show gives the bench table the same date shortcut and its own for the other columns" do
+    stats_for_ochiai
+
+    get player_url(@ochiai)
+
+    { "日付" => "D", "試合" => "V", "背番号" => "U", "学年" => "Y", "役割" => "T", "打順" => "Q", "守備" => "Z" }.each do |label, shortcut|
+      assert_select "table:last-of-type th.sortable button[data-shortcut=?]", shortcut, text: /\A#{label} /
+    end
+  end
+
+  test "no two elements on the players page share a shortcut key, the headings' keys included" do
+    University.create!(name: "Rikkio University", short_name: "Rikkio", slug: "rikkio", position: 4)
+
+    get players_url
+
+    keys = css_select("[data-shortcut]").map { |element| element["data-shortcut"] }
+    assert_operator keys.size, :>, 10
+    assert_equal [], keys.tally.select { |_, count| count > 1 }.keys
   end
 end

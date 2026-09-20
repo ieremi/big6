@@ -1,6 +1,6 @@
 <%# The stat cells of a batting row for a BattingLine::Totals, in the column order of the stats tables. %>
-<td><%= batting_average_label(totals.average) %></td>
-<td><%= ops_label(totals.ops) %></td>
+<%= sort_cell batting_average_label(totals.average), totals.average %>
+<%= sort_cell ops_label(totals.ops), totals.ops %>
 <td><%= totals.games %></td>
 <td><%= totals.pa %></td>
 <td><%= totals.ab %></td>

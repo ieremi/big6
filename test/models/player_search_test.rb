@@ -58,4 +58,42 @@ class PlayerSearchTest < ActiveSupport::TestCase
   test "players is unordered and counts without the university join" do
     assert_equal 2, PlayerSearch.new(university_ids: [ @beta.id, @alpha.id ], start_year: 2023).players.count
   end
+
+  # ---- ordered
+
+  test "ordered puts the newest entry year first, then university and name, when given no sort" do
+    assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], PlayerSearch.new.ordered.map(&:name)
+  end
+
+  test "ordered by a column keeps the usual order among equal values, and unknown sorts are ignored" do
+    assert_equal [ "山田 太郎", "落合 智哉", "今津 慶介", "日野 愛郎" ], PlayerSearch.new.ordered(sort: "enter_year", direction: "asc").map(&:name)
+    assert_equal PlayerSearch.new.ordered.map(&:name), PlayerSearch.new.ordered(sort: "name; DROP TABLE players", direction: "desc").map(&:name)
+  end
+
+  test "ordered puts blanks last in either direction" do
+    @ochiai.update!(position: "捕手")
+
+    assert_equal "落合 智哉", PlayerSearch.new.ordered(sort: "position", direction: "asc").first.name
+    assert_equal "落合 智哉", PlayerSearch.new.ordered(sort: "position", direction: "desc").first.name
+  end
+
+  test "the ranks that tables sorted in the browser use follow the same lists as the database order" do
+    assert_equal [ 0, 1, 7, 8 ], [ "投手", "捕手", "外野手", "マネジャー" ].map { |position| PlayerSearch.position_rank(position) }
+    assert_nil PlayerSearch.position_rank(nil)
+    assert_equal [ 0, 1, 2, 3 ], [ "選手", "部長", "マネージャー", "特別要員" ].map { |role| PlayerSearch.role_rank(role) }
+    assert_nil PlayerSearch.role_rank("")
+
+    # pitching hand first, then batting hand; those with neither have none
+    right_left = Player.new(pitching_hand: "右", batting_hand: "左")
+    left_right = Player.new(pitching_hand: "左", batting_hand: "右")
+    assert_operator PlayerSearch.hands_rank(right_left), :<, PlayerSearch.hands_rank(left_right)
+    assert_nil PlayerSearch.hands_rank(Player.new)
+  end
+
+  test "ordered by role puts players, then staff, then managers, then the rest" do
+    @imazu.update!(role: "マネージャー")
+    @old.update!(role: "特別要員")
+
+    assert_equal [ "落合 智哉", "日野 愛郎", "今津 慶介", "山田 太郎" ], PlayerSearch.new.ordered(sort: "role", direction: "asc").map(&:name)
+  end
 end

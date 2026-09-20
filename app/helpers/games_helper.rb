@@ -32,19 +32,10 @@ module GamesHelper
     "https://big6scorebook.jp/game/#{game.scorebook_game_id}"
   end
 
-  def sortable_game_header(key, label, shortcut)
-    active = @sort == key
-    th_classes = [ "sortable" ]
-    th_classes << (@sort_direction == "asc" ? "sorted-asc" : "sorted-desc") if active
-
-    next_direction = (active && @sort_direction == "asc") ? "desc" : "asc"
-    query = request.query_parameters.except("page").merge(sort: key, direction: next_direction)
-    url = "#{request.path}?#{query.to_query}"
-
-    content_tag :th, class: th_classes.join(" ") do
-      link_to url, data: { shortcut: shortcut, shortcut_label: "#{label}でソート" } do
-        safe_join([ label, " ", content_tag(:kbd, shortcut) ])
-      end
-    end
+  # A column heading that sorts the games table by it (see GameSortable). The
+  # games are in date order when nothing is asked for, so the date column counts
+  # as sorted then.
+  def sortable_game_header(key, label, shortcut, first: "asc")
+    sortable_link_header(key, label, shortcut, sort: @sort || GameSortable::DEFAULT_SORT, direction: @sort_direction, first: first)
   end
 end
