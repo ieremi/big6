@@ -39,7 +39,7 @@ class MatchupsController < ApplicationController
       @game = Game.includes(:team0, :team1, :season)
         .where(team0_id: [ @team0.id, @team1.id ], team1_id: [ @team0.id, @team1.id ])
         .where(season_id: @season.id, game_number: params[:game_number])
-        .first!
+        .cancelled_last.first!
 
       if request.format.symbol == :ics
         calendar = IcsCalendar.new(name: "#{@game.team0.short_name} vs #{@game.team1.short_name}")

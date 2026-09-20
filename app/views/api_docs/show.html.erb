@@ -73,7 +73,11 @@
 <h2>試合</h2>
 
 <h3><code>/api/v1/games</code></h3>
-<p>試合の検索・一覧（ページネーションあり、1ページ100件）。</p>
+<p>
+  試合の検索・一覧（ページネーションあり、1ページ100件）。
+  各試合の<code>cancelled</code>は、中止（ノーゲーム）になった試合で<code>true</code>です。その試合のスコアは<code>null</code>で、
+  同じ<code>round</code>で行われた再試合と別の試合として並びます。
+</p>
 <div class="table-scroll">
   <table>
     <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>

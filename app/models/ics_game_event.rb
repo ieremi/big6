@@ -8,6 +8,7 @@ module IcsGameEvent
     start_time, end_time = times_for(game, scoreboard)
 
     summary = "#{game.team0.short_name} vs #{game.team1.short_name}#{circled_number(game.game_number)}"
+    summary = "【#{game.game_status}】#{summary}" if game.cancelled?
 
     calendar.add_event(
       uid: "game-#{game.id}@big6",
@@ -16,7 +17,8 @@ module IcsGameEvent
       end_time: end_time,
       all_day_date: start_time ? nil : game.played_on,
       location: StadiumLocation.for(scoreboard.stadium),
-      description: "#{game.season.title} 第#{game.game_number}回戦"
+      description: "#{game.season.title} 第#{game.game_number}回戦",
+      cancelled: game.cancelled?
     )
   end
 

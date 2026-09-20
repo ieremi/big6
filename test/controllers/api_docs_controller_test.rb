@@ -114,4 +114,11 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
     assert_match "default_rank", response.body
     assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn&sort=home_runs"
   end
+
+  test "documents the cancelled field of a game" do
+    get api_docs_url
+
+    assert_select "p code", text: "cancelled"
+    assert_match "中止", response.body
+  end
 end

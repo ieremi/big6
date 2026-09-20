@@ -37,11 +37,9 @@ module ApplicationHelper
     "https://calendar.google.com/calendar/render?cid=#{CGI.escape(webcal_url)}"
   end
 
-  CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
-
   def score_span(team0_score, team1_score, played_on: nil, status: nil)
     if team0_score.nil? || team1_score.nil?
-      label = if CANCELLED_STATUSES.include?(status)
+      label = if Game::CANCELLED_STATUSES.include?(status)
         status
       elsif played_on && played_on >= Date.current
         "試合前"

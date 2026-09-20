@@ -104,7 +104,7 @@
     <%= @game.team1.short_name %>
   </p>
   <p class="muted">
-    <% if ApplicationHelper::CANCELLED_STATUSES.include?(@game.game_status) %>
+    <% if @game.cancelled? %>
       この試合は<%= @game.game_status %>になりました。
     <% elsif in_progress && is_future %>
       この試合はまだ行われていません。
@@ -115,7 +115,7 @@
     <% end %>
   </p>
 
-  <% if is_future && !ApplicationHelper::CANCELLED_STATUSES.include?(@game.game_status)
+  <% if is_future && !@game.cancelled?
        estimate = EstimatedGameSchedule.new(@game)
        start_time = estimate.scheduled_start_time
        end_time = estimate.estimated_end_time

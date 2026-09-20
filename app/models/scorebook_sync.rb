@@ -7,6 +7,18 @@ require "json"
 # detail (innings, duration, etc.) while it's in progress. For bulk/historical
 # imports across many seasons, see script/big6/scorebook/season_games.rb and
 # script/big6/game.rb instead.
+#
+# A "中止"/"ノーゲーム" entry (see Game::CANCELLED_STATUSES) isn't imported as a
+# game of its own, but it does mark the game we already have for it as
+# cancelled: a game listed as scheduled would otherwise stay "試合前" for good.
+#
+# The entries made for the replay of a cancelled game can carry the wrong round
+# label (Scorebook has called the replay of a 2回戦 "1回戦"). So once a pair has
+# had a game cancelled in the season, a label for a round number the pair has
+# already played isn't trusted: the game gets the next number instead. (Before
+# then, and in other pairs, a repeated label is left alone, as in the old
+# seasons where a round was replayed under its own number, and a playoff, which
+# is a series of its own.)
 class ScorebookSync
   API_URL = URI("https://big6scorebook.jp/api/game/search")
 
@@ -20,15 +32,6 @@ class ScorebookSync
   }.freeze
 
   TERM_JA = { "spring" => "春", "autumn" => "秋" }.freeze
-
-  # A "中止"/"ノーゲーム" entry is a rained-out (or otherwise voided) attempt,
-  # not a game that happened — it has no score, no duration, nothing worth
-  # tracking. It's also usually re-played under the very same round label
-  # (e.g. two separate Scorebook entries both called "1回戦"), so importing
-  # it as its own Game row creates a same-round duplicate: two Game rows
-  # sharing (season, team pair, game_number), which makes per-game URLs and
-  # routing ambiguous and can double-count games in aggregates.
-  CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
 
   def self.call(season)
     new(season).call
@@ -62,17 +65,31 @@ class ScorebookSync
   def import_games(scorebook_games)
     universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)
     pair_round_counts = Hash.new(0)
+    numbers_used = Hash.new { |hash, key| hash[key] = [] }
+    pairs_with_cancellation = Set.new
 
-    scorebook_games.each do |info|
+    scorebook_games.sort_by { |info| [ info["gameDay"].to_s, info["gameOrder"].to_i ] }.each do |info|
       next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
-      next if CANCELLED_STATUSES.include?(info["gameStatus"])
 
       team0 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("topTeamId")))
       team1 = universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info.fetch("bottomTeamId")))
 
       pair_key = [ team0.id, team1.id ].sort
+      counted = info["isCounted"] != false # false for a playoff
+
+      if Game::CANCELLED_STATUSES.include?(info["gameStatus"])
+        pairs_with_cancellation << pair_key if counted
+        Game.record_cancellation(
+          season: @season, team_ids: [ team0.id, team1.id ], played_on: Date.parse(info.fetch("gameDay")),
+          scorebook_game_id: info["id"], status: info["gameStatus"]
+        )
+        next
+      end
+
       match = info["round"].to_s.match(/(\d+)回戦/)
       game_number = match ? match[1].to_i : pair_round_counts[pair_key] + 1
+      game_number = numbers_used[pair_key].max + 1 if counted && pairs_with_cancellation.include?(pair_key) && numbers_used[pair_key].include?(game_number)
+      numbers_used[pair_key] << game_number if counted
       pair_round_counts[pair_key] = game_number
 
       game = Game.find_or_initialize_by(
@@ -89,7 +106,9 @@ class ScorebookSync
       game.team1_score = info["runsTotalBottom"]&.to_i
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
-      game.game_status = info["gameStatus"]
+      # The league's site may have reported this game cancelled before Scorebook
+      # does: Scorebook still saying it hasn't started doesn't undo that.
+      game.game_status = info["gameStatus"] unless game.cancelled? && info["gameStatus"] == Game::PENDING_STATUS
       game.counted_in_stats = info["isCounted"] != false
       game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)

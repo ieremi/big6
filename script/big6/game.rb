@@ -13,18 +13,25 @@ SCOREBOOK_TEAM_SLUGS = {
 
 universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)
 
-# A "中止"/"ノーゲーム" entry is a rained-out (or otherwise voided) attempt,
-# not a game that happened — it has no score, no duration, nothing worth
-# tracking, and is usually re-played under the very same round label, so
-# importing it as its own Game row would create a same-round duplicate.
-CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
+# A "中止"/"ノーゲーム" entry (Game::CANCELLED_STATUSES) isn't imported as a Game
+# row of its own, since it is usually re-played under the very same round label
+# and would be a same-round duplicate. It does mark the game we already have for
+# it as cancelled, though.
 
 Season.where.not(scorebook_games: nil).find_each do |season|
   pair_round_counts = Hash.new(0)
 
   season.scorebook_games.each do |info|
     next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
-    next if CANCELLED_STATUSES.include?(info["gameStatus"])
+
+    if Game::CANCELLED_STATUSES.include?(info["gameStatus"])
+      Game.record_cancellation(
+        season: season,
+        team_ids: [ universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info["topTeamId"])).id, universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(info["bottomTeamId"])).id ],
+        played_on: Date.parse(info.fetch("gameDay")), scorebook_game_id: info["id"], status: info["gameStatus"]
+      )
+      next
+    end
 
     # Import every scheduled game, even ones that haven't been played yet
     # (nil scores) — this lets the site show the upcoming schedule. As a game
@@ -57,7 +64,7 @@ Season.where.not(scorebook_games: nil).find_each do |season|
     game.team1_score = info["runsTotalBottom"]&.to_i
     game.scorebook_game_id = info["id"]
     game.game_order = info["gameOrder"]
-    game.game_status = info["gameStatus"]
+    game.game_status = info["gameStatus"] unless game.cancelled? && info["gameStatus"] == Game::PENDING_STATUS
     game.counted_in_stats = info["isCounted"] != false
     game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
     game.data_correction_note = team_correction[:note] if team_correction

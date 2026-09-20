@@ -27,6 +27,10 @@
 # (year, month) of each recent game — JMA usually has a day's data up
 # within a day or so, not necessarily the same hour it's played.
 #
+# A game cancelled (中止) is reported by both Scorebook and the schedule page,
+# and recorded on the game; it has no box score to wait for, so it is no longer
+# polled.
+#
 # Finally, fetches each final game's player box score from Scorebook
 # (GameStatsImport) once it has none, for the players' season and career stats.
 class SyncRecentGamesJob < ApplicationJob
@@ -46,7 +50,8 @@ class SyncRecentGamesJob < ApplicationJob
       JmaWeatherScraper.call(year, month)
     end
 
-    incomplete_games = games.reject { |game| complete?(game) }
+    # Reloaded, since the schedule pages may just have marked some cancelled.
+    incomplete_games = games.reload.reject { |game| game.cancelled? || complete?(game) }
     if incomplete_games.any?
       incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
       incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }

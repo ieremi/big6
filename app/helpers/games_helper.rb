@@ -32,6 +32,19 @@ module GamesHelper
     "https://big6scorebook.jp/game/#{game.scorebook_game_id}"
   end
 
+  # A game's teams and score as a link to its page. A cancelled game is plain
+  # text instead: there is nothing to see on its page, and its round number is
+  # usually its replay's too, so the page would be the replay's.
+  def game_matchup_link(game)
+    label = safe_join([
+      game.team0.short_name, " ",
+      score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status), " ",
+      game.team1.short_name
+    ])
+
+    game.cancelled? ? tag.span(label, class: "game-cancelled") : link_to(label, game_path(game))
+  end
+
   # A column heading that sorts the games table by it (see GameSortable). The
   # games are in date order when nothing is asked for, so the date column counts
   # as sorted then.

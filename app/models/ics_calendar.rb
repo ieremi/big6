@@ -7,10 +7,10 @@ class IcsCalendar
     @events = []
   end
 
-  def add_event(uid:, summary:, start_time: nil, end_time: nil, all_day_date: nil, location: nil, description: nil)
+  def add_event(uid:, summary:, start_time: nil, end_time: nil, all_day_date: nil, location: nil, description: nil, cancelled: false)
     @events << {
       uid: uid, summary: summary, start_time: start_time, end_time: end_time,
-      all_day_date: all_day_date, location: location, description: description
+      all_day_date: all_day_date, location: location, description: description, cancelled: cancelled
     }
   end
 
@@ -64,6 +64,7 @@ class IcsCalendar
     end
 
     lines << "SUMMARY:#{escape(event[:summary])}"
+    lines << "STATUS:CANCELLED" if event[:cancelled]
     lines << "LOCATION:#{escape(event[:location])}" if event[:location].present?
     lines << "DESCRIPTION:#{escape(event[:description])}" if event[:description].present?
     lines << "END:VEVENT"

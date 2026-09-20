@@ -25,13 +25,7 @@
           <% end %>
           <td><%= game.played_on %></td>
           <td><%= game.game_number %>回戦</td>
-          <td>
-            <%= link_to game_path(game) do %>
-              <%= game.team0.short_name %>
-              <%= score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status) %>
-              <%= game.team1.short_name %>
-            <% end %>
-          </td>
+          <td><%= game_matchup_link(game) %></td>
           <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
         <% end %>
       <% end %>

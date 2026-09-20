@@ -83,7 +83,7 @@ class GamesController < ApplicationController
     game = Game.includes(:team0, :team1, :season)
       .where(team0_id: [ team0.id, team1.id ], team1_id: [ team0.id, team1.id ])
       .where(season_id: season.id, game_number: params[:game_number])
-      .first!
+      .cancelled_last.first!
 
     send_data GameOgImage.new(game).to_png, type: "image/png", disposition: "inline"
   end
