@@ -109,11 +109,14 @@ class GamesController < ApplicationController
     scope = Game.includes(:team0, :team1, :season)
 
     if @searched
-      # AND only means something with 2+ teams selected (a single id can't
-      # be both team0_id and team1_id on the same game) — falls back to OR
-      # below otherwise, same as if AND were never chosen.
-      if @university_mode == "and" && @selected_university_ids.size >= 2
-        scope = scope.where(team0_id: @selected_university_ids, team1_id: @selected_university_ids)
+      # AND means every selected university played in the game. That only means
+      # something with 2+ universities selected — falls back to OR below
+      # otherwise, same as if AND were never chosen — and a game has just two
+      # teams, so 3 or more selected match nothing.
+      if @university_mode == "and" && @selected_university_ids.uniq.size >= 2
+        @selected_university_ids.uniq.each do |id|
+          scope = scope.where("games.team0_id = :id OR games.team1_id = :id", id: id)
+        end
       else
         scope = scope.where(team0_id: @selected_university_ids).or(scope.where(team1_id: @selected_university_ids))
       end
