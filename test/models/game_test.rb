@@ -88,4 +88,14 @@ class GameTest < ActiveSupport::TestCase
     assert_equal count, Game.count
     assert_equal "試合前", other.reload.game_status
   end
+
+  test "record_cancellation with unless_finished leaves a finished game alone" do
+    finished = game(1, game_status: "試合終了", team0_score: 3, team1_score: 1)
+    pending = game(2, game_status: nil)
+
+    assert_nil Game.record_cancellation(season: @season, team_ids: [ @alpha.id, @beta.id ], played_on: Date.new(2026, 5, 1), unless_finished: true)
+    assert_equal pending, Game.record_cancellation(season: @season, team_ids: [ @alpha.id, @beta.id ], played_on: Date.new(2026, 5, 2), unless_finished: true)
+    assert_equal [ "試合終了", 3 ], [ finished.reload.game_status, finished.team0_score ]
+    assert pending.reload.cancelled?
+  end
 end

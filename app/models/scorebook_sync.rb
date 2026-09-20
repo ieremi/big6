@@ -41,6 +41,24 @@ class ScorebookSync
     @season = season
   end
 
+  # Marks the games we have as cancelled from the Scorebook data already stored on
+  # the season, fetching nothing. This finds the games left over from before
+  # cancelled entries were skipped by the importers, which have no result and no
+  # status and so look as if they were still to be played. A game Scorebook has as
+  # finished is left alone. Returns the games newly marked.
+  def record_stored_cancellations
+    universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)
+
+    Array(@season.scorebook_games).filter_map do |info|
+      next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
+      next unless Game::CANCELLED_STATUSES.include?(info["gameStatus"])
+
+      team_ids = [ info["topTeamId"], info["bottomTeamId"] ].map { |id| universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(id)).id }
+      game = record_cancellation(info, team_ids, unless_finished: true)
+      game if game&.saved_change_to_game_status?
+    end
+  end
+
   def call
     scorebook_games = fetch_scorebook_games
     return if scorebook_games.blank?
@@ -62,6 +80,13 @@ class ScorebookSync
     JSON.parse(response.body)["data"]
   end
 
+  def record_cancellation(info, team_ids, **options)
+    Game.record_cancellation(
+      season: @season, team_ids: team_ids, played_on: Date.parse(info.fetch("gameDay")),
+      scorebook_game_id: info["id"], status: info["gameStatus"], **options
+    )
+  end
+
   def import_games(scorebook_games)
     universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)
     pair_round_counts = Hash.new(0)
@@ -79,10 +104,7 @@ class ScorebookSync
 
       if Game::CANCELLED_STATUSES.include?(info["gameStatus"])
         pairs_with_cancellation << pair_key if counted
-        Game.record_cancellation(
-          season: @season, team_ids: [ team0.id, team1.id ], played_on: Date.parse(info.fetch("gameDay")),
-          scorebook_game_id: info["id"], status: info["gameStatus"]
-        )
+        record_cancellation(info, [ team0.id, team1.id ])
         next
       end
 

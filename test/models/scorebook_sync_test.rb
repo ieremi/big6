@@ -134,4 +134,62 @@ class ScorebookSyncTest < ActiveSupport::TestCase
 
     assert_equal [ [ "2026-09-19", 1 ], [ "2026-09-22", 2 ] ], games.map { |game| [ game.played_on.to_s, game.game_number ] }
   end
+
+  # ---- record_stored_cancellations
+
+  def record_stored(*entries)
+    @season.update!(scorebook_games: entries)
+    stub_method(Net::HTTP, :get_response, ->(*) { raise "fetched from the network" }) do
+      ScorebookSync.new(@season).record_stored_cancellations
+    end
+  end
+
+  test "stored cancellations mark the games left over from the old importer, fetching nothing" do
+    # the cancelled entry has hosei on top, the replay the other way round: not a duplicate as far as the old cleanup could tell
+    leftover = Game.create!(season: @season, team0: @hosei, team1: @rikkio, played_on: "2026-09-20", game_number: 1, scorebook_game_id: 2026092001)
+    replay = Game.create!(season: @season, team0: @rikkio, team1: @hosei, played_on: "2026-09-21", game_number: 1, game_status: "試合終了", team0_score: 4, team1_score: 2, scorebook_game_id: 2026092101)
+
+    marked = record_stored(
+      entry(2026092001, "2026-09-20", "1回戦", "中止"),
+      entry(2026092101, "2026-09-21", "1回戦", "試合終了", top_runs: "4", bottom_runs: "2")
+    )
+
+    assert_equal [ leftover ], marked
+    assert_equal "中止", leftover.reload.game_status
+    assert_equal [ "試合終了", 4 ], [ replay.reload.game_status, replay.team0_score ]
+  end
+
+  test "stored cancellations find a game with no Scorebook id by its teams and date, in either order" do
+    leftover = Game.create!(season: @season, team0: @rikkio, team1: @hosei, played_on: "2026-09-20", game_number: 1)
+
+    assert_equal [ leftover ], record_stored(entry(2026092001, "2026-09-20", "1回戦", "中止"))
+  end
+
+  test "stored cancellations clear the 0-0 that the old importer made of a cancelled game's empty score" do
+    leftover = Game.create!(season: @season, team0: @hosei, team1: @rikkio, played_on: "2026-09-20", game_number: 1, team0_score: 0, team1_score: 0)
+
+    record_stored(entry(2026092001, "2026-09-20", "1回戦", "中止"))
+
+    assert_equal [ "中止", nil, nil ], [ leftover.reload.game_status, leftover.team0_score, leftover.team1_score ]
+  end
+
+  test "stored cancellations leave alone a game that Scorebook has as finished, whatever an older report says" do
+    played = Game.create!(season: @season, team0: @hosei, team1: @rikkio, played_on: "2026-09-20", game_number: 1, game_status: "試合終了", team0_score: 3, team1_score: 1)
+
+    assert_empty record_stored(entry(2026092001, "2026-09-20", "1回戦", "中止"))
+    assert_equal [ "試合終了", 3 ], [ played.reload.game_status, played.team0_score ]
+  end
+
+  test "stored cancellations return only the games newly marked, and do not add games" do
+    Game.create!(season: @season, team0: @hosei, team1: @rikkio, played_on: "2026-09-20", game_number: 1)
+    entries = [ entry(2026092001, "2026-09-20", "1回戦", "中止"), entry(2026092101, "2026-09-21", "1回戦", "ノーゲーム") ]
+
+    assert_equal 1, record_stored(*entries).size # the second entry has no game
+    assert_empty record_stored(*entries)
+    assert_equal 1, Game.where(season: @season).count
+  end
+
+  test "stored cancellations are nothing for a season with no stored data" do
+    assert_empty ScorebookSync.new(@season).record_stored_cancellations
+  end
 end

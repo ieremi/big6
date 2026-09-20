@@ -13,8 +13,9 @@ class Game < ApplicationRecord
   # report these under the same names, which is what game_status holds.
   CANCELLED_STATUSES = %w[中止 ノーゲーム].freeze
 
-  # Scorebook's status for a game that hasn't started.
+  # Scorebook's status for a game that hasn't started, and for one that's over.
   PENDING_STATUS = "試合前".freeze
+  FINISHED_STATUS = "試合終了".freeze
 
   # Games with a final score and a Scorebook id, i.e. ones whose player box
   # score can be fetched.
@@ -40,11 +41,14 @@ class Game < ApplicationRecord
   # CANCELLED_STATUSES: it would only duplicate the round number of its replay).
   #
   # The game is found by its Scorebook id when it has one, else as the game
-  # between the two teams (in either order) on that date.
-  def self.record_cancellation(season:, team_ids:, played_on:, scorebook_game_id: nil, status: CANCELLED_STATUSES.first)
+  # between the two teams (in either order) on that date. With unless_finished, a
+  # game Scorebook has as finished is left alone (nil is returned), for when the
+  # report may be older than the game's own data.
+  def self.record_cancellation(season:, team_ids:, played_on:, scorebook_game_id: nil, status: CANCELLED_STATUSES.first, unless_finished: false)
     game = find_by(season: season, scorebook_game_id: scorebook_game_id) if scorebook_game_id
     game ||= find_by(season: season, played_on: played_on, team0_id: team_ids, team1_id: team_ids)
     return nil unless game
+    return nil if unless_finished && game.game_status == FINISHED_STATUS
 
     game.update!(game_status: status, team0_score: nil, team1_score: nil)
     game
