@@ -25,11 +25,18 @@ class SeasonsController < ApplicationController
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @games = @season.games.includes(:team0, :team1, :season).order(:played_on, :game_number)
 
+    # The universities that played this season, and those chosen to narrow the
+    # games to (nothing chosen: every game).
+    @universities = University.where(id: @games.pluck(:team0_id, :team1_id).flatten.uniq).order(:position).to_a
+    @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
+
     if request.format.symbol == :ics
-      cache_key = "season_ics/v1/#{@season.id}/#{@games.maximum(:updated_at)&.to_i}"
+      games = @games
+      games = games.where(team0_id: @selected_university_ids).or(games.where(team1_id: @selected_university_ids)) if @selected_university_ids.any?
+      cache_key = "season_ics/v1/#{@season.id}/#{@selected_university_ids.sort.join('-')}/#{games.maximum(:updated_at)&.to_i}"
       ics = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
         calendar = IcsCalendar.new(name: @season.title)
-        @games.each { |game| IcsGameEvent.add_to(calendar, game) }
+        games.each { |game| IcsGameEvent.add_to(calendar, game) }
         calendar.to_ics
       end
 
@@ -37,7 +44,9 @@ class SeasonsController < ApplicationController
       return
     end
 
-    @weeks = SeasonWeeks.new(@games).weeks
+    season_weeks = SeasonWeeks.new(@games)
+    @weeks = season_weeks.weeks_with(@selected_university_ids)
+    @shown_game_count = @weeks.sum { |week| week.games.size }
     @prime_ministers = PrimeMinisterTerm.serving_between(*@games.map(&:played_on).minmax).to_a
     @gdp_per_capita = GdpPerCapitaYear.usd_for(@season.year)
     @tags = SeasonTags.new(@season).tags

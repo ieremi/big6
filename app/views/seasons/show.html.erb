@@ -28,12 +28,14 @@
 
 <% if @games.any? %>
   <p><%= link_to "順位表を見る", standings_season_path(@season.year, @season.term) %></p>
+  <%# The calendar has the games shown: those of the chosen universities, or all of them. %>
+  <% ics_params = { format: :ics, university_ids: @selected_university_ids.presence } %>
   <p>
-    <%= link_to "カレンダーに追加 (.ics)", season_path(@season.year, @season.term, format: :ics) %>
+    <%= link_to "カレンダーに追加 (.ics)", season_path(@season.year, @season.term, **ics_params) %>
     ・
-    <%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(season_url(@season.year, @season.term, format: :ics)), target: "_blank", rel: "noopener noreferrer" %>
+    <%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(season_url(@season.year, @season.term, **ics_params)), target: "_blank", rel: "noopener noreferrer" %>
   </p>
-  <%= render "shared/ics_preview", url: season_path(@season.year, @season.term, format: :ics) %>
+  <%= render "shared/ics_preview", url: season_path(@season.year, @season.term, **ics_params) %>
 <% end %>
 
 <% if @attendance_trend.any_data? %>
@@ -41,6 +43,32 @@
 <% end %>
 
 <% if @games.any? %>
+  <%= form_with url: season_path(@season.year, @season.term), method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+    <fieldset>
+      <legend>大学で絞る</legend>
+      <div class="period-toolbar">
+        <button type="button" class="period-btn" data-action="search-filter#clearUniversities">クリア</button>
+      </div>
+      <div class="checkbox-group">
+        <% @universities.each do |u| %>
+          <label class="checkbox-label" data-shortcut="<%= u.initial %>" data-shortcut-label="<%= u.short_name %>を切替">
+            <%= check_box_tag "university_ids[]", u.id, @selected_university_ids.include?(u.id), id: "university_ids_#{u.id}", data: { search_filter_target: "universityCheckbox" } %>
+            <span class="team-chip" style="background: <%= u.color %>"><%= u.initial %></span>
+            <%= u.short_name %>
+            <kbd><%= u.initial %></kbd>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+    <noscript><%= submit_tag "絞り込む" %></noscript>
+  <% end %>
+
+  <% if @selected_university_ids.any? %>
+    <p class="muted">
+      <%= @universities.select { |u| @selected_university_ids.include?(u.id) }.map(&:short_name).join("・") %>の試合のみ：<%= @shown_game_count %>試合（全<%= @games.size %>試合）
+    </p>
+  <% end %>
+
   <div data-controller="week-sort">
     <div class="period-toolbar">
       週のなかのならび：

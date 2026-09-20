@@ -14,6 +14,21 @@ class SeasonWeeks
     compute
   end
 
+  # The weeks with only the series that one of the universities played in (nil
+  # or none: all of them). The numbers stay the season's own, so week 3 is still
+  # week 3 when the weeks before it are left out, and a week nobody played in
+  # is left out.
+  def weeks_with(university_ids)
+    return weeks if university_ids.blank?
+
+    weeks.filter_map do |week|
+      series = week.series.select { |s| university_ids.include?(s.team0.id) || university_ids.include?(s.team1.id) }
+      next if series.empty?
+
+      Week.new(number: week.number, series: series, games: series.flat_map(&:games).sort_by { |g| [ g.played_on, g.game_number ] })
+    end
+  end
+
   private
 
   def compute
