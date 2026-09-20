@@ -88,6 +88,66 @@
 </div>
 <%= render "sandbox", path: "/matchups/rikkio/tokyo?year=1997&term=autumn" %>
 
+<h2>選手</h2>
+
+<p class="muted">
+  選手の<code>id</code>は Scorebook の選手IDで、サイトの<code>/players/:id</code>と同じ番号です（当サイト内部のIDではありません）。
+  <code>university</code>は大学の<code>slug</code>。監督・コーチ・マネージャーなども同じ形で返り、<code>role</code>で区別できます。
+  一覧は<code>/players</code>、1人のプロフィールと成績は<code>/players/:id</code>、試合ごとの記録は<code>/players/:id/games</code>、OGP画像は<code>/players/:id/og.png</code>です。
+</p>
+
+<h3><code>/api/v1/players</code></h3>
+<p>
+  選手・スタッフの検索・一覧（ページネーションあり、1ページ100件）。
+  入学年が新しい順で、入学年のない人（部長・監督など）は最後。<code>total</code>は条件に合う全員の人数です。
+</p>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>q</code></td><td>氏名（姓名の間の空白は無視）・よみ・出身高校のキーワード</td></tr>
+      <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=keio&amp;university[]=waseda</code>）。該当する大学がなければ0件</td></tr>
+      <tr><td><code>start_year</code> / <code>end_year</code></td><td>入学年の範囲</td></tr>
+      <tr><td><code>role</code></td><td><code>player</code>（選手）/ <code>manager</code>（マネージャー）/ <code>staff</code>（監督・コーチ・部長など）/ <code>other</code>（学生コーチ・アナリストなど）</td></tr>
+      <tr><td><code>status</code></td><td><code>active</code>（現役）/ <code>alumni</code>（卒業生）</td></tr>
+      <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
+    </tbody>
+  </table>
+</div>
+<%= render "sandbox", path: "/players?university[]=rikkio&start_year=2023&end_year=2023&role=player&status=active" %>
+
+<h3><code>/api/v1/players/:id</code></h3>
+<p>
+  1人のプロフィールと成績。<code>status</code>は<code>active</code>（現役）/ <code>alumni</code>（卒業生）/ <code>null</code>、
+  <code>grade</code>は Scorebook に記載された時点の学年です。
+  <code>enter_year</code>は入学年で、部長・監督など入学年のない人は<code>null</code>。
+</p>
+<p>
+  <code>batting</code>（打撃）と<code>pitching</code>（投手）は、成績が無ければ<code>null</code>。あれば、
+  シーズンごとの<code>seasons</code>（古い順）と通算の<code>career</code>を返します。
+  優勝決定戦は、Scorebook に合わせて、どちらにも含めません。
+  <code>average</code>（打率）と<code>era</code>（防御率）は計算値で、打数・アウトが0のときは<code>null</code>。
+  <code>innings</code>は<code>outs</code>（アウト数）を「3 1/3」のように書いたものです。
+</p>
+<p class="muted">
+  成績は Scorebook に試合ごとのデータがある試合だけです。1950年代・2010〜2016年の多くの試合などは、元データ自体がなく、成績が空になります。
+  <code>og_image_url</code>は下のOGP画像のURLです。
+</p>
+<%= render "sandbox", path: "/players/20236010" %>
+
+<h3><code>/api/v1/players/:id/games</code></h3>
+<p>
+  その選手の試合ごとの記録（新しい順）。<code>roster</code>（登録メンバー。背番号・学年・役割・打順・守備位置。2021年以降の試合のみ）、
+  <code>batting</code>、<code>pitching</code>のうち、その試合にあるものだけが入り、無いものは<code>null</code>です。
+  <code>game</code>は試合を特定する情報（<code>/games/:year/:term/:team0/:team1/:round</code>と同じ）、
+  <code>opponent</code>は相手大学のslug。<code>counted_in_stats</code>が<code>false</code>の試合（優勝決定戦）は、シーズン成績・通算に含まれません。
+</p>
+<%= render "sandbox", path: "/players/20236010/games" %>
+
+<h3><code>/api/v1/players/:id/og.png</code></h3>
+<p>選手ページのOGP画像（PNG、1200×630）。サイトの選手ページの<code>og:image</code>と同じ画像で、JSONの<code>og_image_url</code>からも辿れます。</p>
+<%= render "sandbox", path: "/players/20236010/og.png" %>
+
 <h2>エラー</h2>
 <p>存在しないリソースを指定した場合は<code>404</code>で以下を返します。</p>
 <%= render "sandbox", path: "/universities/nonexistent" %>

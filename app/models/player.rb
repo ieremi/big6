@@ -53,6 +53,14 @@ class Player < ApplicationRecord
     [ ("#{pitching_hand}投" if pitching_hand), ("#{batting_hand}打" if batting_hand) ].compact.join
   end
 
+  # "active" for a current member, "alumni" for a graduate, nil for anyone else.
+  def enrollment_state
+    case enrollment_status
+    when ACTIVE_ENROLLMENT_STATUS then "active"
+    when ALUMNI_ENROLLMENT_STATUS then "alumni"
+    end
+  end
+
   # The Scorebook id is what identifies a player in URLs.
   def to_param
     scorebook_id.to_s

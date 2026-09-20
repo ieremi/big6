@@ -15,6 +15,12 @@ class PitchingLine < ApplicationRecord
     end
   end
 
+  # Innings pitched from outs, the way baseball writes them: 10 outs is "3 1/3".
+  def self.innings_label(outs)
+    whole, thirds = outs.divmod(3)
+    thirds.zero? ? whole.to_s : "#{whole} #{thirds}/3"
+  end
+
   def self.totals(lines)
     Totals.new(games: lines.size, **SUMMED_COLUMNS.index_with { |column| lines.sum(&column) })
   end

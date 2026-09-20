@@ -35,8 +35,7 @@ module PlayersHelper
 
   # Innings pitched from outs: 10 outs is "3 1/3".
   def innings_label(outs)
-    whole, thirds = outs.divmod(3)
-    thirds.zero? ? whole.to_s : "#{whole} #{thirds}/3"
+    PitchingLine.innings_label(outs)
   end
 
   def era_label(era)

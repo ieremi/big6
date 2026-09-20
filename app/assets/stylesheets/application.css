@@ -1385,3 +1385,11 @@ legend {
   font-weight: 700;
   border-top: 2px solid var(--border);
 }
+
+.sandbox-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+}

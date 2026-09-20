@@ -9,6 +9,10 @@ Rails.application.routes.draw do
       get "seasons/:year/:term", to: "seasons#show", constraints: { year: /\d{4}/, term: /spring|autumn/ }
       get "seasons/:year/:term/standings", to: "seasons#standings", constraints: { year: /\d{4}/, term: /spring|autumn/ }
       get "matchups/:team0_slug/:team1_slug", to: "matchups#show"
+      # :id is the player's Scorebook id, the same one the site's /players/:id uses.
+      resources :players, only: [ :index, :show ], constraints: { id: /\d+/ }
+      get "players/:id/games", to: "players#games", as: :player_games, constraints: { id: /\d+/ }
+      get "players/:id/og.png", to: "players#og_image", as: :player_og_image, constraints: { id: /\d+/ }
     end
   end
 

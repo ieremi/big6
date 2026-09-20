@@ -14,9 +14,16 @@ export default class extends Controller {
     const url = this.prefixValue + path
 
     try {
-      const response = await fetch(url, { headers: { Accept: "application/json" } })
-      const text = await response.text()
+      const response = await fetch(url, { headers: { Accept: "application/json, image/*;q=0.9" } })
       const header = `HTTP ${response.status}\n\n`
+
+      // An image (e.g. a player's og.png): show it rather than its bytes.
+      if ((response.headers.get("content-type") || "").startsWith("image/")) {
+        await this.showImage(response, header)
+        return
+      }
+
+      const text = await response.text()
 
       let parsed
       try {
@@ -33,6 +40,24 @@ export default class extends Controller {
     } catch (error) {
       this.outputTarget.textContent = `リクエストに失敗しました: ${error.message}`
     }
+  }
+
+  async showImage(response, header) {
+    const blob = await response.blob()
+    if (this.imageUrl) URL.revokeObjectURL(this.imageUrl)
+    this.imageUrl = URL.createObjectURL(blob)
+
+    const image = document.createElement("img")
+    image.src = this.imageUrl
+    image.alt = "レスポンスの画像"
+    image.className = "sandbox-image"
+
+    this.outputTarget.textContent = `${header}${blob.type}（${Math.round(blob.size / 1024)}KB）\n`
+    this.outputTarget.appendChild(image)
+  }
+
+  disconnect() {
+    if (this.imageUrl) URL.revokeObjectURL(this.imageUrl)
   }
 
   highlightJson(json) {

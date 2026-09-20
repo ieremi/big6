@@ -10,4 +10,10 @@ class PlayerTest < ActiveSupport::TestCase
     assert_equal "両打", Player.new(batting_hand: "両").hands_label
     assert_equal "", Player.new.hands_label
   end
+test "enrollment_state names current members and graduates, and nothing for anyone else" do
+  assert_equal "active", Player.new(enrollment_status: 1).enrollment_state
+  assert_equal "alumni", Player.new(enrollment_status: 2).enrollment_state
+  assert_nil Player.new(enrollment_status: 3).enrollment_state
+  assert_nil Player.new.enrollment_state
+end
 end
