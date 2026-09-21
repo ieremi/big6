@@ -49,7 +49,7 @@ class SeasonAttendanceTrend
     points = []
 
     weeks.each do |week|
-      finished_games = week.games.select { |g| g.team0_score.present? && g.team1_score.present? }
+      finished_games = week.games.select(&:decided?)
       break if finished_games.empty?
 
       cumulative += finished_games.filter_map(&:attendance).sum

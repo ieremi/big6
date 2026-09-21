@@ -223,4 +223,39 @@ class ScorebookSyncTest < ActiveSupport::TestCase
   test "stored cancellations are nothing for a season with no stored data" do
     assert_empty ScorebookSync.new(@season).record_stored_cancellations
   end
+
+  # ---- bench members
+
+  def sync(**options)
+    members = []
+    stub_method(GameMemberImport, :call, ->(seasons) { members << seasons }) do
+      sync = ScorebookSync.new(@season)
+      stub_method(sync, :fetch_scorebook_games, ->(*) { [ entry(2026092201, "2026-09-22", "2回戦", "試合前") ] }) do
+        sync.call(**options)
+      end
+    end
+    members
+  end
+
+  test "a sync imports the bench members too, unless it is asked not to" do
+    assert_equal 1, sync.size
+    assert_equal 1, sync(members: true).size
+    assert_empty sync(members: false)
+  end
+
+  test "a sync without the members still refreshes the season's Scorebook data and its games" do
+    sync(members: false)
+
+    assert_equal [ 2026092201 ], @season.reload.scorebook_games.map { |info| info["id"] }
+    assert_equal [ [ "2026-09-22", "試合前" ] ], games.map { |game| [ game.played_on.to_s, game.status_label ] }
+  end
+
+  test "the class method passes the option on" do
+    received = []
+    stub_method(ScorebookSync, :new, ->(season) { Struct.new(:season) { def call(members:) = members }.new(season).tap { received << :built } }) do
+      assert_equal false, ScorebookSync.call(@season, members: false)
+      assert_equal true, ScorebookSync.call(@season)
+    end
+    assert_equal 2, received.size
+  end
 end

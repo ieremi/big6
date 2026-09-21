@@ -17,3 +17,7 @@ production:
     class: SyncRecentGamesJob
     queue: default
     schedule: every hour
+  refresh_live_scoreboards:
+    class: RefreshLiveScoreboardsJob
+    queue: default
+    schedule: every 5 minutes

@@ -101,7 +101,7 @@ class Standings
   end
 
   def decided?(game)
-    game.team0_score.present? && game.team1_score.present?
+    game.decided?
   end
 
   def winner_id(game)

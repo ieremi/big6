@@ -8,6 +8,7 @@ one:
   game_number: 1
   team0_score: 1
   team1_score: 1
+  game_status: 試合終了
 
 two:
   season: two
@@ -17,3 +18,4 @@ two:
   game_number: 1
   team0_score: 1
   team1_score: 1
+  game_status: 試合終了

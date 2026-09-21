@@ -60,4 +60,29 @@ class SyncRecentGamesJobTest < ActiveJob::TestCase
     assert_equal [ other ], calls[:pages]
     assert_equal [ @season ], calls[:synced] # the other game still needs Scorebook
   end
+
+  # ---- a game under way isn't complete, though it has a score and innings
+
+  def with_innings(game)
+    game.season.update!(scorebook_games: [ { "id" => game.scorebook_game_id, "runs1Top" => "1", "runs1Bottom" => "0" } ])
+    game.reload
+  end
+
+  test "a game under way with a score and innings is still polled" do
+    game = with_innings(create_game(1, game_status: "in_progress", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090101))
+
+    calls = run_job
+
+    assert_equal [ @season ], calls[:synced]
+    assert_equal [ game ], calls[:pages]
+  end
+
+  test "a game that is over, with a score and innings, is not polled" do
+    with_innings(create_game(1, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090101))
+
+    calls = run_job
+
+    assert_empty calls[:synced]
+    assert_empty calls[:pages]
+  end
 end

@@ -12,16 +12,17 @@ class GameTest < ActiveSupport::TestCase
   end
 
   test "with_stats_available needs a final score and a Scorebook id" do
-    ready = game(1, team0_score: 3, team1_score: 2, scorebook_game_id: 2026050101)
-    game(2, team0_score: nil, team1_score: nil, scorebook_game_id: 2026050201)
-    game(3, team0_score: 1, team1_score: 0, scorebook_game_id: nil)
+    ready = game(1, game_status: "finished", team0_score: 3, team1_score: 2, scorebook_game_id: 2026050101)
+    game(2, game_status: "finished", team0_score: nil, team1_score: nil, scorebook_game_id: 2026050201)
+    game(3, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: nil)
+    game(4, game_status: "in_progress", team0_score: 2, team1_score: 1, scorebook_game_id: 2026050401) # a partial score
 
-    assert_equal [ ready.id ], Game.with_stats_available.where(id: Game.where(game_number: 1..3)).pluck(:id)
+    assert_equal [ ready.id ], Game.with_stats_available.where(id: Game.where(game_number: 1..4)).pluck(:id)
   end
 
   test "needing_stats excludes games that already have batting lines" do
-    imported = game(1, team0_score: 3, team1_score: 2, scorebook_game_id: 2026050101)
-    pending = game(2, team0_score: 1, team1_score: 0, scorebook_game_id: 2026050201)
+    imported = game(1, game_status: "finished", team0_score: 3, team1_score: 2, scorebook_game_id: 2026050101)
+    pending = game(2, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026050201)
     player = Player.create!(scorebook_id: 20236010, university: @alpha, name: "落合 智哉", enter_year: 2023)
     BattingLine.create!(game: imported, player: player, university: @alpha)
 
@@ -174,5 +175,15 @@ class GameTest < ActiveSupport::TestCase
     assert_equal pending, Game.record_cancellation(season: @season, teams: [ @alpha, @beta ], played_on: Date.new(2026, 5, 2), unless_finished: true)
     assert_equal [ "finished", 3, 1 ], [ finished.reload.game_status, finished.team0_score, finished.game_number ]
     assert pending.reload.cancelled?
+  end
+
+  # ---- decided
+
+  test "a game is decided when it is over and has a score" do
+    assert game(1, game_status: "finished", team0_score: 3, team1_score: 1).decided?
+    assert_not game(2, game_status: "in_progress", team0_score: 3, team1_score: 1).decided? # a score, but not a final one
+    assert_not game(3, game_status: "finished").decided?
+    assert_not game(4, game_status: "scheduled").decided?
+    assert_not game(5, game_status: "cancelled").decided?
   end
 end

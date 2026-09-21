@@ -35,9 +35,10 @@ class Game < ApplicationRecord
 
   validates :game_number, presence: true, unless: :not_held?
 
-  # Games with a final score and a Scorebook id, i.e. ones whose player box
-  # score can be fetched.
-  scope :with_stats_available, -> { where.not(scorebook_game_id: nil).where.not(team0_score: nil).where.not(team1_score: nil) }
+  # Games that are over, with a Scorebook id and a final score, i.e. ones whose
+  # player box score can be fetched. (Not one under way: it has a score too, but
+  # a partial one, and its player lines are imported once.)
+  scope :with_stats_available, -> { finished.where.not(scorebook_game_id: nil).where.not(team0_score: nil).where.not(team1_score: nil) }
 
   # Those of them with no player lines imported yet.
   scope :needing_stats, -> { with_stats_available.where.not(id: BattingLine.select(:game_id)) }
@@ -68,6 +69,12 @@ class Game < ApplicationRecord
 
   def held?
     !not_held?
+  end
+
+  # Over, with a result: what wins, losses and draws are counted from. A game under
+  # way has a score too, but not a final one.
+  def decided?
+    finished? && team0_score.present? && team1_score.present?
   end
 
   # Records that a game was called off, as reported by Scorebook or the league's

@@ -31,6 +31,9 @@
 # and recorded on the game; it has no box score to wait for, so it is no longer
 # polled.
 #
+# A game under way (試合中) has a score and innings too, but isn't complete, so it
+# keeps being polled; RefreshLiveScoreboardsJob does that every five minutes.
+#
 # Finally, fetches each final game's player box score from Scorebook
 # (GameStatsImport) once it has none, for the players' season and career stats.
 class SyncRecentGamesJob < ApplicationJob
@@ -71,6 +74,6 @@ class SyncRecentGamesJob < ApplicationJob
   end
 
   def complete?(game)
-    game.team0_score.present? && game.team1_score.present? && GameScoreboard.new(game).innings.any?
+    game.decided? && GameScoreboard.new(game).innings.any?
   end
 end

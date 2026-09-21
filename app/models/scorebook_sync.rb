@@ -34,8 +34,10 @@ class ScorebookSync
 
   TERM_JA = { "spring" => "春", "autumn" => "秋" }.freeze
 
-  def self.call(season)
-    new(season).call
+  # members: false leaves the bench members alone, which is a whole season's
+  # import: for refreshing a game's scoreboard while it is played.
+  def self.call(season, members: true)
+    new(season).call(members: members)
   end
 
   def initialize(season)
@@ -61,13 +63,13 @@ class ScorebookSync
     end
   end
 
-  def call
+  def call(members: true)
     scorebook_games = fetch_scorebook_games
     return if scorebook_games.blank?
 
     @season.update!(scorebook_games: scorebook_games)
     import_games(scorebook_games)
-    GameMemberImport.call(Season.where(id: @season.id))
+    GameMemberImport.call(Season.where(id: @season.id)) if members
   end
 
   private
