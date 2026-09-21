@@ -161,6 +161,20 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ranking-kinds a.period-btn[href*=?]", "minimum", count: 0 # neither the minimum nor its default
   end
 
+  test "the minimum is applied by a button, not by every change of the number" do
+    bat(player("選手"), game(@spring, 1), pa: 100)
+
+    get rankings_url
+
+    assert_select "form[data-action=?]", "change->search-filter#submit" # the other fields still submit as they change
+    assert_select "input#minimum[data-manual-submit]" # this one waits
+    assert_select "fieldset button[type=submit]", text: "絞り込む", count: 1
+    assert_select "fieldset:has(input#minimum) button[type=submit]", text: "絞り込む"
+    assert_select "input#season, select#season", minimum: 1
+    assert_select "select#season[data-manual-submit]", 0
+    assert_select "input[type=checkbox][data-manual-submit]", 0
+  end
+
   test "a minimum the form sends unchanged, beside its default, is not asked for: the period's default follows" do
     bat(player("十五"), game(@spring, 1), pa: 15)
     bat(player("五"), game(@spring, 2), pa: 5)

@@ -6,7 +6,12 @@ export default class extends Controller {
     "activeOnlyButton", "activeOnlyInput", "statusSelect", "activeStatusButton"
   ]
 
-  submit() {
+  // Submits the form: on a change of any of its fields, except one that marks itself
+  // data-manual-submit. That one (a number that is stepped again and again) waits for
+  // the form's button, or Enter, since every submit reloads the page.
+  submit(event) {
+    if (event && event.target && event.target.dataset && event.target.dataset.manualSubmit !== undefined) return
+
     this.element.requestSubmit()
   }
 

@@ -56,9 +56,11 @@
     <legend>最低<%= ranking_unit(@kind) %>数</legend>
     <div class="period-toolbar">
       <%# Always the minimum in force, so that the arrows step from it (40 to 41). The default it is shown beside is sent too: a minimum still equal to it is "not asked for", and follows the period. %>
-      <%= number_field_tag :minimum, @minimum, min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1, "aria-label": "最低#{ranking_unit(@kind)}数" %>
+      <%= number_field_tag :minimum, @minimum, min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1, "aria-label": "最低#{ranking_unit(@kind)}数", data: { manual_submit: true } %>
       <%= hidden_field_tag :default_minimum, @default_minimum, id: "default_minimum" %>
       <%= ranking_unit(@kind) %>以上
+      <%# The page reloads on this button (or Enter), not on every change of the number. %>
+      <button type="submit" class="period-btn">絞り込む</button>
       <% if @minimum == @default_minimum %>
         <span class="muted">（既定）</span>
       <% else %>
@@ -88,7 +90,6 @@
     <%= hidden_field_tag :direction, @sort_order.direction_param %>
   <% end %>
 
-  <noscript><%= submit_tag "表示" %></noscript>
 <% end %>
 
 <p class="muted">
