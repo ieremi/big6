@@ -56,7 +56,7 @@ module Api
             "(team0_id = :team0_id AND team1_id = :team1_id) OR (team0_id = :team1_id AND team1_id = :team0_id)",
             team0_id: team0.id, team1_id: team1.id
           )
-          .cancelled_last.first
+          .first
         raise ActiveRecord::RecordNotFound unless game
 
         game

@@ -9,7 +9,7 @@ class SeasonsController < ApplicationController
     # Only the columns the list needs: scorebook_data/scorebook_games are large
     # JSONB blobs (~20MB across all seasons) that nothing on this page reads.
     @seasons = Season.select(:id, :year, :term).order(year: :desc, term: :desc).to_a
-    @games_counts = Game.group(:season_id).count
+    @games_counts = Game.held.group(:season_id).count
     @season_tags = season_tags_by_id(@seasons)
 
     @selected_tags = Array(params[:tags]) & SeasonTags::LABELS
@@ -46,7 +46,8 @@ class SeasonsController < ApplicationController
 
     season_weeks = SeasonWeeks.new(@games)
     @weeks = season_weeks.weeks_with(@selected_university_ids)
-    @shown_game_count = @weeks.sum { |week| week.games.size }
+    @shown_game_count = @weeks.sum { |week| week.games.count { |game| !game.not_held? } }
+    @played_game_count = @games.count { |game| !game.not_held? }
     @prime_ministers = PrimeMinisterTerm.serving_between(*@games.map(&:played_on).minmax).to_a
     @gdp_per_capita = GdpPerCapitaYear.usd_for(@season.year)
     @tags = SeasonTags.new(@season).tags
@@ -79,7 +80,7 @@ class SeasonsController < ApplicationController
     latest_update_by_season = Game.group(:season_id).maximum(:updated_at)
     season_id_by_key = seasons.filter_map do |season|
       updated_at = latest_update_by_season[season.id]
-      [ "season_tags/v3/#{season.id}/#{updated_at.to_i}", season.id ] if updated_at
+      [ "season_tags/v4/#{season.id}/#{updated_at.to_i}", season.id ] if updated_at
     end.to_h
 
     universities = nil

@@ -32,17 +32,31 @@ module GamesHelper
     "https://big6scorebook.jp/game/#{game.scorebook_game_id}"
   end
 
+  # "12試合", or "12試合（ほか中止1）" when the list has cancelled games. A cancelled
+  # game is in the list but isn't a game that was held, so it isn't counted as one.
+  def games_count_label(games)
+    list = games.to_a
+    cancelled = list.count(&:not_held?)
+    label = "#{list.size - cancelled}試合"
+    cancelled.positive? ? "#{label}（ほか中止#{cancelled}）" : label
+  end
+
+  # "2回戦", or "—" for a game with no round number (one that wasn't held).
+  def round_label(game)
+    game.game_number ? "#{game.game_number}回戦" : "—"
+  end
+
   # A game's teams and score as a link to its page. A cancelled game is plain
   # text instead: there is nothing to see on its page, and its round number is
   # usually its replay's too, so the page would be the replay's.
   def game_matchup_link(game)
     label = safe_join([
       game.team0.short_name, " ",
-      score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.game_status), " ",
+      score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.status_label), " ",
       game.team1.short_name
     ])
 
-    game.cancelled? ? tag.span(label, class: "game-cancelled") : link_to(label, game_path(game))
+    game.not_held? ? tag.span(label, class: "game-cancelled") : link_to(label, game_path(game))
   end
 
   # A column heading that sorts the games table by it (see GameSortable). The

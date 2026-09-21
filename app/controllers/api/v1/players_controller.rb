@@ -34,7 +34,7 @@ module Api
         stats.pitching_lines.each { |line| entry_for.call(line.game, line.university_id)[:pitching] = line }
         player.game_members.includes(game: [ :season, :team0, :team1 ]).each { |member| entry_for.call(member.game, member.university_id)[:roster] = member }
 
-        sorted = entries.values.sort_by { |entry| [ entry[:game].played_on, entry[:game].game_number ] }.reverse
+        sorted = entries.values.sort_by { |entry| [ entry[:game].played_on, entry[:game].game_number.to_i ] }.reverse
         render json: sorted.map { |entry| game_entry_json(entry) }
       end
 

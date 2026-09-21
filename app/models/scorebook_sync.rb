@@ -8,9 +8,10 @@ require "json"
 # imports across many seasons, see script/big6/scorebook/season_games.rb and
 # script/big6/game.rb instead.
 #
-# A "中止"/"ノーゲーム" entry (see Game::CANCELLED_STATUSES) isn't imported as a
-# game of its own, but it does mark the game we already have for it as
-# cancelled: a game listed as scheduled would otherwise stay "試合前" for good.
+# A "中止"/"ノーゲーム" entry (see Game::NOT_HELD_STATUSES) is a game of its own,
+# with that status and no round number (Game.record_cancellation): the game we
+# already have for it is marked, or one is added. A game listed as scheduled would
+# otherwise stay "試合前" for good.
 #
 # The entries made for the replay of a cancelled game can carry the wrong round
 # label (Scorebook has called the replay of a 2回戦 "1回戦"). So once a pair has
@@ -41,21 +42,22 @@ class ScorebookSync
     @season = season
   end
 
-  # Marks the games we have as cancelled from the Scorebook data already stored on
-  # the season, fetching nothing. This finds the games left over from before
-  # cancelled entries were skipped by the importers, which have no result and no
-  # status and so look as if they were still to be played. A game Scorebook has as
-  # finished is left alone. Returns the games newly marked.
+  # Records the games that weren't held (中止, ノーゲーム) from the Scorebook data
+  # already stored on the season, fetching nothing: those we have are marked, and
+  # those we don't are added. This finds the games left over from before cancelled
+  # entries were imported, which have no result and no status and so look as if they
+  # were still to be played. A game Scorebook has as finished is left alone.
+  # Returns the games newly marked or added.
   def record_stored_cancellations
     universities_by_slug = University.where(slug: SCOREBOOK_TEAM_SLUGS.values).index_by(&:slug)
 
     Array(@season.scorebook_games).filter_map do |info|
       next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
-      next unless Game::CANCELLED_STATUSES.include?(info["gameStatus"])
+      next unless Game::NOT_HELD_STATUSES.include?(info["gameStatus"])
 
-      team_ids = [ info["topTeamId"], info["bottomTeamId"] ].map { |id| universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(id)).id }
-      game = record_cancellation(info, team_ids, unless_finished: true)
-      game if game&.saved_change_to_game_status?
+      teams = [ info["topTeamId"], info["bottomTeamId"] ].map { |id| universities_by_slug.fetch(SCOREBOOK_TEAM_SLUGS.fetch(id)) }
+      game = record_cancellation(info, teams, unless_finished: true)
+      game if game && (game.previously_new_record? || game.saved_change_to_game_status?)
     end
   end
 
@@ -80,10 +82,11 @@ class ScorebookSync
     JSON.parse(response.body)["data"]
   end
 
-  def record_cancellation(info, team_ids, **options)
+  def record_cancellation(info, teams, **options)
     Game.record_cancellation(
-      season: @season, team_ids: team_ids, played_on: Date.parse(info.fetch("gameDay")),
-      scorebook_game_id: info["id"], status: info["gameStatus"], **options
+      season: @season, teams: teams, played_on: Date.parse(info.fetch("gameDay")),
+      scorebook_game_id: info["id"], status: info["gameStatus"], **options,
+      attributes: { game_order: info["gameOrder"], counted_in_stats: info["isCounted"] != false }
     )
   end
 
@@ -102,9 +105,9 @@ class ScorebookSync
       pair_key = [ team0.id, team1.id ].sort
       counted = info["isCounted"] != false # false for a playoff
 
-      if Game::CANCELLED_STATUSES.include?(info["gameStatus"])
+      if Game::NOT_HELD_STATUSES.include?(info["gameStatus"])
         pairs_with_cancellation << pair_key if counted
-        record_cancellation(info, [ team0.id, team1.id ])
+        record_cancellation(info, [ team0, team1 ])
         next
       end
 
@@ -130,7 +133,8 @@ class ScorebookSync
       game.game_order = info["gameOrder"]
       # The league's site may have reported this game cancelled before Scorebook
       # does: Scorebook still saying it hasn't started doesn't undo that.
-      game.game_status = info["gameStatus"] unless game.cancelled? && info["gameStatus"] == Game::PENDING_STATUS
+      status = Game.status_for(info["gameStatus"], team0_score: game.team0_score, team1_score: game.team1_score, played_on: game.played_on)
+      game.game_status = status unless game.not_held? && status == Game::PENDING_STATUS
       game.counted_in_stats = info["isCounted"] != false
       game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)

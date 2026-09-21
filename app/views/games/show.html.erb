@@ -25,7 +25,7 @@
   <% if @game.weather_summary.present? %>　<%= @game.weather_summary %><% end %>
   <% if @game.temp_high.present? %>　最高<%= @game.temp_high %>℃<% end %>
   <% if @game.temp_low.present? %>　最低<%= @game.temp_low %>℃<% end %>
-  <% if in_progress %>　<span class="season-tag"><%= is_future ? "試合前" : "試合中" %></span><% end %>
+  　<span class="season-tag game-status" data-status="<%= @game.game_status %>"><%= @game.status_label %></span>
 </p>
 
 <% if detail.innings.any? %>
@@ -100,22 +100,20 @@
 <% else %>
   <p>
     <%= @game.team0.short_name %>
-    <%= score_span(@game.team0_score, @game.team1_score, played_on: @game.played_on, status: @game.game_status) %>
+    <%= score_span(@game.team0_score, @game.team1_score, played_on: @game.played_on, status: @game.status_label) %>
     <%= @game.team1.short_name %>
   </p>
   <p class="muted">
-    <% if @game.cancelled? %>
-      この試合は<%= @game.game_status %>になりました。
-    <% elsif in_progress && is_future %>
+    <% if @game.scheduled? %>
       この試合はまだ行われていません。
-    <% elsif in_progress %>
+    <% elsif @game.in_progress? %>
       試合中です。詳細データはまだありません。
     <% else %>
       詳細データはありません。
     <% end %>
   </p>
 
-  <% if is_future && !@game.cancelled?
+  <% if @game.scheduled? && is_future
        estimate = EstimatedGameSchedule.new(@game)
        start_time = estimate.scheduled_start_time
        end_time = estimate.estimated_end_time

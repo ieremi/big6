@@ -43,6 +43,7 @@ class GamesController < ApplicationController
 
     scope = filtered_scope
     @total_count = scope.count
+    @cancelled_count = scope.not_held.count
     @page = [ params[:page].to_i, 1 ].max
     @games = apply_game_sort(scope).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @total_pages = (@total_count.to_f / PER_PAGE).ceil
@@ -65,7 +66,7 @@ class GamesController < ApplicationController
     end
 
     if @season.nil? && @year.nil?
-      @games_counts = scope.group(:season_id).count
+      @games_counts = scope.held.group(:season_id).count
       @seasons = Season.where(id: @games_counts.keys).order(year: :desc, term: :desc)
       render :team_seasons and return
     end
@@ -83,7 +84,7 @@ class GamesController < ApplicationController
     game = Game.includes(:team0, :team1, :season)
       .where(team0_id: [ team0.id, team1.id ], team1_id: [ team0.id, team1.id ])
       .where(season_id: season.id, game_number: params[:game_number])
-      .cancelled_last.first!
+      .first!
 
     send_data GameOgImage.new(game).to_png, type: "image/png", disposition: "inline"
   end

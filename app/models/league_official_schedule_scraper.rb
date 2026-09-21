@@ -9,9 +9,9 @@ require "nokogiri"
 # the schedule until the first two games of a series have split 1-1, so
 # there's nothing to import until the league site adds the row.
 #
-# A game the schedule shows as "中止" (its result column says so) is marked
-# cancelled on the game we already have for it, if any. It is never created:
-# it would only take the round number of the game that replaces it.
+# A game the schedule shows as "中止" (its result column says so) is recorded as
+# cancelled, with no round number (Game.record_cancellation): the game we already
+# have for it is marked, or one is added.
 #
 # The page's markup mixes encodings (team names are Shift_JIS, the rest of
 # the page is UTF-8), a quirk of the source site, not our fetching — see
@@ -100,7 +100,7 @@ class LeagueOfficialScheduleScraper
 
   # The schedule writes "中止" where a game's result link would be.
   def cancelled?(game_div)
-    game_div.css("span.text10px").any? { |span| span.text.strip == Game::CANCELLED_STATUSES.first }
+    game_div.css("span.text10px").any? { |span| span.text.strip == Game::NOT_HELD_STATUSES.first }
   end
 
   def import(entry)
@@ -109,7 +109,7 @@ class LeagueOfficialScheduleScraper
     return nil unless team_a && team_b
 
     if entry[:cancelled]
-      Game.record_cancellation(season: @season, team_ids: [ team_a.id, team_b.id ], played_on: entry[:date])
+      Game.record_cancellation(season: @season, teams: [ team_a, team_b ], played_on: entry[:date])
       return nil
     end
 
@@ -122,7 +122,7 @@ class LeagueOfficialScheduleScraper
       team0: team_a,
       team1: team_b,
       played_on: entry[:date],
-      game_number: scope.not_cancelled.count + 1, # a cancelled game's number is the replay's
+      game_number: scope.held.count + 1,
       league_official_data: { "scheduledStartTime" => entry[:start_time] }.compact
     )
   end

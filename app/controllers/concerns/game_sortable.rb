@@ -18,9 +18,9 @@ module GameSortable
         "seasons.year #{direction_sql}, (seasons.term = 'autumn') #{direction_sql}, games.played_on ASC, games.game_number ASC"
       ))
     when "date"
-      scope.order(Arel.sql("games.played_on #{direction_sql}, games.game_number #{direction_sql}"))
+      scope.order(Arel.sql("games.played_on #{direction_sql}, games.game_number #{direction_sql} NULLS LAST"))
     when "round"
-      scope.order(Arel.sql("games.game_number #{direction_sql}, games.played_on ASC"))
+      scope.order(Arel.sql("games.game_number #{direction_sql} NULLS LAST, games.played_on ASC"))
     when "card"
       scope
         .joins("JOIN universities team0_u ON team0_u.id = games.team0_id")

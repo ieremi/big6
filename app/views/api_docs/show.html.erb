@@ -75,8 +75,10 @@
 <h3><code>/api/v1/games</code></h3>
 <p>
   試合の検索・一覧（ページネーションあり、1ページ100件）。
-  各試合の<code>cancelled</code>は、中止（ノーゲーム）になった試合で<code>true</code>です。その試合のスコアは<code>null</code>で、
-  同じ<code>round</code>で行われた再試合と別の試合として並びます。
+  各試合の<code>status</code>は、<code>scheduled</code>（試合前）/ <code>in_progress</code>（試合中）/ <code>finished</code>（試合終了）/
+  <code>cancelled</code>（中止）/ <code>no_game</code>（ノーゲーム）のどれかです。中止とノーゲームの試合は、スコアも回戦（<code>round</code>）も<code>null</code>です
+  （再試合が、その回戦になります）。<code>cancelled</code>は、中止かノーゲームの試合で<code>true</code>です。
+  <code>total</code>と件数の数え方は、中止の試合も1件に含みます。
 </p>
 <div class="table-scroll">
   <table>

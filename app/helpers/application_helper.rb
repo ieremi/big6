@@ -37,17 +37,14 @@ module ApplicationHelper
     "https://calendar.google.com/calendar/render?cid=#{CGI.escape(webcal_url)}"
   end
 
+  # A game's score. With none, its status ("試合前", "試合中", "中止", ...): status is
+  # the Japanese name (Game#status_label), and without one the date decides.
   def score_span(team0_score, team1_score, played_on: nil, status: nil)
     if team0_score.nil? || team1_score.nil?
-      label = if Game::CANCELLED_STATUSES.include?(status)
-        status
-      elsif played_on && played_on >= Date.current
-        "試合前"
-      else
-        "試合中"
-      end
+      label = status.presence || (played_on && played_on >= Date.current ? "試合前" : "試合中")
       return tag.span(label, class: "score muted")
     end
+
 
     tag.span class: "score" do
       tag.span(team0_score, class: "score-num score-num-left") +

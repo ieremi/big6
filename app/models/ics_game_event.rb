@@ -8,7 +8,7 @@ module IcsGameEvent
     start_time, end_time = times_for(game, scoreboard)
 
     summary = "#{game.team0.short_name} vs #{game.team1.short_name}#{circled_number(game.game_number)}"
-    summary = "【#{game.game_status}】#{summary}" if game.cancelled?
+    summary = "【#{game.status_label}】#{summary}" if game.not_held?
 
     calendar.add_event(
       uid: "game-#{game.id}@big6",
@@ -17,8 +17,8 @@ module IcsGameEvent
       end_time: end_time,
       all_day_date: start_time ? nil : game.played_on,
       location: StadiumLocation.for(scoreboard.stadium),
-      description: "#{game.season.title} 第#{game.game_number}回戦",
-      cancelled: game.cancelled?
+      description: [ game.season.title, (game.game_number && "第#{game.game_number}回戦") ].compact.join(" "),
+      cancelled: game.not_held?
     )
   end
 
@@ -61,7 +61,10 @@ module IcsGameEvent
     ActiveSupport::TimeZone["Asia/Tokyo"].local(date.year, date.month, date.day, hour, min)
   end
 
+  # "②"; nothing for a game with no round number.
   def circled_number(n)
+    return "" if n.nil?
+
     CIRCLED_DIGITS[n - 1] || "(#{n})"
   end
 end

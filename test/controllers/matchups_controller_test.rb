@@ -52,4 +52,49 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='decade-fold#openAll']", 0
     assert_no_match "ベンチ入りメンバー", response.body
   end
+
+  # ---- the game's status on its page
+
+  def status_tag
+    css_select("p.muted .game-status").map { |tag| [ tag["data-status"], tag.text ] }
+  end
+
+  test "game page shows the game's status as a tag" do
+    { "scheduled" => "試合前", "in_progress" => "試合中" }.each do |status, label|
+      @game.update!(game_status: status)
+
+      get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+      assert_equal [ [ status, label ] ], status_tag
+    end
+
+    @game.update!(game_status: "finished", team0_score: 4, team1_score: 2)
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_equal [ [ "finished", "試合終了" ] ], status_tag
+    assert_select ".score", text: "4-2"
+  end
+
+  test "game page says what the status means where there is no scoreboard" do
+    @game.update!(game_status: "scheduled")
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+    assert_select "p.muted", text: /この試合はまだ行われていません/
+
+    @game.update!(game_status: "in_progress")
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+    assert_select "p.muted", text: /試合中です。詳細データはまだありません/
+    assert_select "p.muted", text: /まだ行われていません/, count: 0
+
+    @game.update!(game_status: "finished", team0_score: 1, team1_score: 0)
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+    assert_select "p.muted", text: /詳細データはありません/
+  end
+
+  test "game page shows the status as stored, not one guessed from the date" do
+    @game.update!(played_on: Date.current - 5, game_status: "scheduled") # not yet updated by the sync
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_equal [ [ "scheduled", "試合前" ] ], status_tag
+  end
 end

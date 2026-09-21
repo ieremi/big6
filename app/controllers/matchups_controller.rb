@@ -39,7 +39,7 @@ class MatchupsController < ApplicationController
       @game = Game.includes(:team0, :team1, :season)
         .where(team0_id: [ @team0.id, @team1.id ], team1_id: [ @team0.id, @team1.id ])
         .where(season_id: @season.id, game_number: params[:game_number])
-        .cancelled_last.first!
+        .first!
 
       if request.format.symbol == :ics
         calendar = IcsCalendar.new(name: "#{@game.team0.short_name} vs #{@game.team1.short_name}")
@@ -86,7 +86,9 @@ class MatchupsController < ApplicationController
 
   private
 
-  # The same orders as GameSortable#apply_game_sort, for a list already loaded.
+  # The same orders as GameSortable#apply_game_sort, for a list already loaded. A
+  # game with no round number (one that wasn't held) comes after the others when
+  # sorting by round, whichever way.
   def sort_games_array(games, sort, direction)
     return games unless sort
 
@@ -94,20 +96,21 @@ class MatchupsController < ApplicationController
 
     case sort
     when "season"
-      games.sort_by { |g| [ g.season.year * multiplier, (g.season.term == "autumn" ? 1 : 0) * multiplier, g.played_on, g.game_number ] }
+      games.sort_by { |g| [ g.season.year * multiplier, (g.season.term == "autumn" ? 1 : 0) * multiplier, g.played_on, g.game_number.to_i ] }
     when "date"
-      games.sort_by { |g| [ g.played_on.jd * multiplier, g.game_number * multiplier ] }
+      games.sort_by { |g| [ g.played_on.jd * multiplier, g.game_number.to_i * multiplier ] }
     when "round"
-      games.sort_by { |g| [ g.game_number * multiplier, g.played_on ] }
+      games.sort_by { |g| [ g.game_number.nil? ? 1 : 0, g.game_number.to_i * multiplier, g.played_on ] }
     when "card"
       games.sort_by do |g|
         lo, hi = [ g.team0.position, g.team1.position ].sort
-        [ lo * multiplier, hi * multiplier, g.played_on, g.game_number ]
+        [ lo * multiplier, hi * multiplier, g.played_on, g.game_number.to_i ]
       end
     when "attendance"
-      games.sort_by { |g| [ g.attendance.nil? ? 1 : 0, g.attendance.to_i * multiplier, g.played_on, g.game_number ] }
+      games.sort_by { |g| [ g.attendance.nil? ? 1 : 0, g.attendance.to_i * multiplier, g.played_on, g.game_number.to_i ] }
     end
   end
+
 
   def build_data
     # One query for every game, instead of Matchup.new doing its own

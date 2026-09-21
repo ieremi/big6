@@ -65,7 +65,7 @@
 
   <% if @selected_university_ids.any? %>
     <p class="muted">
-      <%= @universities.select { |u| @selected_university_ids.include?(u.id) }.map(&:short_name).join("・") %>の試合のみ：<%= @shown_game_count %>試合（全<%= @games.size %>試合）
+      <%= @universities.select { |u| @selected_university_ids.include?(u.id) }.map(&:short_name).join("・") %>の試合のみ：<%= @shown_game_count %>試合（全<%= @played_game_count %>試合）
     </p>
   <% end %>
 

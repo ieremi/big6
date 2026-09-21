@@ -35,18 +35,19 @@ class LeagueOfficialScheduleScraperTest < ActiveSupport::TestCase
 
     scrape(schedule([ "9/19", [ "法大", "5 - 12", "立大" ] ], [ "9/20", [ "法大", "-", "立大", true ] ]))
 
-    assert_equal "中止", cancelled.reload.game_status
-    assert_equal [ "試合終了", 5 ], [ played.reload.game_status, played.team0_score ]
+    assert_equal [ "cancelled", nil ], [ cancelled.reload.game_status, cancelled.game_number ]
+    assert_equal [ "finished", 5 ], [ played.reload.game_status, played.team0_score ]
   end
 
-  test "a cancelled game we do not have is not created, and returns nothing" do
+  test "a cancelled game we do not have is added, with no round, and is not among the games it says it created" do
     created = scrape(schedule([ "9/21", [ "法大", "-", "立大", true ] ]))
 
     assert_empty created
-    assert_equal 0, Game.where(season: @season).count
+    added = Game.where(season: @season).sole
+    assert_equal [ @hosei, @rikkio, "cancelled", nil, Date.new(2026, 9, 21) ], [ added.team0, added.team1, added.game_status, added.game_number, added.played_on ]
   end
 
-  test "the replay of a cancelled game is created with the number the cancelled one had, not the next" do
+  test "the replay of a cancelled game is created with the next round, the cancelled games having none" do
     create_game("2026-09-19", 1, game_status: "試合終了", team0_score: 5, team1_score: 12)
     create_game("2026-09-20", 2, game_status: "試合前")
 
@@ -58,8 +59,8 @@ class LeagueOfficialScheduleScraperTest < ActiveSupport::TestCase
     ))
 
     assert_equal [ [ "2026-09-22", 2 ] ], created.map { |game| [ game.played_on.to_s, game.game_number ] }
-    assert_equal [ [ "2026-09-19", 1, nil ], [ "2026-09-20", 2, "中止" ], [ "2026-09-22", 2, nil ] ],
-      Game.where(season: @season).order(:played_on).map { |game| [ game.played_on.to_s, game.game_number, game.game_status.presence.then { |s| s == "試合終了" ? nil : s } ] }
+    assert_equal [ [ "2026-09-19", 1, "finished" ], [ "2026-09-20", nil, "cancelled" ], [ "2026-09-21", nil, "cancelled" ], [ "2026-09-22", 2, "scheduled" ] ],
+      Game.where(season: @season).order(:played_on).map { |game| [ game.played_on.to_s, game.game_number, game.game_status ] }
   end
 
   test "games with no 中止 are created as before" do
@@ -69,11 +70,11 @@ class LeagueOfficialScheduleScraperTest < ActiveSupport::TestCase
   end
 
   test "a game already cancelled stays so when the schedule is read again" do
-    cancelled = create_game("2026-09-20", 2, game_status: "中止")
+    cancelled = create_game("2026-09-20", nil, game_status: "中止")
 
     2.times { scrape(schedule([ "9/20", [ "法大", "-", "立大", true ] ])) }
 
-    assert_equal "中止", cancelled.reload.game_status
+    assert_equal "cancelled", cancelled.reload.game_status
     assert_equal 1, Game.where(season: @season).count
   end
 end

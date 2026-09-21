@@ -51,7 +51,7 @@ class SyncRecentGamesJob < ApplicationJob
     end
 
     # Reloaded, since the schedule pages may just have marked some cancelled.
-    incomplete_games = games.reload.reject { |game| game.cancelled? || complete?(game) }
+    incomplete_games = games.reload.reject { |game| game.not_held? || complete?(game) }
     if incomplete_games.any?
       incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
       incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }

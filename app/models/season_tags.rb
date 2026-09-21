@@ -62,6 +62,11 @@ class SeasonTags
     @games ||= @season.games.includes(:team0, :team1).order(:played_on, :game_number).to_a
   end
 
+  # The games held: a cancelled game is in the season's games but isn't one of them.
+  def held_games
+    @held_games ||= season_games.reject(&:not_held?)
+  end
+
   def standings
     @standings ||= Standings.new(@season, games: season_games, universities: @universities)
   end
@@ -97,11 +102,11 @@ class SeasonTags
   end
 
   def many_games
-    Tag.new(label: MANY_GAMES) if season_games.size >= 40
+    Tag.new(label: MANY_GAMES) if held_games.size >= 40
   end
 
   def no_round_3
-    Tag.new(label: NO_ROUND_3) if season_games.none? { |g| g.game_number == 3 }
+    Tag.new(label: NO_ROUND_3) if held_games.none? { |g| g.game_number == 3 }
   end
 
   def had_playoff

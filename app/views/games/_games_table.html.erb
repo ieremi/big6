@@ -15,7 +15,7 @@
     <tbody>
       <% games.each do |game| %>
         <% row_data = if local_assigns[:game_periods]
-             { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" ") }
+             { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" "), cancelled: (true if game.not_held?) }
            else
              {}
            end %>
@@ -24,7 +24,7 @@
             <td><%= link_to game.season.title, season_path(game.season.year, game.season.term) %></td>
           <% end %>
           <td><%= game.played_on %></td>
-          <td><%= game.game_number %>回戦</td>
+          <td><%= round_label(game) %></td>
           <td><%= game_matchup_link(game) %></td>
           <td><%= game.attendance.present? ? number_with_delimiter(game.attendance) : "-" %></td>
         <% end %>

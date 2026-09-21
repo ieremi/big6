@@ -46,7 +46,7 @@ class PlayerStats
   private
 
   def sorted_by_game(association)
-    association.includes(game: [ :season, :team0, :team1 ]).to_a.sort_by { |line| [ line.game.played_on, line.game.game_number ] }.reverse
+    association.includes(game: [ :season, :team0, :team1 ]).to_a.sort_by { |line| [ line.game.played_on, line.game.game_number.to_i ] }.reverse
   end
 
   def counted(lines)

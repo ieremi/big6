@@ -4,7 +4,7 @@ class SitemapsController < ApplicationController
   Entry = Struct.new(:loc, :lastmod, :changefreq, :priority, keyword_init: true)
 
   def show
-    cache_key = "sitemap_entries/v2/#{Game.maximum(:updated_at)&.to_i}/#{Game.count}/#{Season.maximum(:updated_at)&.to_i}"
+    cache_key = "sitemap_entries/v3/#{Game.maximum(:updated_at)&.to_i}/#{Game.count}/#{Season.maximum(:updated_at)&.to_i}"
     @entries = Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) { build_entries }
 
     render layout: false
@@ -15,7 +15,9 @@ class SitemapsController < ApplicationController
   def build_entries
     universities = University.order(:position).to_a
     seasons = Season.order(:year, :term).to_a
-    games = Game.includes(:team0, :team1).order(:played_on, :game_number).to_a
+    # Not the cancelled games: they have no page (a cancelled game and its replay
+    # share a round number, and so a URL).
+    games = Game.held.includes(:team0, :team1).order(:played_on, :game_number).to_a
     LiteSeasonPreload.attach(games)
 
     entries = [

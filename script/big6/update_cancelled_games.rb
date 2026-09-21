@@ -5,8 +5,9 @@
 #
 # It does two things:
 #
-# 1. From the Scorebook data already stored on every season (no network): marks the
-#    games we have for Scorebook's cancelled entries. This finds the games left
+# 1. From the Scorebook data already stored on every season (no network): records
+#    Scorebook's cancelled entries, as games with no round number: the games we
+#    have for them are marked, and those we don't have are added. This finds the games left
 #    over from before the importers skipped cancelled entries: rows with no result
 #    and no status, which show as "試合中" for good, and can hide the real game of
 #    the same round number. (delete_phantom_duplicate_games.rb misses those whose
@@ -24,11 +25,12 @@
 #           DAYS=30 bin/rails runner script/big6/update_cancelled_games.rb
 
 def unresolved_games(since)
-  Game.not_cancelled.where(team0_score: nil, team1_score: nil).where(played_on: since...Date.current)
+  Game.held.where(team0_score: nil, team1_score: nil).where(played_on: since...Date.current)
 end
 
 def describe(game)
-  "#{game.played_on} #{game.team0.short_name} - #{game.team1.short_name} (#{game.game_number}回戦)"
+  round = game.game_number ? " (#{game.game_number}回戦)" : ""
+  "#{game.played_on} #{game.team0.short_name} - #{game.team1.short_name}#{round}"
 end
 
 days = Integer(ENV.fetch("DAYS", 90))
@@ -42,10 +44,10 @@ stored_seasons.each do |season|
   next if games.empty?
 
   puts "#{season.title}:"
-  games.each { |game| puts "  marked #{describe(Game.includes(:team0, :team1).find(game.id))}" }
+  games.each { |game| puts "  recorded #{describe(Game.includes(:team0, :team1).find(game.id))} (#{game.status_label})" }
   marked += games.size
 end
-puts "#{marked} game(s) newly marked as cancelled"
+puts "#{marked} game(s) newly recorded as not held (中止 / ノーゲーム)"
 
 puts "== from the schedule page and Scorebook"
 seasons = named ? [ named ] : Season.where(id: unresolved_games(Date.current - days).select(:season_id)).order(:year, :term).to_a
@@ -54,10 +56,10 @@ if seasons.empty?
   puts "no past games without a result or a recorded cancellation"
 else
   seasons.each do |season|
-    before = season.games.cancelled.count
+    before = season.games.not_held.count
     LeagueOfficialScheduleScraper.call(season)
     ScorebookSync.call(season)
-    after = season.games.cancelled.count
+    after = season.games.not_held.count
     puts "#{season.title}: #{before} -> #{after} cancelled game(s) recorded"
   end
 end
@@ -66,4 +68,4 @@ end
 # sources don't call cancelled either (yet to be entered, or lost).
 left = unresolved_games(Date.current - days).includes(:team0, :team1, :season).order(:played_on).to_a
 puts "still without a result or a cancellation: #{left.size}"
-left.each { |game| puts "  #{game.season.title} #{describe(game)} #{game.game_status.inspect}" }
+left.each { |game| puts "  #{game.season.title} #{describe(game)} #{game.status_label.inspect}" }

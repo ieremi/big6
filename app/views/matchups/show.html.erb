@@ -72,13 +72,13 @@
       <% end %>
     <% end %>
 
-    <p class="muted" data-period-filter-target="gameCount"><%= @games.size %>試合</p>
+    <p class="muted" data-period-filter-target="gameCount"><%= games_count_label(@games) %></p>
 
     <%= render "attendance_chart", games: @games, game_periods: @game_periods %>
     <%= render "games/games_table", games: @games, show_season: @season.nil?, game_periods: @game_periods %>
   </div>
 <% else %>
-  <p class="muted"><%= @games.size %>試合</p>
+  <p class="muted"><%= games_count_label(@games) %></p>
 
   <%= render "attendance_chart", games: @games %>
   <%= render "games/games_table", games: @games, show_season: @season.nil? %>

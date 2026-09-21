@@ -154,16 +154,21 @@ export default class extends Controller {
     })
 
     if (this.hasGameRowTarget) {
+      // A cancelled game (data-cancelled) is in the table but isn't a game held.
       let visibleCount = 0
+      let cancelledCount = 0
       this.gameRowTargets.forEach((el) => {
         const periods = (el.dataset.periods || "").split(" ")
         const visible = periods.includes(this.periodValue)
         el.classList.toggle("is-hidden", !visible)
-        if (visible) visibleCount++
+        if (visible) {
+          if (el.dataset.cancelled) cancelledCount++
+          else visibleCount++
+        }
       })
 
       this.gameCountTargets.forEach((el) => {
-        el.textContent = `${visibleCount}試合`
+        el.textContent = `${visibleCount}試合` + (cancelledCount > 0 ? `（ほか中止${cancelledCount}）` : "")
       })
     }
 

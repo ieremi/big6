@@ -25,24 +25,33 @@ class SeasonWeeks
       series = week.series.select { |s| university_ids.include?(s.team0.id) || university_ids.include?(s.team1.id) }
       next if series.empty?
 
-      Week.new(number: week.number, series: series, games: series.flat_map(&:games).sort_by { |g| [ g.played_on, g.game_number ] })
+      Week.new(number: week.number, series: series, games: series.flat_map(&:games).sort_by { |g| [ g.played_on, g.game_number.to_i ] })
     end
   end
 
   private
 
+  # The first game actually held, which is where a series starts: a game
+  # cancelled on the first day (and replayed the next) would otherwise start the
+  # series a day before the pairs that weren't rained out, and split the week,
+  # depending on whether we happen to have a row for each of those cancelled
+  # games. A series with none held starts on its first (cancelled) game.
+  def first_held_game(ordered_games)
+    ordered_games.find { |game| !game.not_held? } || ordered_games.first
+  end
+
   def compute
     series_list = @games.group_by { |g| [ g.team0_id, g.team1_id ].sort }.map do |_, games|
-      ordered = games.sort_by { |g| [ g.played_on, g.game_number ] }
-      first_game = ordered.first
+      ordered = games.sort_by { |g| [ g.played_on, g.game_number.to_i ] }
+      first_game = first_held_game(ordered)
       Series.new(team0: first_game.team0, team1: first_game.team1, games: ordered)
     end
 
-    weeks_by_start_date = series_list.group_by { |s| s.games.first.played_on }
+    weeks_by_start_date = series_list.group_by { |s| first_held_game(s.games).played_on }
 
     @weeks = weeks_by_start_date.keys.sort.each_with_index.map do |date, index|
       series = weeks_by_start_date[date]
-      games = series.flat_map(&:games).sort_by { |g| [ g.played_on, g.game_number ] }
+      games = series.flat_map(&:games).sort_by { |g| [ g.played_on, g.game_number.to_i ] }
       Week.new(number: index + 1, series: series, games: games)
     end
   end

@@ -52,6 +52,7 @@ class LeagueOfficialGameScraper
     if data["finishTime"].present? && @game.team0_score.nil? && @game.team1_score.nil?
       attrs[:team0_score] = data["runsTop"].compact.sum
       attrs[:team1_score] = data["runsBottom"].compact.sum
+      attrs[:game_status] = "finished"
     end
 
     if @game.attendance.nil? && data["attendance"].present?

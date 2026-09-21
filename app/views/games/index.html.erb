@@ -77,7 +77,8 @@
     <% if @total_count.zero? %>
       該当する試合はありません。
     <% else %>
-      <%= @total_count %>試合中 <%= @range_start %>–<%= @range_end %>件を表示
+      <%# Paged by the rows listed; the cancelled ones among them aren't games held. %>
+      <%= @total_count - @cancelled_count %>試合<% if @cancelled_count.positive? %>（ほか中止<%= @cancelled_count %>）<% end %>中 <%= @range_start %>–<%= @range_end %>件を表示
     <% end %>
   </p>
 

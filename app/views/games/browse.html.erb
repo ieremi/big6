@@ -10,7 +10,7 @@
   <%= period_label %>
 </h1>
 
-<p class="muted"><%= @games.size %>試合</p>
+<p class="muted"><%= games_count_label(@games) %></p>
 
 <% @games_by_opponent.each do |opponent, games| %>
   <h2>
