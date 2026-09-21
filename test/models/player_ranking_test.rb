@@ -30,43 +30,88 @@ class PlayerRankingTest < ActiveSupport::TestCase
     ranking.entries.map { |entry| entry.player.name }
   end
 
-  # ---- the minimums
+  # ---- the minimum
 
-  test "the minimums are 30 plate appearances and 15 innings for a season, 200 and 100 for a career" do
-    assert_equal 30, PlayerRanking.new("batting", season: @spring).minimum
-    assert_equal 200, PlayerRanking.new("batting").minimum
-    assert_equal 15, PlayerRanking.new("pitching", season: @spring).minimum
-    assert_equal 100, PlayerRanking.new("pitching").minimum
+  test "the default minimum is 40 for a career and 10 for a season, in plate appearances or innings" do
+    assert_equal [ 40, 10 ], [ PlayerRanking.new("batting").minimum, PlayerRanking.new("batting", season: @spring).minimum ]
+    assert_equal [ 40, 10 ], [ PlayerRanking.new("pitching").minimum, PlayerRanking.new("pitching", season: @spring).minimum ]
+    assert_equal 40, PlayerRanking.default_minimum("pitching", season: nil)
+    assert_equal 10, PlayerRanking.default_minimum("batting", season: @autumn)
   end
 
-  test "a season ranks only batters with at least 30 plate appearances" do
-    bat(player("規定到達"), game(@spring, 1), pa: 30)
-    bat(player("規定未満"), game(@spring, 2), pa: 29)
+  test "a season ranks only batters with at least 10 plate appearances" do
+    bat(player("十打席"), game(@spring, 1), pa: 10)
+    bat(player("九打席"), game(@spring, 2), pa: 9)
 
-    assert_equal [ "規定到達" ], names(PlayerRanking.new("batting", season: @spring))
+    assert_equal %w[十打席], names(PlayerRanking.new("batting", season: @spring))
   end
 
-  test "a career ranks only batters with at least 200 plate appearances, summed over all their games" do
-    over = player("通算200")
-    bat(over, game(@spring, 1), pa: 120)
-    bat(over, game(@autumn, 2), pa: 80)
-    bat(player("通算199"), game(@spring, 3), pa: 199)
+  test "a career ranks only batters with at least 40 plate appearances, summed over all their games" do
+    over = player("通算40")
+    bat(over, game(@spring, 1), pa: 25)
+    bat(over, game(@autumn, 2), pa: 15)
+    bat(player("通算39"), game(@spring, 3), pa: 39)
 
-    assert_equal [ "通算200" ], names(PlayerRanking.new("batting"))
+    assert_equal %w[通算40], names(PlayerRanking.new("batting"))
+    entry = PlayerRanking.new("batting").entries.sole
+    assert_equal [ 2, 40 ], [ entry.totals.games, entry.totals.pa ]
   end
 
-  test "a season ranks only pitchers with at least 15 innings" do
-    pitch(player("15回"), game(@spring, 1), outs: 45)
-    pitch(player("14回2/3"), game(@spring, 2), outs: 44)
+  test "a season ranks only pitchers with at least 10 innings" do
+    pitch(player("十回"), game(@spring, 1), outs: 30)
+    pitch(player("九回2/3"), game(@spring, 2), outs: 29)
 
-    assert_equal [ "15回" ], names(PlayerRanking.new("pitching", season: @spring))
+    assert_equal %w[十回], names(PlayerRanking.new("pitching", season: @spring))
   end
 
-  test "a career ranks only pitchers with at least 100 innings" do
-    pitch(player("100回"), game(@spring, 1), outs: 300)
-    pitch(player("99回2/3"), game(@spring, 2), outs: 299)
+  test "a career ranks only pitchers with at least 40 innings, summed over all their games" do
+    over = player("四十回")
+    pitch(over, game(@spring, 1), outs: 60)
+    pitch(over, game(@autumn, 2), outs: 60)
+    pitch(player("三十九回2/3"), game(@spring, 3), outs: 119)
 
-    assert_equal [ "100回" ], names(PlayerRanking.new("pitching"))
+    assert_equal %w[四十回], names(PlayerRanking.new("pitching"))
+  end
+
+  test "a minimum can be asked for, replacing the default: in plate appearances for batters, in innings for pitchers" do
+    bat(player("二十五"), game(@spring, 1), pa: 25)
+    bat(player("五十"), game(@spring, 2), pa: 50)
+    pitch(player("五回"), game(@spring, 3), outs: 15)
+    pitch(player("三十回"), game(@spring, 4), outs: 90)
+
+    assert_equal %w[二十五 五十], names(PlayerRanking.new("batting", minimum: 25)).sort
+    assert_equal %w[五十], names(PlayerRanking.new("batting", minimum: 26))
+    assert_equal %w[三十回 五回], names(PlayerRanking.new("pitching", minimum: 5)).sort
+    assert_equal %w[三十回], names(PlayerRanking.new("pitching", minimum: 6))
+    assert_equal 25, PlayerRanking.new("batting", minimum: 25).minimum
+  end
+
+  test "a minimum of 0 ranks everyone with a rate, however few their plate appearances or innings" do
+    bat(player("一打席"), game(@spring, 1), pa: 1, ab: 1, hits: 1, total_bases: 4)
+    bat(player("レギュラー"), game(@spring, 2), pa: 120)
+    pitch(player("一死"), game(@spring, 3), outs: 1, earned_runs: 0)
+
+    assert_equal %w[一打席 レギュラー], names(PlayerRanking.new("batting", minimum: 0)) # 5.000 against a regular's rate
+    assert_equal %w[一死], names(PlayerRanking.new("pitching", season: @spring, minimum: 0))
+  end
+
+  test "there is still no rate to rank for a batter with no OPS, or a pitcher with no ERA, whatever the minimum" do
+    bat(player("打席なし"), game(@spring, 1), pa: 0, ab: 0)
+    bat(player("打席あり"), game(@spring, 2), pa: 1, ab: 1, hits: 1, total_bases: 1)
+    pitch(player("投げず"), game(@spring, 3), outs: 0, earned_runs: 0)
+    pitch(player("投げた"), game(@spring, 4), outs: 3, earned_runs: 0)
+
+    assert_equal %w[打席あり], names(PlayerRanking.new("batting", minimum: 0))
+    assert_equal %w[投げた], names(PlayerRanking.new("pitching", minimum: 0))
+  end
+
+  test "minimum_from takes a whole number, and anything else is nil, so that the default applies" do
+    assert_equal [ 25, 7, 0, 100_000 ], [ "25", " 7 ", "0", "999999999" ].map { |value| PlayerRanking.minimum_from(value) }
+    assert_equal [ nil ] * 7, [ nil, "", " ", "abc", "-3", "2.5", "10打席" ].map { |value| PlayerRanking.minimum_from(value) }
+  end
+
+  test "a minimum too big to matter is limited" do
+    assert_equal PlayerRanking::MAX_MINIMUM, PlayerRanking.new("batting", minimum: 10**12).minimum
   end
 
   # ---- OPS
@@ -166,14 +211,16 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_equal [ 1, 1 ], [ spring.games, autumn.games ]
   end
 
-  test "games not counted toward stats add nothing, including toward the minimum" do
-    only_playoff = player("決定戦だけ")
-    bat(only_playoff, game(@spring, 1, counted: false), pa: 40)
+  test "games not counted toward stats add nothing: a player with only those is not ranked, another's totals leave them out" do
+    bat(player("決定戦だけ"), game(@spring, 1, counted: false), pa: 40)
     mixed = player("両方")
     bat(mixed, game(@spring, 2), pa: 25)
     bat(mixed, game(@spring, 3, counted: false), pa: 40)
 
-    assert_empty PlayerRanking.new("batting", season: @spring).entries # 25 counted plate appearances is under 30
+    ranking = PlayerRanking.new("batting", season: @spring)
+
+    assert_equal %w[両方], names(ranking)
+    assert_equal 25, ranking.entries.sole.totals.pa
   end
 
   test "a university filter limits the ranking to those universities, and an empty list to nobody" do

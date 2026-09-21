@@ -2,7 +2,7 @@
   kind_title = @kind == "batting" ? "打者ランキング" : "投手ランキング"
   period_title = @season ? @season.title : "通算"
   content_for :title, "#{kind_title}（#{period_title}） - Big6"
-  content_for :description, "東京六大学野球の#{kind_title}（#{period_title}、#{ranking_minimum_label(@kind, @minimum)}以上）"
+  content_for :description, "東京六大学野球の#{kind_title}（#{period_title}、#{ranking_target_label(@kind, @minimum)}）"
 %>
 
 <h1><%= kind_title %></h1>
@@ -38,6 +38,21 @@
     </div>
   </fieldset>
 
+  <fieldset>
+    <legend>最低<%= ranking_unit(@kind) %>数</legend>
+    <div class="period-toolbar">
+      <%# Empty while it is the default, so that the default follows the period chosen (a season's is not a career's). %>
+      <%= number_field_tag :minimum, (@minimum unless @minimum == @default_minimum), min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1,
+            placeholder: @default_minimum, "aria-label": "最低#{ranking_unit(@kind)}数" %>
+      <%= ranking_unit(@kind) %>以上
+      <% if @minimum == @default_minimum %>
+        <span class="muted">（既定）</span>
+      <% else %>
+        <%= link_to "既定（#{@default_minimum}#{ranking_unit(@kind)}）に戻す", ranking_path(@kind, rankings_filter_params.except("minimum")), class: "period-btn" %>
+      <% end %>
+    </div>
+  </fieldset>
+
   <% if @custom_sort %>
     <%= hidden_field_tag :sort, @sort %>
     <%= hidden_field_tag :direction, @direction %>
@@ -47,7 +62,7 @@
 <% end %>
 
 <p class="muted">
-  <%= @season ? "シーズン" : "通算" %>で<%= ranking_minimum_label(@kind, @minimum) %>以上の<%= @kind == "batting" ? "打者" : "投手" %>が対象です。
+  <%= @season ? "シーズン" : "通算" %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @minimum.zero? %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
   Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。
   <% if @kind == "batting" %>OPS ＝ 出塁率 ＋ 長打率（出塁率は犠飛を含めない簡易式です）。<% end %>
   見出しをクリックすると並べ替えられ、順位もその列の順につけ直されます（同じ値は同順位）。

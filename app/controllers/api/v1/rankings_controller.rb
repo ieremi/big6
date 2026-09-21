@@ -4,12 +4,13 @@ module Api
       PER_PAGE = 100
 
       # GET /api/v1/rankings/batting and /api/v1/rankings/pitching: the whole career unless
-      # year and term name a season; university[] limits it to those universities.
+      # year and term name a season; university[] limits it to those universities;
+      # minimum is the least plate appearances (batting) or innings (pitching) to be ranked.
       # sort and direction reorder the rows, and rank is then the position in that order;
       # default_rank is always the rank in the default order (OPS for batting, ERA for pitching).
       def show
         season = Season.find_by!(year: params[:year], term: params[:term]) if params[:year].present? && params[:term].present?
-        ranking = PlayerRanking.new(params[:kind], season: season, university_ids: university_ids_from_params)
+        ranking = PlayerRanking.new(params[:kind], season: season, university_ids: university_ids_from_params, minimum: PlayerRanking.minimum_from(params[:minimum]))
         sort = PlayerRanking.sort_keys(ranking.kind).include?(params[:sort]) ? params[:sort] : "rank"
         direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(ranking.kind, sort)
         entries = ranking.entries_sorted_by(sort, direction)

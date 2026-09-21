@@ -5,11 +5,12 @@
 # run average (its default order), but either can be reordered by any of its
 # columns (entries_sorted_by).
 #
-# Only players who reach a minimum are ranked, since a rate over a handful of
-# plate appearances says nothing (one at-bat gives an OPS of 2.000):
+# Only players who reach a minimum are ranked, since a rate over a handful of plate
+# appearances says nothing (one at-bat gives an OPS of 2.000). The minimum is of
+# plate appearances for batting and of innings for pitching; whoever asks for the
+# ranking can set it (0 is no minimum), and it is otherwise DEFAULT_MINIMUMS:
 #
-#   batting:  30 plate appearances in a season, 200 for a career
-#   pitching: 15 innings in a season, 100 for a career
+#   career: 40, season: 10 (plate appearances, or innings)
 #
 # Games left out of players' stats (the 優勝決定戦 playoffs) don't count, as on
 # the player pages. Players with equal displayed values (three decimals for OPS,
@@ -17,9 +18,12 @@
 class PlayerRanking
   KINDS = %w[batting pitching].freeze
 
-  # batting: plate appearances, pitching: innings pitched; [season, career].
-  MINIMUMS = { "batting" => { season: 30, career: 200 }, "pitching" => { season: 15, career: 100 } }.freeze
+  # The minimum when none is asked for: plate appearances for batting, innings
+  # pitched for pitching.
+  DEFAULT_MINIMUMS = { "batting" => { season: 10, career: 40 }, "pitching" => { season: 10, career: 40 } }.freeze
 
+  # The most a minimum can be asked to be (nobody has that many, but it keeps the SQL sane).
+  MAX_MINIMUM = 100_000
   # rank is the position in the order shown; default_rank is the rank in the
   # ranking's default order (OPS for batting, ERA for pitching), which is the same
   # thing unless the entries were sorted by another column.
@@ -73,18 +77,31 @@ class PlayerRanking
   attr_reader :kind, :season
 
   # kind is "batting" or "pitching". season nil ranks whole careers.
-  # university_ids nil means any university.
-  def initialize(kind, season: nil, university_ids: nil)
+  # university_ids nil means any university. minimum nil is the default one.
+  def initialize(kind, season: nil, university_ids: nil, minimum: nil)
     raise ArgumentError, "unknown ranking: #{kind.inspect}" unless KINDS.include?(kind)
 
     @kind = kind
     @season = season
     @university_ids = university_ids&.map(&:to_i)
+    @minimum = minimum && Integer(minimum).clamp(0, MAX_MINIMUM)
   end
 
-  # The minimum: plate appearances for batting, innings pitched for pitching.
+  # What the minimum is when none is asked for.
+  def self.default_minimum(kind, season:)
+    DEFAULT_MINIMUMS.fetch(kind).fetch(season ? :season : :career)
+  end
+
+  # A minimum from a request parameter: a whole number, or nil (so that the default
+  # applies) for anything else, including a blank.
+  def self.minimum_from(value)
+    string = value.to_s.strip
+    string.match?(/\A\d+\z/) ? [ string.to_i, MAX_MINIMUM ].min : nil
+  end
+
+  # The minimum in force: plate appearances for batting, innings for pitching.
   def minimum
-    MINIMUMS.fetch(kind).fetch(season ? :season : :career)
+    @minimum || self.class.default_minimum(kind, season: season)
   end
 
   # The ranked entries in the default order, best first.
@@ -161,7 +178,7 @@ class PlayerRanking
 
   # HAVING for the minimum: plate appearances, or innings (3 outs each).
   def minimum_condition
-    kind == "batting" ? "SUM(batting_lines.pa) >= #{minimum.to_i}" : "SUM(pitching_lines.outs) >= #{minimum.to_i * 3}"
+    kind == "batting" ? "SUM(batting_lines.pa) >= #{minimum}" : "SUM(pitching_lines.outs) >= #{minimum * 3}"
   end
 
   # [player, totals] pairs, best first by OPS (batting) or ERA (pitching); ties in

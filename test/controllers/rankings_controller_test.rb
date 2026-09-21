@@ -57,32 +57,117 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr:first-child td", text: "1.20" # 2 earned runs in 15 innings (45 outs)
   end
 
-  test "without a season the ranking is over the whole career" do
+  test "without a season the ranking is over the whole career, from a minimum of 40 plate appearances" do
     over = player("通算")
-    bat(over, game(@spring, 1), pa: 120)
-    bat(over, game(@autumn, 2), pa: 80)
+    bat(over, game(@spring, 1), pa: 25)
+    bat(over, game(@autumn, 2), pa: 15)
+    bat(player("通算39"), game(@spring, 3), pa: 39)
 
     get rankings_url
 
     assert_select "title", /（通算）/
     assert_equal %w[通算], ranked_names
-    assert_select "p.muted", text: /通算で200打席以上の打者/
+    assert_select "p.muted", text: /通算で40打席以上の打者が対象です/
+    assert_select "meta[name=description][content=?]", "東京六大学野球の打者ランキング（通算、40打席以上の打者）"
   end
 
-  test "the page says what the minimum is for a season" do
-    bat(player("選手"), game(@spring, 1))
+  test "a season's minimum is 10 plate appearances" do
+    bat(player("十"), game(@spring, 1), pa: 10)
+    bat(player("九"), game(@spring, 2), pa: 9)
 
     get rankings_url, params: { season: "2026-spring" }
 
-    assert_select "p.muted", text: /シーズンで30打席以上の打者/
+    assert_equal %w[十], ranked_names
+    assert_select "p.muted", text: /シーズンで10打席以上の打者が対象です/
     assert_select "p.muted", text: /優勝決定戦は含みません/
     assert_select "p.muted", text: /出塁率は犠飛を含めない簡易式/
   end
 
-  test "the ERA page counts its minimum in innings" do
+  test "the ERA page counts its minimum in innings: 40 for a career, 10 for a season" do
+    pitch(player("投手"), game(@spring, 1))
+
     get ranking_url("pitching")
 
-    assert_select "p.muted", text: /通算で100投球回以上の投手/
+    assert_select "p.muted", text: /通算で40投球回以上の投手が対象です/
+    assert_select "fieldset legend", text: "最低投球回数"
+    assert_select "input#minimum[placeholder=?]", "40"
+
+    get ranking_url("pitching"), params: { season: "2026-spring" }
+
+    assert_select "p.muted", text: /シーズンで10投球回以上の投手が対象です/
+    assert_select "input#minimum[placeholder=?]", "10"
+  end
+
+  # ---- asking for another minimum
+
+  test "the form has a field for the minimum, empty while it is the default, which is shown in it" do
+    bat(player("選手"), game(@spring, 1), pa: 100)
+
+    get rankings_url
+
+    assert_select "fieldset legend", text: "最低打席数"
+    assert_select "input#minimum[type=number][min='0'][placeholder=?]", "40"
+    assert_select "input#minimum[value]", 0
+    assert_select "form .muted", text: "（既定）"
+    assert_select "a", text: /既定.*に戻す/, count: 0
+  end
+
+  test "a minimum in the URL is applied, and shown in the field with a way back to the default" do
+    bat(player("二十"), game(@spring, 1), pa: 20)
+    bat(player("五十"), game(@spring, 2), pa: 50)
+
+    get rankings_url, params: { minimum: 15 }
+
+    assert_equal %w[二十 五十].sort, ranked_names.sort
+    assert_select "p.muted", text: /通算で15打席以上の打者が対象です/
+    assert_select "input#minimum[value=?]", "15"
+    assert_select "a[href=?]", ranking_path("batting"), text: "既定（40打席）に戻す"
+
+    get rankings_url, params: { minimum: 30 }
+
+    assert_equal %w[五十], ranked_names
+  end
+
+  test "a minimum of 0 ranks everyone, and the page says why the few-at-bat players are on top" do
+    bat(player("一打席"), game(@spring, 1), pa: 1, ab: 1, hits: 1, total_bases: 4)
+
+    get rankings_url, params: { minimum: 0 }
+
+    assert_equal %w[一打席], ranked_names
+    assert_select "p.muted", text: /通算で打席のある打者すべてが対象です/
+    assert_select "p.muted", text: /最低数がないため、打席の少ない選手が上位に並びます/
+    assert_select "input#minimum[value=?]", "0"
+  end
+
+  test "a minimum that is not a whole number is the default" do
+    bat(player("選手"), game(@spring, 1), pa: 100)
+
+    [ "", "abc", "-5", "2.5" ].each do |value|
+      get rankings_url, params: { minimum: value }
+
+      assert_equal %w[選手], ranked_names, value.inspect
+      assert_select "p.muted", text: /通算で40打席以上の打者が対象です/
+    end
+  end
+
+  test "the minimum is kept by the sort links, the paging and the season selector's form, but not by the other kind's tab" do
+    bat(player("選手"), game(@spring, 1), pa: 100)
+
+    get rankings_url, params: { minimum: 15, university_ids: [ @alpha.id ] }
+
+    assert_select "thead th a[href*=?]", "minimum=15", minimum: 12
+    assert_select "input#minimum[value=?]", "15" # the form sends it again with the other filters
+    assert_select ".period-toolbar a.period-btn[href^=?]", ranking_path("pitching"), text: "投手"
+    assert_select ".period-toolbar a.period-btn[href*=?]", "minimum", count: 0
+  end
+
+  test "the default follows the period: switching to a season with the field empty gives the season's" do
+    bat(player("十五"), game(@spring, 1), pa: 15)
+
+    get rankings_url, params: { season: "2026-spring", minimum: "" }
+
+    assert_equal %w[十五], ranked_names
+    assert_select "input#minimum[placeholder=?]", "10"
   end
 
   test "the season selector offers the seasons that have stats, newest first, with the chosen one selected" do

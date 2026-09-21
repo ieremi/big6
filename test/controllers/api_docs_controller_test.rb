@@ -95,15 +95,16 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
     assert_match "犠飛は含めていません", response.body
   end
 
-  test "documents the rankings endpoint, its minimums, and gives try-it boxes" do
+  test "documents the rankings endpoint, its minimum parameter and defaults, and gives try-it boxes" do
     get api_docs_url
 
     assert_select "h2", text: "ランキング"
     assert_select "h3 code", text: "/api/v1/rankings/:kind"
     assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn"
     assert_select ".api-sandbox input[value=?]", "/rankings/pitching?year=1997&term=autumn&university[]=rikkio"
-    assert_match "30打席・15投球回", response.body
-    assert_match "200打席・100投球回", response.body
+    assert_select "table td code", text: "minimum"
+    assert_match "省略すると通算は40、シーズンは10です", response.body
+    assert_match "最低打席数（打者）", response.body
   end
 
   test "documents the rankings sort and direction parameters and the columns" do

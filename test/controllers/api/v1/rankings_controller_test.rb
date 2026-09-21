@@ -33,7 +33,7 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     json["rankings"].map { |row| row["player"]["name"] }
   end
 
-  test "ops returns the ranking with the season, the minimum, and each batter's rates" do
+  test "ops returns the ranking with the season and each batter's rates" do
     ochiai = player("落合")
     bat(ochiai, game(@spring, 1), pa: 40, ab: 32, hits: 16, walks: 8, total_bases: 24)
     bat(player("下位"), game(@spring, 2), hits: 3, total_bases: 3)
@@ -42,7 +42,7 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal({ "year" => 2026, "term" => "spring", "title" => "2026年春季" }, json["season"])
-    assert_equal({ "plate_appearances" => 30 }, json["minimum"])
+    assert_equal({ "plate_appearances" => 10 }, json["minimum"]) # a season's default
     assert_equal [ "batting", 2, 1, 100 ], [ json["kind"], json["total"], json["page"], json["per_page"] ]
     assert_equal %w[落合 下位], names
 
@@ -55,6 +55,48 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ 1, 40, 32, 16, 24 ], first.values_at("games", "pa", "ab", "hits", "total_bases")
   end
 
+  test "the minimum is 40 for a career and 10 for a season, in plate appearances or innings, unless asked for" do
+    get api_v1_ranking_url("batting")
+    assert_equal({ "plate_appearances" => 40 }, json["minimum"])
+
+    get api_v1_ranking_url("pitching")
+    assert_equal({ "innings" => 40 }, json["minimum"])
+
+    get api_v1_ranking_url("pitching"), params: { year: 2026, term: "spring" }
+    assert_equal({ "innings" => 10 }, json["minimum"])
+  end
+
+  test "minimum sets the least plate appearances or innings to be ranked, and 0 is no minimum" do
+    bat(player("二十"), game(@spring, 1), pa: 20)
+    bat(player("五十"), game(@spring, 2), pa: 50)
+    bat(player("一"), game(@spring, 3), pa: 1)
+    pitch(player("六回"), game(@spring, 4), outs: 18)
+
+    get api_v1_ranking_url("batting"), params: { minimum: 20 }
+    assert_equal [ { "plate_appearances" => 20 }, %w[二十 五十] ], [ json["minimum"], names.sort ]
+
+    get api_v1_ranking_url("batting"), params: { minimum: 0 }
+    assert_equal({ "plate_appearances" => 0 }, json["minimum"])
+    assert_equal 3, json["total"]
+
+    get api_v1_ranking_url("pitching"), params: { minimum: 6 }
+    assert_equal [ { "innings" => 6 }, %w[六回] ], [ json["minimum"], names ]
+
+    get api_v1_ranking_url("pitching"), params: { minimum: 7 }
+    assert_equal 0, json["total"]
+  end
+
+  test "a minimum that is not a whole number is the default" do
+    bat(player("選手"), game(@spring, 1), pa: 100)
+
+    [ "abc", "-1", "1.5", "" ].each do |value|
+      get api_v1_ranking_url("batting"), params: { minimum: value }
+
+      assert_equal({ "plate_appearances" => 40 }, json["minimum"], value.inspect)
+      assert_equal %w[選手], names
+    end
+  end
+
   test "era returns the ranking lowest first, in innings and nine-inning runs" do
     ito = player("伊藤")
     pitch(ito, game(@spring, 1), outs: 151, earned_runs: 6, wins: 1)
@@ -63,7 +105,6 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     get api_v1_ranking_url("pitching"), params: { year: 2026, term: "spring" }
 
     assert_response :success
-    assert_equal({ "innings" => 15 }, json["minimum"])
     assert_equal %w[伊藤 打たれた], names
 
     first = json["rankings"].first
@@ -79,7 +120,6 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     get api_v1_ranking_url("batting")
 
     assert_nil json["season"]
-    assert_equal({ "plate_appearances" => 200 }, json["minimum"])
     assert_equal %w[通算], names
     assert_equal 2, json["rankings"].first["games"]
   end

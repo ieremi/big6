@@ -14,9 +14,21 @@ module RankingsHelper
     ]
   }.freeze
 
-  # "30打席" / "100投球回": what the ranking's minimum is counted in.
-  def ranking_minimum_label(kind, minimum)
-    "#{minimum}#{kind == 'batting' ? '打席' : '投球回'}"
+  # "打席" for batters, "投球回" for pitchers: what a ranking's volume is counted in.
+  def ranking_unit(kind)
+    kind == "batting" ? "打席" : "投球回"
+  end
+
+  # "打者" / "投手".
+  def ranking_noun(kind)
+    kind == "batting" ? "打者" : "投手"
+  end
+
+  # "40打席以上の打者" / "10投球回以上の投手", or "打席のある打者すべて" with no minimum: who is ranked.
+  def ranking_target_label(kind, minimum)
+    return "#{ranking_unit(kind)}のある#{ranking_noun(kind)}すべて" if minimum.zero?
+
+    "#{minimum}#{ranking_unit(kind)}以上の#{ranking_noun(kind)}"
   end
 
   # The ranking's own URL for another page, keeping the filters and the sort.
@@ -27,8 +39,9 @@ module RankingsHelper
   # The other kind of ranking with the same filters (the period is dropped by the
   # controller if the other kind has no stats for it). Its sort starts over, since
   # the other kind has other columns.
+  # The minimum isn't kept: it is counted in plate appearances for one and in innings for the other.
   def rankings_kind_path(kind)
-    ranking_path(kind, rankings_filter_params)
+    ranking_path(kind, rankings_filter_params.except("minimum"))
   end
 
   # A column heading that sorts the table by it: a click on the column it is
