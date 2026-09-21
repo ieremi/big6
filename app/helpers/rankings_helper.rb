@@ -1,4 +1,7 @@
 module RankingsHelper
+  # The parameters of the minimum: what it is, and the default it was shown beside.
+  MINIMUM_PARAMS = %w[minimum default_minimum].freeze
+
   KIND_LABELS = { "batting" => "打者", "pitching" => "投手" }.freeze
 
   # The table's columns, left to right: [sort key, heading]. The keys are the
@@ -41,7 +44,7 @@ module RankingsHelper
   # the other kind has other columns.
   # The minimum isn't kept: it is counted in plate appearances for one and in innings for the other.
   def rankings_kind_path(kind)
-    ranking_path(kind, rankings_filter_params.except("minimum"))
+    ranking_path(kind, rankings_filter_params.except(*MINIMUM_PARAMS))
   end
 
   # A column heading that sorts the table by it: a click on the column it is

@@ -9,8 +9,12 @@ class RankingsController < ApplicationController
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
 
     # What the minimum is if not asked for (it depends on the period), and what it is.
+    # The form always sends the minimum it shows, and the default it showed it beside
+    # (default_minimum): a minimum still equal to that wasn't changed, so the default
+    # of the period now chosen applies, not the one of the period it was left.
     @default_minimum = PlayerRanking.default_minimum(@kind, season: @season)
-    @minimum = PlayerRanking.minimum_from(params[:minimum]) || @default_minimum
+    asked = PlayerRanking.minimum_from(params[:minimum])
+    @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
     ranking = PlayerRanking.new(@kind, season: @season, university_ids: @selected_university_ids.presence, minimum: @minimum)
     @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"

@@ -90,24 +90,24 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "p.muted", text: /通算で40投球回以上の投手が対象です/
     assert_select "fieldset legend", text: "最低投球回数"
-    assert_select "input#minimum[placeholder=?]", "40"
+    assert_select "input#minimum[value=?]", "40"
 
     get ranking_url("pitching"), params: { season: "2026-spring" }
 
     assert_select "p.muted", text: /シーズンで10投球回以上の投手が対象です/
-    assert_select "input#minimum[placeholder=?]", "10"
+    assert_select "input#minimum[value=?]", "10"
   end
 
   # ---- asking for another minimum
 
-  test "the form has a field for the minimum, empty while it is the default, which is shown in it" do
+  test "the form has a field holding the minimum, so that the arrows step from it, and the default it is beside" do
     bat(player("選手"), game(@spring, 1), pa: 100)
 
     get rankings_url
 
     assert_select "fieldset legend", text: "最低打席数"
-    assert_select "input#minimum[type=number][min='0'][placeholder=?]", "40"
-    assert_select "input#minimum[value]", 0
+    assert_select "input#minimum[type=number][min='0'][value=?]", "40" # 40 to 41, not 0 to 1
+    assert_select "input#default_minimum[type=hidden][value=?]", "40"
     assert_select "form .muted", text: "（既定）"
     assert_select "a", text: /既定.*に戻す/, count: 0
   end
@@ -158,16 +158,50 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "thead th a[href*=?]", "minimum=15", minimum: 12
     assert_select "input#minimum[value=?]", "15" # the form sends it again with the other filters
     assert_select ".period-toolbar a.period-btn[href^=?]", ranking_path("pitching"), text: "投手"
-    assert_select ".period-toolbar a.period-btn[href*=?]", "minimum", count: 0
+    assert_select ".period-toolbar a.period-btn[href*=?]", "minimum", count: 0 # neither the minimum nor its default
   end
 
-  test "the default follows the period: switching to a season with the field empty gives the season's" do
+  test "a minimum the form sends unchanged, beside its default, is not asked for: the period's default follows" do
     bat(player("十五"), game(@spring, 1), pa: 15)
+    bat(player("五"), game(@spring, 2), pa: 5)
 
-    get rankings_url, params: { season: "2026-spring", minimum: "" }
+    get rankings_url, params: { season: "2026-spring", minimum: 40, default_minimum: 40 } # left a career for a season
 
     assert_equal %w[十五], ranked_names
-    assert_select "input#minimum[placeholder=?]", "10"
+    assert_select "input#minimum[value=?]", "10"
+    assert_select "input#default_minimum[value=?]", "10"
+    assert_select "form .muted", text: "（既定）"
+  end
+
+  test "a minimum that was changed is kept when the period changes" do
+    bat(player("十五"), game(@spring, 1), pa: 15)
+    bat(player("二十五"), game(@spring, 2), pa: 25)
+
+    get rankings_url, params: { season: "2026-spring", minimum: 20, default_minimum: 40 }
+
+    assert_equal %w[二十五], ranked_names
+    assert_select "input#minimum[value=?]", "20"
+    assert_select "a[href=?]", ranking_path("batting", season: "2026-spring"), text: "既定（10打席）に戻す"
+  end
+
+  test "a minimum with no default beside it (a link someone shared) is what was asked for, even if it is the default" do
+    bat(player("十五"), game(@spring, 1), pa: 15)
+    bat(player("五十"), game(@spring, 2), pa: 50)
+
+    get rankings_url, params: { season: "2026-spring", minimum: 40 }
+
+    assert_equal %w[五十], ranked_names
+    assert_select "input#minimum[value=?]", "40"
+  end
+
+  test "an empty field is the default, and so is one that is not a number" do
+    bat(player("十五"), game(@spring, 1), pa: 15)
+
+    get rankings_url, params: { season: "2026-spring", minimum: "", default_minimum: 40 }
+    assert_equal %w[十五], ranked_names
+
+    get rankings_url, params: { season: "2026-spring", minimum: "abc" }
+    assert_equal %w[十五], ranked_names
   end
 
   test "the season selector offers the seasons that have stats, newest first, with the chosen one selected" do
