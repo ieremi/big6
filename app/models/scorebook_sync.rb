@@ -133,10 +133,16 @@ class ScorebookSync
       game.team1_score = info["runsTotalBottom"]&.to_i
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
-      # The league's site may have reported this game cancelled before Scorebook
-      # does: Scorebook still saying it hasn't started doesn't undo that.
+      # Some other source (the league site's box score, most often — see
+      # LeagueOfficialGameScraper) may already have this game further along
+      # (cancelled, in progress, finished) than Scorebook's own gameStatus
+      # reports it: Scorebook can lag behind a game actually starting, the
+      # same way it can lag behind one being called off. Don't let a stale
+      # "試合前" from Scorebook undo whichever further-along status is
+      # already recorded — only a game we still have as scheduled can be
+      # (re)assigned "試合前" here.
       status = Game.status_for(info["gameStatus"], team0_score: game.team0_score, team1_score: game.team1_score, played_on: game.played_on)
-      game.game_status = status unless game.not_held? && status == Game::PENDING_STATUS
+      game.game_status = status unless status == Game::PENDING_STATUS && !game.scheduled?
       game.counted_in_stats = info["isCounted"] != false
       game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)
