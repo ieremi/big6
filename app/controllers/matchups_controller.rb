@@ -51,6 +51,13 @@ class MatchupsController < ApplicationController
       @game_members_by_university = @game.game_members.includes(:player).group_by(&:university_id)
       @scoreboard = GameScoreboard.new(@game)
       @official_scoreboard = LeagueOfficialScoreboard.new(@game)
+      # Scorebook only has GameMember lists once it's fully processed a
+      # game, well after it's finished — while one's in progress, fall back
+      # to whatever lineup could be matched from the league site's box
+      # score (see LeagueOfficialLineup) instead of showing nothing.
+      if @game.in_progress? && @game_members_by_university.blank?
+        @official_lineup = LeagueOfficialLineup.new(@game)
+      end
       render "games/show" and return
     end
 

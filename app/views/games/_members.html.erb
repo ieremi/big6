@@ -1,11 +1,19 @@
-<%# Each team's roster for the game (bench included), from Scorebook, in a collapsible section (closed until opened). Only games from 2021 on have one. %>
+<%# Each team's roster for the game (bench included), from Scorebook, in a collapsible section (closed until opened). Only games from 2021 on have one.
+    While a game is in progress, Scorebook has no GameMember list of its own yet — members_by_university is passed
+    empty, and official_lineup (LeagueOfficialLineup, present? only while there's something to show) provides a
+    provisional stand-in scraped from the league site's box score instead. %>
+<% provisional = members_by_university.blank? && local_assigns[:official_lineup]&.present? %>
+<% source = provisional ? official_lineup.by_university : members_by_university %>
 <% rosters = [ game.team0, game.team1 ].filter_map do |team|
-     members = GameMember.roster_order(members_by_university.fetch(team.id, []))
+     members = GameMember.roster_order(source.fetch(team.id, []))
      [ team, members ] if members.any?
    end %>
 
 <% if rosters.any? %>
   <h2 class="card-heading">ベンチ入りメンバー</h2>
+  <% if provisional %>
+    <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち。出場した選手のみ）</p>
+  <% end %>
 
   <div data-controller="decade-fold">
     <div class="period-toolbar">

@@ -5,7 +5,9 @@
 # season's Scorebook data, so this is ScorebookSync for the season, without the
 # bench members (a whole season's worth, and they don't change during a game),
 # and for a game Scorebook still hasn't finished, the provisional box score from
-# the league's site, as SyncRecentGamesJob does once an hour.
+# the league's site, as SyncRecentGamesJob does once an hour — which also carries
+# a provisional lineup (LeagueOfficialLineup reads it back), Scorebook's own
+# GameMember list not existing yet either at this point.
 #
 # It costs nothing when no game is on: one or two queries, and no request. Only
 # games of today and yesterday count when under way (one can run past midnight):

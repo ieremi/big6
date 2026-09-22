@@ -5,7 +5,8 @@ require "nokogiri"
 # Scrapes a single game's box score from the official league site
 # (big6.gr.jp) as a provisional stand-in until Scorebook publishes the
 # complete data. Caches the result on Game#league_official_data. See
-# LeagueOfficialScoreboard for how it's read back for display.
+# LeagueOfficialScoreboard for how it's read back for display, and
+# LeagueOfficialLineup for the roster ("lineup" key) scraped alongside it.
 class LeagueOfficialGameScraper
   TEAM_LETTERS = {
     "waseda" => "W",
@@ -14,6 +15,13 @@ class LeagueOfficialGameScraper
     "hosei" => "H",
     "tokyo" => "T",
     "rikkio" => "R"
+  }.freeze
+
+  # Standard Japanese baseball position numbering (the box score's own
+  # position codes), 1-9 plus D for the designated hitter.
+  POSITION_KANJI = {
+    "1" => "投", "2" => "捕", "3" => "一", "4" => "二", "5" => "三",
+    "6" => "遊", "7" => "左", "8" => "中", "9" => "右", "D" => "指"
   }.freeze
 
   def self.call(game)
@@ -100,8 +108,87 @@ class LeagueOfficialGameScraper
       "finishTime" => info_text[/終了(\d{1,2}:\d{2})/, 1],
       "attendance" => info_text[/観衆\s*([\d,]+)人/, 1]&.delete(","),
       "umpires" => umpires(doc),
-      "stadium" => "神宮球場"
+      "stadium" => "神宮球場",
+      "lineup" => lineup(doc)
     }
+  end
+
+  # Each team's batters then pitchers, in that order (the box score lists
+  # top-batting, bottom-batting, top-pitching, bottom-pitching, then repeats
+  # the same 4 blocks a second time elsewhere on the page — stopping after 4
+  # "計" (total) rows takes only the first, real, copy). A batter row is
+  # [position code, name, "(grade high_school)"]; a pitcher row is
+  # [name, "(grade high_school)", innings pitched] — no position code cell.
+  #
+  # order (batting order) is only set for a row whose position code is
+  # bracketed ("[7]", "[D]") — a starter — counted within that team's batting
+  # block only; a bare code ("7"), "H", or "H4" is a substitute who entered
+  # partway (defensive sub, pinch hitter, or a pinch hitter who's since taken
+  # the field), with no fixed order slot to show here.
+  def lineup(doc)
+    phases = [ :batting_top, :batting_bottom, :pitching_top, :pitching_bottom ]
+    phase_index = 0
+    batting_order = 0
+    entries = []
+
+    doc.css(".gamescore-box-content").each do |row|
+      cells = row.css("td").map { |c| c.text.strip }
+      next if cells.empty?
+
+      if cells.include?("計")
+        phase_index += 1
+        break if phase_index >= phases.size
+
+        batting_order = 0 if phases[phase_index].to_s.start_with?("batting")
+        next
+      end
+
+      phase = phases[phase_index]
+      side = phase.to_s.end_with?("top") ? "top" : "bottom"
+
+      if phase.to_s.start_with?("pitching")
+        next unless cells[1]&.match?(/\A\(.*\)\z/)
+
+        grade, high_school = grade_and_high_school(cells[1])
+        entries << { "side" => side, "order" => nil, "position" => "投", "name" => cells[0], "grade" => grade, "high_school" => high_school }
+      else
+        next unless cells[2]&.match?(/\A\(.*\)\z/)
+
+        starter, position_code = position_code_from(cells[0])
+        batting_order += 1 if starter
+        grade, high_school = grade_and_high_school(cells[2])
+        entries << {
+          "side" => side, "order" => (starter ? batting_order : nil),
+          "position" => POSITION_KANJI[position_code], "name" => cells[1], "grade" => grade, "high_school" => high_school
+        }
+      end
+    end
+
+    entries
+  end
+
+  # [is a starter, current position code] from a batter's position-code cell:
+  # "[7]" (started at 7), "[2]3" (started at 2, now at 3 — the later code
+  # wins, as the current position), "7" (defensive sub at 7, no brackets),
+  # "H"/"H4" (pinch hitter, not yet in the field — no position).
+  def position_code_from(code)
+    if (match = code.match(/\A\[([1-9D])\](.*)\z/))
+      [ true, match[2].presence || match[1] ]
+    elsif code.match?(/\A[1-9D]\z/)
+      [ false, code ]
+    else
+      [ false, nil ]
+    end
+  end
+
+  # "(4 三重)" -> [4, "三重"]. Grade or school-name-only forms are rare but
+  # real (a school name can itself be one character); grade is nil either
+  # way it can't be parsed, rather than risk misreading the school as one.
+  def grade_and_high_school(text)
+    match = text.match(/\A\((\d)\s*(.*)\)\z/)
+    return [ nil, nil ] unless match
+
+    [ match[1].to_i, match[2].presence ]
   end
 
   def total_hits(doc)

@@ -126,7 +126,7 @@
   <% end %>
 <% end %>
 
-<%= render "games/members", game: @game, members_by_university: @game_members_by_university %>
+<%= render "games/members", game: @game, members_by_university: @game_members_by_university, official_lineup: @official_lineup %>
 
 <% if (url = league_official_game_url(@game)) %>
   <p class="muted">
