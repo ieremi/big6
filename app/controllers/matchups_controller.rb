@@ -52,10 +52,12 @@ class MatchupsController < ApplicationController
       @scoreboard = GameScoreboard.new(@game)
       @official_scoreboard = LeagueOfficialScoreboard.new(@game)
       # Scorebook only has GameMember lists once it's fully processed a
-      # game, well after it's finished — while one's in progress, fall back
-      # to whatever lineup could be matched from the league site's box
-      # score (see LeagueOfficialLineup) instead of showing nothing.
-      if @game.in_progress? && @game_members_by_university.blank?
+      # game, well after it's finished — so the fallback to the league
+      # site's box score (see LeagueOfficialLineup) is needed for a while
+      # after the game ends too, not just while it's in progress; it
+      # naturally shows nothing once Scorebook's own list arrives (or if
+      # the box score was never scraped, e.g. the game hasn't started).
+      if @game_members_by_university.blank?
         @official_lineup = LeagueOfficialLineup.new(@game)
       end
       render "games/show" and return
