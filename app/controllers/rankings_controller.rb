@@ -7,6 +7,7 @@ class RankingsController < ApplicationController
     @season = @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] } # nil ranks whole careers
     @universities = University.order(:position)
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
+    @active_only = params[:active_only].present?
 
     # What the minimum is if not asked for (it depends on the period), and what it is.
     # The form always sends the minimum it shows, and the default it showed it beside
@@ -16,7 +17,7 @@ class RankingsController < ApplicationController
     asked = PlayerRanking.minimum_from(params[:minimum])
     @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
-    ranking = PlayerRanking.new(@kind, season: @season, university_ids: @selected_university_ids.presence, minimum: @minimum)
+    ranking = PlayerRanking.new(@kind, season: @season, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
     @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"
     @direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(@kind, @sort)
     @custom_sort = @sort != "rank" || @direction != "asc" # anything but the ranking's own order

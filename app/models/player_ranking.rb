@@ -78,13 +78,16 @@ class PlayerRanking
 
   # kind is "batting" or "pitching". season nil ranks whole careers.
   # university_ids nil means any university. minimum nil is the default one.
-  def initialize(kind, season: nil, university_ids: nil, minimum: nil)
+  # active_only leaves out anyone no longer on their team's roster (a graduate,
+  # most often), so a career ranking can be narrowed to who could play today.
+  def initialize(kind, season: nil, university_ids: nil, minimum: nil, active_only: false)
     raise ArgumentError, "unknown ranking: #{kind.inspect}" unless KINDS.include?(kind)
 
     @kind = kind
     @season = season
     @university_ids = university_ids&.map(&:to_i)
     @minimum = minimum && Integer(minimum).clamp(0, MAX_MINIMUM)
+    @active_only = ActiveModel::Type::Boolean.new.cast(active_only)
   end
 
   # What the minimum is when none is asked for.
@@ -168,7 +171,7 @@ class PlayerRanking
   def cache_key
     [
       "player_ranking/entries/v1", kind, season&.id || "career",
-      @university_ids&.sort&.join(","), minimum, line_class.maximum(:updated_at)&.to_i
+      @university_ids&.sort&.join(","), minimum, @active_only, line_class.maximum(:updated_at)&.to_i
     ].join("/")
   end
 
@@ -178,6 +181,7 @@ class PlayerRanking
     lines = line_class.joins(:game).where(games: { counted_in_stats: true })
     lines = lines.where(games: { season_id: season.id }) if season
     lines = lines.where(university_id: @university_ids) unless @university_ids.nil?
+    lines = lines.where(player_id: Player.active.select(:id)) if @active_only
 
     sums = line_class::SUMMED_COLUMNS.map { |column| "SUM(#{line_class.table_name}.#{column}) AS #{column}" }
     rows = lines.group("#{line_class.table_name}.player_id").having(minimum_condition)

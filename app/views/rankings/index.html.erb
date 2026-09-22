@@ -39,6 +39,16 @@
   </fieldset>
 
   <fieldset>
+    <legend>在籍</legend>
+    <div class="period-toolbar">
+      <%= tag.button "現役のみ", type: "button",
+            class: [ "period-btn", ("active" if @active_only) ],
+            data: { search_filter_target: "activeOnlyButton", action: "search-filter#toggleActiveOnly" } %>
+      <%= hidden_field_tag :active_only, (@active_only ? "1" : ""), data: { search_filter_target: "activeOnlyInput" } %>
+    </div>
+  </fieldset>
+
+  <fieldset>
     <legend>最低<%= ranking_unit(@kind) %>数</legend>
     <div class="period-toolbar">
       <%# Always the minimum in force, so that the arrows step from it (40 to 41). The default it is shown beside is sent too: a minimum still equal to it is "not asked for", and follows the period. %>

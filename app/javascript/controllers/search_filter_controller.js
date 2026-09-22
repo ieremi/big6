@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["universityCheckbox", "termCheckbox", "yearInput", "universityModeButton", "universityModeInput"]
+  static targets = ["universityCheckbox", "termCheckbox", "yearInput", "universityModeButton", "universityModeInput", "activeOnlyButton", "activeOnlyInput"]
 
   submit() {
     this.element.requestSubmit()
@@ -14,6 +14,15 @@ export default class extends Controller {
     this.universityModeButtonTargets.forEach((el) => {
       el.classList.toggle("active", el.dataset.mode === mode)
     })
+
+    this.submit()
+  }
+
+  toggleActiveOnly() {
+    const active = this.activeOnlyInputTarget.value !== "1"
+
+    this.activeOnlyInputTarget.value = active ? "1" : ""
+    this.activeOnlyButtonTarget.classList.toggle("active", active)
 
     this.submit()
   }
