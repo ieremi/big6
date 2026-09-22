@@ -123,81 +123,112 @@ class LeagueOfficialGameScraper
     }
   end
 
-  # Each team's batters then pitchers, in that order (the box score lists
-  # top-batting, bottom-batting, top-pitching, bottom-pitching, then repeats
-  # the same 4 blocks a second time elsewhere on the page — stopping after 4
-  # "計" (total) rows takes only the first, real, copy). A batter row is
+  # Each team's batters, then (only once "計" total rows confirm the
+  # boundaries — see parse_pitchers) each team's pitchers. A batter row is
   # [position code, name, "(grade high_school)"]; a pitcher row is
   # [name, "(grade high_school)", innings pitched] — no position code cell.
+  # The box score also repeats the same content a second time elsewhere on
+  # the page; both parsers stop once they detect that repeat rather than
+  # double their result.
+  def lineup(doc)
+    rows = doc.css(".gamescore-box-content").map { |row| row.css("td").map { |c| c.text.strip } }.reject(&:empty?)
+    parse_batters(rows) + parse_pitchers(rows)
+  end
+
+  # Splits into two teams from the box score's own content, not from "計"
+  # (team total) rows: a starting lineup uses each of the 9 positions
+  # (1-9, D for the designated hitter) exactly once, so a starter whose
+  # *starting* position repeats one already seen this side means the next
+  # team's batters have begun. This still works during a live game's early
+  # innings, when the box score has no "計" rows at all yet and both teams'
+  # rows would otherwise run together with nothing marking where one ends
+  # and the other begins.
   #
   # order (batting order) is only set for a row whose position code is
-  # bracketed ("[7]", "[D]") — a starter — counted within that team's batting
-  # block only; a bare code ("7"), "H", or "H4" is a substitute who entered
-  # partway (defensive sub, pinch hitter, or a pinch hitter who's since taken
-  # the field), with no fixed order slot to show here.
-  #
-  # While a game is still early — genuinely live, not just "provisional
-  # because Scorebook hasn't caught up" — the box score has no "計" rows at
-  # all yet, and both teams' rows run together with nothing marking where
-  # one ends and the other begins. Rather than guess (and risk crediting
-  # one team's lineup to the other), this only trusts the split once at
-  # least one "計" has confirmed a real boundary; with none seen at all, it
-  # returns nothing rather than a lineup that's silently all one side.
-  def lineup(doc)
-    phases = [ :batting_top, :batting_bottom, :pitching_top, :pitching_bottom ]
-    phase_index = 0
-    batting_order = 0
+  # bracketed ("[7]", "[D]") — a starter — counted within that team's
+  # batting block only; a bare code ("7"), "H", or "H4" is a substitute who
+  # entered partway (defensive sub, pinch hitter, or a pinch hitter who's
+  # since taken the field), with no fixed order slot to show here. position
+  # shown is wherever a starter is playing *now* — the position after any
+  # "[2]3"-style mid-game move — since that's more useful once the game is
+  # under way than where they happened to start.
+  def parse_batters(rows)
     entries = []
+    side = "top"
+    seen_starting_positions = Set.new
+    batting_order = 0
 
-    doc.css(".gamescore-box-content").each do |row|
-      cells = row.css("td").map { |c| c.text.strip }
-      next if cells.empty?
+    rows.each do |cells|
+      next unless cells[2]&.match?(/\A\(.*\)\z/)
 
-      if cells.include?("計")
-        phase_index += 1
-        break if phase_index >= phases.size
+      starter, starting_position, current_position = position_code_from(cells[0])
 
-        batting_order = 0 if phases[phase_index].to_s.start_with?("batting")
-        next
+      if starter
+        if seen_starting_positions.include?(starting_position)
+          break if side == "bottom" # both teams done; this is the page's own repeat of its content
+
+          side = "bottom"
+          seen_starting_positions.clear
+          batting_order = 0
+        end
+        seen_starting_positions << starting_position
+        batting_order += 1
       end
 
-      phase = phases[phase_index]
-      side = phase.to_s.end_with?("top") ? "top" : "bottom"
-
-      if phase.to_s.start_with?("pitching")
-        next unless cells[1]&.match?(/\A\(.*\)\z/)
-
-        grade, high_school = grade_and_high_school(cells[1])
-        entries << { "side" => side, "order" => nil, "position" => "投", "name" => cells[0], "grade" => grade, "high_school" => high_school }
-      else
-        next unless cells[2]&.match?(/\A\(.*\)\z/)
-
-        starter, position_code = position_code_from(cells[0])
-        batting_order += 1 if starter
-        grade, high_school = grade_and_high_school(cells[2])
-        entries << {
-          "side" => side, "order" => (starter ? batting_order : nil),
-          "position" => POSITION_KANJI[position_code], "name" => cells[1], "grade" => grade, "high_school" => high_school
-        }
-      end
+      grade, high_school = grade_and_high_school(cells[2])
+      entries << {
+        "side" => side, "order" => (starter ? batting_order : nil),
+        "position" => POSITION_KANJI[current_position], "name" => cells[1], "grade" => grade, "high_school" => high_school
+      }
     end
-
-    return [] if phase_index.zero?
 
     entries
   end
 
-  # [is a starter, current position code] from a batter's position-code cell:
-  # "[7]" (started at 7), "[2]3" (started at 2, now at 3 — the later code
-  # wins, as the current position), "7" (defensive sub at 7, no brackets),
-  # "H"/"H4" (pinch hitter, not yet in the field — no position).
+  # Unlike batters, a pitcher's row carries nothing that repeats reliably
+  # once per team (no fixed position, and a team may have used only one
+  # pitcher so far) to split on the same way — so this instead trusts "計"
+  # (team total) rows to mark the boundaries, same as the box score does
+  # for the whole page in its complete, post-game form. Both totals for
+  # batting and then both for pitching are expected in that order; with
+  # fewer than that (an early-innings live game has none at all yet, since
+  # the pitching total rows come last), there's no reliable split to make,
+  # so this returns nothing rather than guess.
+  def parse_pitchers(rows)
+    entries = []
+    phase = 0
+
+    rows.each do |cells|
+      if cells.include?("計")
+        phase += 1
+        break if phase >= 4
+
+        next
+      end
+
+      next if phase < 2
+      next unless cells[1]&.match?(/\A\(.*\)\z/)
+
+      grade, high_school = grade_and_high_school(cells[1])
+      entries << { "side" => (phase == 2 ? "top" : "bottom"), "order" => nil, "position" => "投", "name" => cells[0], "grade" => grade, "high_school" => high_school }
+    end
+
+    entries
+  end
+
+  # [is a starter, starting position code, current position code] from a
+  # batter's position-code cell: "[7]" (started, and still at, 7), "[2]3"
+  # (started at 2, now at 3 — the starting code is what's unique per team,
+  # the current one is what's worth showing), "7" (defensive sub at 7, no
+  # brackets — not a starter), "H"/"H4" (pinch hitter, not yet in the
+  # field — not a starter, no position at all).
   def position_code_from(code)
     if (match = code.match(/\A\[([1-9D])\](.*)\z/))
-      [ true, match[2].presence || match[1] ]
+      [ true, match[1], match[2].presence || match[1] ]
     elsif code.match?(/\A[1-9D]\z/)
-      [ false, code ]
+      [ false, nil, code ]
     else
-      [ false, nil ]
+      [ false, nil, nil ]
     end
   end
 
