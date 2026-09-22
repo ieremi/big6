@@ -54,6 +54,14 @@ class LeagueOfficialGameScraper
   # Without this, pages that read Game#team0_score/team1_score directly (the
   # season schedule, standings, etc.) keep showing the game as not-yet-played
   # even though the individual game page already has a provisional box score.
+  #
+  # Likewise, nothing else moves a game off scheduled (試合前) until Scorebook
+  # itself reports it under way — which can lag behind the game actually
+  # having started by as much as its own polling interval. The official
+  # site showing a start time (and not yet a finish time) is itself good
+  # enough evidence the game is on, so mark it in_progress from that alone
+  # when still scheduled — this is also what in_progress?-gated code (the
+  # provisional lineup) waits on to show anything.
   def attrs_from(data)
     attrs = { league_official_data: data }
 
@@ -61,6 +69,8 @@ class LeagueOfficialGameScraper
       attrs[:team0_score] = data["runsTop"].compact.sum
       attrs[:team1_score] = data["runsBottom"].compact.sum
       attrs[:game_status] = "finished"
+    elsif data["startTime"].present? && @game.scheduled?
+      attrs[:game_status] = "in_progress"
     end
 
     if @game.attendance.nil? && data["attendance"].present?
