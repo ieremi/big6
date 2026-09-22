@@ -135,6 +135,14 @@ class LeagueOfficialGameScraper
   # block only; a bare code ("7"), "H", or "H4" is a substitute who entered
   # partway (defensive sub, pinch hitter, or a pinch hitter who's since taken
   # the field), with no fixed order slot to show here.
+  #
+  # While a game is still early — genuinely live, not just "provisional
+  # because Scorebook hasn't caught up" — the box score has no "計" rows at
+  # all yet, and both teams' rows run together with nothing marking where
+  # one ends and the other begins. Rather than guess (and risk crediting
+  # one team's lineup to the other), this only trusts the split once at
+  # least one "計" has confirmed a real boundary; with none seen at all, it
+  # returns nothing rather than a lineup that's silently all one side.
   def lineup(doc)
     phases = [ :batting_top, :batting_bottom, :pitching_top, :pitching_bottom ]
     phase_index = 0
@@ -173,6 +181,8 @@ class LeagueOfficialGameScraper
         }
       end
     end
+
+    return [] if phase_index.zero?
 
     entries
   end
