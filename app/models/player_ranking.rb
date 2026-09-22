@@ -104,9 +104,16 @@ class PlayerRanking
     @minimum || self.class.default_minimum(kind, season: season)
   end
 
-  # The ranked entries in the default order, best first.
+  # The ranked entries in the default order, best first. The expensive part
+  # (summing every qualifying player's lines across, for a career ranking,
+  # its whole history) is cached: the page has no pagination at the SQL
+  # level, so every visit — and every sort-column click, a full reload —
+  # redoes it from scratch otherwise, which was slow enough on the career
+  # batting ranking (the default view) to time out under load.
   def entries
-    @entries ||= rank_in_default_order(in_default_order(totals_by_player))
+    @entries ||= Rails.cache.fetch(cache_key, expires_in: 6.hours) do
+      rank_in_default_order(in_default_order(totals_by_player))
+    end
   end
 
   # The same entries reordered by a column (a key of SORT_KEYS) in "asc" or "desc"
@@ -156,6 +163,13 @@ class PlayerRanking
 
   def line_class
     kind == "batting" ? BattingLine : PitchingLine
+  end
+
+  def cache_key
+    [
+      "player_ranking/entries/v1", kind, season&.id || "career",
+      @university_ids&.sort&.join(","), minimum, line_class.maximum(:updated_at)&.to_i
+    ].join("/")
   end
 
   # { Player => Totals } for every player who reaches the minimum, summed in the
