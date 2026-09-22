@@ -49,6 +49,7 @@ class MatchupsController < ApplicationController
       end
 
       @game_members_by_university = @game.game_members.includes(:player).group_by(&:university_id)
+      @played_player_ids = @game.played_player_ids if @game_members_by_university.present?
       @scoreboard = GameScoreboard.new(@game)
       @official_scoreboard = LeagueOfficialScoreboard.new(@game)
       # Scorebook only has GameMember lists once it's fully processed a

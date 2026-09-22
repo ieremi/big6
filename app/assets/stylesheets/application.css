@@ -1435,3 +1435,12 @@ th.sortable .sort-button {
 th.sortable .sort-button:hover {
   color: var(--accent);
 }
+
+/* A bench member who didn't play in the game (games/_members). */
+tr.bench-only td {
+  color: var(--text-muted);
+}
+
+tr.bench-only td a {
+  color: inherit;
+}

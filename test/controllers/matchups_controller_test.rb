@@ -53,6 +53,33 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "td[data-sort-value='1']", text: "捕"
   end
 
+  test "game page marks who played once the box score is in, and dims the players who didn't" do
+    batter = add_member(1, @alpha, "落合 智哉", uniform_number: 27)
+    pitcher = add_member(2, @alpha, "今津 慶介", uniform_number: 18)
+    add_member(3, @alpha, "山田 太郎", uniform_number: 30)
+    add_member(4, @alpha, "堀井 哲也", role: "監督")
+    BattingLine.create!(game: @game, player: batter.player, university: @alpha, pa: 0)
+    PitchingLine.create!(game: @game, player: pitcher.player, university: @alpha, outs: 3)
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "details.decade summary", text: /（4人・出場2人）/
+    assert_select "th.sortable button[data-shortcut=P]", text: /出場/
+    assert_select "tbody tr:not(.bench-only) td[data-sort-value='0']", text: "✓", count: 2
+    assert_select "tbody tr.bench-only", 1
+    assert_select "tbody tr.bench-only a", text: "山田 太郎"
+  end
+
+  test "game page marks nobody as played while the box score isn't in" do
+    add_member(1, @alpha, "落合 智哉")
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "th", text: /出場/, count: 0
+    assert_select "tr.bench-only", 0
+    assert_select "details.decade summary", text: /（1人）/
+  end
+
   test "game page shows only the team that has a roster" do
     add_member(1, @alpha, "落合 智哉")
 

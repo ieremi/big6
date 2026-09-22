@@ -2,8 +2,12 @@
     Each table starts in roster order (GameMember.roster_order) and can be sorted in the browser by any column.
     While a game is in progress, Scorebook has no GameMember list of its own yet — members_by_university is passed
     empty, and official_lineup (LeagueOfficialLineup, present? only while there's something to show) provides a
-    provisional stand-in scraped from the league site's box score instead. %>
+    provisional stand-in scraped from the league site's box score instead.
+    played_player_ids (Game#played_player_ids) marks who played: a 出場 column, and the players who didn't are dimmed.
+    It is nil, and nothing is marked, while that isn't known yet (and a provisional lineup has only players who
+    played). Staff are never marked either way. %>
 <% provisional = members_by_university.blank? && local_assigns[:official_lineup]&.present? %>
+<% played = local_assigns[:played_player_ids] unless provisional %>
 <% source = provisional ? official_lineup.by_university : members_by_university %>
 <% rosters = [ game.team0, game.team1 ].filter_map do |team|
      members = GameMember.roster_order(source.fetch(team.id, []))
@@ -26,26 +30,31 @@
       <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
         <summary>
           <span class="team-chip" style="background: <%= team.color %>"><%= team.initial %></span>
-          <%= team.short_name %>（<%= members.size %>人）
+          <%= team.short_name %>（<%= members.size %>人<%= "・出場#{members.count { |member| played.include?(member.player_id) }}人" if played %>）
         </summary>
 
         <div class="table-scroll">
           <table data-controller="sortable-table">
             <thead>
               <tr>
-                <%= sortable_headers GamesHelper::GAME_BENCH_COLUMNS, *%w[背番号 氏名 学年 役割 打順 守備] %>
+                <%= sortable_headers GamesHelper::GAME_BENCH_COLUMNS, *%w[背番号 氏名 学年 役割 打順 守備], *("出場" if played) %>
               </tr>
             </thead>
             <tbody>
               <% members.each do |member| %>
-                <tr>
+                <% staff = Player::STAFF_ROLES.include?(member.role) %>
+                <% did_play = played&.include?(member.player_id) %>
+                <%= tag.tr class: ("bench-only" if played && !staff && !did_play) do %>
                   <td><%= member.uniform_number %></td>
                   <%= sort_cell link_to(member.player.name, player_path(member.player)), member.player.name_kana.presence || member.player.name %>
                   <td><%= member.grade %></td>
                   <%= sort_cell member.role, bench_role_sort_value(member.role) %>
                   <td><%= member.batting_order %></td>
                   <%= sort_cell member.fielding_position, fielding_position_sort_value(member.fielding_position) %>
-                </tr>
+                  <% if played %>
+                    <%= staff ? tag.td : sort_cell((did_play ? "✓" : ""), (did_play ? 0 : 1)) %>
+                  <% end %>
+                <% end %>
               <% end %>
             </tbody>
           </table>

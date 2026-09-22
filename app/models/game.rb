@@ -77,6 +77,16 @@ class Game < ApplicationRecord
     finished? && team0_score.present? && team1_score.present?
   end
 
+  # The ids of the players who played in the game: everyone with a batting or a
+  # pitching line. Scorebook gives a line to every batter who appeared, one who
+  # only came on in the field and never batted included. nil while the game has
+  # no lines yet (not over, or its box score not imported), when who played
+  # isn't known.
+  def played_player_ids
+    ids = batting_lines.pluck(:player_id) | pitching_lines.pluck(:player_id)
+    ids.empty? ? nil : ids.to_set
+  end
+
   # Records that a game was called off, as reported by Scorebook or the league's
   # site: the game gets that status, no result and no round. A game we don't have
   # yet is added, as the game of teams[0] (top) and teams[1] on that date: it has no
