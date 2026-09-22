@@ -33,18 +33,27 @@ class PlayerSearch
     (pitching || HAND_ORDER.size + 1) * (HAND_ORDER.size + 2) + (batting || HAND_ORDER.size + 1)
   end
 
-  attr_reader :keyword, :university_ids, :start_year, :end_year, :role_group, :status
+  attr_reader :keyword, :university_ids, :start_year, :end_year, :role_group, :status,
+              :high_school, :faculty, :role, :position
 
   # university_ids nil means any university; an empty array matches no one.
   # start_year / end_year bound the entry year, role_group is one of ROLE_GROUPS,
-  # and status is "active" or "alumni".
-  def initialize(keyword: nil, university_ids: nil, start_year: nil, end_year: nil, role_group: nil, status: nil)
+  # and status is "active" or "alumni". high_school, faculty, role, and position
+  # match a player's column exactly (unlike keyword, which is a loose search) —
+  # for the players table and a player's own page linking to others who share
+  # one of theirs.
+  def initialize(keyword: nil, university_ids: nil, start_year: nil, end_year: nil, role_group: nil, status: nil,
+                  high_school: nil, faculty: nil, role: nil, position: nil)
     @keyword = keyword.to_s.strip.presence
     @university_ids = university_ids&.map(&:to_i)
     @start_year = start_year.presence&.to_i
     @end_year = end_year.presence&.to_i
     @role_group = role_group if ROLE_GROUPS.include?(role_group)
     @status = status if STATUSES.key?(status)
+    @high_school = high_school.presence
+    @faculty = faculty.presence
+    @role = role.presence
+    @position = position.presence
   end
 
   # The matching players, unordered.
@@ -56,6 +65,10 @@ class PlayerSearch
     scope = scope.where(players: { enter_year: ..end_year }) if end_year
     scope = scope.in_role_group(role_group) if role_group
     scope = scope.where(enrollment_status: STATUSES.fetch(status)) if status
+    scope = scope.where(high_school: high_school) if high_school
+    scope = scope.where(faculty: faculty) if faculty
+    scope = scope.where(role: role) if role
+    scope = scope.where(position: position) if position
     scope
   end
 
@@ -85,7 +98,8 @@ class PlayerSearch
   def count_cache_key
     [
       "player_search/count/v1", keyword, university_ids&.sort&.join(","),
-      start_year, end_year, role_group, status, Player.maximum(:updated_at)&.to_i
+      start_year, end_year, role_group, status, high_school, faculty, role, position,
+      Player.maximum(:updated_at)&.to_i
     ].join("/")
   end
 

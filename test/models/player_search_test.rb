@@ -47,6 +47,17 @@ class PlayerSearchTest < ActiveSupport::TestCase
     assert_equal [ 20236010, 20231007 ], found(status: "active")
   end
 
+  test "high school, faculty, role, and position match exactly" do
+    @ochiai.update!(faculty: "商", position: "投手")
+    @imazu.update!(high_school: "東邦", position: "捕手")
+
+    assert_equal [ 20236010, 20231007 ], found(high_school: "東邦")
+    assert_equal [ 20236010 ], found(faculty: "商")
+    assert_equal [ 20236010, 19951001 ], found(role: "選手")
+    assert_equal [ 20236010 ], found(position: "投手")
+    assert_empty found(position: "遊撃手")
+  end
+
   test "unknown role groups and statuses are ignored" do
     search = PlayerSearch.new(role_group: "bogus", status: "bogus")
 

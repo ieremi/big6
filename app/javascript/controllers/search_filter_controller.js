@@ -1,7 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["universityCheckbox", "termCheckbox", "yearInput", "universityModeButton", "universityModeInput", "activeOnlyButton", "activeOnlyInput"]
+  static targets = [
+    "universityCheckbox", "termCheckbox", "yearInput", "universityModeButton", "universityModeInput",
+    "activeOnlyButton", "activeOnlyInput", "statusSelect", "activeStatusButton"
+  ]
 
   submit() {
     this.element.requestSubmit()
@@ -23,6 +26,19 @@ export default class extends Controller {
 
     this.activeOnlyInputTarget.value = active ? "1" : ""
     this.activeOnlyButtonTarget.classList.toggle("active", active)
+
+    this.submit()
+  }
+
+  // A single "現役のみ" toggle over the existing 在籍 select (active/alumni/all),
+  // for the players page: unlike rankings' active-only, which has no other
+  // status option, this shares its value with that dropdown rather than a
+  // separate hidden field.
+  toggleActiveStatus() {
+    const active = this.statusSelectTarget.value !== "active"
+
+    this.statusSelectTarget.value = active ? "active" : ""
+    this.activeStatusButtonTarget.classList.toggle("active", active)
 
     this.submit()
   }

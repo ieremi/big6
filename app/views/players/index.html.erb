@@ -11,6 +11,13 @@
       to the results table below. %>
   <%= hidden_field_tag :sort, @sort %>
   <%= hidden_field_tag :direction, @direction %>
+  <%# Same reason: these come from clicking a value in the table or on a
+      player's page, not from a field in this form, so they'd otherwise be
+      dropped the moment any other filter changes. %>
+  <%= hidden_field_tag :high_school, @high_school %>
+  <%= hidden_field_tag :faculty, @faculty %>
+  <%= hidden_field_tag :role_name, @role_name %>
+  <%= hidden_field_tag :position, @position %>
 
   <fieldset>
     <legend>キーワード</legend>
@@ -50,14 +57,29 @@
   <fieldset>
     <legend>絞り込み</legend>
     <div class="period-toolbar">
+      <%= tag.button "現役のみ", type: "button",
+            class: [ "period-btn", ("active" if @status == "active") ],
+            data: { search_filter_target: "activeStatusButton", action: "search-filter#toggleActiveStatus" } %>
       <%= select_tag :role,
             options_for_select([ [ "役割：すべて", "" ] ] + PlayersHelper::ROLE_GROUP_LABELS.map { |key, label| [ label, key ] }, @role_group),
             "aria-label": "役割" %>
       <%= select_tag :status,
             options_for_select([ [ "在籍：すべて", "" ], [ "現役", "active" ], [ "卒業生", "alumni" ] ], @status),
-            "aria-label": "在籍状況" %>
+            "aria-label": "在籍状況", data: { search_filter_target: "statusSelect" } %>
     </div>
   </fieldset>
+
+  <% ad_hoc_filters = { "出身高校" => [ "high_school", @high_school ], "学部" => [ "faculty", @faculty ], "役割" => [ "role_name", @role_name ], "位置" => [ "position", @position ] }.select { |_, (_, value)| value.present? } %>
+  <% if ad_hoc_filters.any? %>
+    <fieldset>
+      <legend>表の値から絞り込み中</legend>
+      <div class="period-toolbar">
+        <% ad_hoc_filters.each do |label, (param, value)| %>
+          <%= link_to "#{label}: #{value} ×", players_path(request.query_parameters.except("page", param)), class: "period-btn active" %>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
 
   <noscript><%= submit_tag "検索" %></noscript>
 <% end %>
@@ -92,11 +114,11 @@
               <%= player.university.short_name %>
             </td>
             <td><%= link_to player.name, player_path(player) %></td>
-            <td><%= player.enter_year || "—" %></td>
-            <td><%= player.role %></td>
-            <td><%= player.position %></td>
+            <td><%= player_enter_year_link(player.enter_year) %></td>
+            <td><%= player_filter_link(player.role, "role_name") %></td>
+            <td><%= player_filter_link(player.position, "position") %></td>
             <td><%= hands_label(player) %></td>
-            <td><%= player.high_school %></td>
+            <td><%= player_filter_link(player.high_school, "high_school") %></td>
             <td><%= enrollment_label(player.enrollment_status) %></td>
           </tr>
         <% end %>

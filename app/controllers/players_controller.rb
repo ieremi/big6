@@ -6,9 +6,11 @@ class PlayersController < ApplicationController
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
     search = PlayerSearch.new(
       keyword: params[:q], university_ids: @selected_university_ids.presence,
-      start_year: params[:start_year], end_year: params[:end_year], role_group: params[:role], status: params[:status]
+      start_year: params[:start_year], end_year: params[:end_year], role_group: params[:role], status: params[:status],
+      high_school: params[:high_school], faculty: params[:faculty], role: params[:role_name], position: params[:position]
     )
     @keyword, @start_year, @end_year, @role_group, @status = search.keyword, search.start_year, search.end_year, search.role_group, search.status
+    @high_school, @faculty, @role_name, @position = search.high_school, search.faculty, search.role, search.position
 
     @total_count = search.count
     @last_page = [ (@total_count / PER_PAGE.to_f).ceil, 1 ].max

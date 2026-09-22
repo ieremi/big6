@@ -27,19 +27,19 @@
     </div>
   <% end %>
   <% if @player.role.present? %>
-    <div><dt>役割</dt><dd><%= @player.role %></dd></div>
+    <div><dt>役割</dt><dd><%= player_filter_link(@player.role, "role_name") %></dd></div>
   <% end %>
   <% if @player.position.present? %>
-    <div><dt>位置</dt><dd><%= @player.position %></dd></div>
+    <div><dt>位置</dt><dd><%= player_filter_link(@player.position, "position") %></dd></div>
   <% end %>
   <% if hands_label(@player).present? %>
     <div><dt>投打</dt><dd><%= hands_label(@player) %></dd></div>
   <% end %>
   <% if @player.high_school.present? %>
-    <div><dt>出身高校</dt><dd><%= @player.high_school %></dd></div>
+    <div><dt>出身高校</dt><dd><%= player_filter_link(@player.high_school, "high_school") %></dd></div>
   <% end %>
   <% if @player.faculty.present? %>
-    <div><dt>学部</dt><dd><%= @player.faculty %></dd></div>
+    <div><dt>学部</dt><dd><%= player_filter_link(@player.faculty, "faculty") %></dd></div>
   <% end %>
   <% if enrollment_label(@player.enrollment_status) %>
     <div><dt>在籍</dt><dd><%= enrollment_label(@player.enrollment_status) %></dd></div>

@@ -21,6 +21,27 @@ module PlayersHelper
     players_path(request.query_parameters.merge("page" => page))
   end
 
+  # A link that narrows the players list to exactly this value of a column
+  # (high school, faculty, role, or position — param is whichever query
+  # parameter PlayerSearch reads it from), keeping whatever filters are
+  # already active: a click in the table drills further into the current
+  # search, and one on a player's own page (which carries no filters of its
+  # own) starts a fresh one. Plain text, not a link, when there's nothing to
+  # filter by.
+  def player_filter_link(value, param)
+    return value if value.blank?
+
+    link_to value, players_path(request.query_parameters.except("page").merge(param => value))
+  end
+
+  # Same idea, but narrows to exactly this entry year (both ends of the
+  # range) rather than "from this year on".
+  def player_enter_year_link(enter_year)
+    return "—" unless enter_year
+
+    link_to enter_year, players_path(request.query_parameters.except("page").merge(start_year: enter_year, end_year: enter_year))
+  end
+
   # The player's game page, from the point of view of the game they were on the roster for.
   def player_game_path(game)
     matchup_game_path(game.team0.slug, game.team1.slug, game.season.year, game.season.term, game.game_number)
