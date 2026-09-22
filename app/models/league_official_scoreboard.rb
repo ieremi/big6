@@ -26,6 +26,15 @@ class LeagueOfficialScoreboard
     @runs_bottom[inning - 1]
   end
 
+  # See GameScoreboard#top_total/#bottom_total.
+  def top_total
+    innings.sum { |n| top_runs(n).to_i }
+  end
+
+  def bottom_total
+    innings.sum { |n| bottom_runs(n).to_i }
+  end
+
   def top_hits
     @detail["hitsTop"]
   end

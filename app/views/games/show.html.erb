@@ -62,7 +62,7 @@
             <% detail.innings.each do |n| %>
               <td><%= detail.top_runs(n) %></td>
             <% end %>
-            <td class="total"><%= @game.team0_score.nil? ? "-" : @game.team0_score %></td>
+            <td class="total"><%= @game.team0_score.nil? ? detail.top_total : @game.team0_score %></td>
             <td><%= detail.top_hits %></td>
             <td><%= detail.top_errors %></td>
           </tr>
@@ -74,7 +74,7 @@
             <% detail.innings.each do |n| %>
               <td><%= detail.bottom_runs(n) %></td>
             <% end %>
-            <td class="total"><%= @game.team1_score.nil? ? "-" : @game.team1_score %></td>
+            <td class="total"><%= @game.team1_score.nil? ? detail.bottom_total : @game.team1_score %></td>
             <td><%= detail.bottom_hits %></td>
             <td><%= detail.bottom_errors %></td>
           </tr>

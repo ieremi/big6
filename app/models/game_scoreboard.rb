@@ -30,6 +30,19 @@ class GameScoreboard
     @detail["runs#{inning}Bottom"]
   end
 
+  # Sum of the innings shown so far — not the same as the game's own
+  # official total (Game#team0_score/team1_score), which only exists once
+  # the game is finished. Views fall back to this while it's in progress,
+  # so "計" has something to show instead of "-" for a half it can already
+  # see (an inning not yet played contributes 0, same as one not shown).
+  def top_total
+    innings.sum { |n| top_runs(n).to_i }
+  end
+
+  def bottom_total
+    innings.sum { |n| bottom_runs(n).to_i }
+  end
+
   def top_hits
     @detail["hitsTotalTop"]
   end
