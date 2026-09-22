@@ -114,6 +114,17 @@ export default class extends Controller {
     const url = new URL(window.location.href)
     url.searchParams.set("period", this.periodValue)
     window.history.replaceState({}, "", url)
+
+    // The games table's sort-column links (sortable_link_header) are plain
+    // server-rendered <a> tags carrying whatever query the page had at load
+    // time, so a period picked after the fact isn't in their href yet —
+    // clicking one to sort would otherwise drop back to "all". Keep them in
+    // sync so sorting and the period filter can be combined in either order.
+    this.element.querySelectorAll("th.sortable a[href]").forEach((link) => {
+      const linkUrl = new URL(link.href, window.location.href)
+      linkUrl.searchParams.set("period", this.periodValue)
+      link.href = linkUrl.toString()
+    })
   }
 
   metricValueChanged() {
