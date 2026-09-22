@@ -8,6 +8,11 @@
 
 <%= form_with url: games_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
   <%= hidden_field_tag :filtered, "1" %>
+  <%# Carried along so changing a filter (a real GET resubmit, unlike the
+      period filter's URL-only update) doesn't drop a sort already applied
+      to the results table below. %>
+  <%= hidden_field_tag :sort, @sort %>
+  <%= hidden_field_tag :direction, @sort_direction %>
 
   <fieldset>
     <legend>大学</legend>

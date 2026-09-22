@@ -6,6 +6,12 @@
 <h1>選手一覧</h1>
 
 <%= form_with url: players_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+  <%# Carried along so changing a filter (a real GET resubmit, unlike the
+      period filter's URL-only update) doesn't drop a sort already applied
+      to the results table below. %>
+  <%= hidden_field_tag :sort, @sort %>
+  <%= hidden_field_tag :direction, @direction %>
+
   <fieldset>
     <legend>キーワード</legend>
     <%= search_field_tag :q, @keyword, placeholder: "氏名・よみ・出身高校", class: "keyword-input", autocomplete: "off" %>
