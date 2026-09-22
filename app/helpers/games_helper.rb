@@ -11,6 +11,33 @@ module GamesHelper
     matchup_game_url(game.team0.slug, game.team1.slug, game.season.year, game.season.term, game.game_number, format: :ics)
   end
 
+  # The columns of a game's bench tables: heading => [shortcut, direction of the
+  # first click]. The same shortcuts as the bench table on a player's page; both
+  # teams' tables share them, so one key sorts both.
+  GAME_BENCH_COLUMNS = {
+    "背番号" => [ "U", "asc" ], "氏名" => [ "N", "asc" ], "学年" => [ "Y", "desc" ],
+    "役割" => [ "T", "asc" ], "打順" => [ "Q", "asc" ], "守備" => [ "Z", "asc" ]
+  }.freeze
+
+  # Fielding positions in their scorecard order (投 1, 捕 2, ... 右 9, then 指).
+  FIELDING_ORDER = LeagueOfficialGameScraper::POSITION_KANJI.values.freeze
+
+  # A bench member's role sorts staff first (most senior first), then players by
+  # their position (投手, 捕手, 一塁手 ...), then anyone else (マネージャー, 学生コーチ ...).
+  def bench_role_sort_value(role)
+    return nil if role.blank?
+
+    staff = Player::STAFF_ROLES.index(role)
+    return staff if staff
+
+    position = PlayerSearch::POSITION_ORDER.index(role)
+    position ? Player::STAFF_ROLES.size + position : Player::STAFF_ROLES.size + PlayerSearch::POSITION_ORDER.size
+  end
+
+  def fielding_position_sort_value(position)
+    position.presence && (FIELDING_ORDER.index(position) || FIELDING_ORDER.size)
+  end
+
   # Confirmed by spot-checking the league official site: seasons before 2005
   # spring return a page with the game framework but no actual score/box-score
   # data (empty template), so linking to them would be useless.

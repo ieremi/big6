@@ -36,6 +36,23 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='decade-fold#closeAll'][data-shortcut=f]", text: /すべて閉じる/
   end
 
+  test "game page's bench tables sort in the browser, roles and positions in baseball order" do
+    add_member(1, @alpha, "落合 智哉", role: "捕手", fielding_position: "捕")
+    add_member(2, @alpha, "堀井 哲也", role: "監督")
+    add_member(3, @alpha, "山田 太郎", role: "学生コーチ")
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "details.decade table[data-controller=sortable-table]", 1
+    %w[U N Y T Q Z].each do |key|
+      assert_select "details.decade th.sortable button[data-action='sortable-table#sort'][data-shortcut=#{key}]", 1
+    end
+    assert_select "td[data-sort-value='2']", text: "監督"
+    assert_select "td[data-sort-value='6']", text: "捕手"
+    assert_select "td[data-sort-value='13']", text: "学生コーチ"
+    assert_select "td[data-sort-value='1']", text: "捕"
+  end
+
   test "game page shows only the team that has a roster" do
     add_member(1, @alpha, "落合 智哉")
 

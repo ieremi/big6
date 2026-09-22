@@ -1,4 +1,5 @@
 <%# Each team's roster for the game (bench included), from Scorebook, in a collapsible section (closed until opened). Only games from 2021 on have one.
+    Each table starts in roster order (GameMember.roster_order) and can be sorted in the browser by any column.
     While a game is in progress, Scorebook has no GameMember list of its own yet — members_by_university is passed
     empty, and official_lineup (LeagueOfficialLineup, present? only while there's something to show) provides a
     provisional stand-in scraped from the league site's box score instead. %>
@@ -29,26 +30,21 @@
         </summary>
 
         <div class="table-scroll">
-          <table>
+          <table data-controller="sortable-table">
             <thead>
               <tr>
-                <th>背番号</th>
-                <th>氏名</th>
-                <th>学年</th>
-                <th>役割</th>
-                <th>打順</th>
-                <th>守備</th>
+                <%= sortable_headers GamesHelper::GAME_BENCH_COLUMNS, *%w[背番号 氏名 学年 役割 打順 守備] %>
               </tr>
             </thead>
             <tbody>
               <% members.each do |member| %>
                 <tr>
                   <td><%= member.uniform_number %></td>
-                  <td><%= link_to member.player.name, player_path(member.player) %></td>
+                  <%= sort_cell link_to(member.player.name, player_path(member.player)), member.player.name_kana.presence || member.player.name %>
                   <td><%= member.grade %></td>
-                  <td><%= member.role %></td>
+                  <%= sort_cell member.role, bench_role_sort_value(member.role) %>
                   <td><%= member.batting_order %></td>
-                  <td><%= member.fielding_position %></td>
+                  <%= sort_cell member.fielding_position, fielding_position_sort_value(member.fielding_position) %>
                 </tr>
               <% end %>
             </tbody>
