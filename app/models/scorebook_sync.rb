@@ -129,8 +129,12 @@ class ScorebookSync
       attendance = info["attendance"].to_s.delete(",").strip
 
       game.game_number = game_number
-      game.team0_score = info["runsTotalTop"]&.to_i
-      game.team1_score = info["runsTotalBottom"]&.to_i
+      # As with game_status below: Scorebook reporting nothing yet (still
+      # blank) shouldn't erase a score the league site's box score already
+      # provisionally filled in — only an actual value from Scorebook (once
+      # it catches up) overwrites what's there.
+      game.team0_score = info["runsTotalTop"]&.to_i || game.team0_score
+      game.team1_score = info["runsTotalBottom"]&.to_i || game.team1_score
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
       # Some other source (the league site's box score, most often — see
