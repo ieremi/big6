@@ -12,10 +12,14 @@ class LeagueOfficialScoreboard
     @detail.present?
   end
 
+  # See GameScoreboard#innings.
   def innings
-    (1..[ @runs_top.length, @runs_bottom.length ].max).select do |n|
+    played = (1..[ @runs_top.length, @runs_bottom.length ].max).select do |n|
       @runs_top[n - 1].present? || @runs_bottom[n - 1].present?
     end
+    return played if played.empty?
+
+    1..[ played.max, 9 ].max
   end
 
   def top_runs(inning)

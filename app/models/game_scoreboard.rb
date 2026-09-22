@@ -18,8 +18,16 @@ class GameScoreboard
     @detail.present?
   end
 
+  # At least 1..9, once there's anything to show at all, so an in-progress
+  # game's scoreboard has its usual shape from the first inning on instead
+  # of growing one column at a time — a blank column is still blank, just
+  # not missing. A game with no data yet (still scheduled) stays empty:
+  # that's what tells the view to show nothing instead of an empty grid.
   def innings
-    (1..18).select { |n| @detail["runs#{n}Top"].present? || @detail["runs#{n}Bottom"].present? }
+    played = (1..18).select { |n| @detail["runs#{n}Top"].present? || @detail["runs#{n}Bottom"].present? }
+    return played if played.empty?
+
+    1..[ played.max, 9 ].max
   end
 
   def top_runs(inning)
