@@ -59,6 +59,14 @@ class PlayerSearch
     scope
   end
 
+  # players.count, cached: a plain COUNT(*) is the priciest single query the
+  # players page makes (it still has to visit every matching row), and with
+  # up to a couple hundred pages of results, the same count is asked for
+  # again and again for whichever filters are in use.
+  def count
+    Rails.cache.fetch(count_cache_key, expires_in: 6.hours) { players.count }
+  end
+
   # The matching players in display order: newest entry year first (those with
   # none last), then university, then name. The id makes paging stable.
   #
@@ -73,6 +81,13 @@ class PlayerSearch
   end
 
   private
+
+  def count_cache_key
+    [
+      "player_search/count/v1", keyword, university_ids&.sort&.join(","),
+      start_year, end_year, role_group, status, Player.maximum(:updated_at)&.to_i
+    ].join("/")
+  end
 
   def sort_expressions(key, dir)
     case key

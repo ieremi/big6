@@ -10,7 +10,7 @@ class PlayersController < ApplicationController
     )
     @keyword, @start_year, @end_year, @role_group, @status = search.keyword, search.start_year, search.end_year, search.role_group, search.status
 
-    @total_count = search.players.count
+    @total_count = search.count
     @last_page = [ (@total_count / PER_PAGE.to_f).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @last_page)
     @sort = PlayerSearch::SORT_KEYS.include?(params[:sort]) ? params[:sort] : nil

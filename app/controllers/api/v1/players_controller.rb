@@ -8,7 +8,7 @@ module Api
           keyword: params[:q], university_ids: university_ids_from_params,
           start_year: params[:start_year], end_year: params[:end_year], role_group: params[:role], status: params[:status]
         )
-        total = search.players.count
+        total = search.count
         page = [ params[:page].to_i, 1 ].max
         players = search.ordered.offset((page - 1) * PER_PAGE).limit(PER_PAGE)
 
