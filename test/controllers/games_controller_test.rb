@@ -174,4 +174,21 @@ class GamesControllerTest < ActionDispatch::IntegrationTest
     assert_operator keys.size, :>, 10
     assert_equal [], keys.tally.select { |_, count| count > 1 }.keys
   end
+
+test "a team's season list has a section per week, headed with the season's week number and the opponent" do
+  alpha = universities(:one)
+  beta = universities(:two)
+  gamma = University.create!(name: "Gamma University", short_name: "Gamma", slug: "gamma", position: 3)
+  autumn = seasons(:two) # already has beta v alpha on 2026-08-10
+  Game.create!(season: autumn, team0: gamma, team1: beta, played_on: "2026-08-03", game_number: 1)
+  Game.create!(season: autumn, team0: gamma, team1: alpha, played_on: "2026-08-18", game_number: 2)
+  Game.create!(season: autumn, team0: alpha, team1: gamma, played_on: "2026-08-17", game_number: 1)
+
+  get team_season_browse_url("alpha", 2026, "autumn")
+
+  assert_response :success
+  # week 1 was gamma v beta, which alpha wasn't in; the weeks keep the season's numbers
+  assert_equal [ "第2週: vs Beta Beta", "第3週: vs Gamma Gamma" ], css_select("h2").map { |h2| h2.text.squish }.grep(/週/)
+  assert_equal %w[2026-08-17 2026-08-18], css_select("h2 + .table-scroll")[1].css("tbody tr td:first-child").map(&:text)
+end
 end

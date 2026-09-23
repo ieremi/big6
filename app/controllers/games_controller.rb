@@ -71,10 +71,8 @@ class GamesController < ApplicationController
       render :team_seasons and return
     end
 
-    @games = apply_game_sort(scope)
-    @games_by_opponent = @games
-      .group_by { |g| g.team0_id == @team0.id ? g.team1 : g.team0 }
-      .sort_by { |opponent, _| opponent.position }
+    @games = apply_game_sort(scope).to_a
+    @game_groups = @season ? games_by_week : games_by_opponent
   end
 
   def og_image
@@ -105,6 +103,31 @@ class GamesController < ApplicationController
   end
 
   private
+
+  # A group of the team's games under one heading: the week of the season they
+  # were played in (nil when not grouped by week), the opponents, and the games,
+  # in the order the page sorts them.
+  GameGroup = Struct.new(:week, :opponents, :games, keyword_init: true)
+
+  # One group per week the team played in, in week order. Weeks are numbered as
+  # on the season page (SeasonWeeks, over every game of the season), so the
+  # team's third week is 第3週 only if it played in the season's first two.
+  def games_by_week
+    season_games = @season.games.includes(:team0, :team1).to_a
+    SeasonWeeks.new(season_games).weeks_with([ @team0.id ]).map do |week|
+      ids = week.games.map(&:id).to_set
+      opponents = week.series.map { |series| series.team0.id == @team0.id ? series.team1 : series.team0 }
+      GameGroup.new(week: week.number, opponents: opponents, games: @games.select { |game| ids.include?(game.id) })
+    end
+  end
+
+  # One group per opponent, in the order their series were played.
+  def games_by_opponent
+    @games
+      .group_by { |game| game.team0_id == @team0.id ? game.team1 : game.team0 }
+      .sort_by { |opponent, games| [ games.map(&:played_on).min, opponent.position ] }
+      .map { |opponent, games| GameGroup.new(week: nil, opponents: [ opponent ], games: games) }
+  end
 
   def filtered_scope
     scope = Game.includes(:team0, :team1, :season)

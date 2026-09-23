@@ -12,10 +12,14 @@
 
 <p class="muted"><%= games_count_label(@games) %></p>
 
-<% @games_by_opponent.each do |opponent, games| %>
+<%# One section per week of the season, in week order ("第3週: vs 慶大 K"). %>
+<% @game_groups.each do |group| %>
   <h2>
-    <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
-    vs <%= opponent.short_name %>
+    <% if group.week %>第<%= group.week %>週:<% end %>
+    <% group.opponents.each do |opponent| %>
+      vs <%= opponent.short_name %>
+      <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
+    <% end %>
   </h2>
-  <%= render "games_table", games: games %>
+  <%= render "games_table", games: group.games %>
 <% end %>
