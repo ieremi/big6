@@ -1,53 +1,41 @@
 <%# The university's current roster: staff from its latest game roster, then the students in a table sorted in the browser (newest entry year first at first).
-    Each part is a collapsible section (closed until opened), as on a game page's bench rosters. %>
-<% if roster.staff.any? || roster.student_count.positive? %>
-  <h2 class="card-heading">部員名簿</h2>
+    Each part is a collapsible section (closed until opened), rendered inside the page's decade-fold controller. %>
+<% if roster.staff.any? %>
+  <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
+    <summary>監督・コーチ・部長（<%= roster.staff.size %>人）</summary>
+    <ul class="list">
+      <% roster.staff.each do |member| %>
+        <li>
+          <%= link_to member.player.name, player_path(member.player) %>
+          <span class="muted"><%= member.role %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>
 
-  <div data-controller="decade-fold">
-    <div class="period-toolbar">
-      <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
-      <button type="button" class="period-btn" data-action="decade-fold#closeAll" data-shortcut="f" data-shortcut-label="すべて閉じる">すべて閉じる <kbd>f</kbd></button>
-    </div>
-
-    <% if roster.staff.any? %>
-      <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
-        <summary>監督・コーチ・部長（<%= roster.staff.size %>人）</summary>
-        <ul class="list">
-          <% roster.staff.each do |member| %>
-            <li>
-              <%= link_to member.player.name, player_path(member.player) %>
-              <span class="muted"><%= member.role %></span>
-            </li>
+<% if roster.student_count.positive? %>
+  <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
+    <summary>部員（<%= roster.student_count %>人）</summary>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr><%= sortable_headers PlayersHelper::ROSTER_COLUMNS, *%w[入学年 氏名 役割 位置 投打 出身高校] %></tr>
+        </thead>
+        <tbody>
+          <% roster.students_by_entry_year.values.flatten.each do |player| %>
+            <tr>
+              <%= sort_cell player.enter_year || "—", player.enter_year %>
+              <%= sort_cell link_to(player.name, player_path(player)), player.name_kana.presence || player.name %>
+              <%= sort_cell player.role, PlayerSearch.role_rank(player.role) %>
+              <%= sort_cell player.position, PlayerSearch.position_rank(player.position) %>
+              <%= sort_cell hands_label(player), PlayerSearch.hands_rank(player) %>
+              <td><%= player.high_school %></td>
+            </tr>
           <% end %>
-        </ul>
-      <% end %>
-    <% end %>
-
-    <% if roster.student_count.positive? %>
-      <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
-        <summary>部員（<%= roster.student_count %>人）</summary>
-        <div class="table-scroll">
-          <table data-controller="sortable-table">
-            <thead>
-              <tr><%= sortable_headers PlayersHelper::ROSTER_COLUMNS, *%w[入学年 氏名 役割 位置 投打 出身高校] %></tr>
-            </thead>
-            <tbody>
-              <% roster.students_by_entry_year.values.flatten.each do |player| %>
-                <tr>
-                  <%= sort_cell player.enter_year || "—", player.enter_year %>
-                  <%= sort_cell link_to(player.name, player_path(player)), player.name_kana.presence || player.name %>
-                  <%= sort_cell player.role, PlayerSearch.role_rank(player.role) %>
-                  <%= sort_cell player.position, PlayerSearch.position_rank(player.position) %>
-                  <%= sort_cell hands_label(player), PlayerSearch.hands_rank(player) %>
-                  <td><%= player.high_school %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% end %>
-    <% end %>
-  </div>
-
-  <p><%= link_to "この大学の選手をすべて見る →", players_path(university_ids: [ university.id ]) %></p>
+        </tbody>
+      </table>
+    </div>
+    <p><%= link_to "この大学の選手をすべて見る →", players_path(university_ids: [ university.id ]) %></p>
+  <% end %>
 <% end %>

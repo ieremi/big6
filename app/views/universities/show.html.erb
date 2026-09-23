@@ -12,54 +12,66 @@
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 <% labels = { "all" => "通算", "20" => "直近20年", "10" => "直近10年", "5" => "直近5年", "r" => "直近シーズン" } %>
 
-<div data-controller="period-filter">
+<%# Every part of the page is a collapsible section: the record and the matchups open at first, the roster closed. %>
+<div data-controller="decade-fold">
   <div class="period-toolbar">
-    <span class="muted">表示期間:</span>
-    <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">通算 <kbd>a</kbd></button>
-    <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
-    <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
-    <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
-    <button type="button" class="period-btn" data-period="r" data-period-filter-target="button" data-action="period-filter#setPeriod">直近シーズン <kbd>r</kbd></button>
-    <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
+    <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
+    <button type="button" class="period-btn" data-action="decade-fold#closeAll" data-shortcut="f" data-shortcut-label="すべて閉じる">すべて閉じる <kbd>f</kbd></button>
   </div>
 
-  <% @periods.each do |key, opts| %>
-    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
-      <%= labels[key] %>
-      <%= @record.wins(**opts) %>勝<%= @record.losses(**opts) %>敗<%= @record.draws(**opts) %>分
-      （勝率<%= pct.call(@record.percentage(**opts)) %>）
-    <% end %>
+  <%= tag.details class: "decade", open: true, data: { decade_fold_target: "decade" } do %>
+    <summary>成績</summary>
+    <div data-controller="period-filter">
+      <div class="period-toolbar">
+        <span class="muted">表示期間:</span>
+        <button type="button" class="period-btn" data-period="all" data-period-filter-target="button" data-action="period-filter#setPeriod">通算 <kbd>a</kbd></button>
+        <button type="button" class="period-btn" data-period="20" data-period-filter-target="button" data-action="period-filter#setPeriod">20年 <kbd>l</kbd></button>
+        <button type="button" class="period-btn" data-period="10" data-period-filter-target="button" data-action="period-filter#setPeriod">10年 <kbd>m</kbd></button>
+        <button type="button" class="period-btn" data-period="5" data-period-filter-target="button" data-action="period-filter#setPeriod">5年 <kbd>s</kbd></button>
+        <button type="button" class="period-btn" data-period="r" data-period-filter-target="button" data-action="period-filter#setPeriod">直近シーズン <kbd>r</kbd></button>
+        <span class="muted">切替 <kbd>&lt;</kbd><kbd>&gt;</kbd></span>
+      </div>
 
-    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
-      試合時間：
-      合計<%= duration_description(@record.total_duration_minutes(**opts)) %>、
-      平均<%= duration_description(@record.average_duration_minutes(**opts)) %>、
-      最大<%= duration_description(@record.max_duration_minutes(**opts)) %>、
-      最小<%= duration_description(@record.min_duration_minutes(**opts)) %>、
-      標準偏差<%= duration_description(@record.duration_stddev_minutes(**opts)) %>
-    <% end %>
+      <% @periods.each do |key, opts| %>
+        <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
+          <%= labels[key] %>
+          <%= @record.wins(**opts) %>勝<%= @record.losses(**opts) %>敗<%= @record.draws(**opts) %>分
+          （勝率<%= pct.call(@record.percentage(**opts)) %>）
+        <% end %>
 
-    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
-      最多連勝：<%= streak_description(@record.longest_streak(**opts)) %>
-    <% end %>
+        <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
+          試合時間：
+          合計<%= duration_description(@record.total_duration_minutes(**opts)) %>、
+          平均<%= duration_description(@record.average_duration_minutes(**opts)) %>、
+          最大<%= duration_description(@record.max_duration_minutes(**opts)) %>、
+          最小<%= duration_description(@record.min_duration_minutes(**opts)) %>、
+          標準偏差<%= duration_description(@record.duration_stddev_minutes(**opts)) %>
+        <% end %>
 
-    <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
-      現在の連勝：<%= current_streak_description(@record.current_streak(**opts)) %>
-    <% end %>
-  <% end %>
-</div>
+        <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
+          最多連勝：<%= streak_description(@record.longest_streak(**opts)) %>
+        <% end %>
 
-<h2 class="card-heading">対戦カード</h2>
-
-<ul class="list">
-  <% @opponents.each do |opponent| %>
-    <li>
-      <%= link_to matchup_path(@university.slug, opponent.slug) do %>
-        <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
-        <%= @university.short_name %> vs <%= opponent.short_name %>
+        <%= tag.p class: ["muted", ("is-hidden" if key != "all")], data: { period_filter_target: "periodPanel", period: key } do %>
+          現在の連勝：<%= current_streak_description(@record.current_streak(**opts)) %>
+        <% end %>
       <% end %>
-    </li>
+    </div>
   <% end %>
-</ul>
 
-<%= render "universities/roster", roster: @roster, university: @university %>
+  <%= tag.details class: "decade", open: true, data: { decade_fold_target: "decade" } do %>
+    <summary>対戦カード</summary>
+    <ul class="list">
+      <% @opponents.each do |opponent| %>
+        <li>
+          <%= link_to matchup_path(@university.slug, opponent.slug) do %>
+            <span class="team-chip" style="background: <%= opponent.color %>"><%= opponent.initial %></span>
+            <%= @university.short_name %> vs <%= opponent.short_name %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= render "universities/roster", roster: @roster, university: @university %>
+</div>

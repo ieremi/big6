@@ -23,7 +23,7 @@ class UniversitiesControllerTest < ActionDispatch::IntegrationTest
     assert_select "details.decade summary", text: "部員（1人）"
   end
 
-  test "show puts the staff and the students in collapsible sections, closed by default" do
+  test "show puts every part of the page in a collapsible section, the roster closed by default" do
     alpha = universities(:one)
     Player.create!(scorebook_id: 20236010, university: alpha, name: "落合 智哉", enter_year: 2023, role: "選手", enrollment_status: 1)
     coach = Player.create!(scorebook_id: 19951099, university: alpha, name: "日野 愛郎", role: "監督", enrollment_status: 3)
@@ -31,9 +31,12 @@ class UniversitiesControllerTest < ActionDispatch::IntegrationTest
 
     get university_url(alpha.slug)
 
-    assert_select "[data-controller=decade-fold] details.decade[data-decade-fold-target=decade]", 2
-    assert_select "details.decade[open]", 0
-    assert_select "details.decade summary", text: "監督・コーチ・部長（1人）"
+    assert_select "[data-controller=decade-fold] details.decade[data-decade-fold-target=decade]", 4
+    assert_select "details.decade[open] summary", text: "成績"
+    assert_select "details.decade[open] summary", text: "対戦カード"
+    assert_select "details.decade:not([open]) summary", text: "監督・コーチ・部長（1人）"
+    assert_select "details.decade:not([open]) summary", text: "部員（1人）"
+    assert_select "details.decade [data-controller=period-filter]", 1
     assert_select "button[data-action='decade-fold#openAll'][data-shortcut=u]", text: /すべて開く/
     assert_select "button[data-action='decade-fold#closeAll'][data-shortcut=f]", text: /すべて閉じる/
   end
