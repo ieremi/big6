@@ -63,6 +63,7 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - `import_players.rb` must run before `import_game_members.rb` and `import_game_stats.rb`.
 - `import_game_stats.sh` restarts the stats import each time `MemoryGuard` stops it with exit code 75.
 - `update_cancelled_games.rb` and `update_reference_data.rb`.
+- `check_scorebook_stats.rb` compares our batting lines with Scorebook's per-player pages and changes nothing. Differences listed in `scorebook_stats_known_differences.txt` count as known; if any others turn up, it exits with status 1.
 - Scripts named `fix_*`, `delete_*` and `backfill_*` are one-off data fixes.
 
 ## Routes and controllers
