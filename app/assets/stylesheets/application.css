@@ -1490,3 +1490,38 @@ tr.bench-only td a {
   display: block;
   font-size: 1.4rem;
 }
+
+.admin-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+}
+
+.admin-facts dt {
+  color: var(--text-muted);
+}
+
+.admin-facts dd {
+  margin: 0;
+}
+
+.admin-decision {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 40rem;
+}
+
+.admin-decision textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .admin-facts {
+    grid-template-columns: 1fr;
+  }
+}

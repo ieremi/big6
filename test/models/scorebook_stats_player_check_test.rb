@@ -57,6 +57,18 @@ class ScorebookStatsPlayerCheckTest < ActiveSupport::TestCase
     assert_equal 1, @player.scorebook_stats_differences.count
   end
 
+  test "a line filed under a game its team didn't play in is recorded as a suggestion, from the same fetch" do
+    @player.update!(university: University.create!(name: "法政大学", short_name: "法大", slug: "hosei", position: 14))
+    misfiled = ScorebookMemberStats::Line.new(scorebook_game_id: 2019042801, played_on: Date.new(2019, 4, 28), line_id: 103184,
+      team_id: 4, game_team_ids: [ 5, 2 ], values: { pa: 4, ab: 4, hits: 2 })
+    fetches = 0
+
+    ScorebookStatsPlayerCheck.run(@player, fetcher: ->(_id) { fetches += 1; [ line, misfiled ] })
+
+    assert_equal 1, fetches
+    assert_equal [ [ "misfiled_lines", 103184 ] ], FixSuggestionLine.joins(:fix_suggestion).pluck("fix_suggestions.kind", :scorebook_line_id)
+  end
+
   test "a game we have no box score for isn't counted as a difference" do
     run_check([ line, ScorebookMemberStats::Line.new(scorebook_game_id: 2019041401, played_on: Date.new(2019, 4, 14), values: { pa: 4 }) ])
     Game.create!(season: seasons(:one), team0: @alpha, team1: universities(:two), played_on: "2019-04-14", game_number: 2, scorebook_game_id: 2019041401)

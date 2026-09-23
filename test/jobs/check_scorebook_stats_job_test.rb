@@ -34,6 +34,19 @@ class CheckScorebookStatsJobTest < ActiveJob::TestCase
     assert_equal 3, ScorebookStatsPlayerCheck.count
   end
 
+  test "the teammates of lines filed under the wrong game come first, until they have been checked since" do
+    teammate = Player.create!(scorebook_id: 20168888, university: @alpha, name: "僚友 選手", enter_year: 2016)
+    GameMember.create!(game: games(:one), player: teammate, university: @alpha)
+    FixSuggestion.create!(kind: "misfiled_lines", key: "misfiled_lines 1 4", confidence: "likely", university: @alpha, game: games(:one))
+    @players.each { |player| ScorebookStatsPlayerCheck.create!(player: player, checked_at: 1.day.ago) }
+
+    ids = checked_ids { CheckScorebookStatsJob.perform_now(batch_size: 1, sleep_seconds: 0) }
+    assert_equal [ teammate.scorebook_id ], ids
+
+    ids = checked_ids { CheckScorebookStatsJob.perform_now(batch_size: 1, sleep_seconds: 0) }
+    assert_not_equal [ teammate.scorebook_id ], ids, "checked since the suggestion, so back to the usual order"
+  end
+
   test "one player's failure doesn't stop the others" do
     failing = ->(id) { raise "boom" if id == @players[0].scorebook_id; [] }
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,6 +41,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
     t.index ["game_id"], name: "index_batting_lines_on_game_id"
     t.index ["player_id"], name: "index_batting_lines_on_player_id"
     t.index ["university_id"], name: "index_batting_lines_on_university_id"
+  end
+
+  create_table "fix_suggestion_lines", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "fix_suggestion_id", null: false
+    t.bigint "player_id", null: false
+    t.string "position"
+    t.bigint "scorebook_line_id", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "values", default: {}, null: false
+    t.index ["fix_suggestion_id"], name: "index_fix_suggestion_lines_on_fix_suggestion_id"
+    t.index ["player_id"], name: "index_fix_suggestion_lines_on_player_id"
+    t.index ["scorebook_line_id"], name: "index_fix_suggestion_lines_on_scorebook_line_id", unique: true
+  end
+
+  create_table "fix_suggestions", force: :cascade do |t|
+    t.jsonb "candidate_game_ids", default: [], null: false
+    t.string "confidence", null: false
+    t.datetime "created_at", null: false
+    t.datetime "decided_at"
+    t.bigint "decided_by_id"
+    t.bigint "game_id"
+    t.string "key", null: false
+    t.string "kind", null: false
+    t.text "note"
+    t.date "played_on"
+    t.bigint "scorebook_game_id"
+    t.string "status", default: "pending", null: false
+    t.bigint "university_id"
+    t.datetime "updated_at", null: false
+    t.index ["decided_by_id"], name: "index_fix_suggestions_on_decided_by_id"
+    t.index ["game_id"], name: "index_fix_suggestions_on_game_id"
+    t.index ["key"], name: "index_fix_suggestions_on_key", unique: true
+    t.index ["status", "played_on"], name: "index_fix_suggestions_on_status_and_played_on"
+    t.index ["university_id"], name: "index_fix_suggestions_on_university_id"
   end
 
   create_table "game_members", force: :cascade do |t|
@@ -225,6 +260,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
   add_foreign_key "batting_lines", "games"
   add_foreign_key "batting_lines", "players"
   add_foreign_key "batting_lines", "universities"
+  add_foreign_key "fix_suggestion_lines", "fix_suggestions"
+  add_foreign_key "fix_suggestion_lines", "players"
+  add_foreign_key "fix_suggestions", "games"
+  add_foreign_key "fix_suggestions", "universities"
+  add_foreign_key "fix_suggestions", "users", column: "decided_by_id"
   add_foreign_key "game_members", "games"
   add_foreign_key "game_members", "players"
   add_foreign_key "game_members", "universities"

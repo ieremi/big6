@@ -1,0 +1,54 @@
+<%# The suggested fixes (FixSuggestion) of one status, newest game first. %>
+<%
+  content_for :title, "修正の提案 - 管理画面 - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+%>
+
+<p><%= link_to "← 管理画面", admin_path %></p>
+<h1>修正の提案</h1>
+
+<p class="muted">夜間の Scorebook との照合で見つかった、別の試合に登録されている成績などです。承認・却下は記録されるだけで、今はまだ成績には反映されません。</p>
+
+<div class="period-toolbar">
+  <% FixSuggestion::STATUSES.each do |status| %>
+    <%= link_to "#{fix_suggestion_status_label(status)}（#{@counts.fetch(status, 0)}）", admin_suggestions_path(status: status),
+          class: [ "period-btn", ("active" if status == @status) ] %>
+  <% end %>
+</div>
+
+<% if @suggestions.empty? %>
+  <p class="muted"><%= fix_suggestion_status_label(@status) %>の提案はありません。</p>
+<% else %>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>種類</th>
+          <th>大学</th>
+          <th>Scorebook の登録先</th>
+          <th>推測した試合</th>
+          <th>行</th>
+          <th>確度</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @suggestions.each do |suggestion| %>
+          <% filed = @filed_games[suggestion.scorebook_game_id] %>
+          <tr>
+            <td><%= link_to suggestion.played_on, admin_suggestion_path(suggestion) %></td>
+            <td><%= link_to fix_suggestion_kind_label(suggestion.kind), admin_suggestion_path(suggestion) %></td>
+            <td><%= suggestion.university&.short_name %></td>
+            <td><%= filed ? "#{filed.team0.short_name} vs #{filed.team1.short_name}" : suggestion.scorebook_game_id %></td>
+            <td><%= suggestion.game ? "#{suggestion.game.team0.short_name} vs #{suggestion.game.team1.short_name} #{round_label(suggestion.game)}" : "—" %></td>
+            <td><%= suggestion.lines.size %></td>
+            <td><%= fix_suggestion_confidence_label(suggestion.confidence) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @suggestions.size == Admin::SuggestionsController::LIMIT %>
+    <p class="muted">新しい順に <%= Admin::SuggestionsController::LIMIT %> 件まで表示しています。</p>
+  <% end %>
+<% end %>

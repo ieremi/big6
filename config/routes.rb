@@ -32,6 +32,9 @@ Rails.application.routes.draw do
   get "auth/failure", to: "sessions#failure"
   delete "logout", to: "sessions#destroy", as: :logout
   get "admin", to: "admin/dashboard#show", as: :admin
+  namespace :admin do
+    resources :suggestions, only: %i[index show update]
+  end
 
   get "sitemap.xml", to: "sitemaps#show", as: :sitemap, defaults: { format: "xml" }
 

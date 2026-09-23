@@ -22,8 +22,12 @@ class ScorebookMemberStats
   }.freeze
 
   # One of the player's lines: the game's Scorebook id, its date, and the values
-  # (FIELDS' keys => Integer, or nil when not recorded).
-  Line = Struct.new(:scorebook_game_id, :played_on, :values, keyword_init: true)
+  # (FIELDS' keys => Integer, or nil when not recorded). Also Scorebook's id for
+  # the line itself, the player's team (a Scorebook team id), the Scorebook team
+  # ids of the game's two sides as its game info gives them, the round
+  # ("2回戦") and the positions played ("[中]"); a line whose team is neither
+  # side is filed under the wrong game (see FixSuggestion).
+  Line = Struct.new(:scorebook_game_id, :played_on, :values, :line_id, :team_id, :game_team_ids, :round, :position, keyword_init: true)
 
   # The player's lines, or nil when the page can't be fetched or read.
   def self.fetch(scorebook_id)
@@ -47,7 +51,12 @@ class ScorebookMemberStats
       Line.new(
         scorebook_game_id: line["gameId"],
         played_on: parse_date(line.dig("gameInfo", "gameDay")),
-        values: FIELDS.transform_values { |key| line[key]&.to_i }
+        values: FIELDS.transform_values { |key| line[key]&.to_i },
+        line_id: line["id"],
+        team_id: line["teamId"],
+        game_team_ids: [ line.dig("gameInfo", "topTeam", "id"), line.dig("gameInfo", "bottomTeam", "id") ],
+        round: line.dig("gameInfo", "round"),
+        position: line["position"]
       )
     end
   rescue JSON::ParserError

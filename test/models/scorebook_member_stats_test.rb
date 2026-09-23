@@ -8,9 +8,15 @@ class ScorebookMemberStatsTest < ActiveSupport::TestCase
   test "reads each game's line, league games and playoffs alike, with its game id and date" do
     lines = ScorebookMemberStats.lines_from(page)
 
-    assert_equal [ 2019041301, 2019041402, 2019060101 ], lines.map(&:scorebook_game_id)
+    assert_equal [ 2019041301, 2019041402, 2019042801, 2019060101 ], lines.map(&:scorebook_game_id)
     assert_equal Date.new(2019, 4, 13), lines.first.played_on
     assert_equal({ pa: 4, ab: 4, hits: 2, home_runs: 1, rbi: 2 }, lines.first.values.slice(:pa, :ab, :hits, :home_runs, :rbi))
+  end
+
+  test "each line carries its own id, the player's team, the game's two sides, the round and the positions" do
+    line = ScorebookMemberStats.lines_from(page).third
+
+    assert_equal [ 103184, 4, [ 3, 1 ], "1回戦", "[三]" ], [ line.line_id, line.team_id, line.game_team_ids, line.round, line.position ]
   end
 
   test "a value Scorebook didn't record is nil, not 0" do

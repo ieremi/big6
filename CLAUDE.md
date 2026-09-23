@@ -85,7 +85,11 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - The data is split across two tables: `users` (with an `admin` flag that is reset from `ADMIN_EMAILS` at every sign-in) and `identities` (provider + uid), so more sign-in providers can be added later.
 - The admin pages live under `Admin::` and inherit from `Admin::BaseController` (`require_admin`, plus `X-Robots-Tag: noindex`). Public pages have no links to `/login` or `/admin`, and `robots.txt` disallows both.
 - In development, OmniAuth's `developer` strategy (enter an email address) is also enabled, so you can sign in without Google. `ADMIN_EMAILS` still applies.
-- Tests use OmniAuth's test mode (`OmniAuth.config.mock_auth`); see `test/controllers/sessions_controller_test.rb`.
+- Tests use OmniAuth's test mode (`OmniAuth.config.mock_auth`). Integration tests can sign in with `sign_in` from `test_helper.rb` (`admin: false` signs in an ordinary user).
+- **Fix suggestions** (`FixSuggestion` / `FixSuggestionLine`, `/admin/suggestions`):
+  - When `CheckScorebookStatsJob` reads a player's Scorebook page, it looks for lines filed under the wrong game. If the line's university is neither side of the game, it guesses that the line belongs to that university's game on the same day (`misfiled_lines`). A game whose two sides are the same university is listed for review (`same_team_game`).
+  - A suggestion collects its lines from each player's page as the job checks them. Players on the guessed game's roster are checked first, so the whole team's lines arrive sooner.
+  - An admin approves or discards each suggestion. **For now, a decision is only recorded; no stats change.** A discarded suggestion is never made again for the same key.
 
 ## Performance constraints
 
