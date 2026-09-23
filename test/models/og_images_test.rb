@@ -17,6 +17,20 @@ class OgImagesTest < ActiveSupport::TestCase
     assert png?(OgImages.matchup(@alpha, @beta))
   end
 
+  test "a team's season image is a PNG, and differs by team and by the opponents' weeks" do
+    image = OgImages.team_season(@alpha, seasons(:two))
+
+    assert png?(image)
+    assert_not_equal image, OgImages.team_season(@beta, seasons(:two))
+
+    Game.create!(season: seasons(:two), team0: @alpha, team1: @beta, played_on: "2026-08-17", game_number: 2)
+    assert_equal image, OgImages.team_season(@alpha, seasons(:two)), "a second game the same week changes nothing"
+  end
+
+  test "a team's season image with no games still draws" do
+    assert png?(TeamSeasonOgImage.new(@alpha, title: "2030 Spring", opponents: []).to_png)
+  end
+
   test "a matchup with an unknown period is the all-time image" do
     assert_equal OgImages.matchup(@alpha, @beta), OgImages.matchup(@alpha, @beta, period: "bogus")
     assert_equal OgImages.matchup(@alpha, @beta), OgImages.matchup(@alpha, @beta, period: nil)

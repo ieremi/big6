@@ -5,6 +5,11 @@ class SeasonWeeks
     def heading
       series.map { |s| "#{s.team0.short_name} vs #{s.team1.short_name}" }.join("、")
     end
+
+    # The universities the team played this week (one, but for an odd week with two series).
+    def opponents_of(team)
+      series.map { |s| s.team0.id == team.id ? s.team1 : s.team0 }
+    end
   end
 
   attr_reader :weeks

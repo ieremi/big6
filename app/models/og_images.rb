@@ -31,6 +31,15 @@ module OgImages
     SiteOgImage.new(title: "#{season.year} #{season.term.capitalize}", subtitle: label.presence, stripe_colors: stripe_colors).to_png
   end
 
+  # A university's season: its opponents in the order it played them, each with
+  # the season's week number (as on the team's season list).
+  def team_season(team, season)
+    weeks = SeasonWeeks.new(season.games.includes(:team0, :team1).to_a).weeks_with([ team.id ])
+    opponents = weeks.flat_map { |week| week.opponents_of(team).map { |opponent| [ week.number, opponent ] } }
+
+    TeamSeasonOgImage.new(team, title: "#{season.year} #{season.term.capitalize}", opponents: opponents).to_png
+  end
+
   def game(game)
     GameOgImage.new(game).to_png
   end

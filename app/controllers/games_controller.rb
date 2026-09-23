@@ -93,13 +93,13 @@ class GamesController < ApplicationController
 
   def team_og_image
     team = University.find_by!(slug: params[:team0_slug])
-    subtitle = if params[:year] && params[:term]
-      "#{params[:year]} #{params[:term].capitalize}"
+    png = if params[:year] && params[:term]
+      OgImages.team_season(team, Season.find_by!(year: params[:year], term: params[:term]))
     else
-      "All Seasons"
+      TeamOgImage.new(team, subtitle: "All Seasons").to_png
     end
 
-    send_data TeamOgImage.new(team, subtitle: subtitle).to_png, type: "image/png", disposition: "inline"
+    send_data png, type: "image/png", disposition: "inline"
   end
 
   private
@@ -113,11 +113,9 @@ class GamesController < ApplicationController
   # on the season page (SeasonWeeks, over every game of the season), so the
   # team's third week is 第3週 only if it played in the season's first two.
   def games_by_week
-    season_games = @season.games.includes(:team0, :team1).to_a
-    SeasonWeeks.new(season_games).weeks_with([ @team0.id ]).map do |week|
+    SeasonWeeks.new(@season.games.includes(:team0, :team1).to_a).weeks_with([ @team0.id ]).map do |week|
       ids = week.games.map(&:id).to_set
-      opponents = week.series.map { |series| series.team0.id == @team0.id ? series.team1 : series.team0 }
-      GameGroup.new(week: week.number, opponents: opponents, games: @games.select { |game| ids.include?(game.id) })
+      GameGroup.new(week: week.number, opponents: week.opponents_of(@team0), games: @games.select { |game| ids.include?(game.id) })
     end
   end
 
