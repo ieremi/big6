@@ -1,0 +1,17 @@
+<%# The sign-in page. Only admins can sign in for now (LoginPolicy); nothing on the public pages links here. %>
+<%
+  content_for :title, "ログイン - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+%>
+
+<h1>ログイン</h1>
+
+<p class="muted">管理者用のログインです。</p>
+
+<%# Not through Turbo: signing in leaves the site for Google and comes back. %>
+<%= button_to "Google でログイン", "/auth/google_oauth2", method: :post, class: "period-btn", data: { turbo: false } %>
+
+<% if Rails.env.development? %>
+  <p class="muted">開発環境のみ：</p>
+  <%= button_to "開発用ログイン（メールアドレスを入力）", "/auth/developer", method: :post, class: "period-btn", data: { turbo: false } %>
+<% end %>

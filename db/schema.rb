@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -94,6 +94,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
     t.integer "usd", null: false
     t.integer "year", null: false
     t.index ["year"], name: "index_gdp_per_capita_years_on_year", unique: true
+  end
+
+  create_table "identities", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.string "provider", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
+    t.index ["user_id"], name: "index_identities_on_user_id"
   end
 
   create_table "pitching_lines", force: :cascade do |t|
@@ -201,6 +212,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
     t.index ["slug"], name: "index_universities_on_slug", unique: true
   end
 
+  create_table "users", force: :cascade do |t|
+    t.boolean "admin", default: false, null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "last_signed_in_at"
+    t.string "name"
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+  end
+
   add_foreign_key "batting_lines", "games"
   add_foreign_key "batting_lines", "players"
   add_foreign_key "batting_lines", "universities"
@@ -210,6 +231,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   add_foreign_key "games", "seasons"
   add_foreign_key "games", "universities", column: "team0_id"
   add_foreign_key "games", "universities", column: "team1_id"
+  add_foreign_key "identities", "users"
   add_foreign_key "pitching_lines", "games"
   add_foreign_key "pitching_lines", "players"
   add_foreign_key "pitching_lines", "universities"

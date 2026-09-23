@@ -76,6 +76,17 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - The players page and the players API share `PlayerSearch`; the rankings page and the rankings API share `PlayerRanking`. Keep filtering and sorting logic in those models, not in the controllers.
 - Tables can be sorted by column, on the server (`GameSortable`, `SortableHelper`, `PlayerSearch`) and in the browser (`sortable_table_controller.js`). Sort and filter state has to survive form resubmits (hidden fields).
 
+## Sign-in and admin pages
+
+- Sign-in is Google only, through OmniAuth (`config/initializers/omniauth.rb`). **For now only admins can sign in.** Accounts that aren't allowed are refused, and nothing about them is saved in the DB.
+- `LoginPolicy` decides who may sign in:
+  - `ADMIN_EMAILS` (comma-separated, verified addresses only) lists the admins.
+  - `OPEN_LOGIN=1` lets anyone sign in as an ordinary user. This switch exists for later, when sign-in opens to the public.
+- The data is split across two tables: `users` (with an `admin` flag that is reset from `ADMIN_EMAILS` at every sign-in) and `identities` (provider + uid), so more sign-in providers can be added later.
+- The admin pages live under `Admin::` and inherit from `Admin::BaseController` (`require_admin`, plus `X-Robots-Tag: noindex`). Public pages have no links to `/login` or `/admin`, and `robots.txt` disallows both.
+- In development, OmniAuth's `developer` strategy (enter an email address) is also enabled, so you can sign in without Google. `ADMIN_EMAILS` still applies.
+- Tests use OmniAuth's test mode (`OmniAuth.config.mock_auth`); see `test/controllers/sessions_controller_test.rb`.
+
 ## Performance constraints
 
 Production is a single Render instance with 0.5 CPU and 512 MB (`render.yaml`, Singapore), shared by web, jobs and one-off scripts. Keep that in mind:

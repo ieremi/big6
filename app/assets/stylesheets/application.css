@@ -1444,3 +1444,49 @@ tr.bench-only td {
 tr.bench-only td a {
   color: inherit;
 }
+
+/* A message after an action, such as signing in (layouts/application). */
+.flash {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+}
+
+.flash-alert {
+  border-left-color: #dc2626;
+}
+
+/* The admin pages (admin/) and the sign-in page (sessions/new). */
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-bar form {
+  margin: 0;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-stats li {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+}
+
+.admin-stats strong {
+  display: block;
+  font-size: 1.4rem;
+}

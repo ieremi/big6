@@ -24,6 +24,15 @@ Rails.application.routes.draw do
 
   get "api/docs", to: "api_docs#show", as: :api_docs
 
+  # Signing in (admins only for now, see LoginPolicy) and the admin pages.
+  # OmniAuth itself answers POST /auth/:provider and sends the browser on to
+  # the provider; it comes back to the callback.
+  get "login", to: "sessions#new", as: :login
+  match "auth/:provider/callback", to: "sessions#create", via: %i[get post]
+  get "auth/failure", to: "sessions#failure"
+  delete "logout", to: "sessions#destroy", as: :logout
+  get "admin", to: "admin/dashboard#show", as: :admin
+
   get "sitemap.xml", to: "sitemaps#show", as: :sitemap, defaults: { format: "xml" }
 
   get "og/site.png", to: "home#og_image", as: :site_og_image

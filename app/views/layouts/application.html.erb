@@ -81,6 +81,9 @@
     </div>
 
     <main class="container">
+      <% flash.each do |type, message| %>
+        <%= tag.p message, class: [ "flash", "flash-#{type}" ], role: (type == "alert" ? "alert" : "status") %>
+      <% end %>
       <%= yield %>
       <%= image_tag page_image, class: "og-preview", alt: "", width: 1200, height: 630 %>
     </main>

@@ -1,0 +1,23 @@
+<%# The admin pages' front page: who is signed in, and what the nightly Scorebook check (CheckScorebookStatsJob) has recorded so far. %>
+<%
+  content_for :title, "管理画面 - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+%>
+
+<div class="admin-bar">
+  <h1>管理画面</h1>
+  <div>
+    <span class="muted"><%= current_user.email %></span>
+    <%= button_to "ログアウト", logout_path, method: :delete, class: "period-btn", form: { style: "display: inline" } %>
+  </div>
+</div>
+
+<h2 class="card-heading">Scorebook との照合（夜間ジョブ）</h2>
+<ul class="admin-stats">
+  <li><strong><%= number_with_delimiter(ScorebookStatsPlayerCheck.count) %></strong>照合した選手</li>
+  <li><strong><%= number_with_delimiter(ScorebookStatsDifference.unknown.count) %></strong>新しい差</li>
+  <li><strong><%= number_with_delimiter(ScorebookStatsDifference.counted.where(known: true).count) %></strong>既知の差</li>
+  <li><strong><%= number_with_delimiter(ScorebookStatsDifference.where(kind: ScorebookStatsDifference::NOT_COUNTED_KINDS).distinct.count(:scorebook_game_id)) %></strong>成績未取り込みの試合</li>
+</ul>
+
+<p class="muted">差の確認と修正の提案（承認・却下）は、次の段階でこの画面に追加します。</p>

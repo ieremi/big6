@@ -14,6 +14,15 @@ services:
     envVars:
       - key: RAILS_MASTER_KEY
         sync: false
+      # Signing in to the admin pages with Google (config/initializers/omniauth.rb):
+      # the OAuth client's id and secret, and the addresses that may sign in as
+      # admins, comma separated (LoginPolicy). Entered in the Render dashboard.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
       # Without this, Puma never boots the Solid Queue supervisor, so nothing
       # in config/recurring.yml (and no other ActiveJob job) ever actually
       # runs — jobs get enqueued but nothing dequeues them. There's only one
