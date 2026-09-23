@@ -101,7 +101,7 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_match "オチアイ トモヤ", response.body
     assert_match "東邦", response.body
     assert_select "a[href=?]", "https://big6scorebook.jp/member/20236010"
-    assert_match "ベンチ入りの記録はありません", response.body
+    assert_match "試合の記録はありません", response.body
   end
 
   test "show lists the games the player was on the roster for" do
@@ -113,6 +113,35 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_select "table tbody tr", 1
     assert_select "a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1)
     assert_match "27", response.body
+  end
+
+  test "show lists each game once, with the roster entry, and the batting line in a closed row under it" do
+    batted = games(:one) # on the roster and batted
+    bench = Game.create!(season: seasons(:one), team0: @alpha, team1: @beta, played_on: "2026-08-11", game_number: 2) # on the roster only
+    old = Game.create!(season: seasons(:one), team0: @beta, team1: @alpha, played_on: "2026-08-09", game_number: 1) # batted, no roster
+    GameMember.create!(game: batted, player: @ochiai, university: @alpha, uniform_number: 6, grade: 3, role: "遊撃手", batting_order: 3, fielding_position: "遊")
+    GameMember.create!(game: bench, player: @ochiai, university: @alpha, uniform_number: 6, grade: 3, role: "遊撃手")
+    BattingLine.create!(game: batted, player: @ochiai, university: @alpha, position: "遊", pa: 5, ab: 4, hits: 2, rbi: 1)
+    BattingLine.create!(game: old, player: @ochiai, university: @alpha, pa: 3, ab: 3, hits: 1)
+
+    get player_url(@ochiai)
+
+    assert_select "h2", "試合別成績（3試合）"
+    rows = css_select("table.game-log > tbody > tr")
+    game_rows = rows.reject { |row| row["data-sort-with-previous"] }
+    # newest first: the bench game (08-11), the one batted (08-10), the old one (08-09)
+    assert_equal %w[2026-08-11 2026-08-10 2026-08-09], game_rows.map { |row| row.css("> td")[1].text }
+    assert_equal [ "▸", "6", "3", "遊撃手", "3", "遊" ], game_rows[1].css("> td").to_a.values_at(0, 3, 4, 5, 6, 7).map { |td| td.text.strip }
+    assert_equal [ "", "", "", "", "" ], game_rows[2].css("> td").to_a.values_at(3, 4, 5, 6, 7).map { |td| td.text.strip }
+
+    # only a game with a batting line has a button, closed, and its line in a hidden row right after it
+    assert_empty game_rows[0].css("button.row-toggle-btn")
+    assert_equal "false", game_rows[1].at_css("button.row-toggle-btn[data-action='row-toggle#toggle']")["aria-expanded"]
+    detail = rows[rows.index(game_rows[1]) + 1]
+    assert detail.key?("data-sort-with-previous")
+    assert detail.key?("hidden")
+    assert_equal %w[遊 5 4 2], detail.css("tbody td").first(4).map(&:text)
+    assert_select "[data-controller=row-toggle] button[data-action='row-toggle#openAll']", 1
   end
 
   test "show returns 404 for an unknown player" do
@@ -155,7 +184,7 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", "投手成績"
     assert_select "tr.stats-total td", text: ".375" # 3 hits in 8 at-bats
     assert_select "tr.stats-total td", text: "3 1/3"
-    assert_select "details.decade summary", text: /打撃 試合別成績（2試合）/
+    assert_select "h2", "試合別成績（2試合）"
     assert_select "details.decade summary", text: /投手 試合別成績（1試合）/
     assert_select "button[data-shortcut=u]", text: /すべて開く/
     assert_select "details.decade[open]", 0
@@ -306,7 +335,7 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
 
     get player_url(@ochiai)
 
-    assert_select "table[data-controller=sortable-table]", 5 # batting and pitching seasons, both game tables, the bench
+    assert_select "table[data-controller=sortable-table]", 4 # batting and pitching seasons, the game list, the pitching games
     assert_select "table[data-controller=sortable-table] th.sortable button[data-action=?]", "sortable-table#sort", minimum: 40
     assert_select "th.sortable button[data-shortcut][data-shortcut-all]", minimum: 40
   end
@@ -328,10 +357,9 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
 
     by_shortcut = css_select("th.sortable button[data-shortcut]").group_by { |button| button["data-shortcut"] }
     # D is the date or season of every table, V the opponent or game
-    assert_equal 5, by_shortcut.fetch("D").size
-    assert_equal 3, by_shortcut.fetch("V").size # both game tables and the bench
-    # the batting season and game tables both have 安打, and so on: two of each
-    assert_equal 2, by_shortcut.fetch("H").size
+    assert_equal 4, by_shortcut.fetch("D").size
+    assert_equal 2, by_shortcut.fetch("V").size # the game list and the pitching games
+    assert_equal 1, by_shortcut.fetch("H").size # 安打, of the batting seasons (a game's line opens under its row)
     # otherwise one key is one column, told by its heading
     by_shortcut.except("D", "V").each do |key, buttons|
       assert_equal 1, buttons.map { |button| button.text.strip.delete_suffix(" #{key}") }.uniq.size, "#{key} is used for different columns: #{buttons.map(&:text)}"
@@ -360,13 +388,13 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_select "td[data-sort-value=?]", "0.5", text: ".500" # the batting average sorts as a number, not as ".500"
   end
 
-  test "show gives the bench table the same date shortcut and its own for the other columns" do
+  test "show gives the game list the same date shortcut and its own for the roster columns" do
     stats_for_ochiai
 
     get player_url(@ochiai)
 
     { "日付" => "D", "試合" => "V", "背番号" => "U", "学年" => "Y", "役割" => "T", "打順" => "Q", "守備" => "Z" }.each do |label, shortcut|
-      assert_select "table:last-of-type th.sortable button[data-shortcut=?]", shortcut, text: /\A#{label} /
+      assert_select "table.game-log th.sortable button[data-shortcut=?]", shortcut, text: /\A#{label} /
     end
   end
 

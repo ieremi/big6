@@ -1525,3 +1525,37 @@ tr.bench-only td a {
     grid-template-columns: 1fr;
   }
 }
+
+/* The player page's game list (players/_games): a button opening a game's
+   batting line in the row under it. */
+.row-toggle-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.25rem;
+  transition: transform 0.15s ease;
+}
+
+.row-toggle-btn[aria-expanded="true"] {
+  transform: rotate(90deg);
+}
+
+.game-log-detail > td {
+  background: var(--row-alt);
+}
+
+.game-log-detail table {
+  margin: 0;
+}
+
+/* Read by screen readers, not shown. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

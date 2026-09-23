@@ -12,6 +12,15 @@ class PlayersHelperTest < ActionView::TestCase
     assert_equal "---", batting_average_label(nil)
   end
 
+  test "batting_positions_label writes Scorebook's position codes in kanji, and leaves kanji as they are" do
+    assert_equal "[二]", batting_positions_label("[4]")
+    assert_equal "[指]", batting_positions_label("[D]")
+    assert_equal "打", batting_positions_label("H")
+    assert_equal "走一", batting_positions_label("R3")
+    assert_equal "打一", batting_positions_label("打一")
+    assert_equal "", batting_positions_label(nil)
+  end
+
   test "innings_label shows partial innings as thirds" do
     assert_equal "3", innings_label(9)
     assert_equal "3 1/3", innings_label(10)

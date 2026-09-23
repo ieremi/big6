@@ -1,0 +1,75 @@
+<%# The player's games (PlayerGameLog), one row each with the roster entry, sorted in the browser by those columns. A game with a batting line has a button that opens the line in a row under it (row-toggle), closed at first; that row moves with its game when sorted. %>
+<h2 class="card-heading">試合別成績（<%= log.size %>試合）</h2>
+
+<% if log.any? %>
+  <p class="muted">▸ で打撃成績を開きます。Scorebookに試合ごとのメンバー登録（背番号・学年・役割・打順・守備）があるのは2021年以降の試合です。</p>
+
+  <div data-controller="row-toggle">
+    <div class="period-toolbar">
+      <button type="button" class="period-btn" data-action="row-toggle#openAll">打撃成績をすべて開く</button>
+      <button type="button" class="period-btn" data-action="row-toggle#closeAll">すべて閉じる</button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="game-log" data-controller="sortable-table">
+        <thead>
+          <tr>
+            <th><span class="visually-hidden">打撃成績</span></th>
+            <%= sortable_headers PlayersHelper::BENCH_COLUMNS, *%w[日付 試合 背番号 学年 役割 打順 守備] %>
+          </tr>
+        </thead>
+        <tbody>
+          <% log.entries.each do |entry| %>
+            <% game, member, line = entry.game, entry.member, entry.batting %>
+            <tr>
+              <td>
+                <% if line %>
+                  <button type="button" class="row-toggle-btn" aria-expanded="false" data-action="row-toggle#toggle"
+                    aria-label="<%= game.played_on %>の打撃成績">▸</button>
+                <% end %>
+              </td>
+              <td><%= game.played_on %></td>
+              <td>
+                <%= link_to "#{game.season.title} #{game.team0.short_name} vs #{game.team1.short_name}（#{game.game_number}回戦）", player_game_path(game) %>
+                <% unless game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
+              </td>
+              <td><%= member&.uniform_number %></td>
+              <td><%= member&.grade %></td>
+              <td><%= member&.role %></td>
+              <td><%= member&.batting_order %></td>
+              <td><%= member&.fielding_position %></td>
+            </tr>
+            <% if line %>
+              <tr class="game-log-detail" data-sort-with-previous hidden>
+                <td></td>
+                <td colspan="7">
+                  <div class="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <% %w[守備 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策].each do |label| %>
+                            <th><%= label %></th>
+                          <% end %>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><%= batting_positions_label(line.position) %></td>
+                          <td><%= line.pa %></td><td><%= line.ab %></td><td><%= line.hits %></td><td><%= line.doubles %></td><td><%= line.triples %></td><td><%= line.home_runs %></td>
+                          <td><%= line.rbi %></td><td><%= line.runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td><td><%= line.sacrifices %></td>
+                          <td><%= line.stolen_bases %></td><td><%= line.gidp %></td><td><%= line.fielding_errors %></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <p class="muted">試合の記録はありません（Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です）。</p>
+<% end %>

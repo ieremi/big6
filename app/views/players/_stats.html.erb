@@ -1,4 +1,4 @@
-<%# Season and career stats from the player's per-game lines, then the per-game lines in collapsible sections. %>
+<%# Season and career stats from the player's per-game lines, then the pitching lines game by game in a collapsible section. The batting lines game by game are in the game list (players/_games). %>
 <% if stats.batting? %>
   <h2 class="card-heading">打撃成績</h2>
   <div class="table-scroll">
@@ -52,70 +52,41 @@
 
 <% if stats.batting? || stats.pitching? %>
   <p class="muted">優勝決定戦は、Scorebookに合わせて、シーズン成績と通算に含めていません。</p>
+<% end %>
 
+<% if stats.pitching? %>
   <div data-controller="decade-fold">
     <div class="period-toolbar">
       <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
       <button type="button" class="period-btn" data-action="decade-fold#closeAll" data-shortcut="f" data-shortcut-label="すべて閉じる">すべて閉じる <kbd>f</kbd></button>
     </div>
 
-    <% if stats.batting? %>
-      <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
-        <summary>打撃 試合別成績（<%= stats.batting_lines.size %>試合）</summary>
-        <div class="table-scroll">
-          <table data-controller="sortable-table">
-            <thead>
+    <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
+      <summary>投手 試合別成績（<%= stats.pitching_lines.size %>試合）</summary>
+      <div class="table-scroll">
+        <table data-controller="sortable-table">
+          <thead>
+            <tr>
+              <%= sortable_headers PlayersHelper::PITCHING_COLUMNS, *%w[日付 相手 結果 投球回 打者 球数 被安打 被本塁打 奪三振 与四死球 失点 自責点] %>
+            </tr>
+          </thead>
+          <tbody>
+            <% stats.pitching_lines.each do |line| %>
               <tr>
-                <%= sortable_headers PlayersHelper::BATTING_COLUMNS, *%w[日付 相手 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策] %>
+                <td><%= line.game.played_on %></td>
+                <td>
+                  <%= link_to "#{opponent_name(line)}（#{line.game.game_number}回戦）", player_game_path(line.game) %>
+                  <% unless line.game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
+                </td>
+                <%= sort_cell "#{line.wins.positive? ? '勝' : (line.losses.positive? ? '敗' : '')}#{'先発' if line.started.positive?}", pitching_result_sort_value(line) %>
+                <%= sort_cell innings_label(line.outs), line.outs %><td><%= line.batters_faced %></td><td><%= line.pitches %></td>
+                <td><%= line.hits %></td><td><%= line.home_runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td>
+                <td><%= line.runs %></td><td><%= line.earned_runs %></td>
               </tr>
-            </thead>
-            <tbody>
-              <% stats.batting_lines.each do |line| %>
-                <tr>
-                  <td><%= line.game.played_on %></td>
-                  <td>
-                    <%= link_to "#{opponent_name(line)}（#{line.game.game_number}回戦）", player_game_path(line.game) %>
-                    <% unless line.game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
-                  </td>
-                  <td><%= line.pa %></td><td><%= line.ab %></td><td><%= line.hits %></td><td><%= line.doubles %></td><td><%= line.triples %></td><td><%= line.home_runs %></td>
-                  <td><%= line.rbi %></td><td><%= line.runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td><td><%= line.sacrifices %></td>
-                  <td><%= line.stolen_bases %></td><td><%= line.gidp %></td><td><%= line.fielding_errors %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% end %>
-    <% end %>
-
-    <% if stats.pitching? %>
-      <%= tag.details class: "decade", data: { decade_fold_target: "decade" } do %>
-        <summary>投手 試合別成績（<%= stats.pitching_lines.size %>試合）</summary>
-        <div class="table-scroll">
-          <table data-controller="sortable-table">
-            <thead>
-              <tr>
-                <%= sortable_headers PlayersHelper::PITCHING_COLUMNS, *%w[日付 相手 結果 投球回 打者 球数 被安打 被本塁打 奪三振 与四死球 失点 自責点] %>
-              </tr>
-            </thead>
-            <tbody>
-              <% stats.pitching_lines.each do |line| %>
-                <tr>
-                  <td><%= line.game.played_on %></td>
-                  <td>
-                    <%= link_to "#{opponent_name(line)}（#{line.game.game_number}回戦）", player_game_path(line.game) %>
-                    <% unless line.game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
-                  </td>
-                  <%= sort_cell "#{line.wins.positive? ? '勝' : (line.losses.positive? ? '敗' : '')}#{'先発' if line.started.positive?}", pitching_result_sort_value(line) %>
-                  <%= sort_cell innings_label(line.outs), line.outs %><td><%= line.batters_faced %></td><td><%= line.pitches %></td>
-                  <td><%= line.hits %></td><td><%= line.home_runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td>
-                  <td><%= line.runs %></td><td><%= line.earned_runs %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
     <% end %>
   </div>
 <% end %>

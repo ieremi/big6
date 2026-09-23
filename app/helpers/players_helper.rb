@@ -116,6 +116,16 @@ module PlayersHelper
     end)
   end
 
+  # Scorebook writes the positions of a batting line in kanji for older games
+  # ("[三]", "打一") and in codes for newer ones ("[4]", "H"): the scorecard's
+  # numbers, D for the designated hitter, H for a pinch hitter and R for a pinch
+  # runner. Brackets mark a starter. Shown in kanji either way.
+  POSITION_CODES = LeagueOfficialGameScraper::POSITION_KANJI.merge("H" => "打", "R" => "走").freeze
+
+  def batting_positions_label(position)
+    position.to_s.gsub(/[1-9DHR]/) { |code| POSITION_CODES.fetch(code) }
+  end
+
   # Season rows sort in time order: 1997 spring, then autumn.
   def season_sort_value(season)
     season.year + (season.term == "autumn" ? 0.5 : 0)

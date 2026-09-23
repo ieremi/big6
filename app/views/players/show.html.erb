@@ -52,37 +52,6 @@
 
 <%= render "players/stats", stats: @stats %>
 
-<h2 class="card-heading">ベンチ入りした試合</h2>
-
-<% if @game_members.any? %>
-  <p class="muted">Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です。</p>
-  <div class="table-scroll">
-    <table data-controller="sortable-table">
-      <thead>
-        <tr>
-          <%= sortable_headers PlayersHelper::BENCH_COLUMNS, *%w[日付 試合 背番号 学年 役割 打順 守備] %>
-        </tr>
-      </thead>
-      <tbody>
-        <% @game_members.each do |member| %>
-          <% game = member.game %>
-          <tr>
-            <td><%= game.played_on %></td>
-            <td>
-              <%= link_to "#{game.season.title} #{game.team0.short_name} vs #{game.team1.short_name}（#{game.game_number}回戦）", player_game_path(game) %>
-            </td>
-            <td><%= member.uniform_number %></td>
-            <td><%= member.grade %></td>
-            <td><%= member.role %></td>
-            <td><%= member.batting_order %></td>
-            <td><%= member.fielding_position %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% else %>
-  <p class="muted">ベンチ入りの記録はありません（Scorebookに試合ごとのメンバー登録があるのは2021年以降の試合です）。</p>
-<% end %>
+<%= render "players/games", log: @game_log %>
 
 <p><%= link_to "← 選手一覧へ", players_path %></p>

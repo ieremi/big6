@@ -9,7 +9,9 @@ import { Controller } from "@hotwired/stimulus"
 // A cell sorts by its data-sort-value when it has one, else by its text; numbers
 // compare as numbers, and blanks ("", "-", "---") go last whichever way it is
 // sorted. Rows equal in the column stay in the order they were in. A row marked
-// data-sort-fixed (a totals row) stays at the bottom.
+// data-sort-fixed (a totals row) stays at the bottom, and one marked
+// data-sort-with-previous (a detail row that opens under its row) isn't sorted
+// itself but moves along with the row before it.
 export default class extends Controller {
   sort(event) {
     const heading = event.currentTarget.closest("th")
@@ -24,11 +26,23 @@ export default class extends Controller {
     const fixed = rows.filter((row) => row.hasAttribute("data-sort-fixed"))
     const sign = direction === "asc" ? 1 : -1
 
-    rows
-      .filter((row) => !fixed.includes(row))
-      .map((row, index) => ({ row, index, value: this.valueOf(row, column) }))
+    this.groups(rows.filter((row) => !fixed.includes(row)))
+      .map((group, index) => ({ group, index, value: this.valueOf(group[0], column) }))
       .sort((a, b) => this.compare(a.value, b.value, sign) || a.index - b.index)
-      .forEach(({ row }) => body.insertBefore(row, fixed[0] || null))
+      .forEach(({ group }) => group.forEach((row) => body.insertBefore(row, fixed[0] || null)))
+  }
+
+  // The rows in groups: each row with the data-sort-with-previous rows after it.
+  groups(rows) {
+    const groups = []
+    rows.forEach((row) => {
+      if (row.hasAttribute("data-sort-with-previous") && groups.length > 0) {
+        groups[groups.length - 1].push(row)
+      } else {
+        groups.push([ row ])
+      }
+    })
+    return groups
   }
 
   markHeading(heading, direction) {
