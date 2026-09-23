@@ -57,6 +57,52 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, BattingLine.count
   end
 
+  test "an approved suggestion is applied from its page, and can be taken back" do
+    admin = sign_in
+    @suggestion.decide!("approved", user: admin)
+
+    get admin_suggestion_path(@suggestion)
+    assert_select "form[action=?] button", apply_admin_suggestion_path(@suggestion), text: "成績に反映（1人分）"
+
+    post apply_admin_suggestion_path(@suggestion)
+    assert_redirected_to admin_suggestion_path(@suggestion)
+    line = BattingLine.sole
+    assert_equal [ @game, @player, @suggestion, 4 ], [ line.game, line.player, line.fix_suggestion, line.hits ]
+
+    follow_redirect!
+    assert_select ".flash-notice", "1人分の打撃成績を反映しました。"
+    assert_select "form[action=?] button", unapply_admin_suggestion_path(@suggestion), text: "反映を取り消す"
+    assert_select "button[name=decision]", 0 # the decision can't change while applied
+
+    patch admin_suggestion_path(@suggestion), params: { decision: "discarded" }
+    assert_equal "approved", @suggestion.reload.status
+
+    post unapply_admin_suggestion_path(@suggestion)
+    assert_equal 0, BattingLine.count
+  end
+
+  test "a pending suggestion can't be applied" do
+    sign_in
+
+    post apply_admin_suggestion_path(@suggestion)
+
+    assert_redirected_to admin_suggestion_path(@suggestion)
+    assert_equal 0, BattingLine.count
+  end
+
+  test "a discarded suggestion is taken back to pending from the list" do
+    sign_in
+    @suggestion.decide!("discarded", user: nil, note: "要再確認")
+
+    get admin_suggestions_path(status: "discarded")
+    assert_select "form[action=?] button", admin_suggestion_path(@suggestion), text: "未決定に戻す"
+
+    patch admin_suggestion_path(@suggestion), params: { decision: "pending", return_to: "list" }
+
+    assert_redirected_to admin_suggestions_path(status: "discarded")
+    assert_equal [ "pending", "要再確認" ], [ @suggestion.reload.status, @suggestion.note ]
+  end
+
   test "a decided suggestion can be taken back, and an unknown decision changes nothing" do
     sign_in
     @suggestion.decide!("discarded", user: nil)

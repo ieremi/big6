@@ -89,7 +89,9 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - **Fix suggestions** (`FixSuggestion` / `FixSuggestionLine`, `/admin/suggestions`):
   - When `CheckScorebookStatsJob` reads a player's Scorebook page, it looks for lines filed under the wrong game. If the line's university is neither side of the game, it guesses that the line belongs to that university's game on the same day (`misfiled_lines`). A game whose two sides are the same university is listed for review (`same_team_game`).
   - A suggestion collects its lines from each player's page as the job checks them. Players on the guessed game's roster are checked first, so the whole team's lines arrive sooner.
-  - An admin approves or discards each suggestion. **For now, a decision is only recorded; no stats change.** A discarded suggestion is never made again for the same key.
+  - An admin approves or discards each suggestion, and can send any decision back to pending. The nightly job never recreates a suggestion with the same key, even after it has been discarded.
+  - Approving doesn't change any stats. The stats change only when an admin presses **"成績に反映"** (`FixSuggestion#apply!`) on an approved suggestion. That adds its lines as `BattingLine`s of the guessed game, with `fix_suggestion_id` set, skipping players who already have a line in that game. `unapply!` removes those lines again. While lines are applied, the decision can't be changed.
+  - When `GameStatsImport` re-imports a game, it keeps lines that have a `fix_suggestion_id`. The exception is when Scorebook's game page now has that player's own line: then the imported line replaces the suggestion's line.
 
 ## Performance constraints
 

@@ -112,6 +112,23 @@ class GameStatsImportTest < ActiveSupport::TestCase
     assert_equal 3, @game.batting_lines.first.hits
   end
 
+  test "re-importing keeps the lines an applied suggestion added, unless the page now has the player's own line" do
+    suggestion = FixSuggestion.create!(kind: "misfiled_lines", key: "misfiled_lines 2026052402 6", confidence: "likely", status: "approved",
+      university: @rikkio, game: @game)
+    BattingLine.create!(game: @game, player: @ochiai, university: @rikkio, fix_suggestion: suggestion, pa: 5, ab: 5, hits: 4)
+
+    import({ "batterTop" => [ batter(20231007, 2) ], "pitcherTop" => [ pitcher(20231007, 2) ] })
+
+    assert_equal [ @imazu.id, @ochiai.id ].sort, @game.batting_lines.pluck(:player_id).sort
+    assert_equal suggestion, @game.batting_lines.find_by(player: @ochiai).fix_suggestion
+
+    import({ "batterTop" => [ batter(20231007, 2), batter(20236010, 6, "hb" => 3) ] })
+
+    ochiai = @game.batting_lines.find_by(player: @ochiai)
+    assert_nil ochiai.fix_suggestion
+    assert_equal 3, ochiai.hits
+  end
+
   test "a player listed twice for a game is stored once" do
     import({ "batterTop" => [ batter(20231007, 2), batter(20231007, 2, "hb" => 9) ] })
 

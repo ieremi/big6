@@ -7,8 +7,10 @@ require "json"
 # keyed by Scorebook member id. Only people already imported by PlayerSync are
 # kept; anyone else is counted as skipped.
 #
-# A game's rows are replaced together, so re-running is safe. A game whose page
-# can't be fetched, or carries no player stats, keeps whatever rows it had.
+# A game's rows are replaced together, so re-running is safe; batting lines
+# added by applying a FixSuggestion are kept, unless the page has the player's
+# line itself. A game whose page can't be fetched, or carries no player stats,
+# keeps whatever rows it had.
 # stats_checked_at records a successful fetch (even one with no stats) so a
 # backfill can skip games it has already tried.
 #
@@ -63,7 +65,11 @@ class GameStatsImport
         Game.transaction do
           # Not through the game's associations: delete_all would leave them loaded
           # as empty, and a caller still holding this game would see no lines.
-          BattingLine.where(game_id: game.id).delete_all
+          # Lines added by an applied FixSuggestion stay (the game page doesn't have
+          # them: that's why they were added), unless it now has the player's own.
+          BattingLine.where(game_id: game.id)
+            .where("fix_suggestion_id IS NULL OR player_id IN (?)", batting.map { |row| row[:player_id] }.presence || [ 0 ])
+            .delete_all
           PitchingLine.where(game_id: game.id).delete_all
           BattingLine.insert_all!(batting) if batting.any?
           PitchingLine.insert_all!(pitching) if pitching.any?
@@ -107,7 +113,8 @@ class GameStatsImport
     {
       position: row["position"].presence,
       pa: row["pa"].to_i, ab: row["ab"].to_i, runs: row["rb"].to_i, hits: hits,
-      doubles: doubles, triples: triples, home_runs: home_runs, total_bases: hits + doubles + 2 * triples + 3 * home_runs,
+      doubles: doubles, triples: triples, home_runs: home_runs,
+      total_bases: BattingLine.total_bases_of(hits: hits, doubles: doubles, triples: triples, home_runs: home_runs),
       rbi: row["rbi"].to_i, strikeouts: row["sob"].to_i, walks: row["bbTotal"].to_i, sacrifices: row["sac"].to_i,
       stolen_bases: row["sb"].to_i, caught_stealing: row["cs"].to_i, gidp: row["gidp"].to_i, fielding_errors: row["error"].to_i
     }

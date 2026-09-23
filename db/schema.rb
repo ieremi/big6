@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,6 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
     t.datetime "created_at", null: false
     t.integer "doubles", default: 0, null: false
     t.integer "fielding_errors", default: 0, null: false
+    t.bigint "fix_suggestion_id"
     t.bigint "game_id", null: false
     t.integer "gidp", default: 0, null: false
     t.integer "hits", default: 0, null: false
@@ -37,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
     t.bigint "university_id", null: false
     t.datetime "updated_at", null: false
     t.integer "walks", default: 0, null: false
+    t.index ["fix_suggestion_id"], name: "index_batting_lines_on_fix_suggestion_id"
     t.index ["game_id", "player_id"], name: "index_batting_lines_on_game_id_and_player_id", unique: true
     t.index ["game_id"], name: "index_batting_lines_on_game_id"
     t.index ["player_id"], name: "index_batting_lines_on_player_id"
@@ -57,6 +59,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
   end
 
   create_table "fix_suggestions", force: :cascade do |t|
+    t.datetime "applied_at"
+    t.bigint "applied_by_id"
     t.jsonb "candidate_game_ids", default: [], null: false
     t.string "confidence", null: false
     t.datetime "created_at", null: false
@@ -71,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
     t.string "status", default: "pending", null: false
     t.bigint "university_id"
     t.datetime "updated_at", null: false
+    t.index ["applied_by_id"], name: "index_fix_suggestions_on_applied_by_id"
     t.index ["decided_by_id"], name: "index_fix_suggestions_on_decided_by_id"
     t.index ["game_id"], name: "index_fix_suggestions_on_game_id"
     t.index ["key"], name: "index_fix_suggestions_on_key", unique: true
@@ -257,6 +262,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "batting_lines", "fix_suggestions"
   add_foreign_key "batting_lines", "games"
   add_foreign_key "batting_lines", "players"
   add_foreign_key "batting_lines", "universities"
@@ -264,6 +270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
   add_foreign_key "fix_suggestion_lines", "players"
   add_foreign_key "fix_suggestions", "games"
   add_foreign_key "fix_suggestions", "universities"
+  add_foreign_key "fix_suggestions", "users", column: "applied_by_id"
   add_foreign_key "fix_suggestions", "users", column: "decided_by_id"
   add_foreign_key "game_members", "games"
   add_foreign_key "game_members", "players"

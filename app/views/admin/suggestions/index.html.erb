@@ -7,7 +7,7 @@
 <p><%= link_to "← 管理画面", admin_path %></p>
 <h1>修正の提案</h1>
 
-<p class="muted">夜間の Scorebook との照合で見つかった、別の試合に登録されている成績などです。承認・却下は記録されるだけで、今はまだ成績には反映されません。</p>
+<p class="muted">夜間の Scorebook との照合で見つかった、別の試合に登録されている成績などです。承認した提案は、詳細画面の「成績に反映」で当サイトの成績に加わります（取り消しもできます）。却下した提案も、却下の一覧からいつでも未決定に戻せます。</p>
 
 <div class="period-toolbar">
   <% FixSuggestion::STATUSES.each do |status| %>
@@ -30,6 +30,8 @@
           <th>推測した試合</th>
           <th>行</th>
           <th>確度</th>
+          <% if @status == "approved" %><th>反映</th><% end %>
+          <% if @status == "discarded" %><th></th><% end %>
         </tr>
       </thead>
       <tbody>
@@ -43,6 +45,10 @@
             <td><%= suggestion.game ? "#{suggestion.game.team0.short_name} vs #{suggestion.game.team1.short_name} #{round_label(suggestion.game)}" : "—" %></td>
             <td><%= suggestion.lines.size %></td>
             <td><%= fix_suggestion_confidence_label(suggestion.confidence) %></td>
+            <% if @status == "approved" %><td><%= suggestion.applied_at ? "反映済み" : "未反映" %></td><% end %>
+            <% if @status == "discarded" %>
+              <td><%= button_to "未決定に戻す", admin_suggestion_path(suggestion), method: :patch, params: { decision: "pending", return_to: "list" }, class: "period-btn" %></td>
+            <% end %>
           </tr>
         <% end %>
       </tbody>

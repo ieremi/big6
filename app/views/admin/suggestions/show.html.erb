@@ -6,6 +6,9 @@
   hits = @suggestion.hits_check
   roster = @suggestion.roster_check
   our_lines = @suggestion.our_lines_count
+  # Each line: added by applying, the player already has an imported line in the guessed game, or still to add.
+  applied_ids = @suggestion.applied_batting_lines.pluck(:player_id)
+  to_apply_ids = @suggestion.lines_to_apply.map(&:player_id)
 %>
 
 <p><%= link_to "← 提案の一覧", admin_suggestions_path(status: @suggestion.status) %></p>
@@ -70,6 +73,7 @@
           <th><%= label %></th>
         <% end %>
         <th>Scorebook</th>
+        <th>反映</th>
       </tr>
     </thead>
     <tbody>
@@ -81,14 +85,40 @@
             <td><%= line.value(field) || "-" %></td>
           <% end %>
           <td><%= link_to "選手ページ", scorebook_member_page_url(line.player), target: "_blank", rel: "noopener" %></td>
+          <td>
+            <% if @suggestion.game.nil? %>—
+            <% elsif applied_ids.include?(line.player_id) %>反映済み
+            <% elsif to_apply_ids.include?(line.player_id) %>未反映
+            <% else %>取り込み済み
+            <% end %>
+          </td>
         </tr>
       <% end %>
     </tbody>
   </table>
 </div>
 
+<% if @suggestion.applicable? || @suggestion.applied? %>
+  <h2 class="card-heading">成績への反映</h2>
+  <% if @suggestion.applied_at %>
+    <p class="muted"><%= @suggestion.applied_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> に <%= @suggestion.applied_by&.email %> が反映（当サイトの打撃成績 <%= applied_ids.size %>人分）。</p>
+  <% end %>
+  <p class="muted">推測した試合の<%= @suggestion.university&.short_name %>の打撃成績として加えます。その試合にすでに打撃成績がある選手（Scorebook から取り込み済み）は加えません。反映した行は Scorebook からの取り込み直しでも消えず、Scorebook の試合ページにその選手の成績が載ったときは、そちらに置き換わります。</p>
+  <div class="period-toolbar">
+    <% if @suggestion.applicable? && to_apply_ids.any? %>
+      <%= button_to "成績に反映（#{to_apply_ids.size}人分）", apply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "#{to_apply_ids.size}人分の打撃成績を当サイトに加えます。よろしいですか？" } } %>
+    <% end %>
+    <% if @suggestion.applied? %>
+      <%= button_to "反映を取り消す", unapply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "反映した打撃成績を削除します。よろしいですか？" } } %>
+    <% end %>
+  </div>
+<% end %>
+
 <h2 class="card-heading">決定</h2>
-<p class="muted">承認・却下は記録されるだけで、今はまだ成績には反映されません。却下した提案は、同じ内容で二度と出ません。</p>
+<p class="muted">承認しただけでは成績は変わりません（上の「成績に反映」で加わります）。却下しても、あとから未決定に戻せます。夜間ジョブが同じ提案を新しく作り直すことはありません。</p>
+<% if @suggestion.applied? %>
+  <p class="muted">成績に反映済みなので、決定を変えるには先に反映を取り消してください。</p>
+<% end %>
 <%= form_with url: admin_suggestion_path(@suggestion), method: :patch, class: "admin-decision" do |form| %>
   <%= form.label :note, "メモ" %>
   <%= form.text_area :note, value: @suggestion.note, rows: 3 %>
@@ -96,7 +126,7 @@
     <% if @suggestion.status == "pending" %>
       <%= form.button "承認", name: "decision", value: "approved", class: "period-btn" %>
       <%= form.button "却下", name: "decision", value: "discarded", class: "period-btn" %>
-    <% else %>
+    <% elsif !@suggestion.applied? %>
       <%= form.button "未決定に戻す", name: "decision", value: "pending", class: "period-btn" %>
     <% end %>
   </div>

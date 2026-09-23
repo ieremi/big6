@@ -97,6 +97,70 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal 0, FixSuggestion.sole.our_lines_count
   end
 
+  def approved_suggestion
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+    FixSuggestion.record_from(@matsushita, [ line(11985, hits: 1) ])
+    suggestion = FixSuggestion.sole
+    suggestion.decide!("approved", user: nil)
+    suggestion
+  end
+
+  test "applying an approved suggestion adds its lines to the guessed game, as the suggestion's" do
+    suggestion = approved_suggestion
+    admin = User.create!(email: "admin@example.com", admin: true)
+
+    assert_equal 2, suggestion.apply!(user: admin)
+
+    lines = BattingLine.where(game: @real).order(:player_id)
+    assert_equal [ @fujimori, @matsushita ].sort_by(&:id), lines.map(&:player)
+    fujimori = lines.find_by(player: @fujimori)
+    assert_equal [ @hosei, suggestion, "[中]", 5, 5, 4, 0, 4 ], [ fujimori.university, fujimori.fix_suggestion, fujimori.position, fujimori.pa, fujimori.ab, fujimori.hits, fujimori.runs, fujimori.total_bases ]
+    assert suggestion.applied?
+    assert_equal admin, suggestion.reload.applied_by
+    assert suggestion.applied_at
+  end
+
+  test "applying skips a player who already has a line in the game, and again adds only the lines gathered since" do
+    suggestion = approved_suggestion
+    BattingLine.create!(game: @real, player: @matsushita, university: @hosei, pa: 4, ab: 4, hits: 1) # imported from Scorebook
+
+    assert_equal 1, suggestion.apply!(user: nil)
+    assert_nil BattingLine.find_by(game: @real, player: @matsushita).fix_suggestion
+
+    teammate = Player.create!(scorebook_id: 20234026, university: @hosei, name: "中村 騎士", enter_year: 2024)
+    FixSuggestion.record_from(teammate, [ line(11986, hits: 2) ])
+    assert_equal [ teammate ], suggestion.reload.lines_to_apply.map(&:player)
+    assert_equal 1, suggestion.apply!(user: nil)
+    assert_equal 0, suggestion.apply!(user: nil)
+  end
+
+  test "only an approved suggestion with its game guessed can be applied" do
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+    suggestion = FixSuggestion.sole
+
+    assert_raises(FixSuggestion::NotAllowed) { suggestion.apply!(user: nil) }
+
+    suggestion.update!(status: "approved", game: nil)
+    assert_raises(FixSuggestion::NotAllowed) { suggestion.apply!(user: nil) }
+    assert_equal 0, BattingLine.count
+  end
+
+  test "taking an application back removes only the lines it added, and until then the decision can't change" do
+    suggestion = approved_suggestion
+    BattingLine.create!(game: @real, player: @matsushita, university: @hosei, pa: 4, ab: 4, hits: 1)
+    suggestion.apply!(user: nil)
+
+    assert_raises(FixSuggestion::NotAllowed) { suggestion.decide!("discarded", user: nil) }
+    assert_raises(FixSuggestion::NotAllowed) { suggestion.decide!("pending", user: nil) }
+
+    assert_equal 1, suggestion.unapply!
+    assert_equal [ @matsushita ], BattingLine.where(game: @real).map(&:player)
+    assert_not suggestion.applied?
+    assert_nil suggestion.reload.applied_at
+    suggestion.decide!("discarded", user: nil)
+    assert_equal "discarded", suggestion.status
+  end
+
   test "a decision records who made it and when, and can be taken back" do
     FixSuggestion.record_from(@fujimori, [ line(11984) ])
     suggestion = FixSuggestion.sole
