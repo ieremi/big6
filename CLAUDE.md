@@ -91,6 +91,7 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
   - A suggestion collects its lines from each player's page as the job checks them. Players on the guessed game's roster are checked first, so the whole team's lines arrive sooner.
   - An admin approves or discards each suggestion, and can send any decision back to pending. The nightly job never recreates a suggestion with the same key, even after it has been discarded.
   - Approving doesn't change any stats. The stats change only when an admin presses **"成績に反映"** (`FixSuggestion#apply!`) on an approved suggestion. That adds its lines as `BattingLine`s of the guessed game, with `fix_suggestion_id` set, skipping players who already have a line in that game. `unapply!` removes those lines again. While lines are applied, the decision can't be changed.
+  - Applying also publishes an `Announcement` (a notice, one per suggestion) about the fix. The admin can edit its title and body in the apply form. Applying again updates the same notice (its `published_at` stays), and `unapply!` deletes it. The home page shows the latest 3 notices and `/news` lists them all.
   - When `GameStatsImport` re-imports a game, it keeps lines that have a `fix_suggestion_id`. The exception is when Scorebook's game page now has that player's own line: then the imported line replaces the suggestion's line.
 
 ## Performance constraints

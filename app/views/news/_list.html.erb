@@ -1,0 +1,16 @@
+<%# Notices (Announcement), each with its date, title, body and a link to the game it is about. %>
+<ul class="news-list">
+  <% announcements.each do |announcement| %>
+    <li>
+      <span class="muted">
+        <%= announcement.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %>
+        <% if announcement.revised? %>（<%= announcement.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %> 更新）<% end %>
+      </span>
+      <h3><%= announcement.title %></h3>
+      <p><%= announcement.body %></p>
+      <% if (game = announcement.game) && game.game_number %>
+        <p><%= link_to "試合のページへ →", game_path(game) %></p>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

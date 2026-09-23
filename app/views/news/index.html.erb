@@ -1,0 +1,12 @@
+<%
+  content_for :title, "おしらせ - Big6"
+  content_for :description, "Big6 のデータの修正などのおしらせ"
+%>
+
+<h1>おしらせ</h1>
+
+<% if @announcements.any? %>
+  <%= render "news/list", announcements: @announcements %>
+<% else %>
+  <p class="muted">おしらせはありません。</p>
+<% end %>

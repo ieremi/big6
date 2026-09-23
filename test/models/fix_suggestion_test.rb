@@ -161,6 +161,43 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal "discarded", suggestion.status
   end
 
+  test "applying publishes a notice about the game, in the default words unless given others" do
+    suggestion = approved_suggestion
+
+    suggestion.apply!(user: nil)
+
+    notice = Announcement.sole
+    assert_equal suggestion, notice.fix_suggestion
+    assert_equal @real, notice.game
+    assert_equal "2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました", notice.title
+    assert_match "2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が当サイトに入っていなかったため、2人分を補いました。", notice.body
+
+    suggestion.unapply!
+    suggestion.apply!(user: nil, title: "お詫び", body: "補いました。")
+    assert_equal [ "お詫び", "補いました。" ], Announcement.pluck(:title, :body).sole
+  end
+
+  test "applying again updates the same notice, which keeps when it was published, and taking it back deletes it" do
+    suggestion = approved_suggestion
+    suggestion.lines.last.destroy # only 藤森's line gathered yet
+    published = 2.days.ago
+    suggestion.apply!(user: nil, now: published)
+    assert_match "1人分を補いました", Announcement.sole.body
+
+    teammate = Player.create!(scorebook_id: 20234026, university: @hosei, name: "中村 騎士", enter_year: 2024)
+    FixSuggestion.record_from(teammate, [ line(11986, hits: 2) ])
+    assert_match "2人分を補いました", suggestion.reload.default_announcement.last
+    suggestion.apply!(user: nil)
+
+    notice = Announcement.sole
+    assert_match "2人分を補いました", notice.body
+    assert_in_delta published, notice.published_at, 1
+    assert notice.revised?
+
+    suggestion.unapply!
+    assert_equal 0, Announcement.count
+  end
+
   test "a decision records who made it and when, and can be taken back" do
     FixSuggestion.record_from(@fujimori, [ line(11984) ])
     suggestion = FixSuggestion.sole

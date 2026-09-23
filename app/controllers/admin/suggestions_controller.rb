@@ -35,16 +35,19 @@ module Admin
       redirect_to admin_suggestion_path(@suggestion), alert: e.message
     end
 
+    # Applies the lines, and publishes (or updates) the notice with the title and
+    # body from the form.
     def apply
-      added = @suggestion.apply!(user: current_user)
-      redirect_to admin_suggestion_path(@suggestion), notice: "#{added}人分の打撃成績を反映しました。"
+      had_notice = @suggestion.announcement.present?
+      added = @suggestion.apply!(user: current_user, title: params[:announcement_title], body: params[:announcement_body])
+      redirect_to admin_suggestion_path(@suggestion), notice: "#{added}人分の打撃成績を反映し、おしらせを#{had_notice ? "更新" : "掲載"}しました。"
     rescue FixSuggestion::NotAllowed => e
       redirect_to admin_suggestion_path(@suggestion), alert: e.message
     end
 
     def unapply
       removed = @suggestion.unapply!
-      redirect_to admin_suggestion_path(@suggestion), notice: "反映を取り消しました（#{removed}人分の打撃成績を削除）。"
+      redirect_to admin_suggestion_path(@suggestion), notice: "反映を取り消しました（#{removed}人分の打撃成績とおしらせを削除）。"
     end
 
     private

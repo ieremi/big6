@@ -24,6 +24,8 @@ Rails.application.routes.draw do
 
   get "api/docs", to: "api_docs#show", as: :api_docs
 
+  get "news", to: "news#index", as: :news
+
   # Signing in (admins only for now, see LoginPolicy) and the admin pages.
   # OmniAuth itself answers POST /auth/:provider and sends the browser on to
   # the provider; it comes back to the callback.

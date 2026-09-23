@@ -29,6 +29,7 @@ class FixSuggestion < ApplicationRecord
   belongs_to :applied_by, class_name: "User", optional: true
   has_many :lines, -> { order(:id) }, class_name: "FixSuggestionLine", dependent: :delete_all
   has_many :applied_batting_lines, class_name: "BattingLine", dependent: :restrict_with_exception
+  has_one :announcement, dependent: :destroy
 
   # A change the suggestion's state doesn't allow (applying one not approved,
   # changing the decision on one applied, ...), with a message for the admin.
@@ -138,27 +139,57 @@ class FixSuggestion < ApplicationRecord
   # university, marked as this suggestion's; lines_to_apply says which. Values
   # Scorebook didn't record are 0, as the import stores them. Can be run again
   # for lines gathered since. Returns how many were added.
-  def apply!(user:, now: Time.current)
+  #
+  # Also publishes the notice about it (Announcement), or updates it when
+  # applied again: with the title and body given, or else the default ones
+  # (default_announcement). An existing notice keeps when it was published.
+  def apply!(user:, title: nil, body: nil, now: Time.current)
     raise NotAllowed, "承認済みで、試合が1つに絞れている提案だけ反映できます。" unless applicable?
 
     transaction do
       rows = lines_to_apply.map { |line| batting_attributes(line, now) }
       BattingLine.insert_all!(rows) if rows.any?
       update!(applied_at: now, applied_by: user)
+
+      default_title, default_body = default_announcement
+      notice = Announcement.find_or_initialize_by(fix_suggestion_id: id) { |created| created.published_at = now }
+      notice.update!(title: title.presence || default_title, body: body.presence || default_body)
+      association(:announcement).reset
       rows.size
     end
   end
 
-  # Takes the lines applying added out of our batting lines again. Returns how
-  # many were removed.
+  # Takes the lines applying added out of our batting lines again, and the
+  # notice about them off the site. Returns how many lines were removed.
   def unapply!
     transaction do
       # Not applied_batting_lines.delete_all: through the association that would
       # only clear their fix_suggestion_id, leaving them as imported lines.
       removed = BattingLine.where(fix_suggestion_id: id).delete_all
+      Announcement.where(fix_suggestion_id: id).destroy_all
+      association(:announcement).reset
       update!(applied_at: nil, applied_by: nil)
       removed
     end
+  end
+
+  # The notice's title and body as they would be with the lines applied so far
+  # and those still to apply:
+  #
+  #   2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました
+  #   2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が入っていなかったため、
+  #   18人分を補いました。...
+  def default_announcement
+    count = applied_batting_lines.count + lines_to_apply.size
+    match = "#{game.team0.short_name} vs #{game.team1.short_name} #{game.game_number}回戦"
+    date = game.played_on.strftime("%Y年%-m月%-d日")
+    school = university.short_name
+
+    [
+      "#{game.season.title} #{match} の#{school}の打撃成績を補いました",
+      "#{date}の#{match}で、#{school}の打撃成績が当サイトに入っていなかったため、#{count}人分を補いました。" \
+        "当サイトの成績の元にしている Scorebook（東京六大学野球 公式記録室）で、この試合の#{school}の打撃成績が同じ日の別の試合に登録されているためです。"
+    ]
   end
 
   # The hits of the lines gathered so far against the team's hits on the

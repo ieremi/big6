@@ -15,3 +15,9 @@
   <%= link_to rankings_path, class: "home-link" do %>ランキング <kbd>7</kbd><% end %>
   <%= link_to api_docs_path, class: "home-link" do %>Web API <kbd>8</kbd><% end %>
 </nav>
+
+<% if @announcements.any? %>
+  <h2 class="card-heading">おしらせ</h2>
+  <%= render "news/list", announcements: @announcements %>
+  <p><%= link_to "すべてのおしらせ →", news_path %></p>
+<% end %>

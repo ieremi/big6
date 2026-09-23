@@ -104,14 +104,34 @@
     <p class="muted"><%= @suggestion.applied_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> に <%= @suggestion.applied_by&.email %> が反映（当サイトの打撃成績 <%= applied_ids.size %>人分）。</p>
   <% end %>
   <p class="muted">推測した試合の<%= @suggestion.university&.short_name %>の打撃成績として加えます。その試合にすでに打撃成績がある選手（Scorebook から取り込み済み）は加えません。反映した行は Scorebook からの取り込み直しでも消えず、Scorebook の試合ページにその選手の成績が載ったときは、そちらに置き換わります。</p>
-  <div class="period-toolbar">
-    <% if @suggestion.applicable? && to_apply_ids.any? %>
-      <%= button_to "成績に反映（#{to_apply_ids.size}人分）", apply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "#{to_apply_ids.size}人分の打撃成績を当サイトに加えます。よろしいですか？" } } %>
+  <% if (published = @suggestion.announcement) %>
+    <p class="muted">掲載中のおしらせ（<%= published.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> 掲載<%= "、#{published.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M")} 更新" if published.revised? %>）：</p>
+    <blockquote class="admin-notice">
+      <strong><%= published.title %></strong>
+      <p><%= published.body %></p>
+    </blockquote>
+  <% end %>
+
+  <% if @suggestion.applicable? && to_apply_ids.any? %>
+    <% default_title, default_body = @suggestion.default_announcement %>
+    <%= form_with url: apply_admin_suggestion_path(@suggestion), method: :post, class: "admin-decision",
+          data: { turbo_confirm: "#{to_apply_ids.size}人分の打撃成績を当サイトに加え、おしらせを#{@suggestion.announcement ? "更新" : "掲載"}します。よろしいですか？" } do |form| %>
+      <p class="muted">おしらせ（反映と同時に<%= @suggestion.announcement ? "更新" : "掲載" %>します。人数は、反映後の合計で入れてあります）：</p>
+      <%= form.label :announcement_title, "タイトル" %>
+      <%= form.text_field :announcement_title, value: default_title %>
+      <%= form.label :announcement_body, "本文" %>
+      <%= form.text_area :announcement_body, value: default_body, rows: 4 %>
+      <div class="period-toolbar">
+        <%= form.button "成績に反映（#{to_apply_ids.size}人分）", class: "period-btn" %>
+      </div>
     <% end %>
-    <% if @suggestion.applied? %>
-      <%= button_to "反映を取り消す", unapply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "反映した打撃成績を削除します。よろしいですか？" } } %>
-    <% end %>
-  </div>
+  <% end %>
+
+  <% if @suggestion.applied? %>
+    <div class="period-toolbar">
+      <%= button_to "反映を取り消す", unapply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "反映した打撃成績と、そのおしらせを削除します。よろしいですか？" } } %>
+    </div>
+  <% end %>
 <% end %>
 
 <h2 class="card-heading">決定</h2>

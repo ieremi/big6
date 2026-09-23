@@ -4,7 +4,7 @@ class SitemapsController < ApplicationController
   Entry = Struct.new(:loc, :lastmod, :changefreq, :priority, keyword_init: true)
 
   def show
-    cache_key = "sitemap_entries/v3/#{Game.maximum(:updated_at)&.to_i}/#{Game.count}/#{Season.maximum(:updated_at)&.to_i}"
+    cache_key = "sitemap_entries/v4/#{Game.maximum(:updated_at)&.to_i}/#{Game.count}/#{Season.maximum(:updated_at)&.to_i}/#{Announcement.maximum(:updated_at)&.to_i}"
     @entries = Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) { build_entries }
 
     render layout: false
@@ -29,6 +29,7 @@ class SitemapsController < ApplicationController
       Entry.new(loc: players_url, changefreq: "weekly", priority: "0.5"),
       Entry.new(loc: rankings_url, changefreq: "weekly", priority: "0.5"),
       Entry.new(loc: ranking_url("pitching"), changefreq: "weekly", priority: "0.4"),
+      Entry.new(loc: news_url, lastmod: Announcement.maximum(:updated_at), changefreq: "weekly", priority: "0.4"),
       Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3")
     ]
 

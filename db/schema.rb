@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "announcements", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.bigint "fix_suggestion_id"
+    t.datetime "published_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fix_suggestion_id"], name: "index_announcements_on_fix_suggestion_id", unique: true
+    t.index ["published_at"], name: "index_announcements_on_published_at"
+  end
 
   create_table "batting_lines", force: :cascade do |t|
     t.integer "ab", default: 0, null: false
@@ -262,6 +273,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_000001) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "announcements", "fix_suggestions"
   add_foreign_key "batting_lines", "fix_suggestions"
   add_foreign_key "batting_lines", "games"
   add_foreign_key "batting_lines", "players"

@@ -63,14 +63,17 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
 
     get admin_suggestion_path(@suggestion)
     assert_select "form[action=?] button", apply_admin_suggestion_path(@suggestion), text: "成績に反映（1人分）"
+    assert_select "input[name=announcement_title][value*=?]", "の法大の打撃成績を補いました"
+    assert_select "textarea[name=announcement_body]", /1人分を補いました/
 
-    post apply_admin_suggestion_path(@suggestion)
+    post apply_admin_suggestion_path(@suggestion), params: { announcement_title: "打撃成績を補いました", announcement_body: "藤森の4安打を補いました。" }
     assert_redirected_to admin_suggestion_path(@suggestion)
+    assert_equal [ "打撃成績を補いました", "藤森の4安打を補いました。" ], [ @suggestion.reload.announcement.title, @suggestion.announcement.body ]
     line = BattingLine.sole
     assert_equal [ @game, @player, @suggestion, 4 ], [ line.game, line.player, line.fix_suggestion, line.hits ]
 
     follow_redirect!
-    assert_select ".flash-notice", "1人分の打撃成績を反映しました。"
+    assert_select ".flash-notice", "1人分の打撃成績を反映し、おしらせを掲載しました。"
     assert_select "form[action=?] button", unapply_admin_suggestion_path(@suggestion), text: "反映を取り消す"
     assert_select "button[name=decision]", 0 # the decision can't change while applied
 
@@ -79,6 +82,7 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
 
     post unapply_admin_suggestion_path(@suggestion)
     assert_equal 0, BattingLine.count
+    assert_equal 0, Announcement.count
   end
 
   test "a pending suggestion can't be applied" do
