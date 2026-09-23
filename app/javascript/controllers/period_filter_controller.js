@@ -165,21 +165,21 @@ export default class extends Controller {
     })
 
     if (this.hasGameRowTarget) {
-      // A cancelled game (data-cancelled) is in the table but isn't a game held.
-      let visibleCount = 0
-      let cancelledCount = 0
+      // The visible games counted by status (each row's data-status), as
+      // GamesHelper#games_count_label words it: "終了10・中止2". The count
+      // element carries the names, in order, as data-status-labels.
+      const counts = {}
       this.gameRowTargets.forEach((el) => {
         const periods = (el.dataset.periods || "").split(" ")
         const visible = periods.includes(this.periodValue)
         el.classList.toggle("is-hidden", !visible)
-        if (visible) {
-          if (el.dataset.cancelled) cancelledCount++
-          else visibleCount++
-        }
+        if (visible) counts[el.dataset.status] = (counts[el.dataset.status] || 0) + 1
       })
 
       this.gameCountTargets.forEach((el) => {
-        el.textContent = `${visibleCount}試合` + (cancelledCount > 0 ? `（ほか中止${cancelledCount}）` : "")
+        const labels = JSON.parse(el.dataset.statusLabels || "{}")
+        const parts = Object.entries(labels).filter(([status]) => counts[status] > 0).map(([status, label]) => `${label}${counts[status]}`)
+        el.textContent = parts.length > 0 ? parts.join("・") : "0試合"
       })
     }
 

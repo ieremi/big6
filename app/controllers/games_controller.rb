@@ -42,8 +42,8 @@ class GamesController < ApplicationController
     return unless @searched
 
     scope = filtered_scope
-    @total_count = scope.count
-    @cancelled_count = scope.not_held.count
+    @status_counts = scope.group(:game_status).count
+    @total_count = @status_counts.values.sum
     @page = [ params[:page].to_i, 1 ].max
     @games = apply_game_sort(scope).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @total_pages = (@total_count.to_f / PER_PAGE).ceil

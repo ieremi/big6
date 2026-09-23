@@ -15,7 +15,7 @@
     <tbody>
       <% games.each do |game| %>
         <% row_data = if local_assigns[:game_periods]
-             { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" "), cancelled: (true if game.not_held?) }
+             { period_filter_target: "gameRow", periods: local_assigns[:game_periods][game.id]&.join(" "), status: game.game_status }
            else
              {}
            end %>

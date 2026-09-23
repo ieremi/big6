@@ -59,13 +59,22 @@ module GamesHelper
     "https://big6scorebook.jp/game/#{game.scorebook_game_id}"
   end
 
-  # "12試合", or "12試合（ほか中止1）" when the list has cancelled games. A cancelled
-  # game is in the list but isn't a game that was held, so it isn't counted as one.
+  # The names a list's games are counted under, by status, in this order.
+  GAME_STATUS_COUNT_LABELS = {
+    "finished" => "終了", "in_progress" => "試合中", "scheduled" => "予定", "cancelled" => "中止", "no_game" => "ノーゲーム"
+  }.freeze
+
+  # A list's games counted by status: "終了1・試合中1・予定8・中止2", leaving out
+  # the statuses no game has; "0試合" for an empty list.
   def games_count_label(games)
-    list = games.to_a
-    cancelled = list.count(&:not_held?)
-    label = "#{list.size - cancelled}試合"
-    cancelled.positive? ? "#{label}（ほか中止#{cancelled}）" : label
+    games_status_count_label(games.to_a.map(&:game_status).tally)
+  end
+
+  # The same from counts by status ({ "finished" => 10, "cancelled" => 2 }, keyed
+  # as game_status reads), for a list counted in SQL rather than loaded.
+  def games_status_count_label(counts)
+    parts = GAME_STATUS_COUNT_LABELS.filter_map { |status, label| "#{label}#{counts[status]}" if counts[status].to_i.positive? }
+    parts.empty? ? "0試合" : parts.join("・")
   end
 
   # "2回戦", or "—" for a game with no round number (one that wasn't held).

@@ -88,38 +88,38 @@ class CancelledGamesTest < ActionDispatch::IntegrationTest
 
   # ---- counts: a cancelled game is listed but is not a game held
 
-  test "a matchup's game count leaves out the cancelled game and says how many there were" do
+  test "a matchup's game count counts its games by status" do
     get "/matchups/alpha/beta/2027/spring"
 
-    assert_select "p.muted", text: "2試合（ほか中止1）"
+    assert_select "p.muted", text: "終了2・中止1"
   end
 
-  test "a matchup with no cancelled games says just the count" do
+  test "a matchup with no cancelled games leaves 中止 out of the count" do
     @cancelled.destroy
 
     get "/matchups/alpha/beta/2027/spring"
 
-    assert_select "p.muted", text: "2試合"
+    assert_select "p.muted", text: "終了2"
   end
 
-  test "the matchup page marks its cancelled rows, so the count for a chosen period can leave them out" do
+  test "the matchup page marks each row with its status, so the count for a chosen period can be by status" do
     get "/matchups/alpha/beta"
 
     assert_response :success
-    assert_select "tr[data-period-filter-target=gameRow][data-cancelled=true]", minimum: 1
-    assert_select "tr[data-period-filter-target=gameRow]:not([data-cancelled])", minimum: 1
+    assert_select "tr[data-period-filter-target=gameRow][data-status=cancelled]", minimum: 1
+    assert_select "tr[data-period-filter-target=gameRow][data-status=finished]", minimum: 1
   end
 
-  test "a team's game list counts the games held" do
+  test "a team's game list counts its games by status" do
     get team_season_browse_url("alpha", 2027, "spring")
 
-    assert_select "p.muted", text: "2試合（ほか中止1）"
+    assert_select "p.muted", text: "終了2・中止1"
   end
 
-  test "the game search counts the games held, and pages by the rows it lists" do
+  test "the game search counts its games by status, and pages by the rows it lists" do
     get games_url, params: { filtered: 1, terms: %w[spring], university_ids: [ @alpha.id ], start_year: 2027, end_year: 2027 }
 
-    assert_select "p.muted", text: /\A\s*2試合（ほか中止1）中 1–3件を表示\s*\z/
+    assert_select "p.muted", text: /\A\s*全3件（終了2・中止1）中 1–3件を表示\s*\z/
     assert_select "tbody tr", 3
   end
 

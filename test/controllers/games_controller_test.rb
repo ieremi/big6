@@ -19,8 +19,8 @@ class GamesControllerTest < ActionDispatch::IntegrationTest
   def search(university_ids, mode)
     get games_url, params: { filtered: 1, university_mode: mode, university_ids: university_ids.map(&:id), terms: %w[spring autumn] }
     assert_response :success
-    assigns_total = css_select("p.muted").map(&:text).find { |text| text.include?("試合中") }
-    assigns_total ? assigns_total[/(\d+)試合中/, 1].to_i : 0
+    assigns_total = css_select("p.muted").map(&:text).find { |text| text.match?(/全\d+件/) }
+    assigns_total ? assigns_total[/全(\d+)件/, 1].to_i : 0
   end
 
   test "searching with AND finds the games between the two selected universities" do

@@ -72,7 +72,7 @@
       <% end %>
     <% end %>
 
-    <p class="muted" data-period-filter-target="gameCount"><%= games_count_label(@games) %></p>
+    <%= tag.p games_count_label(@games), class: "muted", data: { period_filter_target: "gameCount", status_labels: GamesHelper::GAME_STATUS_COUNT_LABELS.to_json } %>
 
     <%= render "attendance_chart", games: @games, game_periods: @game_periods %>
     <%= render "games/games_table", games: @games, show_season: @season.nil?, game_periods: @game_periods %>
