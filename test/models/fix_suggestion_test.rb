@@ -171,6 +171,7 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal @real, notice.game
     assert_equal "2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました", notice.title
     assert_match "2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が当サイトに入っていなかったため、2人分を補いました。", notice.body
+    assert_match "この試合（https://big6scorebook.jp/game/2025100502）の法大の打撃成績が同じ日の別の試合（https://big6scorebook.jp/game/2025100501）に登録されている", notice.body
 
     suggestion.unapply!
     suggestion.apply!(user: nil, title: "お詫び", body: "補いました。")

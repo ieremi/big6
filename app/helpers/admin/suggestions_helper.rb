@@ -43,7 +43,7 @@ module Admin
     end
 
     def scorebook_game_page_url(scorebook_game_id)
-      "https://big6scorebook.jp/game/#{scorebook_game_id}"
+      FixSuggestion.scorebook_game_url(scorebook_game_id)
     end
 
     def scorebook_member_page_url(player)

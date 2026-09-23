@@ -1578,6 +1578,7 @@ tr.bench-only td a {
 
 .admin-notice p {
   margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
 }
 
 /* Notices to visitors: the latest few on the home page, all at /news. */
@@ -1603,4 +1604,5 @@ tr.bench-only td a {
 
 .news-list p {
   margin: 0.25rem 0 0;
+  overflow-wrap: anywhere; /* a long URL wraps instead of widening the page */
 }

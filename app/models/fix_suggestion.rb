@@ -21,6 +21,7 @@
 # roster_check, ...), so it grows with the lines gathered.
 class FixSuggestion < ApplicationRecord
   KINDS = %w[misfiled_lines same_team_game].freeze
+  SCOREBOOK_GAME_URL = "https://big6scorebook.jp/game/%d".freeze
   STATUSES = %w[pending approved discarded].freeze
 
   belongs_to :university, optional: true
@@ -178,18 +179,29 @@ class FixSuggestion < ApplicationRecord
   #
   #   2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました
   #   2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が入っていなかったため、
-  #   18人分を補いました。...
+  #   18人分を補いました。... Scorebook ...で、この試合（https://big6scorebook.jp/game/2025100502）
+  #   の法大の打撃成績が同じ日の別の試合（https://big6scorebook.jp/game/2025100501）に...
+  #
+  # The Scorebook pages of both games are given as URLs, which the notice's
+  # page shows as links (NewsHelper#linked_text).
   def default_announcement
     count = applied_batting_lines.count + lines_to_apply.size
     match = "#{game.team0.short_name} vs #{game.team1.short_name} #{game.game_number}回戦"
     date = game.played_on.strftime("%Y年%-m月%-d日")
     school = university.short_name
+    this_game = game.scorebook_game_id ? "この試合（#{self.class.scorebook_game_url(game.scorebook_game_id)}）" : "この試合"
+    other_game = scorebook_game_id ? "同じ日の別の試合（#{self.class.scorebook_game_url(scorebook_game_id)}）" : "同じ日の別の試合"
 
     [
       "#{game.season.title} #{match} の#{school}の打撃成績を補いました",
       "#{date}の#{match}で、#{school}の打撃成績が当サイトに入っていなかったため、#{count}人分を補いました。" \
-        "当サイトの成績の元にしている Scorebook（東京六大学野球 公式記録室）で、この試合の#{school}の打撃成績が同じ日の別の試合に登録されているためです。"
+        "当サイトの成績の元にしている Scorebook（東京六大学野球 公式記録室）で、#{this_game}の#{school}の打撃成績が#{other_game}に登録されているためです。"
     ]
+  end
+
+  # A game's page on Scorebook.
+  def self.scorebook_game_url(scorebook_game_id)
+    format(SCOREBOOK_GAME_URL, scorebook_game_id)
   end
 
   # The hits of the lines gathered so far against the team's hits on the

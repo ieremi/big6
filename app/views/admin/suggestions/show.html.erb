@@ -108,7 +108,7 @@
     <p class="muted">掲載中のおしらせ（<%= published.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> 掲載<%= "、#{published.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M")} 更新" if published.revised? %>）：</p>
     <blockquote class="admin-notice">
       <strong><%= published.title %></strong>
-      <p><%= published.body %></p>
+      <p><%= linked_text(published.body) %></p>
     </blockquote>
   <% end %>
 

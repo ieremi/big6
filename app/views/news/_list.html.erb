@@ -7,7 +7,7 @@
         <% if announcement.revised? %>（<%= announcement.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %> 更新）<% end %>
       </span>
       <h3><%= announcement.title %></h3>
-      <p><%= announcement.body %></p>
+      <p><%= linked_text(announcement.body) %></p>
       <% if (game = announcement.game) && game.game_number %>
         <p><%= link_to "試合のページへ →", game_path(game) %></p>
       <% end %>

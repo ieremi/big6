@@ -4,7 +4,7 @@ class NewsControllerTest < ActionDispatch::IntegrationTest
   def publish(title, at:, game: nil)
     suggestion = game && FixSuggestion.create!(kind: "misfiled_lines", key: "misfiled_lines #{title}", confidence: "likely", status: "approved",
       university: game.team1, game: game)
-    Announcement.create!(title: title, body: "#{title}の本文", published_at: at, fix_suggestion: suggestion)
+    Announcement.create!(title: title, body: "#{title}の本文（https://big6scorebook.jp/game/2026081001）", published_at: at, fix_suggestion: suggestion)
   end
 
   test "the notices are listed newest first, each linked to its game" do
@@ -15,7 +15,8 @@ class NewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal [ "新しいおしらせ", "古いおしらせ" ], css_select(".news-list h3").map(&:text)
-    assert_select ".news-list p", "新しいおしらせの本文"
+    assert_select ".news-list p", "新しいおしらせの本文（https://big6scorebook.jp/game/2026081001）"
+    assert_select ".news-list p a[href=?][target=_blank]", "https://big6scorebook.jp/game/2026081001", minimum: 1
     assert_select ".news-list a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1), text: "試合のページへ →"
   end
 
