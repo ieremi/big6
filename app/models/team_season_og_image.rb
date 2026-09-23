@@ -9,11 +9,11 @@
 #   week 2  3  5  6  8
 #   Tokyo Big 6 Baseball
 class TeamSeasonOgImage < OgImage
-  CHIP_SIZE = 110
+  MAX_CHIP_SIZE = 140
   CHIP_BORDER = 4
-  MAX_COLUMN_WIDTH = 170
-  COLUMNS_WIDTH = 840 # the widest the opponents' columns get, for a long season
-  CHIPS_Y = 345
+  MAX_COLUMN_WIDTH = 180
+  COLUMNS_WIDTH = 880 # the widest the opponents' columns get, for a long season
+  CHIPS_Y = 335
   WEEKS_Y = 455
 
   # opponents: [[week number, University], ...], in the order they were played.
@@ -33,12 +33,12 @@ class TeamSeasonOgImage < OgImage
       bg = chip(bg, opponent, center_x: centers[index])
     end
 
-    bg, = overlay_text(bg, @team.initial, dpi: 1000, center_y: 95)
-    bg, = overlay_text(bg, @title, dpi: 400, center_y: 225)
+    bg, = overlay_text(bg, @team.initial, dpi: 1200, center_y: 88)
+    bg, = overlay_text(bg, @title, dpi: 520, center_y: 215)
 
-    chip_initial_dpi = dpi_to_fit("W", CHIP_SIZE * 0.5)
-    week_dpi = 370
-    label_dpi = 250
+    chip_initial_dpi = dpi_to_fit("W", chip_size * 0.55)
+    week_dpi = 480
+    label_dpi = 300
     @opponents.each_with_index do |(week, opponent), index|
       bg, = overlay_text(bg, opponent.initial, dpi: chip_initial_dpi, center_x: centers[index], center_y: CHIPS_Y)
       bg, = overlay_text(bg, week.to_s, dpi: week_dpi, center_x: centers[index], center_y: WEEKS_Y)
@@ -48,7 +48,7 @@ class TeamSeasonOgImage < OgImage
       bg, = overlay_text(bg, "week", dpi: label_dpi, center_x: label_x, center_y: WEEKS_Y)
     end
 
-    bg, = overlay_text(bg, "Tokyo Big 6 Baseball", dpi: 200, center_y: 570)
+    bg, = overlay_text(bg, "Tokyo Big 6 Baseball", dpi: 260, center_y: 562)
 
     finalize(bg)
   end
@@ -61,6 +61,11 @@ class TeamSeasonOgImage < OgImage
     [ MAX_COLUMN_WIDTH, COLUMNS_WIDTH / @opponents.size ].min
   end
 
+  # The chips fill their columns but for a gap between them, up to MAX_CHIP_SIZE.
+  def chip_size
+    [ MAX_CHIP_SIZE, column_width - 36 ].min
+  end
+
   # The x of each opponent's column, the columns centred on the image.
   def column_centers
     left = WIDTH / 2.0 - column_width * @opponents.size / 2.0
@@ -70,9 +75,10 @@ class TeamSeasonOgImage < OgImage
   # A square in the opponent's colour with a white border, centred on center_x
   # in the chips' row.
   def chip(bg, opponent, center_x:)
-    outer = CHIP_SIZE + CHIP_BORDER * 2
+    size = chip_size
+    outer = size + CHIP_BORDER * 2
     border = (Vips::Image.black(outer, outer) + [ 255, 255, 255 ]).cast(:uchar)
-    fill = (Vips::Image.black(CHIP_SIZE, CHIP_SIZE) + hex_to_rgb(opponent.color)).cast(:uchar)
+    fill = (Vips::Image.black(size, size) + hex_to_rgb(opponent.color)).cast(:uchar)
     square = border.insert(fill, CHIP_BORDER, CHIP_BORDER).copy(interpretation: :srgb)
 
     bg.insert(square, (center_x - outer / 2.0).round, (CHIPS_Y - outer / 2.0).round)
