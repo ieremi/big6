@@ -12,7 +12,7 @@
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>
 <% labels = { "all" => "通算", "20" => "直近20年", "10" => "直近10年", "5" => "直近5年", "r" => "直近シーズン" } %>
 
-<%# Every part of the page is a collapsible section: the record and the matchups open at first, the roster closed. %>
+<%# Every part of the page is a collapsible section: the record, the matchups and the latest season's games open at first, the roster closed. %>
 <div data-controller="decade-fold">
   <div class="period-toolbar">
     <button type="button" class="period-btn" data-action="decade-fold#openAll" data-shortcut="u" data-shortcut-label="すべて開く">すべて開く <kbd>u</kbd></button>
@@ -72,6 +72,8 @@
       <% end %>
     </ul>
   <% end %>
+
+  <%= render "universities/games", season: @games_season, games: @season_games, university: @university %>
 
   <%= render "universities/roster", roster: @roster, university: @university %>
 </div>

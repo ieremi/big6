@@ -1,0 +1,37 @@
+<%# The university's games in its latest season, sorted in the browser (date order at first), with a link to all of its games.
+    A collapsible section, open at first, rendered inside the page's decade-fold controller. %>
+<% if season %>
+  <%= tag.details class: "decade", open: true, data: { decade_fold_target: "decade" } do %>
+    <summary><%= season.title %>の試合 <span class="muted"><%= games_count_label(games) %></span></summary>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr>
+            <%= sortable_headers UniversitiesHelper::GAME_COLUMNS, *%w[日付 回戦 相手 結果] %>
+            <th>試合</th>
+            <%= sortable_headers UniversitiesHelper::GAME_COLUMNS, "観衆" %>
+          </tr>
+        </thead>
+        <tbody>
+          <% games.each do |game| %>
+            <% opponent = game_opponent(game, university) %>
+            <% result = game_result_for(game, university) %>
+            <tr>
+              <%= sort_cell game.played_on, game.played_on.to_s %>
+              <%= sort_cell round_label(game), game.game_number %>
+              <%= sort_cell safe_join([ tag.span(opponent.initial, class: "team-chip", style: "background: #{opponent.color}"), " ", opponent.short_name ]), opponent.position %>
+              <%= sort_cell result, result && UniversitiesHelper::RESULT_ORDER.index(result) %>
+              <td><%= game_matchup_link(game) %></td>
+              <%= sort_cell (game.attendance.present? ? number_with_delimiter(game.attendance) : "-"), game.attendance %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <%= link_to "#{season.title}の試合を対戦相手ごとに見る →", team_season_browse_path(university.slug, season.year, season.term) %>
+      <br>
+      <%= link_to "すべてのシーズンの試合を見る →", team_browse_path(university.slug) %>
+    </p>
+  <% end %>
+<% end %>

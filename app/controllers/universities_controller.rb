@@ -9,6 +9,13 @@ class UniversitiesController < ApplicationController
     @record = TeamRecord.new(@university)
     @roster = UniversityRoster.new(@university)
 
+    # The university's latest season with games (only the columns shown, not the
+    # season's Scorebook JSONB), and its games in it. "autumn" sorts before
+    # "spring", so term ascending puts a year's autumn first.
+    team_games = Game.where(team0_id: @university.id).or(Game.where(team1_id: @university.id))
+    @games_season = Season.select(:id, :year, :term).where(id: team_games.select(:season_id)).order(year: :desc, term: :asc).first
+    @season_games = @games_season ? team_games.where(season_id: @games_season.id).includes(:team0, :team1).order(:played_on, :game_number).to_a : []
+
     latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
     @periods = {
       "all" => {},
