@@ -86,14 +86,6 @@ class ScorebookStatsCheckTest < ActiveSupport::TestCase
     assert_equal({ runs: 1 }, checker.unknown_as_zero)
   end
 
-  test "dates limit the games compared on both sides" do
-    bat(@second)
-
-    differences = check([ line(2019041301, "2019-04-13") ], dates: Date.new(2019, 4, 14)..Date.new(2019, 4, 30)).call(@player)
-
-    assert_equal [ "extra 20164001 2019041401" ], differences.map(&:key)
-  end
-
   test "a page that can't be read is nil, not no differences" do
     assert_nil check(nil).call(@player)
   end

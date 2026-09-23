@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -153,6 +153,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.index ["start_on"], name: "index_prime_minister_terms_on_start_on"
   end
 
+  create_table "scorebook_stats_differences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "field"
+    t.string "key", null: false
+    t.string "kind", null: false
+    t.boolean "known", default: false, null: false
+    t.integer "our_value"
+    t.date "played_on"
+    t.bigint "player_id", null: false
+    t.bigint "scorebook_game_id"
+    t.integer "scorebook_value"
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_scorebook_stats_differences_on_key", unique: true
+    t.index ["known", "kind"], name: "index_scorebook_stats_differences_on_known_and_kind"
+    t.index ["player_id"], name: "index_scorebook_stats_differences_on_player_id"
+  end
+
+  create_table "scorebook_stats_player_checks", force: :cascade do |t|
+    t.datetime "checked_at", null: false
+    t.datetime "created_at", null: false
+    t.bigint "player_id", null: false
+    t.boolean "readable", default: true, null: false
+    t.jsonb "unknown_as_zero", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["checked_at"], name: "index_scorebook_stats_player_checks_on_checked_at"
+    t.index ["player_id"], name: "index_scorebook_stats_player_checks_on_player_id", unique: true
+  end
+
   create_table "seasons", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "scorebook_data"
@@ -186,4 +214,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
   add_foreign_key "pitching_lines", "players"
   add_foreign_key "pitching_lines", "universities"
   add_foreign_key "players", "universities"
+  add_foreign_key "scorebook_stats_differences", "players"
+  add_foreign_key "scorebook_stats_player_checks", "players"
 end

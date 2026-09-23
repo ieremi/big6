@@ -25,6 +25,8 @@ class Player < ApplicationRecord
   has_many :game_members, dependent: :destroy
   has_many :batting_lines, dependent: :destroy
   has_many :pitching_lines, dependent: :destroy
+  has_one :scorebook_stats_player_check, dependent: :delete
+  has_many :scorebook_stats_differences, dependent: :delete_all
 
   scope :active, -> { where(enrollment_status: ACTIVE_ENROLLMENT_STATUS) }
   scope :students, -> { where("players.role IS NULL OR players.role NOT IN (?)", STAFF_ROLES) }

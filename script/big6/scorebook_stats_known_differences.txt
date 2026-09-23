@@ -1,5 +1,0 @@
-# Differences between our batting lines and Scorebook's member pages that are
-# known, so script/big6/check_scorebook_stats.rb doesn't report them as new.
-# One per line: the difference's key, then a comment (# player, date, detail).
-# Add to it with UPDATE_KNOWN=1 once new differences have been looked at; take a
-# line out once what it records is fixed.

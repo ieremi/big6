@@ -53,6 +53,7 @@ Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and impor
 Recurring jobs (`config/recurring.yml`, production only):
 - `SyncRecentGamesJob` runs hourly. It covers games from the last 3 days: schedule, videos, weather, Scorebook, provisional data and player box scores.
 - `RefreshLiveScoreboardsJob` runs every 5 minutes. It does nothing unless a game is under way or due to have started.
+- `CheckScorebookStatsJob` runs every 20 minutes from 1:00 to 4:40 Tokyo time. Each run checks 40 players' batting lines against their Scorebook player pages, oldest check first. It records the results in `scorebook_stats_player_checks` and `scorebook_stats_differences` and changes nothing else.
 
 Production runs the Solid Queue supervisor inside Puma (`SOLID_QUEUE_IN_PUMA`).
 
@@ -63,7 +64,7 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - `import_players.rb` must run before `import_game_members.rb` and `import_game_stats.rb`.
 - `import_game_stats.sh` restarts the stats import each time `MemoryGuard` stops it with exit code 75.
 - `update_cancelled_games.rb` and `update_reference_data.rb`.
-- `check_scorebook_stats.rb` compares our batting lines with Scorebook's per-player pages and changes nothing. Differences listed in `scorebook_stats_known_differences.txt` count as known; if any others turn up, it exits with status 1.
+- `check_scorebook_stats.rb` reports what `CheckScorebookStatsJob` has found and exits with status 1 if there are differences not marked known. `CHECK=1 IDS=…` checks those players immediately. `MARK_KNOWN=1` marks the current new differences as known once they have been reviewed.
 - Scripts named `fix_*`, `delete_*` and `backfill_*` are one-off data fixes.
 
 ## Routes and controllers

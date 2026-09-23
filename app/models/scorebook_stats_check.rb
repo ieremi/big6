@@ -20,8 +20,8 @@ require "uri"
 # Games are matched by Scorebook game id, and failing that by date: Scorebook's
 # member page sometimes files a line under another game of the same day.
 #
-# Each Difference has a key that stays the same from run to run, for the list of
-# known differences script/big6/check_scorebook_stats.rb keeps.
+# Each Difference has a key that stays the same from check to check, which is how
+# ScorebookStatsDifference keeps a difference found again as the same row.
 #
 #   check = ScorebookStatsCheck.new
 #   differences = check.call(player)   # nil when Scorebook's page can't be read
@@ -42,10 +42,8 @@ class ScorebookStatsCheck
 
   attr_reader :unknown_as_zero
 
-  # dates limits the games checked (both sides) to a range of dates; fetcher is
-  # how a player's Scorebook lines are fetched (by Scorebook id).
-  def initialize(dates: nil, fetcher: ScorebookMemberStats.method(:fetch))
-    @dates = dates
+  # fetcher is how a player's Scorebook lines are fetched (by Scorebook id).
+  def initialize(fetcher: ScorebookMemberStats.method(:fetch))
     @fetcher = fetcher
     @unknown_as_zero = Hash.new(0)
   end
@@ -63,7 +61,6 @@ class ScorebookStatsCheck
   # The player's differences, or nil when Scorebook's page can't be read.
   def call(player)
     scorebook_lines = @fetcher.call(player.scorebook_id) or return nil
-    scorebook_lines = scorebook_lines.select { |line| in_dates?(line.played_on) }
     ours = our_lines(player)
     by_game_id = ours.index_by { |line| line.game.scorebook_game_id }
     by_date = ours.group_by { |line| line.game.played_on }
@@ -95,9 +92,7 @@ class ScorebookStatsCheck
   private
 
   def our_lines(player)
-    lines = BattingLine.where(player_id: player.id).includes(:game)
-    lines = lines.joins(:game).where(games: { played_on: @dates }) if @dates
-    lines.to_a
+    BattingLine.where(player_id: player.id).includes(:game).to_a
   end
 
   # Whether we have the game (by its Scorebook id, or else the player's
@@ -108,10 +103,6 @@ class ScorebookStatsCheck
     game = nil if game && [ game.team0_id, game.team1_id ].exclude?(player.university_id)
     game ||= Game.where(played_on: played_on).where("team0_id = :id OR team1_id = :id", id: player.university_id).first
     game.present? && !BattingLine.exists?(game_id: game.id)
-  end
-
-  def in_dates?(date)
-    @dates.nil? || (date && @dates.cover?(date))
   end
 
   def value_differences(player, game_id, line, mine)

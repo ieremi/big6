@@ -1,107 +1,86 @@
-# Checks our players' batting lines against Scorebook's own per-player lines
-# (its member pages), game by game, and lists what differs (ScorebookStatsCheck
-# explains the kinds). One request per player, one second apart; nothing is
-# changed.
+# Reports what the checks of our batting lines against Scorebook's own
+# per-player lines (its member pages) have found, as recorded in the database
+# (ScorebookStatsPlayerCheck, ScorebookStatsDifference). CheckScorebookStatsJob
+# does the checking, a few players each run through the small hours; this
+# script only reads what it recorded, unless asked to check some players now.
 #
-# A game we have no box score for at all (no_stats) is only listed: that is a
-# game not imported yet, or one Scorebook's game page has no box score for, not
-# a difference in what was imported.
+# ScorebookStatsCheck explains the kinds of difference. Games we have no box
+# score for at all (no_stats) are only counted. Differences marked known (looked
+# at: Scorebook's own errors, or ours not fixed yet) are only counted; any other
+# is new, and is listed, and makes the script exit with status 1.
 #
-# Differences listed in script/big6/scorebook_stats_known_differences.txt are
-# known (Scorebook's own errors, or ours not fixed yet) and only counted. Any
-# other is new: the run lists them and exits with status 1, so a run after an
-# import tells whether it brought anything unexpected. UPDATE_KNOWN=1 adds the
-# new ones to the file instead, after they have been looked at.
+#   bin/rails runner script/big6/check_scorebook_stats.rb
 #
-# Which players:
-#   (default)   those on Scorebook's batting records page (about 80)
-#   IDS=20164001,19922005   these Scorebook ids
-#   ALL=1       everyone with a batting line (thousands: hours)
-# FROM_DATE / TO_DATE (YYYY-MM-DD) limit the games compared.
+# Check some players now, recording the result as the job does (one request a
+# second; nothing else is changed), then report:
+#   CHECK=1 IDS=20164001,19922005 bin/rails runner script/big6/check_scorebook_stats.rb
+#   CHECK=1 RECORD_HOLDERS=1 bin/rails runner script/big6/check_scorebook_stats.rb   (Scorebook's records page, about 80)
 #
-# Run with: bin/rails runner script/big6/check_scorebook_stats.rb
-#           IDS=20164001 bin/rails runner script/big6/check_scorebook_stats.rb
-#           FROM_DATE=2026-09-01 ALL=1 bin/rails runner script/big6/check_scorebook_stats.rb
+# Mark every new difference known, once they have been looked at:
+#   MARK_KNOWN=1 bin/rails runner script/big6/check_scorebook_stats.rb
 #
-# Like the imports, it stops cleanly (exit status 75) if it grows more than
-# MEMORY_GROWTH_LIMIT_MB (default 150): the machine is shared with the web server.
+# A check stops cleanly (exit status 75) if it grows more than
+# MEMORY_GROWTH_LIMIT_MB (default 150): the machine is shared with the web
+# server. What it checked by then is recorded; run it again for the rest.
 
-KNOWN_FILE = File.expand_path("scorebook_stats_known_differences.txt", __dir__)
 SLEEP_SECONDS = 1
 
-known = File.exist?(KNOWN_FILE) ? File.readlines(KNOWN_FILE).map { |line| line.sub(/#.*/, "").strip }.reject(&:empty?).to_set : Set.new
-
-players = if ENV["IDS"]
-  Player.where(scorebook_id: ENV["IDS"].split(",").map(&:to_i))
-elsif ENV["ALL"]
-  Player.where(id: BattingLine.select(:player_id))
-else
-  ids = ScorebookStatsCheck.record_holder_ids
-  abort "couldn't read Scorebook's records page" if ids.empty?
-  sleep SLEEP_SECONDS
-  Player.where(scorebook_id: ids)
-end
-players = players.order(:scorebook_id).to_a
-
-from = ENV["FROM_DATE"].presence && Date.parse(ENV["FROM_DATE"])
-to = ENV["TO_DATE"].presence && Date.parse(ENV["TO_DATE"])
-check = ScorebookStatsCheck.new(dates: (from || to) ? (from || Date.new(1900))..(to || Date.new(9999)) : nil)
-
-memory_limit_mb = ENV.fetch("MEMORY_GROWTH_LIMIT_MB", 150).to_i
-guard = MemoryGuard.new(growth_limit_mb: memory_limit_mb)
-
-puts "#{players.size} players to check (about #{(players.size / 60.0).ceil} minutes)"
-new_differences = []
-no_stats = []
-known_count = Hash.new(0)
-unreadable = []
-
-players.each_with_index do |player, index|
-  differences = check.call(player)
-  sleep SLEEP_SECONDS
-  if differences.nil?
-    unreadable << player
-    next
+if ENV["CHECK"]
+  ids = if ENV["IDS"]
+    ENV["IDS"].split(",").map(&:to_i)
+  elsif ENV["RECORD_HOLDERS"]
+    ScorebookStatsCheck.record_holder_ids.presence or abort "couldn't read Scorebook's records page"
+  else
+    abort "CHECK=1 needs IDS= or RECORD_HOLDERS=1 (the nightly job checks everyone)"
   end
+  players = Player.where(scorebook_id: ids).order(:scorebook_id).to_a
 
-  differences.each do |difference|
-    if difference.kind == "no_stats"
-      no_stats << difference
-    elsif known.include?(difference.key)
-      known_count[difference.kind] += 1
-    else
-      new_differences << difference
-    end
-  end
+  memory_limit_mb = ENV.fetch("MEMORY_GROWTH_LIMIT_MB", 150).to_i
+  guard = MemoryGuard.new(growth_limit_mb: memory_limit_mb)
+  puts "checking #{players.size} players (about #{(players.size / 60.0).ceil} minutes)"
 
-  if (index + 1) % 20 == 0
-    puts "#{index + 1}/#{players.size} new differences so far: #{new_differences.size}"
+  players.each_with_index do |player, index|
+    sleep SLEEP_SECONDS
+    ScorebookStatsPlayerCheck.run(player)
+    next unless (index + 1) % 20 == 0
+
+    puts "#{index + 1}/#{players.size}"
     if index + 1 < players.size && guard.exceeded?
-      puts "stopping to avoid running out of memory: it has grown #{guard.growth_mb}MB (limit #{memory_limit_mb}MB). Use IDS= to check the rest."
+      puts "stopping to avoid running out of memory: it has grown #{guard.growth_mb}MB (limit #{memory_limit_mb}MB). " \
+           "The players checked so far are recorded."
       exit 75
     end
   end
+  puts
 end
 
-puts
-puts "known differences: #{known_count.empty? ? "none" : known_count.map { |kind, n| "#{kind} #{n}" }.join(", ")}"
-puts "not recorded by Scorebook, 0 here (not differences): #{check.unknown_as_zero.map { |field, n| "#{field} #{n}" }.join(", ").presence || "none"}"
-puts "Scorebook's page couldn't be read for: #{unreadable.map(&:scorebook_id).join(", ")}" if unreadable.any?
-if no_stats.any?
-  games = no_stats.map { |difference| [ difference.scorebook_game_id, difference.played_on ] }.uniq
-  puts "games with no box score here (not imported yet, or none on Scorebook's game page), not counted as differences: #{games.size}"
-  games.sort_by(&:last).first(20).each { |game_id, played_on| puts "  #{game_id} #{played_on}" }
-  puts "  ... and #{games.size - 20} more" if games.size > 20
+if ENV["MARK_KNOWN"]
+  marked = ScorebookStatsDifference.unknown.update_all(known: true, updated_at: Time.current)
+  puts "marked #{marked} differences known"
 end
+
+due = Player.where(id: BattingLine.select(:player_id)).count
+checks = ScorebookStatsPlayerCheck.all
+puts "players checked: #{checks.count} of #{due}" \
+     "#{", oldest check #{checks.minimum(:checked_at)&.in_time_zone("Asia/Tokyo")&.strftime("%Y-%m-%d %H:%M")}" if checks.exists?}"
+
+unreadable = checks.where(readable: false).includes(:player).map { |check| check.player.scorebook_id }
+puts "Scorebook's page couldn't be read at the last check for: #{unreadable.join(", ")}" if unreadable.any?
+
+unknown_as_zero = checks.pluck(:unknown_as_zero).each_with_object(Hash.new(0)) { |counts, sums| counts.each { |field, n| sums[field] += n } }
+puts "not recorded by Scorebook, 0 here (not differences): #{unknown_as_zero.map { |field, n| "#{field} #{n}" }.join(", ").presence || "none"}"
+
+no_stats = ScorebookStatsDifference.where(kind: ScorebookStatsDifference::NOT_COUNTED_KINDS).distinct.count(:scorebook_game_id)
+puts "games with no box score here (not imported yet, or none on Scorebook's game page): #{no_stats}"
+
+known = ScorebookStatsDifference.counted.where(known: true).group(:kind).count
+puts "known differences: #{known.map { |kind, n| "#{kind} #{n}" }.join(", ").presence || "none"}"
+
+new_differences = ScorebookStatsDifference.unknown.includes(:player).order(:kind, :played_on, :key).to_a
 puts "new differences: #{new_differences.size}"
 new_differences.group_by(&:kind).each do |kind, differences|
   puts "== #{kind} (#{differences.size})"
   differences.each { |difference| puts "  #{difference}" }
 end
 
-if new_differences.any? && ENV["UPDATE_KNOWN"]
-  File.open(KNOWN_FILE, "a") { |file| new_differences.each { |difference| file.puts(difference.to_s) } }
-  puts "added #{new_differences.size} to #{File.basename(KNOWN_FILE)}"
-elsif new_differences.any?
-  exit 1
-end
+exit 1 if new_differences.any?

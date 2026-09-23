@@ -16,11 +16,13 @@ test:
 
 # CPU/memory on the production instance are limited and shared with the web
 # server (Solid Queue's supervisor runs in-process there — see
-# SOLID_QUEUE_IN_PUMA in render.yaml). The only job is the hourly
-# SyncRecentGamesJob, so there's no need to wake up and hit the queue
-# database every second around the clock; a slower poll and a single
-# worker thread are still plenty responsive for that cadence and leave more
-# headroom for actual web requests.
+# SOLID_QUEUE_IN_PUMA in render.yaml). The jobs are all recurring ones
+# (config/recurring.yml) that run minutes apart at the most, so there's no
+# need to wake up and hit the queue database every second around the clock;
+# a slower poll and a single worker thread are still plenty responsive for
+# that cadence and leave more headroom for actual web requests. With the one
+# thread, the jobs run one at a time: CheckScorebookStatsJob's minute-long
+# runs are in the small hours, when no game is on.
 production:
   dispatchers:
     - polling_interval: 30
