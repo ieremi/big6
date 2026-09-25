@@ -115,6 +115,23 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[name=decision][value=discarded]", "却下"
   end
 
+  test "a suggestion shows the team checks, and starts an empty note from them" do
+    pitcher = Player.create!(scorebook_id: 20224030, university: universities(:one), name: "髙橋 煌稀", enter_year: 2024)
+    @suggestion.lines.sole.update!(values: { "pa" => 5, "hits" => 4, "strikeouts" => 0 })
+    BattingLine.create!(game: @game, player: @player, university: @hosei, pa: 5, hits: 4, strikeouts: 1)
+    PitchingLine.create!(game: @game, player: pitcher, university: universities(:one), outs: 27, hits: 4, strikeouts: 1)
+    sign_in
+
+    get admin_suggestion_path(@suggestion)
+
+    assert_select "li", /✓ 三振 1 \/ 奪三振 1\s*（Scorebook 選手ページの値にすると 0 ✗）/
+    assert_select "textarea[name=note]", /選手ページ側の誤りと考えられる。/
+
+    @suggestion.update!(note: "自分のメモ")
+    get admin_suggestion_path(@suggestion)
+    assert_select "textarea[name=note]", "自分のメモ"
+  end
+
   test "a pending suggestion can't be applied" do
     sign_in
 

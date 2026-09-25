@@ -10,6 +10,8 @@
   states = @suggestion.line_states
   applied_ids = states.select { |state| state.state == :applied }.map { |state| state.line.player_id }
   to_apply_ids = states.select { |state| state.state == :to_apply }.map { |state| state.line.player_id }
+  checks = @suggestion.team_checks(states)
+  suggested_note = @suggestion.suggested_note(states, checks) if @suggestion.note.blank?
 %>
 
 <p><%= link_to "← 提案の一覧", admin_suggestions_path(status: @suggestion.status) %></p>
@@ -60,6 +62,17 @@
     <li>当サイトにある<%= @suggestion.university&.short_name %>の打撃成績（推測した試合）：<%= our_lines %>人分<%= "（空なので矛盾しません）" if our_lines&.zero? %></li>
     <li>安打の合計（集まった行 / スコアボードの H）：<%= fix_suggestion_hits_label(hits) %></li>
     <li>ベンチ入りメンバーとの照合：<%= roster ? "#{roster[:on_roster]} / #{roster[:lines]} 人が名簿にいる（名簿 #{roster[:roster]} 人）" : "名簿なし（2021年より前の試合か、名簿が未取り込み）" %></li>
+    <% if checks.any? %>
+      <li>
+        チームの合計（当サイトの<%= @suggestion.university&.short_name %>打者 / 相手投手）：
+        <% checks.each do |check| %>
+          <br><%= check.matches? ? "✓" : "✗" %> <%= check.batting_label %> <%= check.batting %> / <%= check.pitching_label %> <%= check.pitching %>
+          <% if check.batting_with_scorebook %>（Scorebook 選手ページの値にすると <%= check.batting_with_scorebook %><%= check.scorebook_matches? ? " ✓" : " ✗" %>）<% end %>
+        <% end %>
+      </li>
+    <% else %>
+      <li>チームの合計：相手投手の成績が当サイトにないため照合できません</li>
+    <% end %>
   </ul>
   <p class="muted">行は、夜間の照合でチームメイトの選手ページを読むたびに増えます。安打の合計がスコアボードの H と一致すれば、チーム全員分がそろっています。</p>
 <% elsif @suggestion.kind == "same_team_game" %>
@@ -144,7 +157,10 @@
 <% end %>
 <%= form_with url: admin_suggestion_path(@suggestion), method: :patch, class: "admin-decision" do |form| %>
   <%= form.label :note, "メモ" %>
-  <%= form.text_area :note, value: @suggestion.note, rows: 3 %>
+  <% if suggested_note %>
+    <p class="muted">メモ欄には、照合の結果から作った案を入れてあります。直してから決定できます。</p>
+  <% end %>
+  <%= form.text_area :note, value: @suggestion.note.presence || suggested_note, rows: 4 %>
   <div class="period-toolbar">
     <% if FixSuggestion::UNDECIDED.include?(@suggestion.status) %>
       <%= form.button "承認", name: "decision", value: "approved", class: "period-btn" %>

@@ -252,6 +252,54 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { suggestion.decide!("not_needed", user: nil) }
   end
 
+  # hosei's batting in the real game as imported (fujimori struck out once, a
+  # teammate twice) and waseda's pitching against it (3 strikeouts), as for
+  # 大川 忠弘 of 1980-05-11, whose member page has 0 strikeouts where the game page has 1.
+  def imported_game_with_pitching(fujimori_strikeouts: 1, pitcher_strikeouts: 3)
+    teammate = Player.create!(scorebook_id: 20234027, university: @hosei, name: "今泉 秀悟", enter_year: 2024)
+    pitcher = Player.create!(scorebook_id: 20224030, university: @waseda, name: "髙橋 煌稀", enter_year: 2024)
+    BattingLine.create!(game: @real, player: @fujimori, university: @hosei, pa: 5, ab: 5, hits: 4, strikeouts: fujimori_strikeouts)
+    BattingLine.create!(game: @real, player: teammate, university: @hosei, pa: 4, ab: 4, hits: 1, strikeouts: 2, walks: 1)
+    PitchingLine.create!(game: @real, player: pitcher, university: @waseda, outs: 27, hits: 5, strikeouts: pitcher_strikeouts, walks: 1)
+  end
+
+  def misfiled_line_with(strikeouts)
+    ScorebookMemberStats::Line.new(scorebook_game_id: 2025100501, played_on: Date.new(2025, 10, 5), line_id: 11984, team_id: 4,
+      game_team_ids: [ 5, 2 ], values: { pa: 5, ab: 5, hits: 4, strikeouts: strikeouts })
+  end
+
+  test "the team checks compare our batters' totals with the other side's pitchers', and what Scorebook's differing values would make them" do
+    imported_game_with_pitching
+    FixSuggestion.record_from(@fujimori, [ misfiled_line_with(0) ])
+    suggestion = FixSuggestion.sole
+
+    checks = suggestion.team_checks.index_by(&:field)
+    assert_equal [ 3, 3, 2 ], checks[:strikeouts].to_h.values_at(:batting, :pitching, :batting_with_scorebook)
+    assert checks[:strikeouts].matches?
+    assert_not checks[:strikeouts].scorebook_matches?
+    assert_equal [ 5, 5, nil ], checks[:hits].to_h.values_at(:batting, :pitching, :batting_with_scorebook)
+    assert_equal [ 1, 1 ], checks[:walks].to_h.values_at(:batting, :pitching)
+
+    assert_equal "藤森 康淳の三振：Scorebook 選手ページ 0 / 当サイト 1。" \
+      "当サイトの値で法大打者の三振 3 = 早大投手の奪三振 3（選手ページの値では 2）。選手ページ側の誤りと考えられる。", suggestion.suggested_note
+  end
+
+  test "the note says when Scorebook's member page is the one the game bears out" do
+    imported_game_with_pitching(fujimori_strikeouts: 1, pitcher_strikeouts: 2)
+    FixSuggestion.record_from(@fujimori, [ misfiled_line_with(0) ])
+
+    assert_match "当サイト（Scorebook の試合ページ）側の誤りの可能性がある。", FixSuggestion.sole.suggested_note
+  end
+
+  test "without the other side's pitching there are no team checks, and a suggestion with nothing to fix says so in its note" do
+    BattingLine.create!(game: @real, player: @fujimori, university: @hosei, pa: 5, ab: 5, hits: 4)
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+    suggestion = FixSuggestion.sole
+
+    assert_empty suggestion.team_checks
+    assert_equal "全員の打撃成績が推測した試合に同じ値で取り込み済み。Scorebook の選手ページだけの誤り。", suggestion.suggested_note
+  end
+
   test "a decision records who made it and when, and can be taken back" do
     FixSuggestion.record_from(@fujimori, [ line(11984) ])
     suggestion = FixSuggestion.sole

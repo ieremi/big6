@@ -312,6 +312,96 @@ class FixSuggestion < ApplicationRecord
     { on_roster: lines.count { |line| roster_ids.include?(line.player_id) }, lines: lines.size, roster: roster_ids.size }
   end
 
+  # The counts a batting side's lines must add up to on the other side's
+  # pitching lines: batter's column => pitcher's column, and their names.
+  TEAM_CHECKS = {
+    strikeouts: [ :strikeouts, "三振", "奪三振" ],
+    hits: [ :hits, "安打", "被安打" ],
+    walks: [ :walks, "四死球", "与四死球" ]
+  }.freeze
+
+  # One count checked across the two sides of the guessed game: the
+  # university's batters' total (ours), the other university's pitchers'
+  # total, and the batters' total if the lines Scorebook's member page has
+  # other values for had those instead (nil when none differ in it).
+  TeamCheck = Struct.new(:field, :batting_label, :pitching_label, :batting, :pitching, :batting_with_scorebook, keyword_init: true) do
+    def matches?
+      batting == pitching
+    end
+
+    def scorebook_matches?
+      !batting_with_scorebook.nil? && batting_with_scorebook == pitching
+    end
+  end
+
+  # The TeamChecks of the guessed game, from our batting and pitching lines
+  # only, or [] when we have no pitching lines for the other side. They tell
+  # which of two differing values fits the game: a batter's strikeouts are the
+  # other side's pitchers' strikeouts, and so on.
+  def team_checks(states = line_states)
+    return [] unless game && university
+
+    batting = BattingLine.where(game: game, university: university)
+    pitching = PitchingLine.where(game: game).where.not(university: university)
+    return [] unless pitching.exists?
+
+    TEAM_CHECKS.map do |field, (pitching_field, batting_label, pitching_label)|
+      ours = batting.sum(field)
+      shifts = states.flat_map(&:differences).select { |difference, _, _| difference == field }
+      TeamCheck.new(
+        field: field, batting_label: batting_label, pitching_label: pitching_label,
+        batting: ours, pitching: pitching.sum(pitching_field),
+        batting_with_scorebook: (ours + shifts.sum { |_, scorebook, mine| scorebook - mine } if shifts.any?)
+      )
+    end
+  end
+
+  # A note to start the admin's from, worked out from the lines and the team
+  # checks: which values differ and which side's the game bears out, or that
+  # every line is already in with the same values, or how far the lines
+  # gathered are from the team's hits.
+  def suggested_note(states = line_states, checks = team_checks(states))
+    return nil unless kind == "misfiled_lines" && game
+
+    school = university.short_name
+    opponent = (game.team0_id == university.id ? game.team1 : game.team0).short_name
+    sentences = []
+
+    states.select { |state| state.state == :imported_differs }.each do |state|
+      details = state.differences.map { |field, scorebook, ours| "#{FIELD_NAMES.fetch(field, field)}：Scorebook 選手ページ #{scorebook} / 当サイト #{ours}" }
+      sentences << "#{state.line.player.name}の#{details.join("、")}。"
+    end
+
+    checks.select(&:batting_with_scorebook).each do |check|
+      comparison = "当サイトの値で#{school}打者の#{check.batting_label} #{check.batting} #{check.matches? ? "=" : "≠"} #{opponent}投手の#{check.pitching_label} #{check.pitching}" \
+        "（選手ページの値では #{check.batting_with_scorebook}）。"
+      verdict = if check.matches? && !check.scorebook_matches?
+        "選手ページ側の誤りと考えられる。"
+      elsif check.scorebook_matches? && !check.matches?
+        "当サイト（Scorebook の試合ページ）側の誤りの可能性がある。"
+      else
+        "どちらの値が正しいか、この照合では判断できない。"
+      end
+      sentences << comparison + verdict
+    end
+
+    if states.any? && states.all? { |state| state.state == :imported_match }
+      sentences << "全員の打撃成績が推測した試合に同じ値で取り込み済み。Scorebook の選手ページだけの誤り。"
+    elsif (hits = hits_check) && states.any? { |state| state.state == :to_apply }
+      sentences << "集まった行 #{states.size}人、安打の合計 #{hits[:lines]} / スコアボードの H #{hits[:scoreboard] || "不明"}" \
+        "#{hits[:lines] == hits[:scoreboard] ? "（全員分そろっている）" : "（まだそろっていない）"}。"
+    end
+
+    sentences.join.presence
+  end
+
+  # Batting columns' names, for the note.
+  FIELD_NAMES = {
+    pa: "打席", ab: "打数", hits: "安打", doubles: "二塁打", triples: "三塁打", home_runs: "本塁打", rbi: "打点", runs: "得点",
+    strikeouts: "三振", walks: "四死球", sacrifices: "犠打・犠飛", stolen_bases: "盗塁", caught_stealing: "盗塁死",
+    gidp: "併殺打", fielding_errors: "失策"
+  }.freeze
+
   # How many batting lines imported from Scorebook we already have for the
   # university in the guessed game (none, if Scorebook files them under another
   # game). Lines added by applying suggestions aren't counted.
