@@ -22,7 +22,19 @@
 class FixSuggestion < ApplicationRecord
   KINDS = %w[misfiled_lines same_team_game].freeze
   SCOREBOOK_GAME_URL = "https://big6scorebook.jp/game/%d".freeze
-  STATUSES = %w[pending approved discarded].freeze
+  # not_needed: undecided, but nothing to fix here (every line is already in our
+  # batting lines, with the same values: only Scorebook's member page files it
+  # under the wrong game). Set and unset by classify!, not by an admin.
+  STATUSES = %w[pending not_needed approved discarded].freeze
+  UNDECIDED = %w[pending not_needed].freeze
+  DECISIONS = %w[pending approved discarded].freeze # what an admin can set
+
+  # Where a line stands against our batting lines in the guessed game:
+  # :no_game (no game guessed), :to_apply (not there yet), :applied (added by
+  # applying this suggestion), :imported_match or :imported_differs (imported
+  # from Scorebook's game page, with the same values or not). differences lists
+  # [field, Scorebook's value, ours] for :imported_differs.
+  LineState = Struct.new(:line, :state, :ours, :differences, keyword_init: true)
 
   belongs_to :university, optional: true
   belongs_to :game, optional: true
@@ -47,7 +59,7 @@ class FixSuggestion < ApplicationRecord
   # recorded is left as it is, and a suggestion already decided (discarded
   # included) is never made again.
   def self.record_from(player, lines)
-    lines.each do |line|
+    touched = lines.filter_map do |line|
       teams = Array(line.game_team_ids)
       next if line.team_id.nil? || line.line_id.nil? || teams.compact.size < 2
 
@@ -62,6 +74,54 @@ class FixSuggestion < ApplicationRecord
         record.player = player
         record.position = line.position
         record.values = line.values.transform_keys(&:to_s)
+      end
+      suggestion
+    end
+
+    touched.uniq.each(&:classify!)
+  end
+
+  # Moves an undecided suggestion between pending and not_needed as its lines
+  # stand now (not_needed?). A decided one (approved, discarded) is left alone.
+  def classify!
+    return unless UNDECIDED.include?(status)
+
+    wanted = not_needed? ? "not_needed" : "pending"
+    update!(status: wanted) unless status == wanted
+  end
+
+  # classify! for every undecided suggestion: our batting lines change as games
+  # are imported, so a suggestion's standing can change without new lines.
+  def self.classify_undecided!
+    where(status: UNDECIDED).includes(:lines, game: %i[team0 team1]).find_each(&:classify!)
+  end
+
+  # Whether there is nothing to fix: a misfiled_lines suggestion whose every
+  # line is already among our batting lines of the guessed game, imported from
+  # Scorebook with the same values.
+  def not_needed?
+    kind == "misfiled_lines" && game.present? && lines.any? && line_states.all? { |state| state.state == :imported_match }
+  end
+
+  # Each line's LineState: whether the guessed game already has the player's
+  # batting line, from where, and whether its values agree (values Scorebook
+  # didn't record aren't compared, as they are 0 here).
+  def line_states
+    return lines.map { |line| LineState.new(line: line, state: :no_game, differences: []) } unless game
+
+    ours = BattingLine.where(game: game, player_id: lines.map(&:player_id)).index_by(&:player_id)
+    lines.map do |line|
+      mine = ours[line.player_id]
+      if mine.nil?
+        LineState.new(line: line, state: :to_apply, differences: [])
+      elsif mine.fix_suggestion_id == id
+        LineState.new(line: line, state: :applied, ours: mine, differences: [])
+      else
+        differences = ScorebookMemberStats::FIELDS.keys.filter_map do |field|
+          value = line.value(field)
+          [ field, value, mine.public_send(field) ] unless value.nil? || value == mine.public_send(field)
+        end
+        LineState.new(line: line, state: differences.empty? ? :imported_match : :imported_differs, ours: mine, differences: differences)
       end
     end
   end
@@ -108,12 +168,16 @@ class FixSuggestion < ApplicationRecord
 
   # Records an admin's decision: "approved", "discarded", or "pending" to take
   # one back. The note, when given, replaces the one kept.
+  #
+  # not_needed isn't a decision (classify! sets it); taking one back to pending
+  # classifies it again, so one with nothing to fix goes back to not_needed.
   def decide!(status, user:, note: nil)
-    raise ArgumentError, "unknown decision: #{status.inspect}" unless STATUSES.include?(status)
+    raise ArgumentError, "unknown decision: #{status.inspect}" unless DECISIONS.include?(status)
     raise NotAllowed, "成績に反映済みです。決定を変えるには、先に反映を取り消してください。" if status != "approved" && applied?
 
     decided = status != "pending"
     update!(status: status, decided_by: (user if decided), decided_at: (Time.current if decided), note: note.nil? ? self.note : note.presence)
+    classify!
   end
 
   # Whether any of our batting lines came from applying this suggestion.

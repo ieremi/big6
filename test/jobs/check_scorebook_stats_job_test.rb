@@ -47,6 +47,16 @@ class CheckScorebookStatsJobTest < ActiveJob::TestCase
     assert_not_equal [ teammate.scorebook_id ], ids, "checked since the suggestion, so back to the usual order"
   end
 
+  test "each run first classifies the undecided suggestions again" do
+    classified = false
+
+    stub_method(FixSuggestion, :classify_undecided!, -> { classified = true }) do
+      checked_ids { CheckScorebookStatsJob.perform_now(batch_size: 1, sleep_seconds: 0) }
+    end
+
+    assert classified
+  end
+
   test "one player's failure doesn't stop the others" do
     failing = ->(id) { raise "boom" if id == @players[0].scorebook_id; [] }
 

@@ -47,6 +47,10 @@ class CheckScorebookStatsJob < ApplicationJob
   end
 
   def perform(batch_size: BATCH_SIZE, sleep_seconds: SLEEP_SECONDS)
+    # Our batting lines change as games are imported, and with them whether a
+    # suggestion has anything left to fix.
+    FixSuggestion.classify_undecided!
+
     self.class.players_due(batch_size).each do |player|
       ScorebookStatsPlayerCheck.run(player)
       sleep sleep_seconds

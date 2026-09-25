@@ -210,6 +210,48 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal "4打席3打数0安打", FixSuggestion.batting_summary(FixSuggestionLine.new(values: { "pa" => 4, "ab" => 3, "hits" => 0 }))
   end
 
+  test "a suggestion whose every line is already imported with the same values is not needed, and pending again once one isn't" do
+    BattingLine.create!(game: @real, player: @fujimori, university: @hosei, pa: 5, ab: 5, hits: 4) # imported from Scorebook's game page
+
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+    suggestion = FixSuggestion.sole
+    assert_equal "not_needed", suggestion.status
+    assert_equal [ :imported_match ], suggestion.line_states.map(&:state)
+
+    FixSuggestion.record_from(@matsushita, [ line(11985, hits: 1) ]) # not in our game
+    assert_equal "pending", suggestion.reload.status
+    assert_equal [ :imported_match, :to_apply ], suggestion.line_states.map(&:state)
+  end
+
+  test "a line imported with other values is a difference, and the suggestion stays pending" do
+    BattingLine.create!(game: @real, player: @fujimori, university: @hosei, pa: 5, ab: 5, hits: 3)
+
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+
+    suggestion = FixSuggestion.sole
+    assert_equal "pending", suggestion.status
+    state = suggestion.line_states.sole
+    assert_equal [ :imported_differs, [ [ :hits, 4, 3 ] ] ], [ state.state, state.differences ]
+  end
+
+  test "classifying leaves a decided suggestion alone, and every undecided one is classified again when our lines change" do
+    FixSuggestion.record_from(@fujimori, [ line(11984) ])
+    suggestion = FixSuggestion.sole
+    assert_equal "pending", suggestion.status
+
+    BattingLine.create!(game: @real, player: @fujimori, university: @hosei, pa: 5, ab: 5, hits: 4) # imported later
+    FixSuggestion.classify_undecided!
+    assert_equal "not_needed", suggestion.reload.status
+
+    suggestion.decide!("discarded", user: nil)
+    FixSuggestion.classify_undecided!
+    assert_equal "discarded", suggestion.reload.status
+
+    suggestion.decide!("pending", user: nil) # taken back: classified again at once
+    assert_equal "not_needed", suggestion.reload.status
+    assert_raises(ArgumentError) { suggestion.decide!("not_needed", user: nil) }
+  end
+
   test "a decision records who made it and when, and can be taken back" do
     FixSuggestion.record_from(@fujimori, [ line(11984) ])
     suggestion = FixSuggestion.sole

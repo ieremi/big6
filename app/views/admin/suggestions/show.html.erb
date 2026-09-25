@@ -6,9 +6,10 @@
   hits = @suggestion.hits_check
   roster = @suggestion.roster_check
   our_lines = @suggestion.our_lines_count
-  # Each line: added by applying, the player already has an imported line in the guessed game, or still to add.
-  applied_ids = @suggestion.applied_batting_lines.pluck(:player_id)
-  to_apply_ids = @suggestion.lines_to_apply.map(&:player_id)
+  # Where each line stands against our batting lines in the guessed game (FixSuggestion::LineState).
+  states = @suggestion.line_states
+  applied_ids = states.select { |state| state.state == :applied }.map { |state| state.line.player_id }
+  to_apply_ids = states.select { |state| state.state == :to_apply }.map { |state| state.line.player_id }
 %>
 
 <p><%= link_to "← 提案の一覧", admin_suggestions_path(status: @suggestion.status) %></p>
@@ -18,6 +19,9 @@
   ・ 状態：<%= fix_suggestion_status_label(@suggestion.status) %>
   <% if @suggestion.decided_at %>（<%= @suggestion.decided_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> <%= @suggestion.decided_by&.email %>）<% end %>
 </p>
+<% if @suggestion.status == "not_needed" %>
+  <p class="flash">対応不要：この提案の行は、推測した試合の打撃成績として当サイトにすでに同じ値で入っています（Scorebook の試合ページから取り込み済み）。Scorebook の選手ページだけが別の試合に登録している状態で、当サイトで直すものはありません。確認のうえ、却下して構いません。</p>
+<% end %>
 
 <h2 class="card-heading">試合</h2>
 <dl class="admin-facts">
@@ -77,7 +81,8 @@
       </tr>
     </thead>
     <tbody>
-      <% @lines.each do |line| %>
+      <% states.each do |state| %>
+        <% line = state.line %>
         <tr>
           <td><%= link_to line.player.name, player_path(line.player) %></td>
           <td><%= line.position %></td>
@@ -85,13 +90,7 @@
             <td><%= line.value(field) || "-" %></td>
           <% end %>
           <td><%= link_to "選手ページ", scorebook_member_page_url(line.player), target: "_blank", rel: "noopener" %></td>
-          <td>
-            <% if @suggestion.game.nil? %>—
-            <% elsif applied_ids.include?(line.player_id) %>反映済み
-            <% elsif to_apply_ids.include?(line.player_id) %>未反映
-            <% else %>取り込み済み
-            <% end %>
-          </td>
+          <td><%= fix_suggestion_line_state_label(state) %></td>
         </tr>
       <% end %>
     </tbody>
@@ -127,6 +126,10 @@
     <% end %>
   <% end %>
 
+  <% if @suggestion.applicable? && to_apply_ids.empty? %>
+    <p class="muted">加える行はありません。この提案の行の選手は全員、推測した試合の打撃成績が当サイトにすでにあります（上の表の「反映」列）。</p>
+  <% end %>
+
   <% if @suggestion.applied? %>
     <div class="period-toolbar">
       <%= button_to "反映を取り消す", unapply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "反映した打撃成績と、そのおしらせを削除します。よろしいですか？" } } %>
@@ -143,7 +146,7 @@
   <%= form.label :note, "メモ" %>
   <%= form.text_area :note, value: @suggestion.note, rows: 3 %>
   <div class="period-toolbar">
-    <% if @suggestion.status == "pending" %>
+    <% if FixSuggestion::UNDECIDED.include?(@suggestion.status) %>
       <%= form.button "承認", name: "decision", value: "approved", class: "period-btn" %>
       <%= form.button "却下", name: "decision", value: "discarded", class: "period-btn" %>
     <% elsif !@suggestion.applied? %>

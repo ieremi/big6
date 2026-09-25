@@ -5,7 +5,7 @@ module Admin
       "same_team_game" => "両チームが同じ大学の試合"
     }.freeze
 
-    STATUS_LABELS = { "pending" => "未決定", "approved" => "承認", "discarded" => "却下" }.freeze
+    STATUS_LABELS = { "pending" => "未決定", "not_needed" => "対応不要", "approved" => "承認", "discarded" => "却下" }.freeze
 
     CONFIDENCE_LABELS = { "likely" => "候補1つ", "needs_review" => "要確認" }.freeze
 
@@ -14,6 +14,24 @@ module Admin
       "pa" => "打席", "ab" => "打数", "hits" => "安打", "doubles" => "二塁打", "triples" => "三塁打", "home_runs" => "本塁打",
       "rbi" => "打点", "runs" => "得点", "walks" => "四死球", "strikeouts" => "三振", "stolen_bases" => "盗塁"
     }.freeze
+
+    # Every batting column's name, for the differences between Scorebook and us.
+    FIELD_LABELS = LINE_COLUMNS.merge(
+      "sacrifices" => "犠打・犠飛", "caught_stealing" => "盗塁死", "gidp" => "併殺打", "fielding_errors" => "失策"
+    ).freeze
+
+    # A line's FixSuggestion::LineState in words: "取り込み済み（差あり：安打 Scorebook 1 / 当サイト 0）".
+    def fix_suggestion_line_state_label(state)
+      case state.state
+      when :no_game then "—"
+      when :to_apply then "未反映"
+      when :applied then "反映済み"
+      when :imported_match then "取り込み済み（一致）"
+      when :imported_differs
+        details = state.differences.map { |field, scorebook, ours| "#{FIELD_LABELS.fetch(field.to_s, field.to_s)} Scorebook #{scorebook} / 当サイト #{ours}" }
+        "取り込み済み（差あり：#{details.join("、")}）"
+      end
+    end
 
     def fix_suggestion_kind_label(kind)
       KIND_LABELS.fetch(kind, kind)

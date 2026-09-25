@@ -21,4 +21,7 @@
 </ul>
 
 <h2 class="card-heading">修正の提案</h2>
-<p><%= link_to "未決定の提案（#{FixSuggestion.pending.count}件）→", admin_suggestions_path %></p>
+<p>
+  <%= link_to "未決定の提案（#{FixSuggestion.pending.count}件）→", admin_suggestions_path %>
+  <span class="muted">（ほかに<%= link_to "対応不要 #{FixSuggestion.where(status: "not_needed").count}件", admin_suggestions_path(status: "not_needed") %>）</span>
+</p>

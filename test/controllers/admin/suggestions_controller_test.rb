@@ -85,6 +85,36 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, Announcement.count
   end
 
+  test "a suggestion with nothing to add says so, and shows how each imported line compares" do
+    other = Player.create!(scorebook_id: 20234026, university: @hosei, name: "中村 騎士", enter_year: 2024)
+    @suggestion.lines.create!(player: other, scorebook_line_id: 11985, position: "[二]", values: { "pa" => 4, "hits" => 1 })
+    BattingLine.create!(game: @game, player: @player, university: @hosei, pa: 5, hits: 4)
+    BattingLine.create!(game: @game, player: other, university: @hosei, pa: 4, hits: 2)
+    admin = sign_in
+    @suggestion.decide!("approved", user: admin)
+
+    get admin_suggestion_path(@suggestion)
+
+    assert_select "form[action=?]", apply_admin_suggestion_path(@suggestion), 0
+    assert_select "p", /加える行はありません/
+    assert_select "tbody td", "取り込み済み（一致）"
+    assert_select "tbody td", "取り込み済み（差あり：安打 Scorebook 1 / 当サイト 2）"
+  end
+
+  test "a suggestion with nothing to fix is not needed, in its own tab, and says why" do
+    BattingLine.create!(game: @game, player: @player, university: @hosei, pa: 5, hits: 4)
+    @suggestion.classify!
+    sign_in
+
+    get admin_suggestions_path(status: "not_needed")
+    assert_select "a.period-btn.active", "対応不要（1）"
+    assert_select "tbody tr", 1
+
+    get admin_suggestion_path(@suggestion)
+    assert_select "p.flash", /対応不要/
+    assert_select "button[name=decision][value=discarded]", "却下"
+  end
+
   test "a pending suggestion can't be applied" do
     sign_in
 
