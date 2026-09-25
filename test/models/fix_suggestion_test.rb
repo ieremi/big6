@@ -170,7 +170,11 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal suggestion, notice.fix_suggestion
     assert_equal @real, notice.game
     assert_equal "2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました", notice.title
-    assert_match "2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が当サイトに入っていなかったため、2人分を補いました。", notice.body
+    assert_equal [
+      "2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が当サイトに入っていなかったため、次の2人分を補いました。",
+      "・藤森 康淳：5打席5打数4安打",
+      "・松下 歩叶：5打席5打数1安打"
+    ], notice.body.lines(chomp: true).first(3)
     assert_match "この試合（https://big6scorebook.jp/game/2025100502）の法大の打撃成績が同じ日の別の試合（https://big6scorebook.jp/game/2025100501）に登録されている", notice.body
 
     suggestion.unapply!
@@ -197,6 +201,13 @@ class FixSuggestionTest < ActiveSupport::TestCase
 
     suggestion.unapply!
     assert_equal 0, Announcement.count
+  end
+
+  test "a line in words gives its plate appearances, at-bats and hits, then the other counts that aren't 0 or unrecorded" do
+    line = FixSuggestionLine.new(values: { "pa" => 5, "ab" => 5, "hits" => 4, "doubles" => 1, "triples" => 0, "rbi" => 1, "runs" => nil, "stolen_bases" => 1, "strikeouts" => 0 })
+
+    assert_equal "5打席5打数4安打（二塁打1、打点1、盗塁1）", FixSuggestion.batting_summary(line)
+    assert_equal "4打席3打数0安打", FixSuggestion.batting_summary(FixSuggestionLine.new(values: { "pa" => 4, "ab" => 3, "hits" => 0 }))
   end
 
   test "a decision records who made it and when, and can be taken back" do

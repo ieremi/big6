@@ -16,6 +16,11 @@ class NewsHelperTest < ActionView::TestCase
     assert_includes html, %(href="https://example.com/?a=1&amp;b=2")
   end
 
+  test "linked_text keeps the line breaks" do
+    assert_equal "次の2人分を補いました。<br>・藤森 康淳：5打席5打数4安打<br>・松下 歩叶：5打席4打数1安打",
+      linked_text("次の2人分を補いました。\n・藤森 康淳：5打席5打数4安打\r\n・松下 歩叶：5打席4打数1安打")
+  end
+
   test "linked_text leaves text without URLs as it is" do
     assert_equal "補いました。", linked_text("補いました。")
     assert_equal "", linked_text(nil)

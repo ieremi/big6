@@ -107,7 +107,7 @@
   <% if (published = @suggestion.announcement) %>
     <p class="muted">掲載中のおしらせ（<%= published.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> 掲載<%= "、#{published.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M")} 更新" if published.revised? %>）：</p>
     <blockquote class="admin-notice">
-      <strong><%= published.title %></strong>
+      <strong><%= link_to published.title, news_item_path(published) %></strong>
       <p><%= linked_text(published.body) %></p>
     </blockquote>
   <% end %>
@@ -120,7 +120,7 @@
       <%= form.label :announcement_title, "タイトル" %>
       <%= form.text_field :announcement_title, value: default_title %>
       <%= form.label :announcement_body, "本文" %>
-      <%= form.text_area :announcement_body, value: default_body, rows: 4 %>
+      <%= form.text_area :announcement_body, value: default_body, rows: 10 %>
       <div class="period-toolbar">
         <%= form.button "成績に反映（#{to_apply_ids.size}人分）", class: "period-btn" %>
       </div>

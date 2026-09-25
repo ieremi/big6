@@ -175,17 +175,21 @@ class FixSuggestion < ApplicationRecord
   end
 
   # The notice's title and body as they would be with the lines applied so far
-  # and those still to apply:
+  # and those still to apply, one line of the body for each player's line:
   #
   #   2025年秋季 早大 vs 法大 2回戦 の法大の打撃成績を補いました
-  #   2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が入っていなかったため、
-  #   18人分を補いました。... Scorebook ...で、この試合（https://big6scorebook.jp/game/2025100502）
-  #   の法大の打撃成績が同じ日の別の試合（https://big6scorebook.jp/game/2025100501）に...
+  #
+  #   2025年10月5日の早大 vs 法大 2回戦で、法大の打撃成績が当サイトに入っていなかったため、次の2人分を補いました。
+  #   ・藤森 康淳：5打席5打数4安打（二塁打1、打点1、得点1、盗塁1）
+  #   ・松下 歩叶：5打席4打数1安打（三振1、四死球1）
+  #   当サイトの成績の元にしている Scorebook ... で、この試合（https://big6scorebook.jp/game/2025100502）
+  #   の法大の打撃成績が同じ日の別の試合（https://big6scorebook.jp/game/2025100501）に登録されているためです。
   #
   # The Scorebook pages of both games are given as URLs, which the notice's
   # page shows as links (NewsHelper#linked_text).
   def default_announcement
-    count = applied_batting_lines.count + lines_to_apply.size
+    applied_ids = applied_batting_lines.pluck(:player_id)
+    added = (lines.includes(:player).select { |line| applied_ids.include?(line.player_id) } + lines_to_apply).sort_by(&:id)
     match = "#{game.team0.short_name} vs #{game.team1.short_name} #{game.game_number}回戦"
     date = game.played_on.strftime("%Y年%-m月%-d日")
     school = university.short_name
@@ -194,9 +198,26 @@ class FixSuggestion < ApplicationRecord
 
     [
       "#{game.season.title} #{match} の#{school}の打撃成績を補いました",
-      "#{date}の#{match}で、#{school}の打撃成績が当サイトに入っていなかったため、#{count}人分を補いました。" \
+      [
+        "#{date}の#{match}で、#{school}の打撃成績が当サイトに入っていなかったため、次の#{added.size}人分を補いました。",
+        *added.map { |line| "・#{line.player.name}：#{self.class.batting_summary(line)}" },
         "当サイトの成績の元にしている Scorebook（東京六大学野球 公式記録室）で、#{this_game}の#{school}の打撃成績が#{other_game}に登録されているためです。"
+      ].join("\n")
     ]
+  end
+
+  # The counts a notice lists after a line's plate appearances, at-bats and
+  # hits, when not 0 (or not recorded).
+  SUMMARY_COUNTS = {
+    doubles: "二塁打", triples: "三塁打", home_runs: "本塁打", rbi: "打点", runs: "得点", strikeouts: "三振",
+    walks: "四死球", sacrifices: "犠打・犠飛", stolen_bases: "盗塁", gidp: "併殺打", fielding_errors: "失策"
+  }.freeze
+
+  # A FixSuggestionLine in words: "5打席5打数4安打（二塁打1、打点1、得点1、盗塁1）".
+  def self.batting_summary(line)
+    head = "#{line.value(:pa).to_i}打席#{line.value(:ab).to_i}打数#{line.value(:hits).to_i}安打"
+    rest = SUMMARY_COUNTS.filter_map { |field, label| "#{label}#{line.value(field)}" if line.value(field).to_i.positive? }
+    rest.empty? ? head : "#{head}（#{rest.join("、")}）"
   end
 
   # A game's page on Scorebook.

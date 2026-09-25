@@ -1606,3 +1606,8 @@ tr.bench-only td a {
   margin: 0.25rem 0 0;
   overflow-wrap: anywhere; /* a long URL wraps instead of widening the page */
 }
+
+/* A notice at its own URL (news/show). */
+.news-item p {
+  overflow-wrap: anywhere;
+}

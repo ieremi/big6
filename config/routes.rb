@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   get "api/docs", to: "api_docs#show", as: :api_docs
 
   get "news", to: "news#index", as: :news
+  get "news/:id", to: "news#show", as: :news_item, constraints: { id: /\d+/ }
 
   # Signing in (admins only for now, see LoginPolicy) and the admin pages.
   # OmniAuth itself answers POST /auth/:provider and sends the browser on to

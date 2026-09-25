@@ -20,6 +20,31 @@ class NewsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".news-list a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1), text: "試合のページへ →"
   end
 
+  test "each notice has its own page, linked from the list, and is in the sitemap" do
+    notice = publish("補いました", at: 1.day.ago, game: games(:one))
+    notice.update!(body: "次の1人分を補いました。\n・藤森 康淳：5打席5打数4安打（https://big6scorebook.jp/game/2026081001）")
+
+    get news_path
+    assert_select ".news-list h3 a[href=?]", news_item_path(notice), text: "補いました"
+
+    get news_item_path(notice)
+    assert_response :success
+    assert_select "h1", "補いました"
+    assert_select "title", "補いました - おしらせ - Big6"
+    assert_select ".news-item p br", 1
+    assert_select ".news-item p a[href=?]", "https://big6scorebook.jp/game/2026081001"
+    assert_select "a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1), text: "試合のページへ →"
+
+    get sitemap_path
+    assert_includes response.body, news_item_url(notice)
+  end
+
+  test "a notice that isn't there is not found" do
+    get news_item_path(id: 999_999)
+
+    assert_response :not_found
+  end
+
   test "the page says so when there are no notices" do
     get news_path
 

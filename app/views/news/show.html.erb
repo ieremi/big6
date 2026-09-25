@@ -1,0 +1,19 @@
+<%# One notice (Announcement) at its own URL. %>
+<%
+  content_for :title, "#{@announcement.title} - おしらせ - Big6"
+  content_for :description, @announcement.body.lines.first.to_s.strip
+%>
+
+<p><%= link_to "← おしらせ一覧", news_path %></p>
+
+<article class="news-item">
+  <p class="muted">
+    <%= @announcement.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %>
+    <% if @announcement.revised? %>（<%= @announcement.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %> 更新）<% end %>
+  </p>
+  <h1><%= @announcement.title %></h1>
+  <p><%= linked_text(@announcement.body) %></p>
+  <% if (game = @announcement.game) && game.game_number %>
+    <p><%= link_to "試合のページへ →", game_path(game) %></p>
+  <% end %>
+</article>

@@ -33,6 +33,10 @@ class SitemapsController < ApplicationController
       Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3")
     ]
 
+    Announcement.select(:id, :updated_at).find_each do |announcement|
+      entries << Entry.new(loc: news_item_url(announcement), lastmod: announcement.updated_at, changefreq: "monthly", priority: "0.3")
+    end
+
     universities.each do |u|
       entries << Entry.new(loc: university_url(u.slug), changefreq: "weekly", priority: "0.6")
     end
