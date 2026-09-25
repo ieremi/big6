@@ -30,7 +30,8 @@ class FixSuggestion < ApplicationRecord
   DECISIONS = %w[pending approved discarded].freeze # what an admin can set
 
   # Where a line stands against our batting lines in the guessed game:
-  # :no_game (no game guessed), :to_apply (not there yet), :applied (added by
+  # :no_game (no game guessed), :to_apply (not there yet), :stray (not there,
+  # and not to be: the player has a twin line, twin_of), :applied (added by
   # applying this suggestion), :imported_match or :imported_differs (imported
   # from Scorebook's game page, with the same values or not). differences lists
   # [field, Scorebook's value, ours] for :imported_differs.
@@ -70,15 +71,37 @@ class FixSuggestion < ApplicationRecord
       end
       next unless suggestion
 
-      suggestion.lines.find_or_create_by!(scorebook_line_id: line.line_id) do |record|
+      record = suggestion.lines.find_or_initialize_by(scorebook_line_id: line.line_id)
+      if record.new_record?
         record.player = player
         record.position = line.position
         record.values = line.values.transform_keys(&:to_s)
       end
+      # Set on lines recorded before too, as their players are checked again.
+      record.twin_scorebook_game_id = twin_of(line, lines)&.scorebook_game_id
+      record.save! if record.changed?
       suggestion
     end
 
     touched.uniq.each(&:classify!)
+  end
+
+  # The player's line of the same day filed under a game of the player's own
+  # university, when a line filed under the wrong game has one: then the
+  # wrong game's line isn't the player's missing line of that day, but some
+  # other box score that has strayed in.
+  def self.twin_of(line, lines)
+    lines.find do |other|
+      teams = Array(other.game_team_ids)
+      other.line_id != line.line_id && other.played_on == line.played_on && teams.uniq.size > 1 && teams.include?(line.team_id)
+    end
+  end
+
+  # Whether every line gathered has a twin (twin_of): the lines are a box score
+  # of another game that has strayed in under the wrong game, not lines our
+  # guessed game is missing, so they aren't to be added to it.
+  def stray?
+    lines.any? && lines.all?(&:twin_scorebook_game_id)
   end
 
   # Moves an undecided suggestion between pending and not_needed as its lines
@@ -113,7 +136,7 @@ class FixSuggestion < ApplicationRecord
     lines.map do |line|
       mine = ours[line.player_id]
       if mine.nil?
-        LineState.new(line: line, state: :to_apply, differences: [])
+        LineState.new(line: line, state: line.twin_scorebook_game_id ? :stray : :to_apply, differences: [])
       elsif mine.fix_suggestion_id == id
         LineState.new(line: line, state: :applied, ours: mine, differences: [])
       else
@@ -192,12 +215,13 @@ class FixSuggestion < ApplicationRecord
   end
 
   # The lines applying would add: those whose player has no batting line in the
-  # guessed game yet (one imported from Scorebook, or added before, stays).
+  # guessed game yet (one imported from Scorebook, or added before, stays),
+  # and that aren't strays (a line with a twin: another game's box score).
   def lines_to_apply
     return [] unless game
 
     have = BattingLine.where(game: game).pluck(:player_id)
-    lines.reject { |line| have.include?(line.player_id) }
+    lines.reject { |line| have.include?(line.player_id) || line.twin_scorebook_game_id }
   end
 
   # Adds the lines to our batting lines, as lines of the guessed game for the
@@ -366,6 +390,12 @@ class FixSuggestion < ApplicationRecord
     school = university.short_name
     opponent = (game.team0_id == university.id ? game.team1 : game.team0).short_name
     sentences = []
+
+    if stray?
+      twins = lines.map(&:twin_scorebook_game_id).uniq
+      sentences << "全員（#{lines.size}人）が同じ日に正しい試合（#{twins.join("、")}）にも登録された行を持つ。" \
+        "この行は別の試合の成績表が紛れ込んだものと考えられ、推測した試合に加えるべきではない。"
+    end
 
     states.select { |state| state.state == :imported_differs }.each do |state|
       details = state.differences.map { |field, scorebook, ours| "#{FIELD_NAMES.fetch(field, field)}：Scorebook 選手ページ #{scorebook} / 当サイト #{ours}" }

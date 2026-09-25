@@ -25,6 +25,7 @@ module Admin
       case state.state
       when :no_game then "—"
       when :to_apply then "未反映"
+      when :stray then "反映しない（同じ日に正しい試合 #{state.line.twin_scorebook_game_id} の行あり）"
       when :applied then "反映済み"
       when :imported_match then "取り込み済み（一致）"
       when :imported_differs
@@ -33,8 +34,12 @@ module Admin
       end
     end
 
-    def fix_suggestion_kind_label(kind)
-      KIND_LABELS.fetch(kind, kind)
+    # The kind in words; one whose lines have all strayed in from another game
+    # (FixSuggestion#stray?) is told apart.
+    def fix_suggestion_kind_label(suggestion)
+      return "別の試合の成績の紛れ込み（要確認）" if suggestion.stray?
+
+      KIND_LABELS.fetch(suggestion.kind, suggestion.kind)
     end
 
     def fix_suggestion_status_label(status)

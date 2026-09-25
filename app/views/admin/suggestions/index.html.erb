@@ -39,7 +39,7 @@
           <% filed = @filed_games[suggestion.scorebook_game_id] %>
           <tr>
             <td><%= link_to suggestion.played_on, admin_suggestion_path(suggestion) %></td>
-            <td><%= link_to fix_suggestion_kind_label(suggestion.kind), admin_suggestion_path(suggestion) %></td>
+            <td><%= link_to fix_suggestion_kind_label(suggestion), admin_suggestion_path(suggestion) %></td>
             <td><%= suggestion.university&.short_name %></td>
             <td><%= filed ? "#{filed.team0.short_name} vs #{filed.team1.short_name}" : suggestion.scorebook_game_id %></td>
             <td><%= suggestion.game ? "#{suggestion.game.team0.short_name} vs #{suggestion.game.team1.short_name} #{round_label(suggestion.game)}" : "—" %></td>

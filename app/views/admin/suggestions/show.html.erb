@@ -17,12 +17,15 @@
 <p><%= link_to "← 提案の一覧", admin_suggestions_path(status: @suggestion.status) %></p>
 <h1><%= fix_suggestion_title(@suggestion) %></h1>
 <p class="muted">
-  <%= fix_suggestion_kind_label(@suggestion.kind) %> ・ 確度：<%= fix_suggestion_confidence_label(@suggestion.confidence) %>
+  <%= fix_suggestion_kind_label(@suggestion) %> ・ 確度：<%= fix_suggestion_confidence_label(@suggestion.confidence) %>
   ・ 状態：<%= fix_suggestion_status_label(@suggestion.status) %>
   <% if @suggestion.decided_at %>（<%= @suggestion.decided_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> <%= @suggestion.decided_by&.email %>）<% end %>
 </p>
 <% if @suggestion.status == "not_needed" %>
   <p class="flash">対応不要：この提案の行は、推測した試合の打撃成績として当サイトにすでに同じ値で入っています（Scorebook の試合ページから取り込み済み）。Scorebook の選手ページだけが別の試合に登録している状態で、当サイトで直すものはありません。確認のうえ、却下して構いません。</p>
+<% end %>
+<% if @suggestion.stray? %>
+  <p class="flash flash-alert">別の試合の成績の紛れ込み：この提案の行の選手は全員、Scorebook の選手ページに、同じ日の正しい試合（<%= @suggestion.lines.map(&:twin_scorebook_game_id).uniq.join("、") %>）にも登録された行を持っています。この行は推測した試合の抜けた成績ではなく、別の試合の成績表が紛れ込んだものと考えられるため、反映の対象にしていません。確認のうえ、却下して構いません。</p>
 <% end %>
 
 <h2 class="card-heading">試合</h2>

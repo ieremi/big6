@@ -132,6 +132,20 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=note]", "自分のメモ"
   end
 
+  test "a suggestion whose lines strayed in from another game is told apart, and nothing is offered to apply" do
+    @suggestion.lines.sole.update!(twin_scorebook_game_id: 2026081702)
+    admin = sign_in
+
+    get admin_suggestions_path
+    assert_select "tbody td", "別の試合の成績の紛れ込み（要確認）"
+
+    @suggestion.decide!("approved", user: admin)
+    get admin_suggestion_path(@suggestion)
+    assert_select "p.flash-alert", /別の試合の成績の紛れ込み/
+    assert_select "tbody td", "反映しない（同じ日に正しい試合 2026081702 の行あり）"
+    assert_select "form[action=?]", apply_admin_suggestion_path(@suggestion), 0
+  end
+
   test "a pending suggestion can't be applied" do
     sign_in
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,6 +62,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_000002) do
     t.bigint "player_id", null: false
     t.string "position"
     t.bigint "scorebook_line_id", null: false
+    t.bigint "twin_scorebook_game_id"
     t.datetime "updated_at", null: false
     t.jsonb "values", default: {}, null: false
     t.index ["fix_suggestion_id"], name: "index_fix_suggestion_lines_on_fix_suggestion_id"

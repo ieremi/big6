@@ -300,6 +300,44 @@ class FixSuggestionTest < ActiveSupport::TestCase
     assert_equal "全員の打撃成績が推測した試合に同じ値で取り込み済み。Scorebook の選手ページだけの誤り。", suggestion.suggested_note
   end
 
+  # 藤森's lines of 2025-10-05 as for 田淵 幸一 of 1967-05-03: one filed under
+  # his own game, and another box score filed under the tokyo v keio game.
+  def lines_with_twin
+    own = ScorebookMemberStats::Line.new(scorebook_game_id: 2025100502, played_on: Date.new(2025, 10, 5), line_id: 14851, team_id: 4,
+      game_team_ids: [ 1, 4 ], values: { pa: 4, ab: 4, hits: 0, strikeouts: 3 })
+    [ own, line(14872, hits: 1) ]
+  end
+
+  test "a line whose player also has a line of that day filed under his own game is a stray, not to be applied" do
+    FixSuggestion.record_from(@fujimori, lines_with_twin)
+
+    suggestion = FixSuggestion.sole
+    assert_equal [ 2025100502 ], suggestion.lines.map(&:twin_scorebook_game_id)
+    assert suggestion.stray?
+    assert_equal [ :stray ], suggestion.line_states.map(&:state)
+    assert_empty suggestion.lines_to_apply
+    assert_equal "pending", suggestion.status
+    assert_match "全員（1人）が同じ日に正しい試合（2025100502）にも登録された行を持つ。この行は別の試合の成績表が紛れ込んだものと考えられ", suggestion.suggested_note
+
+    suggestion.decide!("approved", user: nil)
+    assert_equal 0, suggestion.apply!(user: nil)
+    assert_equal 0, BattingLine.count
+  end
+
+  test "a line recorded before is marked a stray when its player is checked again, and a line without a twin isn't one" do
+    FixSuggestion.record_from(@fujimori, [ line(14872) ]) # before twins were looked for
+    suggestion = FixSuggestion.sole
+    assert_nil suggestion.lines.sole.twin_scorebook_game_id
+    assert_not suggestion.stray?
+
+    FixSuggestion.record_from(@fujimori, lines_with_twin)
+    assert_equal 2025100502, suggestion.lines.sole.reload.twin_scorebook_game_id
+
+    FixSuggestion.record_from(@matsushita, [ line(11985) ]) # no twin: a line the game may be missing
+    assert_not suggestion.reload.stray?
+    assert_equal [ :stray, :to_apply ], suggestion.line_states.map(&:state)
+  end
+
   test "a decision records who made it and when, and can be taken back" do
     FixSuggestion.record_from(@fujimori, [ line(11984) ])
     suggestion = FixSuggestion.sole
