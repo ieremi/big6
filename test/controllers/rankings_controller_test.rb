@@ -157,8 +157,8 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "thead th a[href*=?]", "minimum=15", minimum: 12
     assert_select "input#minimum[value=?]", "15" # the form sends it again with the other filters
-    assert_select ".period-toolbar a.period-btn[href^=?]", ranking_path("pitching"), text: "投手"
-    assert_select ".period-toolbar a.period-btn[href*=?]", "minimum", count: 0 # neither the minimum nor its default
+    assert_select ".ranking-kinds a.period-btn[href^=?]", ranking_path("pitching"), text: "投手"
+    assert_select ".ranking-kinds a.period-btn[href*=?]", "minimum", count: 0 # neither the minimum nor its default
   end
 
   test "a minimum the form sends unchanged, beside its default, is not asked for: the period's default follows" do
@@ -253,6 +253,51 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody .team-chip", text: @alpha.initial
   end
 
+  # 13 batters: 8 with their own OPS (ranks 1 to 8), then 3 sharing the 9th
+  # place, then 2 below them (ranks 12 and 13).
+  def thirteen_batters
+    (1..8).each { |i| bat(player("上位#{i}"), game(@spring, i), total_bases: 30 - i) }
+    (1..3).each { |i| bat(player("九位#{i}"), game(@spring, 8 + i), total_bases: 20) }
+    (1..2).each { |i| bat(player("下位#{i}"), game(@spring, 11 + i), total_bases: 12 - i) }
+  end
+
+  test "the ranking shows the top 10 places at first, with everyone tied for the last of them" do
+    thirteen_batters
+
+    get rankings_url, params: { season: "2026-spring" }
+
+    assert_equal %w[1 2 3 4 5 6 7 8 9 9 9], css_select("tbody tr td:first-child").map(&:text)
+    assert_select "input#top[value=?]", "10"
+    assert_select "p.muted", /13人中、上位10位まで（11人、同順位を含む）/
+    assert_select "a.period-btn[href*=?]", "top=all", text: "すべて表示"
+  end
+
+  test "top sets how many places are shown, and a blank or all shows everyone" do
+    thirteen_batters
+
+    get rankings_url, params: { season: "2026-spring", top: 3 }
+    assert_equal %w[1 2 3], css_select("tbody tr td:first-child").map(&:text)
+    assert_select "a.period-btn", text: "上位10位に戻す"
+
+    [ "", "all", "0" ].each do |top|
+      get rankings_url, params: { season: "2026-spring", top: top }
+      assert_equal 13, ranked_names.size, "top=#{top.inspect}"
+      assert_select "input#top:not([value])"
+      assert_select "p.muted", /\A\s*13人\s*\z/
+    end
+  end
+
+  test "the places shown are kept by the sort links and the other kind's tab, and count in the sorted order" do
+    thirteen_batters
+
+    get rankings_url, params: { season: "2026-spring", top: 2 }
+    assert_select "thead th a[href*=?]", "top=2", minimum: 12
+    assert_select ".ranking-kinds a.period-btn[href*=?]", "top=2", text: "投手"
+
+    get rankings_url, params: { season: "2026-spring", top: 2, sort: "player", direction: "desc" }
+    assert_equal %w[九位3 九位2], ranked_names # names in reverse order: 九 (U+4E5D) comes before 下 and 上
+  end
+
   test "equal values share a rank on the page" do
     bat(player("同じ一"), game(@spring, 1))
     bat(player("同じ二"), game(@spring, 2))
@@ -266,15 +311,15 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "the ranking pages through 50 at a time" do
     (1..51).each { |i| bat(player("選手#{i.to_s.rjust(2, '0')}"), game(@spring, i), total_bases: 12 + i) }
 
-    get rankings_url, params: { season: "2026-spring" }
+    get rankings_url, params: { season: "2026-spring", top: "all" }
     assert_equal RankingsController::PER_PAGE, ranked_names.size
     assert_select "nav.pagination a[rel=next]"
 
-    get rankings_url, params: { season: "2026-spring", page: 2 }
+    get rankings_url, params: { season: "2026-spring", top: "all", page: 2 }
     assert_equal 1, ranked_names.size
     assert_select "nav.pagination a[rel=prev][href*=?]", "season=2026-spring"
 
-    get rankings_url, params: { season: "2026-spring", page: 99 }
+    get rankings_url, params: { season: "2026-spring", top: "all", page: 99 }
     assert_equal 1, ranked_names.size
   end
 
@@ -385,10 +430,10 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "the paging links keep the sort, and leave out an invalid one" do
     (1..51).each { |i| bat(player("選手#{i.to_s.rjust(2, '0')}"), game(@spring, i), total_bases: 12 + i) }
 
-    get rankings_url, params: { season: "2026-spring", sort: "hits", direction: "desc" }
+    get rankings_url, params: { season: "2026-spring", top: "all", sort: "hits", direction: "desc" }
     assert_select "nav.pagination a[rel=next][href*='sort=hits'][href*='direction=desc'][href*='page=2']"
 
-    get rankings_url, params: { season: "2026-spring", sort: "bogus" }
+    get rankings_url, params: { season: "2026-spring", top: "all", sort: "bogus" }
     assert_select "nav.pagination a[rel=next]"
     assert_select "nav.pagination a[rel=next][href*='sort=']", 0
   end
@@ -442,7 +487,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "the tab buttons are labelled 打者 and 投手" do
     get rankings_url
 
-    assert_equal %w[打者 投手], css_select(".period-toolbar a.period-btn").map { |a| a.text.strip }
+    assert_equal %w[打者 投手], css_select(".ranking-kinds a.period-btn").map { |a| a.text.strip }
   end
 
   test "equal values in the sorted column share a rank on the page, and sorting by rank keeps the official ranks" do

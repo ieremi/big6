@@ -21,7 +21,12 @@ class RankingsController < ApplicationController
     @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"
     @direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(@kind, @sort)
     @custom_sort = @sort != "rank" || @direction != "asc" # anything but the ranking's own order
-    entries = ranking.entries_sorted_by(@sort, @direction)
+    sorted = ranking.entries_sorted_by(@sort, @direction)
+    @ranked_count = sorted.size
+    # The top 10 places at first (ties included); top= changes how many, and a
+    # blank or "all" shows every one.
+    @top = PlayerRanking.top_from(params[:top])
+    entries = PlayerRanking.within_top(sorted, @top)
     @total_count = entries.size
     @last_page = [ (@total_count / PER_PAGE.to_f).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @last_page)

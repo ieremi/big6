@@ -95,6 +95,30 @@ class PlayerRanking
     DEFAULT_MINIMUMS.fetch(kind).fetch(season ? :season : :career)
   end
 
+  # How many places a ranking shows at first: the top 10 (and anyone tied with
+  # the 10th, see within_top).
+  DEFAULT_TOP = 10
+
+  # The places to show from a request parameter: a whole number of them, nil
+  # for all of them (a blank, "all" or 0), and DEFAULT_TOP when there is no
+  # parameter at all (or it isn't a number).
+  def self.top_from(value)
+    return DEFAULT_TOP if value.nil?
+
+    string = value.to_s.strip
+    return nil if string.empty? || string == "all"
+    return DEFAULT_TOP unless string.match?(/\A\d+\z/)
+
+    string.to_i.zero? ? nil : string.to_i
+  end
+
+  # The entries in the first top places, in the order they are sorted in: rank
+  # top or better, so that the players tied for the last place are all in, even
+  # past top of them. top nil is every entry.
+  def self.within_top(entries, top)
+    top ? entries.select { |entry| entry.rank <= top } : entries
+  end
+
   # A minimum from a request parameter: a whole number, or nil (so that the default
   # applies) for anything else, including a blank.
   def self.minimum_from(value)

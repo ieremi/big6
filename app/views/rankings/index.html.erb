@@ -7,7 +7,7 @@
 
 <h1><%= kind_title %></h1>
 
-<div class="period-toolbar">
+<div class="period-toolbar ranking-kinds">
   <% RankingsHelper::KIND_LABELS.each do |kind, label| %>
     <%= link_to label, rankings_kind_path(kind), class: [ "period-btn", ("active" if @kind == kind) ] %>
   <% end %>
@@ -63,6 +63,22 @@
     </div>
   </fieldset>
 
+  <fieldset>
+    <legend>表示する順位</legend>
+    <div class="period-toolbar">
+      <%# Blank (or all) shows everyone; the top place is shared by all tied for it. %>
+      上位 <%= number_field_tag :top, @top, min: 1, step: 1, placeholder: "すべて", "aria-label": "上位何位まで表示するか" %> 位まで
+      <% if @top %>
+        <%= link_to "すべて表示", ranking_path(@kind, rankings_filter_params.merge("top" => "all")), class: "period-btn" %>
+      <% else %>
+        <span class="muted">（すべて表示）</span>
+      <% end %>
+      <% unless @top == PlayerRanking::DEFAULT_TOP %>
+        <%= link_to "上位#{PlayerRanking::DEFAULT_TOP}位に戻す", ranking_path(@kind, rankings_filter_params.except("top")), class: "period-btn" %>
+      <% end %>
+    </div>
+  </fieldset>
+
   <% if @custom_sort %>
     <%= hidden_field_tag :sort, @sort %>
     <%= hidden_field_tag :direction, @direction %>
@@ -79,7 +95,11 @@
 </p>
 
 <p class="muted">
-  <%= number_with_delimiter(@total_count) %>人
+  <% if @top && @total_count < @ranked_count %>
+    <%= number_with_delimiter(@ranked_count) %>人中、上位<%= @top %>位まで（<%= number_with_delimiter(@total_count) %>人、同順位を含む）
+  <% else %>
+    <%= number_with_delimiter(@total_count) %>人
+  <% end %>
   <% if @last_page > 1 %>（<%= @page %> / <%= @last_page %> ページ）<% end %>
 </p>
 

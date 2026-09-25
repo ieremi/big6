@@ -390,6 +390,25 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_raises(KeyError) { PlayerRanking.default_direction("batting", "nope") }
   end
 
+  test "top_from reads how many places to show: 10 when not asked, every one for a blank, all or 0" do
+    assert_equal 10, PlayerRanking.top_from(nil)
+    assert_equal 25, PlayerRanking.top_from("25")
+    assert_equal 5, PlayerRanking.top_from(" 5 ")
+    assert_nil PlayerRanking.top_from("")
+    assert_nil PlayerRanking.top_from("all")
+    assert_nil PlayerRanking.top_from("0")
+    assert_equal 10, PlayerRanking.top_from("-3")
+    assert_equal 10, PlayerRanking.top_from("ten")
+  end
+
+  test "within_top keeps the entries ranked in the first places, those tied for the last included" do
+    entries = [ 1, 2, 2, 4, 4, 4, 7 ].map { |rank| PlayerRanking::Entry.new(rank, nil, nil, rank) }
+
+    assert_equal [ 1, 2, 2 ], PlayerRanking.within_top(entries, 2).map(&:rank)
+    assert_equal [ 1, 2, 2, 4, 4, 4 ], PlayerRanking.within_top(entries, 4).map(&:rank)
+    assert_equal 7, PlayerRanking.within_top(entries, nil).size
+  end
+
   test "every kind lists its sortable columns in table order" do
     assert_equal %w[rank player university ops average obp slg games pa ab hits home_runs], PlayerRanking.sort_keys("batting")
     assert_equal %w[rank player university era games outs wins losses hits strikeouts walks earned_runs], PlayerRanking.sort_keys("pitching")
