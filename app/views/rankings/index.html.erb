@@ -1,6 +1,6 @@
 <%
   kind_title = @kind == "batting" ? "打者ランキング" : "投手ランキング"
-  period_title = @season ? @season.title : "通算"
+  period_title = ranking_period_title
   content_for :title, "#{kind_title}（#{period_title}） - Big6"
   content_for :description, "東京六大学野球の#{kind_title}（#{period_title}、#{ranking_target_label(@kind, @minimum)}）"
 %>
@@ -17,7 +17,11 @@
   <fieldset>
     <legend>期間</legend>
     <%= select_tag :season,
-          options_for_select([ [ "通算", "" ] ] + @seasons.map { |season| [ season.title, "#{season.year}-#{season.term}" ] }, @season && "#{@season.year}-#{@season.term}"),
+          options_for_select(
+            (@complete_since ? [ [ "#{@complete_since.title}以降（全試合のデータあり）", "complete" ] ] : []) +
+              [ [ "通算", "" ] ] + @seasons.map { |season| [ season.title, "#{season.year}-#{season.term}" ] },
+            { season: @season && "#{@season.year}-#{@season.term}", complete: "complete", career: "" }.fetch(@period)
+          ),
           "aria-label": "期間" %>
   </fieldset>
 
@@ -88,11 +92,21 @@
 <% end %>
 
 <p class="muted">
-  <%= @season ? "シーズン" : "通算" %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @minimum.zero? %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
+  <%= @period == :season ? "シーズン" : ranking_period_title %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @minimum.zero? %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
   Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。
+  <% if @missing_seasons.any? %>
+    Scorebook には、試合ごとのデータがないシーズンが<%= @missing_seasons.size %>あります。<% if @period == :career %>通算では、その期間にいた選手の成績が実際より少なくなります（名前の横に「一部データなし」）。<% end %><% if @complete_since %>全試合のデータがそろっているのは<%= @complete_since.title %>以降です。<% end %>
+  <% end %>
   <% if @kind == "batting" %>OPS ＝ 出塁率 ＋ 長打率（出塁率は犠飛を含めない簡易式です）。<% end %>
   見出しをクリックすると並べ替えられ、順位もその列の順につけ直されます（同じ値は同順位）。
 </p>
+
+<% if @missing_seasons.any? %>
+  <details class="missing-seasons">
+    <summary class="muted">データのないシーズン（<%= @missing_seasons.size %>）</summary>
+    <p class="muted"><%= season_ranges(@missing_seasons).join("、") %></p>
+  </details>
+<% end %>
 
 <p class="muted">
   <% if @top && @total_count < @ranked_count %>
@@ -118,7 +132,12 @@
           <% totals = entry.totals %>
           <tr>
             <td><%= entry.rank %></td>
-            <td><%= link_to entry.player.name, player_path(entry.player) %></td>
+            <td>
+              <%= link_to entry.player.name, player_path(entry.player) %>
+              <% if @period == :career && (missing = ranking_missing_seasons(entry.player)).any? %>
+                <span class="season-tag" title="データなし：<%= missing.join("、") %>">一部データなし</span>
+              <% end %>
+            </td>
             <td>
               <span class="team-chip" style="background: <%= entry.player.university.color %>"><%= entry.player.university.initial %></span>
               <%= entry.player.university.short_name %>

@@ -74,17 +74,19 @@ class PlayerRanking
   NO_TIES = %w[player university].freeze
   TIE_DIGITS = { "ops" => 3, "average" => 3, "obp" => 3, "slg" => 3, "era" => 2 }.freeze
 
-  attr_reader :kind, :season
+  attr_reader :kind, :season, :since
 
-  # kind is "batting" or "pitching". season nil ranks whole careers.
+  # kind is "batting" or "pitching". season nil ranks whole careers, or with
+  # since (a Season) only the seasons from it on (complete_since).
   # university_ids nil means any university. minimum nil is the default one.
   # active_only leaves out anyone no longer on their team's roster (a graduate,
   # most often), so a career ranking can be narrowed to who could play today.
-  def initialize(kind, season: nil, university_ids: nil, minimum: nil, active_only: false)
+  def initialize(kind, season: nil, since: nil, university_ids: nil, minimum: nil, active_only: false)
     raise ArgumentError, "unknown ranking: #{kind.inspect}" unless KINDS.include?(kind)
 
     @kind = kind
     @season = season
+    @since = since unless season
     @university_ids = university_ids&.map(&:to_i)
     @minimum = minimum && Integer(minimum).clamp(0, MAX_MINIMUM)
     @active_only = ActiveModel::Type::Boolean.new.cast(active_only)
@@ -179,11 +181,57 @@ class PlayerRanking
   end
 
   # Seasons that have any stats of the kind, newest first, for choosing a period.
+  # Seasons in time order: spring, then autumn, of each year.
+  def self.chronological_key(season)
+    [ season.year, season.term == "autumn" ? 1 : 0 ]
+  end
+
+  # The seasons up to the latest with stats that have none, oldest first: the
+  # ones Scorebook has no per-game box scores for (most before 1977, and
+  # 2010-11 and 2014-16 as of 2026), so a career spanning them is counted short.
+  def self.seasons_without_stats(kind)
+    with = seasons_with_stats(kind).select(:id, :year, :term).to_a
+    return [] if with.empty?
+
+    latest = chronological_key(with.first)
+    have = with.map(&:id).to_set
+    Season.select(:id, :year, :term).to_a.sort_by { |season| chronological_key(season) }
+      .select { |season| (chronological_key(season) <=> latest) <= 0 && !have.include?(season.id) }
+  end
+
+  # The first season of the stretch since the last season without stats: from
+  # it on every season has them, so a ranking over it is complete. nil when no
+  # season lacks stats (the whole career is complete then).
+  def self.complete_since(kind)
+    last_missing = seasons_without_stats(kind).last or return nil
+
+    seasons_with_stats(kind).select(:id, :year, :term).to_a
+      .select { |season| (chronological_key(season) <=> chronological_key(last_missing)).positive? }
+      .min_by { |season| chronological_key(season) }
+  end
+
+  # The seasons a player entering in enter_year could have played in: four
+  # years, spring and autumn, as [year, term].
+  def self.career_seasons(enter_year)
+    (enter_year..(enter_year + 3)).flat_map { |year| [ [ year, "spring" ], [ year, "autumn" ] ] }
+  end
+
   def self.seasons_with_stats(kind)
-    line_class = kind == "batting" ? BattingLine : PitchingLine
     # Newest first: within a year the autumn season is the later one (term: :desc would put spring first).
-    Season.where(id: Game.where(id: line_class.select(:game_id), counted_in_stats: true).select(:season_id))
+    Season.where(id: season_ids_with_stats(kind))
       .order(Arel.sql("seasons.year DESC, CASE seasons.term WHEN 'autumn' THEN 1 ELSE 0 END DESC"))
+  end
+
+  # The ids of the seasons with stats of the kind. Finding them goes through
+  # every line, and the rankings page needs them three times over (the season
+  # choices, the seasons without stats, the complete stretch), so they are
+  # cached until the lines change.
+  def self.season_ids_with_stats(kind)
+    line_class = kind == "batting" ? BattingLine : PitchingLine
+    key = [ "player_ranking/season_ids", kind, line_class.maximum(:updated_at)&.to_i, line_class.count ].join("/")
+    Rails.cache.fetch(key, expires_in: 6.hours) do
+      Game.where(id: line_class.select(:game_id), counted_in_stats: true).distinct.pluck(:season_id)
+    end
   end
 
   private
@@ -194,7 +242,7 @@ class PlayerRanking
 
   def cache_key
     [
-      "player_ranking/entries/v1", kind, season&.id || "career",
+      "player_ranking/entries/v2", kind, season&.id || (@since && "since-#{@since.id}") || "career",
       @university_ids&.sort&.join(","), minimum, @active_only, line_class.maximum(:updated_at)&.to_i
     ].join("/")
   end
@@ -204,6 +252,7 @@ class PlayerRanking
   def totals_by_player
     lines = line_class.joins(:game).where(games: { counted_in_stats: true })
     lines = lines.where(games: { season_id: season.id }) if season
+    lines = lines.where(games: { season_id: seasons_since(@since).select(:id) }) if @since
     lines = lines.where(university_id: @university_ids) unless @university_ids.nil?
     lines = lines.where(player_id: Player.active.select(:id)) if @active_only
 
@@ -219,6 +268,12 @@ class PlayerRanking
   end
 
   # HAVING for the minimum: plate appearances, or innings (3 outs each).
+  # The seasons from since on: a later year, or its own year from its term.
+  def seasons_since(since)
+    terms = since.term == "spring" ? %w[spring autumn] : %w[autumn]
+    Season.where("year > :year OR (year = :year AND term IN (:terms))", year: since.year, terms: terms)
+  end
+
   def minimum_condition
     kind == "batting" ? "SUM(batting_lines.pa) >= #{minimum}" : "SUM(pitching_lines.outs) >= #{minimum * 3}"
   end

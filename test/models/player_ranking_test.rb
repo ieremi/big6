@@ -390,6 +390,29 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_raises(KeyError) { PlayerRanking.default_direction("batting", "nope") }
   end
 
+  test "the seasons without stats are those up to the latest with stats that have none, and the complete stretch starts after the last of them" do
+    seasons = %w[2024-autumn 2025-spring 2025-autumn].to_h { |key| year, term = key.split("-"); [ key, Season.create!(year: year.to_i, term: term) ] }
+    university = universities(:one)
+    player = Player.create!(scorebook_id: 60_000_001, university: university, name: "選手", enter_year: 2023)
+    { "2024-autumn" => 5, "2025-autumn" => 7 }.each_with_index do |(key, hits), index|
+      game = Game.create!(season: seasons[key], team0: university, team1: universities(:two), played_on: Date.new(2020, 1, 1) + index, game_number: index + 1)
+      BattingLine.create!(game: game, player: player, university: university, pa: 30, ab: 30, hits: hits)
+    end
+
+    assert_equal [ "2025年春季" ], PlayerRanking.seasons_without_stats("batting").map(&:title) # 2026 (the fixtures) is after the latest
+    assert_equal "2025年秋季", PlayerRanking.complete_since("batting").title
+    assert_nil PlayerRanking.complete_since("pitching") # no pitching stats: nothing lacks them
+
+    since = PlayerRanking.new("batting", since: seasons["2025-autumn"], minimum: 0).entries.sole
+    career = PlayerRanking.new("batting", minimum: 0).entries.sole
+    assert_equal [ 7, 12 ], [ since.totals.hits, career.totals.hits ]
+  end
+
+  test "a player's four years are eight seasons from the spring he entered" do
+    assert_equal [ [ 2023, "spring" ], [ 2023, "autumn" ], [ 2026, "autumn" ] ], PlayerRanking.career_seasons(2023).values_at(0, 1, -1)
+    assert_equal 8, PlayerRanking.career_seasons(2023).size
+  end
+
   test "top_from reads how many places to show: 10 when not asked, every one for a blank, all or 0" do
     assert_equal 10, PlayerRanking.top_from(nil)
     assert_equal 25, PlayerRanking.top_from("25")

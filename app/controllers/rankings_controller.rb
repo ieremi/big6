@@ -4,7 +4,16 @@ class RankingsController < ApplicationController
   def index
     @kind = PlayerRanking::KINDS.include?(params[:kind]) ? params[:kind] : "batting"
     @seasons = PlayerRanking.seasons_with_stats(@kind).to_a
-    @season = @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] } # nil ranks whole careers
+    @missing_seasons = PlayerRanking.seasons_without_stats(@kind)
+    @complete_since = PlayerRanking.complete_since(@kind)
+    # The period: one season (season=2026-spring), the whole career (season=, as
+    # the 通算 choice sends it), or, with no season at all, the stretch from
+    # which every season has per-game stats (complete_since), so that a player's
+    # totals aren't short of seasons Scorebook has no box scores for. Without
+    # any such gap, that stretch is the whole career.
+    @season = @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] }
+    @since = @complete_since if @season.nil? && (params[:season].nil? || params[:season] == "complete")
+    @period = @season ? :season : (@since ? :complete : :career)
     @universities = University.order(:position)
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
     @active_only = params[:active_only].present?
@@ -17,7 +26,7 @@ class RankingsController < ApplicationController
     asked = PlayerRanking.minimum_from(params[:minimum])
     @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
-    ranking = PlayerRanking.new(@kind, season: @season, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
+    ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
     @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"
     @direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(@kind, @sort)
     @custom_sort = @sort != "rank" || @direction != "asc" # anything but the ranking's own order

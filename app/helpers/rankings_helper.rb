@@ -17,6 +17,30 @@ module RankingsHelper
     ]
   }.freeze
 
+  # "2017年春季以降", "通算" or "2026年春季": the period a ranking is over.
+  def ranking_period_title
+    case @period
+    when :season then @season.title
+    when :complete then "#{@since.title}以降"
+    else "通算"
+    end
+  end
+
+  # Seasons as runs of consecutive ones: "1925年春季〜1976年秋季", "2010年春季〜2011年秋季".
+  def season_ranges(seasons)
+    runs = seasons.slice_when { |a, b| next_season_key(a) != [ b.year, b.term ] }
+    runs.map { |run| run.size == 1 ? run.first.title : "#{run.first.title}〜#{run.last.title}" }
+  end
+
+  # The seasons of the player's four years that have no per-game stats (titles),
+  # for a career ranking: his totals are short of them. [] without an entry year.
+  def ranking_missing_seasons(player)
+    return [] unless player.enter_year
+
+    @missing_season_titles ||= @missing_seasons.to_h { |season| [ [ season.year, season.term ], season.title ] }
+    PlayerRanking.career_seasons(player.enter_year).filter_map { |key| @missing_season_titles[key] }
+  end
+
   # "打席" for batters, "投球回" for pitchers: what a ranking's volume is counted in.
   def ranking_unit(kind)
     kind == "batting" ? "打席" : "投球回"
@@ -59,6 +83,11 @@ module RankingsHelper
   end
 
   private
+
+  # The season after one: its year's autumn after spring, the next year's spring after autumn.
+  def next_season_key(season)
+    season.term == "spring" ? [ season.year, "autumn" ] : [ season.year + 1, "spring" ]
+  end
 
   # The period and university filters from the request, without paging or sorting.
   def rankings_filter_params

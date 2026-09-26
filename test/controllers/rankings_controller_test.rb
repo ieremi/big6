@@ -253,6 +253,54 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody .team-chip", text: @alpha.initial
   end
 
+  # A gap: 2025 spring has no per-game stats, 2025 autumn and 2026 spring have.
+  # 古株 batted in 2025 autumn and 2026 spring, 新人 only in 2026 spring.
+  def seasons_with_a_gap
+    Season.create!(year: 2025, term: "spring")
+    autumn = Season.create!(year: 2025, term: "autumn")
+    veteran = player("古株")
+    bat(veteran, game(autumn, 1), pa: 30, hits: 20, total_bases: 30)
+    bat(veteran, game(@spring, 2), pa: 30)
+    bat(player("新人"), game(@spring, 3), pa: 50)
+  end
+
+  test "with seasons lacking stats, the ranking is at first over the stretch since the last of them" do
+    seasons_with_a_gap
+
+    get rankings_url
+
+    assert_select "select#season option[selected][value=complete]", "2025年秋季以降（全試合のデータあり）"
+    assert_select "title", /（2025年秋季以降）/
+    assert_equal %w[古株 新人], ranked_names # both over 40 plate appearances from 2025 autumn on
+    assert_select "p.muted", /全試合のデータがそろっているのは2025年秋季以降です/
+    assert_select ".season-tag", 0 # nobody is short in a complete stretch
+
+    get rankings_url, params: { season: "complete" }
+    assert_equal %w[古株 新人], ranked_names
+  end
+
+  test "the career ranking marks players whose four years include a season without stats, and lists those seasons" do
+    seasons_with_a_gap
+
+    get rankings_url, params: { season: "" }
+
+    assert_select "select#season option[selected]", "通算"
+    assert_select "td .season-tag[title=?]", "データなし：2025年春季", text: "一部データなし", count: 2
+    assert_select "details.missing-seasons summary", "データのないシーズン（1）"
+    assert_select "details.missing-seasons p", "2025年春季"
+    assert_select "p.muted", /通算では、その期間にいた選手の成績が実際より少なくなります/
+  end
+
+  test "without any season lacking stats, the ranking is over the whole career as before" do
+    bat(player("選手"), game(@spring, 1), pa: 50)
+
+    get rankings_url
+
+    assert_select "select#season option[value=complete]", 0
+    assert_select "select#season option[selected]", "通算"
+    assert_select "details.missing-seasons", 0
+  end
+
   # 13 batters: 8 with their own OPS (ranks 1 to 8), then 3 sharing the 9th
   # place, then 2 below them (ranks 12 and 13).
   def thirteen_batters
