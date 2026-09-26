@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -93,6 +93,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
     t.index ["key"], name: "index_fix_suggestions_on_key", unique: true
     t.index ["status", "played_on"], name: "index_fix_suggestions_on_status_and_played_on"
     t.index ["university_id"], name: "index_fix_suggestions_on_university_id"
+  end
+
+  create_table "game_check_reviews", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.text "note"
+    t.bigint "reviewed_by_id"
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_game_check_reviews_on_key", unique: true
+    t.index ["reviewed_by_id"], name: "index_game_check_reviews_on_reviewed_by_id"
   end
 
   create_table "game_members", force: :cascade do |t|
@@ -285,6 +295,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
   add_foreign_key "fix_suggestions", "universities"
   add_foreign_key "fix_suggestions", "users", column: "applied_by_id"
   add_foreign_key "fix_suggestions", "users", column: "decided_by_id"
+  add_foreign_key "game_check_reviews", "users", column: "reviewed_by_id"
   add_foreign_key "game_members", "games"
   add_foreign_key "game_members", "players"
   add_foreign_key "game_members", "universities"

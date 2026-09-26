@@ -86,6 +86,16 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 - The admin pages live under `Admin::` and inherit from `Admin::BaseController` (`require_admin`, plus `X-Robots-Tag: noindex`). Public pages have no links to `/login` or `/admin`, and `robots.txt` disallows both.
 - In development, OmniAuth's `developer` strategy (enter an email address) is also enabled, so you can sign in without Google. `ADMIN_EMAILS` still applies.
 - Tests use OmniAuth's test mode (`OmniAuth.config.mock_auth`). Integration tests can sign in with `sign_in` from `test_helper.rb` (`admin: false` signs in an ordinary user).
+- **Games data check** (`GameDataCheck`, `/admin/game_checks`): this runs sanity checks over the `games` table only, with no network access, and changes nothing. It flags:
+  - a university with two games on one day
+  - a game whose two sides are the same university
+  - a university playing a different opponent within 2 days
+  - a series with repeated or missing round numbers
+  - a series with games after one side already has 2 wins
+  - a series that ended with neither side at 2 wins
+  - a season whose number of pairings is wrong
+
+  Many findings are legitimate exceptions (the schedules of the 1940s, playoffs, replays). An admin marks those as reviewed (`GameCheckReview`, keyed like the finding), and reviewed findings are hidden from the list. The 2020 seasons (`SPECIAL_FORMATS`) are excluded from the series and opponent checks.
 - **Fix suggestions** (`FixSuggestion` / `FixSuggestionLine`, `/admin/suggestions`):
   - When `CheckScorebookStatsJob` reads a player's Scorebook page, it looks for lines filed under the wrong game. If the line's university is neither side of the game, it guesses that the line belongs to that university's game on the same day (`misfiled_lines`). A game whose two sides are the same university is listed for review (`same_team_game`).
   - A suggestion collects its lines from each player's page as the job checks them. Players on the guessed game's roster are checked first, so the whole team's lines arrive sooner.

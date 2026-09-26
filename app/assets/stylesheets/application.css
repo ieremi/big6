@@ -1611,3 +1611,26 @@ tr.bench-only td a {
 .news-item p {
   overflow-wrap: anywhere;
 }
+
+/* The games data check (admin/game_checks). */
+.game-check-games {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.2rem;
+}
+
+.game-check-review {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.game-check-review input[type="text"] {
+  flex: 1 1 16rem;
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}

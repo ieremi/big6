@@ -1,0 +1,69 @@
+<%# The findings of the games data check (GameDataCheck), a collapsible section per kind. Each can be marked fine (GameCheckReview) with a note; nothing here changes the games. %>
+<%
+  content_for :title, "試合データの点検 - 管理画面 - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+%>
+
+<p><%= link_to "← 管理画面", admin_path %></p>
+<h1>試合データの点検</h1>
+
+<p class="muted">
+  当サイトの試合データ（Scorebook から取り込んだもの）で、おかしいかもしれない点の一覧です。昔の日程や優勝決定戦・再試合など、正常な例外も多く含まれます。
+  正常なものは「確認済み（正常）」にすると一覧から外れます。ここでは試合データは変わりません。
+  2020年（<%= GameDataCheck::SPECIAL_FORMATS.values.join("・") %>）は、カードの勝敗の点検から外しています。
+</p>
+
+<div class="period-toolbar">
+  <% if @show_reviewed %>
+    <%= link_to "確認済みを隠す", admin_game_checks_path, class: "period-btn" %>
+  <% else %>
+    <%= link_to "確認済みも表示", admin_game_checks_path(reviewed: 1), class: "period-btn" %>
+  <% end %>
+</div>
+
+<% GameDataCheck::KINDS.each do |kind, label| %>
+  <% total, reviewed = @counts.fetch(kind, [ 0, 0 ]) %>
+  <% findings = @findings_by_kind.fetch(kind, []) %>
+  <%= tag.details class: "decade", id: kind, open: (true if params[:kind] == kind) do %>
+    <summary><%= label %>（<%= total - reviewed %>件<%= "、確認済み #{reviewed}件" if reviewed.positive? %>）</summary>
+    <% if findings.empty? %>
+      <p class="muted"><%= total.zero? ? "見つかりませんでした。" : "すべて確認済みです。" %></p>
+    <% else %>
+      <ul class="news-list">
+        <% findings.each do |finding| %>
+          <% review = @reviews[finding.key] %>
+          <li>
+            <span class="muted"><%= finding.season.title %></span>
+            <h3><%= finding.message %></h3>
+            <% if finding.games.any? %>
+              <ul class="game-check-games">
+                <% finding.games.each do |game| %>
+                  <li>
+                    <%= fix_suggestion_game_link(game) %>
+                    <% if game.scorebook_game_id %>（<%= link_to "Scorebook", scorebook_game_page_url(game.scorebook_game_id), target: "_blank", rel: "noopener" %><% if game.game_number && (official = league_official_game_url(game)) %>・<%= link_to "連盟", official, target: "_blank", rel: "noopener" %><% end %>）<% end %>
+                    <% unless game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% end %>
+            <% if review %>
+              <p class="muted">
+                確認済み（正常）<%= "：#{review.note}" if review.note.present? %>
+                （<%= review.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %> <%= review.reviewed_by&.email %>）
+              </p>
+              <%= button_to "確認済みを取り消す", admin_review_game_check_path, params: { key: finding.key, remove: 1, kind: kind, reviewed: (1 if @show_reviewed) }, class: "period-btn" %>
+            <% else %>
+              <%= form_with url: admin_review_game_check_path, method: :post, class: "game-check-review" do |form| %>
+                <%= hidden_field_tag :key, finding.key %>
+                <%= hidden_field_tag :kind, kind %>
+                <%= hidden_field_tag :reviewed, 1 if @show_reviewed %>
+                <%= form.text_field :note, placeholder: "メモ（例：優勝決定戦、ダブルヘッダー）", "aria-label": "メモ" %>
+                <%= form.button "確認済み（正常）にする", class: "period-btn" %>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+<% end %>

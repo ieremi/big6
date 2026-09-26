@@ -20,6 +20,9 @@
   <li><strong><%= number_with_delimiter(ScorebookStatsDifference.where(kind: ScorebookStatsDifference::NOT_COUNTED_KINDS).distinct.count(:scorebook_game_id)) %></strong>成績未取り込みの試合</li>
 </ul>
 
+<h2 class="card-heading">試合データの点検</h2>
+<p><%= link_to "試合データの点検 →", admin_game_checks_path %> <span class="muted">（同じ日の2試合、回戦番号の抜け・重複など。見るだけで、試合データは変えません）</span></p>
+
 <h2 class="card-heading">修正の提案</h2>
 <p>
   <%= link_to "未決定の提案（#{FixSuggestion.pending.count}件）→", admin_suggestions_path %>
