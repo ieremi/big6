@@ -13,13 +13,19 @@ require "json"
 # already have for it is marked, or one is added. A game listed as scheduled would
 # otherwise stay "試合前" for good.
 #
-# The entries made for the replay of a cancelled game can carry the wrong round
-# label (Scorebook has called the replay of a 2回戦 "1回戦"). So once a pair has
-# had a game cancelled in the season, a label for a round number the pair has
-# already played isn't trusted: the game gets the next number instead. (Before
-# then, and in other pairs, a repeated label is left alone, as in the old
-# seasons where a round was replayed under its own number, and a playoff, which
-# is a series of its own.)
+# Once a pair has had a game cancelled in the season, Scorebook's round labels
+# aren't trusted for its later games: each is numbered in the order the pair
+# plays, the next number after those already played, as the league's site
+# numbers them (the game that would have been cancelled's number goes to the
+# next one played). Scorebook keeps the labels of the schedule as first drawn
+# up: after the 1回戦 of 2026-09-26 was called off, it still called the next
+# day's game "2回戦" and the replay the day after "1回戦", while the league's
+# site called them 1回戦 and 2回戦 (and its box score of the game is found
+# only under that number, see LeagueOfficialGameScraper). It has also called
+# the replay of a 2回戦 "1回戦". (Before any cancellation, and in other pairs,
+# the labels are kept, a repeated one included, as in the old seasons where a
+# round was replayed under its own number, and a playoff, which is a series of
+# its own.)
 class ScorebookSync
   API_URL = URI("https://big6scorebook.jp/api/game/search")
 
@@ -115,7 +121,7 @@ class ScorebookSync
 
       match = info["round"].to_s.match(/(\d+)回戦/)
       game_number = match ? match[1].to_i : pair_round_counts[pair_key] + 1
-      game_number = numbers_used[pair_key].max + 1 if counted && pairs_with_cancellation.include?(pair_key) && numbers_used[pair_key].include?(game_number)
+      game_number = numbers_used[pair_key].max.to_i + 1 if counted && pairs_with_cancellation.include?(pair_key)
       numbers_used[pair_key] << game_number if counted
       pair_round_counts[pair_key] = game_number
 

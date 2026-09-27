@@ -98,6 +98,32 @@ class ScorebookSyncTest < ActiveSupport::TestCase
     assert_equal [ [ "2026-09-19", 1, "試合終了" ], [ "2026-09-20", nil, "中止" ], [ "2026-09-21", nil, "中止" ], [ "2026-09-22", 2, "試合前" ] ], shape
   end
 
+  test "after a cancelled 1回戦, the games are numbered in the order played, whatever the schedule's labels say" do
+    # 2026 autumn: the 1回戦 of 9-26 called off, Scorebook still calls the next
+    # day's game 2回戦 and the replay of the day after 1回戦; the league's site
+    # calls them 1回戦 and 2回戦.
+    import(
+      entry(2026092602, "2026-09-26", "1回戦", "中止", order: 2),
+      entry(2026092701, "2026-09-27", "2回戦", "試合前"),
+      entry(2026092802, "2026-09-28", "1回戦", "試合前", order: 2)
+    )
+
+    assert_equal [ [ "2026-09-26", nil, "中止" ], [ "2026-09-27", 1, "試合前" ], [ "2026-09-28", 2, "試合前" ] ], shape
+  end
+
+  test "a game we have under the schedule's label is renumbered when synced again" do
+    create_game("2026-09-27", 2, scorebook_game_id: 2026092701)
+    create_game("2026-09-28", 1, scorebook_game_id: 2026092802)
+
+    import(
+      entry(2026092602, "2026-09-26", "1回戦", "中止"),
+      entry(2026092701, "2026-09-27", "2回戦", "試合前"),
+      entry(2026092802, "2026-09-28", "1回戦", "試合前")
+    )
+
+    assert_equal [ nil, 1, 2 ], games.map(&:game_number)
+  end
+
   test "a replay keeps its label when nothing was played under it" do
     import(
       entry(2025051701, "2026-05-17", "1回戦", "中止"),

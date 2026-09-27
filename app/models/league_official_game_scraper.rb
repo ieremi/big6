@@ -80,17 +80,29 @@ class LeagueOfficialGameScraper
     attrs
   end
 
-  # Mirrors GamesHelper#league_official_game_url without depending on a view
-  # helper module from a plain model.
   def game_url
-    return nil if @game.season.year < 2005
-
-    term_code = @game.season.term == "spring" ? "s" : "a"
-    vs = "#{@game.team0.initial}#{@game.team1.initial}#{@game.game_number}"
-
-    "https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=#{@game.season.year}#{term_code}" \
-      "&gd=#{@game.played_on}&gnd=#{@game.game_number}&vs=#{vs}"
+    self.class.url_for(@game)
   end
+
+  # The game's page on the league's site (also linked from the game page,
+  # GamesHelper#league_official_game_url), or nil before 2005, when its pages
+  # have no box scores. vs is the two sides' initials and the round, as the
+  # league numbers its rounds: in the order played (ScorebookSync numbers ours
+  # the same way). Under another round the page is an empty box score. gnd is
+  # the game's place in the day (第1試合, 第2試合), which the page heads itself
+  # with.
+  def self.url_for(game)
+    return nil if game.season.year < MIN_YEAR || game.game_number.nil?
+
+    term_code = game.season.term == "spring" ? "s" : "a"
+    vs = "#{game.team0.initial}#{game.team1.initial}#{game.game_number}"
+
+    "https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=#{game.season.year}#{term_code}" \
+      "&gd=#{game.played_on}&gnd=#{game.game_order || game.game_number}&vs=#{vs}"
+  end
+
+  # Before this season the league's game pages have no box scores.
+  MIN_YEAR = 2005
 
   def parse(doc)
     score_rows = doc.css(".gamescore-score-run").first(2)
