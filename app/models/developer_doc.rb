@@ -3,12 +3,11 @@
 # Markdown in the repository is the one source: the site renders it as it is.
 #
 # Links between the pages (league-site-game-page.md) become the site's own
-# URLs, and links to other files of the repository (../CLAUDE.md) point to
-# them on GitHub, where the repository is public.
+# URLs. A link to any other file of the repository (../CLAUDE.md) is shown as
+# its text only: the notes don't point into this site's code.
 class DeveloperDoc
   DIR = Rails.root.join("docs")
   INDEX = "README".freeze
-  REPOSITORY_URL = "https://github.com/ieremi/big6/blob/main/".freeze
 
   attr_reader :name
 
@@ -60,8 +59,8 @@ class DeveloperDoc
     @path.mtime
   end
 
-  # The page as HTML, its links pointed at the site or GitHub. Raw HTML in the
-  # Markdown isn't let through.
+  # The page as HTML, its links between the pages pointed at the site. Raw HTML
+  # in the Markdown isn't let through.
   def html
     rendered = Commonmarker.to_html(markdown, options: { render: { unsafe: false }, extension: { table: true, autolink: true, strikethrough: true } })
     fragment = Nokogiri::HTML::DocumentFragment.parse(rendered)
@@ -79,9 +78,7 @@ class DeveloperDoc
     elsif (page = href[/\A([a-z0-9-]+|README)\.md(#.*)?\z/, 1])
       link["href"] = (page == INDEX ? "/developers" : "/developers/#{page}") + href[/#.*\z/].to_s
     elsif !href.start_with?("#", "/")
-      link["href"] = REPOSITORY_URL + File.expand_path(href, "/docs").delete_prefix("/")
-      link["target"] = "_blank"
-      link["rel"] = "noopener noreferrer"
+      link.replace(link.children)
     end
   end
 end

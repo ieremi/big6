@@ -25,7 +25,7 @@ class DeveloperDocTest < ActiveSupport::TestCase
     assert_equal "/developers/league-site-game-page", doc.site_path
   end
 
-  test "links between the pages point at the site, other files of the repository at GitHub, and outside links open apart" do
+  test "links between the pages point at the site, other files of the repository are text only, and outside links open apart" do
     markdown = "# T\n\n[page](league-site-game-page.md#url%E3%81%AE%E5%BD%A2) [index](README.md) [code](../app/models/game.rb) [out](https://big6.gr.jp/)\n"
     Tempfile.create([ "doc", ".md" ]) do |file|
       file.write(markdown)
@@ -34,8 +34,9 @@ class DeveloperDocTest < ActiveSupport::TestCase
 
       assert html.at_css("a[href='/developers/league-site-game-page#url%E3%81%AE%E5%BD%A2']")
       assert html.at_css("a[href='/developers']")
-      code = html.at_css("a[href='https://github.com/ieremi/big6/blob/main/app/models/game.rb']")
-      assert_equal [ "_blank", "noopener noreferrer" ], [ code["target"], code["rel"] ]
+      assert_nil html.at_css("a[href*='game.rb']")
+      assert_includes html.text, "code"
+      assert_empty html.css("a[href*='github']")
       assert_equal "_blank", html.at_css("a[href='https://big6.gr.jp/']")["target"]
     end
   end

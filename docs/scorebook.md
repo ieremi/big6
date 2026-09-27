@@ -183,14 +183,3 @@ https://big6scorebook.jp/member/20234025
 ## アクセスの頻度
 
 API キーや、データの利用についての案内はありません。Big6 では、1秒に1回程度の間隔で取得しています。選手ページで全選手を確かめる処理は、夜間に少しずつ行っています。
-
-## 実装例
-
-東京六大学野球の記録サイト Big6 での実装です（Ruby on Rails）。
-
-- [試合検索 API からのシーズンの取り込み（中止のあとの回戦番号の振り直しを含む）](https://github.com/ieremi/big6/blob/main/app/models/scorebook_sync.rb)
-- [選手検索 API からの名鑑の取り込み](https://github.com/ieremi/big6/blob/main/app/models/player_sync.rb)
-- [試合ページからのボックススコアの取り込み](https://github.com/ieremi/big6/blob/main/app/models/game_stats_import.rb)
-- [選手ページの読み取り](https://github.com/ieremi/big6/blob/main/app/models/scorebook_member_stats.rb)
-- [選手ページと取り込んだ成績の照合](https://github.com/ieremi/big6/blob/main/app/models/scorebook_stats_check.rb)
-- [別の試合IDで登録された行の見分け方と、紛れ込みの判定](https://github.com/ieremi/big6/blob/main/app/models/fix_suggestion.rb)

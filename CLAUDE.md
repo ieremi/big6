@@ -57,9 +57,9 @@ Recurring jobs (`config/recurring.yml`, production only):
 
 Production runs the Solid Queue supervisor inside Puma (`SOLID_QUEUE_IN_PUMA`).
 
-`docs/` holds notes, in Japanese, for **people building software on Tokyo Big6 baseball data**. It is not written for developers of this site. It covers how the data sources (big6.gr.jp, Scorebook, this site's Web API) behave, since none of them documents it, and what to watch out for. This site's own code appears only in an 「実装例」 section with GitHub links. The first page covers the URL of big6.gr.jp's game pages.
+`docs/` holds notes, in Japanese, for **people building software on Tokyo Big6 baseball data**. It is not written for developers of this site. It covers how the data sources (big6.gr.jp, Scorebook, this site's Web API) behave, since none of them documents it, and what to watch out for. The notes don't link to this site's code or to GitHub. The first page covers the URL of big6.gr.jp's game pages.
 - When you learn something new about a source, add or update a page there, noting the date it was checked.
-- The site publishes `docs/` unchanged at `/developers`. `DeveloperDoc` renders the Markdown with commonmarker, turning `*.md` links into site links and other repository paths into GitHub links.
+- The site publishes `docs/` unchanged at `/developers`. `DeveloperDoc` renders the Markdown with commonmarker, turning `*.md` links into site links. A link to any other repository path is rendered as plain text.
 - A new page is `docs/<lowercase-and-hyphens>.md`, and appears at `/developers/<name>`. Link between pages by their `.md` file names.
 
 Scorebook is the source of truth. Provisional data from the league site must never overwrite or regress what Scorebook already has; several recent fixes guarded against exactly that. Scorebook's own data also has known errors, which are corrected at import time: `script/big6/known_game_number_overrides.rb`, `known_team_corrections.rb`, and the round relabelling for replays in `ScorebookSync`.

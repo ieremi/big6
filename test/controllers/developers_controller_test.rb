@@ -1,7 +1,7 @@
 require "test_helper"
 
 class DevelopersControllerTest < ActionDispatch::IntegrationTest
-  test "the index and each page of docs/ are shown, with a link back and to the source" do
+  test "the index and each page of docs/ are shown, with a link back and none to GitHub" do
     get developers_path
     assert_response :success
     assert_select "title", "東京六大学野球のデータを扱う開発者向けの解説 - Big6"
@@ -12,7 +12,7 @@ class DevelopersControllerTest < ActionDispatch::IntegrationTest
     assert_select "title", "連盟公式サイト（big6.gr.jp）の試合ページのURL - 開発者向けの解説 - Big6"
     assert_select "a[href=?]", developers_path, text: "← 開発者向けの解説"
     assert_select ".markdown-body table", minimum: 3
-    assert_select "a[href=?]", "https://github.com/ieremi/big6/blob/main/docs/league-site-game-page.md"
+    assert_select "a[href*=github]", 0
   end
 
   test "the Scorebook page is listed on the index and shown" do
