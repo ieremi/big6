@@ -57,6 +57,8 @@ Recurring jobs (`config/recurring.yml`, production only):
 
 Production runs the Solid Queue supervisor inside Puma (`SOLID_QUEUE_IN_PUMA`).
 
+What we have found out about the outside sites' behaviour (none of them documents it) is written up for developers, in Japanese, under [docs/](docs/README.md). The first page covers the URL of big6.gr.jp's game pages. When you learn something new about a source, add a page there, noting the date it was checked.
+
 Scorebook is the source of truth. Provisional data from the league site must never overwrite or regress what Scorebook already has; several recent fixes guarded against exactly that. Scorebook's own data also has known errors, which are corrected at import time: `script/big6/known_game_number_overrides.rb`, `known_team_corrections.rb`, and the round relabelling for replays in `ScorebookSync`.
 
 The scripts in `script/big6/` are run with `bin/rails runner`, and each one documents its env vars in its header. The main ones:
