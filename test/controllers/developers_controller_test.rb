@@ -4,7 +4,7 @@ class DevelopersControllerTest < ActionDispatch::IntegrationTest
   test "the index and each page of docs/ are shown, with a link back and to the source" do
     get developers_path
     assert_response :success
-    assert_select "title", "開発者向けの解説 - Big6"
+    assert_select "title", "東京六大学野球のデータを扱う開発者向けの解説 - Big6"
     assert_select ".markdown-body a[href=?]", developer_page_path("league-site-game-page")
 
     get developer_page_path("league-site-game-page")

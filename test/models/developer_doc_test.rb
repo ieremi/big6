@@ -26,11 +26,18 @@ class DeveloperDocTest < ActiveSupport::TestCase
   end
 
   test "links between the pages point at the site, other files of the repository at GitHub, and outside links open apart" do
-    html = Nokogiri::HTML::DocumentFragment.parse(DeveloperDoc.find(nil).html)
+    markdown = "# T\n\n[page](league-site-game-page.md#url%E3%81%AE%E5%BD%A2) [index](README.md) [code](../app/models/game.rb) [out](https://big6.gr.jp/)\n"
+    Tempfile.create([ "doc", ".md" ]) do |file|
+      file.write(markdown)
+      file.close
+      html = Nokogiri::HTML::DocumentFragment.parse(DeveloperDoc.new("test", Pathname.new(file.path)).html)
 
-    assert html.at_css("a[href='/developers/league-site-game-page']")
-    github = html.at_css("a[href='https://github.com/ieremi/big6/blob/main/CLAUDE.md']")
-    assert_equal [ "_blank", "noopener noreferrer" ], [ github["target"], github["rel"] ]
+      assert html.at_css("a[href='/developers/league-site-game-page#url%E3%81%AE%E5%BD%A2']")
+      assert html.at_css("a[href='/developers']")
+      code = html.at_css("a[href='https://github.com/ieremi/big6/blob/main/app/models/game.rb']")
+      assert_equal [ "_blank", "noopener noreferrer" ], [ code["target"], code["rel"] ]
+      assert_equal "_blank", html.at_css("a[href='https://big6.gr.jp/']")["target"]
+    end
   end
 
   test "tables are rendered, and raw HTML in the Markdown isn't let through" do
