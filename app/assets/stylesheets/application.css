@@ -1670,6 +1670,7 @@ tr.bench-only td a {
 .markdown-body table {
   display: block;
   overflow-x: auto;
+  width: auto; /* not the 100% of other tables: it is set in from the left, and would run past the right */
 }
 
 .markdown-body blockquote {
@@ -1677,4 +1678,15 @@ tr.bench-only td a {
   padding: 0.25rem 1rem;
   border-left: 4px solid var(--border);
   color: var(--text-muted);
+}
+
+/* The body text set in from the headings, so they stand out. */
+.markdown-body > :not(h1, h2, h3, h4) {
+  margin-left: 2em;
+}
+
+@media (max-width: 600px) {
+  .markdown-body > :not(h1, h2, h3, h4) {
+    margin-left: 1em;
+  }
 }
