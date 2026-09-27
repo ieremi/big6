@@ -135,6 +135,19 @@ https://big6scorebook.jp/member/20234025
 - 翌日の試合：`round` は「2回戦」、連盟公式サイトでは1回戦
 - 9/28 の振り替え：`round` は「1回戦」、連盟公式サイトでは2回戦
 
+試合検索 API（`https://big6scorebook.jp/api/game/search?league=リーグ戦&season=2026秋`）の、この3試合の行です（主な項目だけ）。
+
+```json
+{"id": 2026092602, "gameDay": "2026-09-26T00:00:00.000Z", "round": "1回戦", "gameOrder": 2, "topTeamId": 1, "bottomTeamId": 3, "gameStatus": "中止"}
+{"id": 2026092701, "gameDay": "2026-09-27T00:00:00.000Z", "round": "2回戦", "gameOrder": 1, "topTeamId": 3, "bottomTeamId": 1, "gameStatus": "試合前"}
+{"id": 2026092802, "gameDay": "2026-09-28T00:00:00.000Z", "round": "1回戦", "gameOrder": 2, "topTeamId": 1, "bottomTeamId": 3, "gameStatus": "試合前"}
+```
+
+9/27 の試合の、連盟公式サイトのページです。
+
+- `https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=2026a&gd=2026-09-27&gnd=1&vs=MW1`：データがあるページ（およそ 62KB）
+- `https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=2026a&gd=2026-09-27&gnd=1&vs=MW2`：`round` のとおり2回戦にすると、空のページ（およそ 50KB）
+
 連盟公式サイトは、実際に行った順に番号を付けています（[連盟公式サイトの試合ページのURL](league-site-game-page.md)を参照）。
 
 ### 試合ページに打撃成績がない試合がある（2026-09-25 確認）
