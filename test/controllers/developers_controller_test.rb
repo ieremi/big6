@@ -15,6 +15,16 @@ class DevelopersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", "https://github.com/ieremi/big6/blob/main/docs/league-site-game-page.md"
   end
 
+  test "the Scorebook page is listed on the index and shown" do
+    get developers_path
+    assert_select ".markdown-body a[href=?]", developer_page_path("scorebook")
+
+    get developer_page_path("scorebook")
+    assert_response :success
+    assert_select "h1", "BIG6 Scorebook（big6scorebook.jp）"
+    assert_select ".markdown-body a[href=?]", developer_page_path("league-site-game-page")
+  end
+
   test "a page that isn't there is not found" do
     get "/developers/no-such-page"
     assert_response :not_found

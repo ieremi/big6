@@ -9,7 +9,7 @@
 | 入手先 | わかること | 解説 |
 |---|---|---|
 | 東京六大学野球連盟 公式サイト（big6.gr.jp） | 日程、試合中のスコア、先発メンバー、ボックススコア（2005年以降） | [試合ページのURL](league-site-game-page.md) |
-| BIG6 Scorebook（big6scorebook.jp） | 1925年以降の試合結果、選手名鑑、試合ごとの成績（一部のシーズンのみ） | 準備中 |
+| BIG6 Scorebook（big6scorebook.jp） | 1925年以降の試合結果、選手名鑑、試合ごとの成績（一部のシーズンのみ）、歴代記録 | [BIG6 Scorebook](scorebook.md) |
 | このサイト（Big6）の Web API | 上の2つを整理したデータ（試合、シーズン、選手、ランキング）を JSON で | [Web API の説明](https://big6.onrender.com/api/docs) |
 
 ## 使うときの注意点
