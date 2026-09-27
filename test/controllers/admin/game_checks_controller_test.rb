@@ -24,6 +24,21 @@ class Admin::GameChecksControllerTest < ActionDispatch::IntegrationTest
     assert_select "details#same_day a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1)
   end
 
+  test "a finding's games since 2005 link to Scorebook and to the league's site" do
+    season = Season.create!(year: 2008, term: "spring")
+    [ [ 1, 1 ], [ 2, 2 ] ].each do |order, number|
+      Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: "2008-05-19", game_number: number,
+        game_order: order, team0_score: 1, team1_score: 0, game_status: "試合終了", scorebook_game_id: 2008051900 + order)
+    end
+    sign_in
+
+    get admin_game_checks_path
+
+    assert_response :success
+    assert_select "details#same_day a[href=?]", "https://big6scorebook.jp/game/2008051901"
+    assert_select "details#same_day a[href*=?]", "gd=2008-05-19&gnd=2", text: "連盟"
+  end
+
   test "a finding marked fine leaves the list, with its note, until taken back; the games don't change" do
     admin = sign_in
     games_before = Game.order(:id).pluck(:id, :played_on, :game_number)

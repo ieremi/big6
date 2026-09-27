@@ -45,7 +45,9 @@ class GameDataCheck
   def games
     @games ||= begin
       seasons = Season.select(:id, :year, :term).index_by(&:id)
-      Game.select(:id, :season_id, :team0_id, :team1_id, :played_on, :game_number, :game_status, :team0_score, :team1_score,
+      # game_order too: the list links to each game's page on the league's site,
+      # whose URL needs it (LeagueOfficialGameScraper.url_for).
+      Game.select(:id, :season_id, :team0_id, :team1_id, :played_on, :game_number, :game_order, :game_status, :team0_score, :team1_score,
           :counted_in_stats, :scorebook_game_id).to_a.each do |game|
         game.association(:season).target = seasons[game.season_id]
         game.association(:team0).target = universities[game.team0_id]
