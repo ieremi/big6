@@ -15,7 +15,7 @@ module GamesHelper
   # first click]. The same shortcuts as the bench table on a player's page; both
   # teams' tables share them, so one key sorts both.
   GAME_BENCH_COLUMNS = {
-    "背番号" => [ "U", "asc" ], "氏名" => [ "N", "asc" ], "学年" => [ "Y", "desc" ],
+    "背番号" => [ "U", "asc" ], "氏名" => [ "N", "asc" ], "学年" => [ "Y", "desc" ], "学部" => [ "B", "asc" ],
     "役割" => [ "T", "asc" ], "打順" => [ "Q", "asc" ], "守備" => [ "Z", "asc" ], "出場" => [ "P", "asc" ]
   }.freeze
 

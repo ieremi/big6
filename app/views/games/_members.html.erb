@@ -37,7 +37,7 @@
           <table data-controller="sortable-table">
             <thead>
               <tr>
-                <%= sortable_headers GamesHelper::GAME_BENCH_COLUMNS, *%w[背番号 氏名 学年 役割 打順 守備], *("出場" if played) %>
+                <%= sortable_headers GamesHelper::GAME_BENCH_COLUMNS, *%w[背番号 氏名 学年 学部 役割 打順 守備], *("出場" if played) %>
               </tr>
             </thead>
             <tbody>
@@ -48,6 +48,7 @@
                   <td><%= member.uniform_number %></td>
                   <%= sort_cell link_to(member.player.name, player_path(member.player)), member.player.name_kana.presence || member.player.name %>
                   <td><%= member.grade %></td>
+                  <td><%= player_filter_link(member.player.faculty, "faculty") %></td>
                   <%= sort_cell member.role, bench_role_sort_value(member.role) %>
                   <td><%= member.batting_order %></td>
                   <%= sort_cell member.fielding_position, fielding_position_sort_value(member.fielding_position) %>

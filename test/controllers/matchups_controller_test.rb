@@ -36,6 +36,18 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='decade-fold#closeAll'][data-shortcut=f]", text: /すべて閉じる/
   end
 
+  test "game page's bench tables give each member's faculty, linked to the players of that faculty" do
+    member = add_member(1, @alpha, "落合 智哉", role: "捕手")
+    member.player.update!(faculty: "商")
+    add_member(2, @alpha, "堀井 哲也", role: "監督") # no faculty
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "details.decade th.sortable button", text: /\A学部 B/
+    assert_equal %w[背番号 氏名 学年 学部 役割 打順 守備], css_select("details.decade thead th").map { |th| th.text.split.first }
+    assert_select "details.decade td a[href=?]", players_path(faculty: "商"), text: "商"
+  end
+
   test "game page's bench tables sort in the browser, roles and positions in baseball order" do
     add_member(1, @alpha, "落合 智哉", role: "捕手", fielding_position: "捕")
     add_member(2, @alpha, "堀井 哲也", role: "監督")
@@ -44,7 +56,7 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 
     assert_select "details.decade table[data-controller=sortable-table]", 1
-    %w[U N Y T Q Z].each do |key|
+    %w[U N Y B T Q Z].each do |key|
       assert_select "details.decade th.sortable button[data-action='sortable-table#sort'][data-shortcut=#{key}]", 1
     end
     assert_select "td[data-sort-value='2']", text: "監督"
