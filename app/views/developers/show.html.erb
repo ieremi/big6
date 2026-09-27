@@ -1,0 +1,20 @@
+<%# A page of the developers' notes, rendered from docs/ (DeveloperDoc). %>
+<%
+  content_for :title, @doc.index? ? "#{@doc.title} - Big6" : "#{@doc.title} - 開発者向けの解説 - Big6"
+  content_for :description, @doc.summary.truncate(160)
+%>
+
+<% unless @doc.index? %>
+  <p><%= link_to "← 開発者向けの解説", developers_path %></p>
+<% end %>
+
+<article class="markdown-body">
+  <%# The Markdown of docs/ in the repository, rendered with raw HTML left out (DeveloperDoc#html), and kept to these tags and attributes all the same. %>
+  <%= sanitize @doc.html,
+        tags: %w[h1 h2 h3 h4 p a ul ol li table thead tbody tr th td code pre blockquote strong em del br hr],
+        attributes: %w[href target rel id class aria-hidden] %>
+</article>
+
+<p class="muted">
+  この解説は、リポジトリの <%= link_to "docs/#{@doc.index? ? "README" : @doc.name}.md", "#{DeveloperDoc::REPOSITORY_URL}docs/#{@doc.index? ? "README" : @doc.name}.md", target: "_blank", rel: "noopener noreferrer" %> をそのまま表示しています。
+</p>

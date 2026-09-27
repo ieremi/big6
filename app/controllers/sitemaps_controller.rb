@@ -30,7 +30,8 @@ class SitemapsController < ApplicationController
       Entry.new(loc: rankings_url, changefreq: "weekly", priority: "0.5"),
       Entry.new(loc: ranking_url("pitching"), changefreq: "weekly", priority: "0.4"),
       Entry.new(loc: news_url, lastmod: Announcement.maximum(:updated_at), changefreq: "weekly", priority: "0.4"),
-      Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3")
+      Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3"),
+      *DeveloperDoc.all.map { |doc| Entry.new(loc: "#{root_url.chomp("/")}#{doc.site_path}", lastmod: doc.updated_at, changefreq: "monthly", priority: "0.2") }
     ]
 
     Announcement.select(:id, :updated_at).find_each do |announcement|

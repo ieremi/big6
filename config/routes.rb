@@ -25,6 +25,8 @@ Rails.application.routes.draw do
   get "api/docs", to: "api_docs#show", as: :api_docs
 
   get "news", to: "news#index", as: :news
+  get "developers", to: "developers#show", as: :developers
+  get "developers/:page", to: "developers#show", as: :developer_page, constraints: { page: /[a-z0-9][a-z0-9-]*/ }
   get "news/:id", to: "news#show", as: :news_item, constraints: { id: /\d+/ }
 
   # Signing in (admins only for now, see LoginPolicy) and the admin pages.

@@ -1634,3 +1634,47 @@ tr.bench-only td a {
   background: var(--surface);
   color: var(--text);
 }
+
+/* The developers' notes, rendered from docs/ (developers/show). */
+.markdown-body h1 {
+  margin-top: 0.5rem;
+}
+
+.markdown-body h2 {
+  margin-top: 2rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.markdown-body code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--row-alt);
+  overflow-wrap: anywhere;
+}
+
+.markdown-body pre {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: var(--row-alt);
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: none;
+  overflow-wrap: normal;
+}
+
+.markdown-body table {
+  display: block;
+  overflow-x: auto;
+}
+
+.markdown-body blockquote {
+  margin: 0 0 1rem;
+  padding: 0.25rem 1rem;
+  border-left: 4px solid var(--border);
+  color: var(--text-muted);
+}
