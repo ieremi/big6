@@ -90,6 +90,6 @@ module GamesHelper
   # games are in date order when nothing is asked for, so the date column counts
   # as sorted then.
   def sortable_game_header(key, label, shortcut, first: "asc")
-    sortable_link_header(key, label, shortcut, sort: @sort || GameSortable::DEFAULT_SORT, direction: @sort_direction, first: first)
+    sortable_link_header(key, label, shortcut, order: @sort_order, default: GameSortable::DEFAULT_KEY, first: first)
   end
 end

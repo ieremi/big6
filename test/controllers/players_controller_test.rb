@@ -246,6 +246,17 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "山田 太郎", "日野 愛郎", "落合 智哉", "今津 慶介" ], sorted_names("name", "desc")
   end
 
+  test "index sorts by several columns, and the headings carry the order on" do
+    give_readings
+
+    alpha = [ "山田 太郎", "日野 愛郎", "落合 智哉" ] # by reading, descending
+    expected = @alpha.position < @beta.position ? alpha + [ "今津 慶介" ] : [ "今津 慶介" ] + alpha
+
+    assert_equal expected, sorted_names("university,name", "asc,desc")
+    assert_select "th[data-sort-rank='2'] a", text: /氏名/
+    assert_select "th a[href*=?]", "sort=role%2Cuniversity%2Cname", text: /役割/
+  end
+
   test "index sorts by entry year, with those without one last either way, equal years in the usual order" do
     assert_equal [ "山田 太郎", "落合 智哉", "今津 慶介", "日野 愛郎" ], sorted_names("enter_year", "asc")
     assert_equal [ "落合 智哉", "今津 慶介", "山田 太郎", "日野 愛郎" ], sorted_names("enter_year", "desc")

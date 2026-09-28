@@ -113,7 +113,7 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
     assert_select "table td code", text: "sort"
     assert_select "table td code", text: "direction"
     assert_match "default_rank", response.body
-    assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn&sort=home_runs"
+    assert_select ".api-sandbox input[value=?]", "/rankings/batting?year=1997&term=autumn&sort=home_runs,average"
   end
 
   test "documents the cancelled field of a game" do

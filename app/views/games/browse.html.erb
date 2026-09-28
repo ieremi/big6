@@ -11,6 +11,7 @@
 </h1>
 
 <p class="muted"><%= games_count_label(@games) %></p>
+<%= sort_reset_link(@sort_order) %>
 
 <%# One section per week of the season, in week order ("第3週: vs 慶大 K"). %>
 <% @game_groups.each do |group| %>

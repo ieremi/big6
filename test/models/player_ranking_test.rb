@@ -299,6 +299,34 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_equal [ [ "大", 1 ], [ "小", 2 ] ], sortable_ranking.entries_sorted_by("pa", "desc").map { |e| [ e.player.name, e.rank ] }
   end
 
+  test "sorting by several columns breaks each one's ties by the next, and rows equal in all of them share a number" do
+    [ [ "安打少", 40, 10 ], [ "安打少二", 40, 10 ], [ "安打多", 40, 12 ], [ "打席少", 30, 20 ] ].each_with_index do |(name, pa, hits), index|
+      bat(player(name), game(@spring, index + 1), pa: pa, hits: hits)
+    end
+
+    sorted = sortable_ranking.entries_sorted(PlayerRanking.sort_order("batting", "pa,hits", "desc,desc"))
+
+    assert_equal "安打多", sorted.first.player.name
+    assert_equal "打席少", sorted.last.player.name
+    assert_equal [ 1, 2, 2, 4 ], sorted.map(&:rank)
+  end
+
+  test "the next key breaks ties in the displayed value, not in the unrounded one" do
+    bat(player("僅差上"), game(@spring, 1), pa: 3000, ab: 3000, hits: 1000, walks: 0, total_bases: 1000, home_runs: 0)
+    bat(player("僅差下"), game(@spring, 2), pa: 3001, ab: 3001, hits: 1000, walks: 0, total_bases: 1000, home_runs: 1)
+
+    sorted = sortable_ranking.entries_sorted(PlayerRanking.sort_order("batting", "average,home_runs", "desc,desc"))
+
+    assert_equal %w[僅差下 僅差上], sorted.map { |entry| entry.player.name } # both .333: more home runs first
+    assert_equal [ 1, 2 ], sorted.map(&:rank)
+  end
+
+  test "rank ascending, asked for or not, is the ranking's own order" do
+    assert PlayerRanking.sort_order("batting", "rank", "asc").empty?
+    assert PlayerRanking.sort_order("batting", nil, nil).empty?
+    assert_equal [ [ "ops", "desc" ] ], PlayerRanking.sort_order("batting", "ops", nil).map { |key| [ key.column, key.direction ] }
+  end
+
   test "rates share a number when they are equal as displayed, to three decimals" do
     a = player("A")
     bat(a, game(@spring, 1), ab: 1000, hits: 300) # .300

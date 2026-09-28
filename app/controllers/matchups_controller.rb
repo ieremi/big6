@@ -65,7 +65,7 @@ class MatchupsController < ApplicationController
     end
 
     read_game_sort
-    @games = sort_games_array(@matchup.games_for(season: @season, year: @year), @sort, @sort_direction)
+    @games = sort_games_array(@matchup.games_for(season: @season, year: @year), @sort_order)
 
     if @season.nil? && @year.nil?
       latest_season_id = Game.order(played_on: :desc, game_number: :desc).limit(1).pick(:season_id)
@@ -96,31 +96,31 @@ class MatchupsController < ApplicationController
 
   private
 
-  # The same orders as GameSortable#apply_game_sort, for a list already loaded. A
-  # game with no round number (one that wasn't held) comes after the others when
-  # sorting by round, whichever way.
-  def sort_games_array(games, sort, direction)
-    return games unless sort
+  # The same orders as GameSortable#apply_game_sort, for a list already loaded:
+  # each key in turn, then date order. Blanks (a game not held has no round)
+  # come last whichever way.
+  def sort_games_array(games, order)
+    return games if order.empty?
 
-    multiplier = direction == "desc" ? -1 : 1
-
-    case sort
-    when "season"
-      games.sort_by { |g| [ g.season.year * multiplier, (g.season.term == "autumn" ? 1 : 0) * multiplier, g.played_on, g.game_number.to_i ] }
-    when "date"
-      games.sort_by { |g| [ g.played_on.jd * multiplier, g.game_number.to_i * multiplier ] }
-    when "round"
-      games.sort_by { |g| [ g.game_number.nil? ? 1 : 0, g.game_number.to_i * multiplier, g.played_on ] }
-    when "card"
-      games.sort_by do |g|
-        lo, hi = [ g.team0.position, g.team1.position ].sort
-        [ lo * multiplier, hi * multiplier, g.played_on, g.game_number.to_i ]
+    games.sort_by do |game|
+      keys = order.flat_map do |key|
+        sign = key.desc? ? -1 : 1
+        game_sort_values(game, key.column).flat_map { |value| [ value.nil? ? 1 : 0, value.to_i * sign ] }
       end
-    when "attendance"
-      games.sort_by { |g| [ g.attendance.nil? ? 1 : 0, g.attendance.to_i * multiplier, g.played_on, g.game_number.to_i ] }
+      [ *keys, game.played_on.jd, game.game_number || Float::INFINITY ]
     end
   end
 
+  # The values a column sorts a game by, most significant first.
+  def game_sort_values(game, column)
+    case column
+    when "season" then [ game.season.year, game.season.term == "autumn" ? 1 : 0 ]
+    when "date" then [ game.played_on.jd, game.game_number ]
+    when "round" then [ game.game_number ]
+    when "card" then [ game.team0.position, game.team1.position ].sort
+    when "attendance" then [ game.attendance ]
+    end
+  end
 
   def build_data
     # One query for every game, instead of Matchup.new doing its own

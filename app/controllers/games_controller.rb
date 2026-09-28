@@ -6,6 +6,7 @@ class GamesController < ApplicationController
   def index
     @universities = University.order(:position).to_a
     @searched = params[:filtered].present?
+    read_game_sort
 
     if @searched
       @selected_university_ids = Array(params[:university_ids]).map(&:to_i)

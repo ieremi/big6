@@ -211,6 +211,16 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ 3, 2, 1 ], json["rankings"].map { |row| row["default_rank"] }       # the rank by OPS
   end
 
+  test "sort and direction take up to three columns, each breaking the ties of the ones before" do
+    add_batters_of_different_size
+
+    get api_v1_ranking_url("batting"), params: { year: 2026, term: "spring", sort: "home_runs,pa", direction: "desc" }
+
+    assert_equal [ "home_runs,pa", "desc,desc" ], json.values_at("sort", "direction") # pa's own default
+    assert_equal %w[三位 二位 一位], names
+    assert_equal [ 1, 2, 3 ], json["rankings"].map { |row| row["rank"] }
+  end
+
   test "a column starts largest first unless it is rank, player, university, or era" do
     add_batters_of_different_size
 

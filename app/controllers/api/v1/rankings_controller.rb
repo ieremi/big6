@@ -6,22 +6,22 @@ module Api
       # GET /api/v1/rankings/batting and /api/v1/rankings/pitching: the whole career unless
       # year and term name a season; university[] limits it to those universities;
       # minimum is the least plate appearances (batting) or innings (pitching) to be ranked.
-      # sort and direction reorder the rows, and rank is then the position in that order;
+      # sort and direction reorder the rows (comma-separated lists of up to three columns,
+      # each breaking the ties of the ones before, see SortOrder), and rank is then the position in that order;
       # default_rank is always the rank in the default order (OPS for batting, ERA for pitching).
       def show
         season = Season.find_by!(year: params[:year], term: params[:term]) if params[:year].present? && params[:term].present?
         ranking = PlayerRanking.new(params[:kind], season: season, university_ids: university_ids_from_params, minimum: PlayerRanking.minimum_from(params[:minimum]))
-        sort = PlayerRanking.sort_keys(ranking.kind).include?(params[:sort]) ? params[:sort] : "rank"
-        direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(ranking.kind, sort)
-        entries = ranking.entries_sorted_by(sort, direction)
+        order = PlayerRanking.sort_order(ranking.kind, params[:sort], params[:direction]).or(PlayerRanking::DEFAULT_KEY)
+        entries = ranking.entries_sorted(order)
         page = [ params[:page].to_i, 1 ].max
 
         render json: {
           kind: ranking.kind,
           season: season && season_json(season),
           minimum: { (ranking.kind == "batting" ? :plate_appearances : :innings) => ranking.minimum },
-          sort: sort,
-          direction: direction,
+          sort: order.sort_param,
+          direction: order.direction_param,
           total: entries.size,
           page: page,
           per_page: PER_PAGE,

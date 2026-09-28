@@ -411,6 +411,19 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "th[aria-sort=ascending] a", text: "打席 ▲"
   end
 
+  test "sorting by several columns numbers their arrows and keeps them in the form" do
+    add_batters_of_different_size
+
+    get rankings_url, params: { season: "2026-spring", sort: "home_runs,pa", direction: "desc,asc" }
+
+    assert_equal %w[一位 二位 三位], ranked_names # no home runs: by plate appearances
+    assert_select "th[aria-sort=descending] a", text: "本塁打 1▼"
+    assert_select "th:not([aria-sort]) a", text: "打席 2▲"
+    assert_select "input[type=hidden][name=sort][value=?]", "home_runs,pa"
+    assert_select "a.sort-reset", text: "並べ替えをリセット"
+    assert_select "th a[href*=?]", "sort=ops%2Chome_runs%2Cpa", text: "OPS"
+  end
+
   test "without a sort the ranking's own order is shown, with the rank column marked" do
     add_batters_of_different_size
 

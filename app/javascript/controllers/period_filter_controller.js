@@ -118,9 +118,10 @@ export default class extends Controller {
     // The games table's sort-column links (sortable_link_header) are plain
     // server-rendered <a> tags carrying whatever query the page had at load
     // time, so a period picked after the fact isn't in their href yet —
-    // clicking one to sort would otherwise drop back to "all". Keep them in
-    // sync so sorting and the period filter can be combined in either order.
-    this.element.querySelectorAll("th.sortable a[href]").forEach((link) => {
+    // clicking one to sort would otherwise drop back to "all". Keep them (and
+    // the link that resets the sort) in sync so sorting and the period filter
+    // can be combined in either order.
+    this.element.querySelectorAll("th.sortable a[href], a.sort-reset").forEach((link) => {
       const linkUrl = new URL(link.href, window.location.href)
       linkUrl.searchParams.set("period", this.periodValue)
       link.href = linkUrl.toString()

@@ -5,42 +5,40 @@ module GameSortable
   # request the games are in date order, which is the "date" sort ascending.
   SORT_KEYS = %w[season date round card attendance].freeze
   DEFAULT_SORT = "date".freeze
+  DEFAULT_KEY = SortOrder::Key.new(DEFAULT_SORT, "asc")
 
   private
 
+  # Up to SortOrder::MAX_KEYS columns, each breaking the ties of the ones before
+  # it, then date order.
   def apply_game_sort(scope)
     read_game_sort
-    direction_sql = @sort_direction == "desc" ? "DESC" : "ASC"
 
-    case @sort
-    when "season"
-      scope.joins(:season).order(Arel.sql(
-        "seasons.year #{direction_sql}, (seasons.term = 'autumn') #{direction_sql}, games.played_on ASC, games.game_number ASC"
-      ))
-    when "date"
-      scope.order(Arel.sql("games.played_on #{direction_sql}, games.game_number #{direction_sql} NULLS LAST"))
-    when "round"
-      scope.order(Arel.sql("games.game_number #{direction_sql} NULLS LAST, games.played_on ASC"))
-    when "card"
-      scope
+    scope = scope.joins(:season) if @sort_order.columns.include?("season")
+    if @sort_order.columns.include?("card")
+      scope = scope
         .joins("JOIN universities team0_u ON team0_u.id = games.team0_id")
         .joins("JOIN universities team1_u ON team1_u.id = games.team1_id")
-        .order(Arel.sql(
-          "LEAST(team0_u.position, team1_u.position) #{direction_sql}, " \
-          "GREATEST(team0_u.position, team1_u.position) #{direction_sql}, " \
-          "games.played_on ASC, games.game_number ASC"
-        ))
-    when "attendance"
-      scope.order(Arel.sql("games.attendance #{direction_sql} NULLS LAST, games.played_on ASC, games.game_number ASC"))
-    else
-      scope.order(:played_on, :game_number)
+    end
+
+    order = @sort_order.flat_map { |key| game_sort_expressions(key.column, key.sql_direction) }
+    scope.order(Arel.sql([ *order, "games.played_on ASC", "games.game_number ASC" ].join(", ")))
+  end
+
+  def game_sort_expressions(column, direction)
+    case column
+    when "season" then [ "seasons.year #{direction}", "(seasons.term = 'autumn') #{direction}" ]
+    when "date" then [ "games.played_on #{direction}", "games.game_number #{direction} NULLS LAST" ]
+    when "round" then [ "games.game_number #{direction} NULLS LAST" ]
+    when "card"
+      [ "LEAST(team0_u.position, team1_u.position) #{direction}", "GREATEST(team0_u.position, team1_u.position) #{direction}" ]
+    when "attendance" then [ "games.attendance #{direction} NULLS LAST" ]
     end
   end
 
-  # @sort is nil for a missing or unknown sort, and then the direction is
-  # ascending, whatever the request says.
+  # @sort_order is empty for a missing or unknown sort, and the games are then
+  # in date order.
   def read_game_sort
-    @sort = SORT_KEYS.include?(params[:sort]) ? params[:sort] : nil
-    @sort_direction = @sort && params[:direction] == "desc" ? "desc" : "asc"
+    @sort_order = SortOrder.from_params(params[:sort], params[:direction], columns: SORT_KEYS)
   end
 end

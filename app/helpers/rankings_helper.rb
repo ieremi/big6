@@ -71,15 +71,18 @@ module RankingsHelper
     ranking_path(kind, rankings_filter_params.except(*MINIMUM_PARAMS))
   end
 
-  # A column heading that sorts the table by it: a click on the column it is
-  # already sorted by reverses the order, any other starts with its natural order.
+  # A column heading that sorts the table by it: a click on the first key
+  # reverses the order, and any other column becomes the first key, starting
+  # with its natural order, the others moving down (SortOrder#clicked). The
+  # arrow is numbered when the table is sorted by more than one key.
   def ranking_column_header(key, label)
-    current = @sort == key
-    direction = current ? (@direction == "asc" ? "desc" : "asc") : PlayerRanking.default_direction(@kind, key)
-    path = ranking_path(@kind, rankings_filter_params.merge("sort" => key, "direction" => direction))
-    arrow = current ? (@direction == "asc" ? " ▲" : " ▼") : ""
+    shown = @sort_order.or(PlayerRanking::DEFAULT_KEY)
+    sorted = shown.key_for(key)
+    next_order = @sort_order.clicked(key, first: PlayerRanking.default_direction(@kind, key), default: PlayerRanking::DEFAULT_KEY)
+    path = ranking_path(@kind, rankings_filter_params.merge(next_order.to_params))
+    arrow = sorted ? " #{(shown.rank(key) if shown.keys.size > 1)}#{sorted.desc? ? "▼" : "▲"}" : ""
 
-    tag.th(link_to("#{label}#{arrow}", path, class: "sort-link"), aria: { sort: (current ? (@direction == "asc" ? "ascending" : "descending") : nil) })
+    tag.th(link_to("#{label}#{arrow}", path, class: "sort-link"), aria: { sort: (sorted.desc? ? "descending" : "ascending" if sorted == shown.primary) })
   end
 
   private
@@ -97,6 +100,6 @@ module RankingsHelper
   # The sort the page is showing when it isn't the ranking's own order. An invalid
   # sort in the URL is not carried along: the controller has already dropped it.
   def rankings_sort_params
-    @custom_sort ? { "sort" => @sort, "direction" => @direction } : {}
+    @sort_order.to_params
   end
 end

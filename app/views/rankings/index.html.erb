@@ -83,9 +83,9 @@
     </div>
   </fieldset>
 
-  <% if @custom_sort %>
-    <%= hidden_field_tag :sort, @sort %>
-    <%= hidden_field_tag :direction, @direction %>
+  <% unless @sort_order.empty? %>
+    <%= hidden_field_tag :sort, @sort_order.sort_param %>
+    <%= hidden_field_tag :direction, @sort_order.direction_param %>
   <% end %>
 
   <noscript><%= submit_tag "表示" %></noscript>
@@ -118,6 +118,7 @@
 </p>
 
 <% if @entries.any? %>
+  <%= sort_reset_link(@sort_order) %>
   <div class="table-scroll">
     <table>
       <thead>

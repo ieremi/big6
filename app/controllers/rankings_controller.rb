@@ -27,10 +27,8 @@ class RankingsController < ApplicationController
     @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
     ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
-    @sort = PlayerRanking.sort_keys(@kind).include?(params[:sort]) ? params[:sort] : "rank"
-    @direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : PlayerRanking.default_direction(@kind, @sort)
-    @custom_sort = @sort != "rank" || @direction != "asc" # anything but the ranking's own order
-    sorted = ranking.entries_sorted_by(@sort, @direction)
+    @sort_order = PlayerRanking.sort_order(@kind, params[:sort], params[:direction]) # empty for the ranking's own order
+    sorted = ranking.entries_sorted(@sort_order)
     @ranked_count = sorted.size
     # The top 10 places at first (ties included); top= changes how many, and a
     # blank or "all" shows every one.

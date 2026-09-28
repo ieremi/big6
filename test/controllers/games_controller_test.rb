@@ -108,6 +108,50 @@ class GamesControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[2026-05-02 2026-05-03 2026-09-12 2026-09-13], listed_dates(sort: "bogus", direction: "desc")
   end
 
+  test "games sort by several columns, each breaking the ties of the ones before" do
+    sort_games
+
+    assert_equal %w[2026-05-02 2026-05-03 2026-09-13 2026-09-12], listed_dates(sort: "season,attendance", direction: "asc,asc")
+    assert_equal %w[2026-09-13 2026-09-12 2026-05-02 2026-05-03], listed_dates(sort: "season,attendance", direction: "desc,asc")
+  end
+
+  test "the headings number the keys, a click puts its column first, and a link resets the sort" do
+    sort_games
+    get games_url, params: { filtered: 1, terms: %w[spring autumn], university_ids: [ @alpha.id ], sort: "season,attendance", direction: "asc,desc" }
+
+    assert_select "th.sorted-asc[data-sort-rank='1'][aria-sort=ascending] a[data-shortcut=S]"
+    assert_select "th.sorted-desc[data-sort-rank='2']:not([aria-sort]) a[data-shortcut=A]"
+    assert_select "th[data-sort-rank]", 2
+    link = ->(shortcut) { Rack::Utils.parse_query(URI(css_select("th a[data-shortcut=#{shortcut}]").first["href"]).query) }
+    assert_equal [ "date,season,attendance", "asc,asc,desc" ], link.("D").values_at("sort", "direction")
+    assert_equal [ "season,attendance", "desc,desc" ], link.("S").values_at("sort", "direction")
+    assert_equal [ "attendance,season", "desc,asc" ], link.("A").values_at("sort", "direction")
+
+    reset = css_select("a.sort-reset").sole
+    assert_equal "並べ替えをリセット", reset.text
+    assert_nil Rack::Utils.parse_query(URI(reset["href"]).query)["sort"]
+    assert_select "input[type=hidden][name=sort][value=?]", "season,attendance"
+    assert_select "input[type=hidden][name=direction][value=?]", "asc,desc"
+  end
+
+  test "a single key is shown without a number, and there is no reset link without a sort" do
+    sort_games
+    get games_url, params: { filtered: 1, terms: %w[spring autumn], university_ids: [ @alpha.id ], sort: "attendance" }
+    assert_select "th[data-sort-rank]", 0
+
+    get games_url, params: { filtered: 1, terms: %w[spring autumn], university_ids: [ @alpha.id ] }
+    assert_select "a.sort-reset", 0
+  end
+
+  test "a matchup's games sort by several columns too" do
+    sort_games
+
+    get matchup_url("alpha", "beta"), params: { sort: "season,attendance", direction: "asc,asc" }
+
+    assert_response :success
+    assert_equal %w[2026-05-02 2026-05-03 2026-09-13 2026-09-12], css_select("tbody tr").map { |row| row.css("td")[1]&.text }.compact.grep(/\A\d{4}-/)
+  end
+
   test "the headings are sort links with a capital-letter shortcut each" do
     sort_games
     get games_url, params: { filtered: 1, terms: %w[spring autumn], university_ids: [ @alpha.id ] }

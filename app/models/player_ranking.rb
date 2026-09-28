@@ -68,6 +68,9 @@ class PlayerRanking
   # batting rates) start with the largest.
   ASCENDING_FIRST = %w[rank player university era].freeze
 
+  # The ranking's own order, when no other is asked for.
+  DEFAULT_KEY = SortOrder::Key.new("rank", "asc")
+
   # Sorted by these, every row gets its own number. By the others, equal values
   # share one, compared as displayed (three decimals for the batting rates, two
   # for ERA, whole numbers for counts).
@@ -146,26 +149,37 @@ class PlayerRanking
   end
 
   # The same entries reordered by a column (a key of SORT_KEYS) in "asc" or "desc"
-  # order; direction nil is the column's default. Ties stay in default order, and
-  # blanks come last whichever way it is sorted. The rows are numbered again in
-  # the new order (equal displayed values share a number, 1, 2, 2, 4), except when
-  # sorting by "rank" itself, which keeps the ranks of the default order.
+  # order; direction nil is the column's default.
   def entries_sorted_by(key, direction = nil)
-    reader = SORT_KEYS.fetch(kind).fetch(key)
-    sign = (direction || self.class.default_direction(kind, key)) == "desc" ? -1 : 1
+    entries_sorted(SortOrder.new([ [ key, direction || self.class.default_direction(kind, key) ] ]))
+  end
+
+  # The entries in a SortOrder of SORT_KEYS: each key breaking the ties of the
+  # ones before it, compared by their displayed values (an OPS to three decimals),
+  # and the default order breaking the rest. Blanks come last whichever way. The
+  # rows are numbered again in the new order, rows equal in every key sharing a
+  # number (1, 2, 2, 4), except when the first key is "rank" itself, which keeps
+  # the ranks of the default order. An empty order is the default order.
+  def entries_sorted(order)
+    return entries if order.empty?
+
+    readers = order.map { |key| [ key.column, SORT_KEYS.fetch(kind).fetch(key.column), key.desc? ? -1 : 1 ] }
 
     sorted_entries = entries.each_with_index.sort do |(a, a_index), (b, b_index)|
-      a_value = reader.call(a)
-      b_value = reader.call(b)
-      order = if a_value.nil? || b_value.nil?
-        (a_value.nil? ? 1 : 0) - (b_value.nil? ? 1 : 0)
-      else
-        (a_value <=> b_value) * sign
-      end
-      order.zero? ? a_index <=> b_index : order
+      readers.lazy.map { |column, reader, sign| compare_values(tie_value(column, reader.call(a)), tie_value(column, reader.call(b)), sign) }
+        .find(&:nonzero?) || a_index <=> b_index
     end.map(&:first)
 
-    key == "rank" ? sorted_entries : renumber(sorted_entries, key)
+    order.primary.column == "rank" ? sorted_entries : renumber(sorted_entries, order.columns)
+  end
+
+  # The order sort and direction from a URL ask for (comma-separated lists, see
+  # SortOrder), each column without a direction in its default one. Unknown
+  # columns are dropped. The ranking's own order (rank ascending) comes back
+  # empty, however it was asked for.
+  def self.sort_order(kind, sort, direction)
+    order = SortOrder.from_params(sort, direction, columns: sort_keys(kind), default_direction: ->(key) { default_direction(kind, key) })
+    order.keys == [ DEFAULT_KEY ] ? SortOrder.new : order
   end
 
   # The columns a kind of ranking can be sorted by.
@@ -299,16 +313,25 @@ class PlayerRanking
     end
   end
 
-  # Numbers entries by their position in the order they are now in.
-  def renumber(sorted_entries, key)
-    reader = SORT_KEYS.fetch(kind).fetch(key)
+  # Numbers entries by their position in the order they are now in, entries
+  # equal in every one of the columns sorted by sharing a number.
+  def renumber(sorted_entries, columns)
+    readers = columns.map { |column| [ column, SORT_KEYS.fetch(kind).fetch(column) ] }
     ranks = {}
 
     sorted_entries.each_with_index.map do |entry, index|
-      value = NO_TIES.include?(key) ? index : tie_value(key, reader.call(entry))
+      value = columns.intersect?(NO_TIES) ? index : readers.map { |column, reader| tie_value(column, reader.call(entry)) }
       ranks[value] ||= index + 1
       Entry.new(ranks[value], entry.player, entry.totals, entry.default_rank)
     end
+  end
+
+  # Negative when a goes first: sign 1 for ascending, -1 for descending, with
+  # nil (a blank) last either way.
+  def compare_values(a, b, sign)
+    return (a.nil? ? 1 : 0) - (b.nil? ? 1 : 0) if a.nil? || b.nil?
+
+    (a <=> b) * sign
   end
 
   def tie_value(key, value)

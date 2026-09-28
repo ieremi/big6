@@ -9,8 +9,8 @@
   <%# Carried along so changing a filter (a real GET resubmit, unlike the
       period filter's URL-only update) doesn't drop a sort already applied
       to the results table below. %>
-  <%= hidden_field_tag :sort, @sort %>
-  <%= hidden_field_tag :direction, @direction %>
+  <%= hidden_field_tag :sort, @sort_order.sort_param %>
+  <%= hidden_field_tag :direction, @sort_order.direction_param %>
   <%# Same reason: these come from clicking a value in the table or on a
       player's page, not from a field in this form, so they'd otherwise be
       dropped the moment any other filter changes. %>
@@ -90,20 +90,20 @@
 </p>
 
 <% if @players.any? %>
+  <%= sort_reset_link(@sort_order) %>
   <div class="table-scroll">
     <table>
       <thead>
         <tr>
           <%# Unsorted, the players are newest entry year first. %>
-          <% sort, direction = @sort ? [ @sort, @direction ] : [ "enter_year", "desc" ] %>
-          <%= sortable_link_header("university", "大学", "U", sort: sort, direction: direction) %>
-          <%= sortable_link_header("name", "氏名", "N", sort: sort, direction: direction) %>
-          <%= sortable_link_header("enter_year", "入学年", "Y", sort: sort, direction: direction, first: "desc") %>
-          <%= sortable_link_header("role", "役割", "O", sort: sort, direction: direction) %>
-          <%= sortable_link_header("position", "位置", "P", sort: sort, direction: direction) %>
-          <%= sortable_link_header("hands", "投打", "B", sort: sort, direction: direction) %>
-          <%= sortable_link_header("high_school", "出身高校", "S", sort: sort, direction: direction) %>
-          <%= sortable_link_header("status", "在籍", "E", sort: sort, direction: direction) %>
+          <%= sortable_link_header("university", "大学", "U", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("name", "氏名", "N", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("enter_year", "入学年", "Y", order: @sort_order, default: PlayerSearch::DEFAULT_KEY, first: "desc") %>
+          <%= sortable_link_header("role", "役割", "O", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("position", "位置", "P", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("hands", "投打", "B", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("high_school", "出身高校", "S", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
+          <%= sortable_link_header("status", "在籍", "E", order: @sort_order, default: PlayerSearch::DEFAULT_KEY) %>
         </tr>
       </thead>
       <tbody>

@@ -500,12 +500,18 @@ th.sortable:hover {
   color: var(--accent);
 }
 
+/* The key's number shows only when a table is sorted by more than one
+   (data-sort-rank: "1▲", "2▼"); attr() is empty otherwise. */
 th.sortable.sorted-asc::after {
-  content: " ▲";
+  content: " " attr(data-sort-rank) "▲";
 }
 
 th.sortable.sorted-desc::after {
-  content: " ▼";
+  content: " " attr(data-sort-rank) "▼";
+}
+
+.sort-reset {
+  margin-bottom: 0.5rem;
 }
 
 .avg-cell {

@@ -8,6 +8,8 @@ class PlayerSearch
   # The columns of the players table that can be sorted by. Baseball positions
   # and hands sort in their usual order (投手, 捕手, 一塁手 ...), not alphabetically.
   SORT_KEYS = %w[university name enter_year role position hands high_school status].freeze
+  # With no sort asked for, the list is newest entry year first.
+  DEFAULT_KEY = SortOrder::Key.new("enter_year", "desc")
   POSITION_ORDER = %w[投手 捕手 一塁手 二塁手 三塁手 遊撃手 内野手 外野手].freeze
   HAND_ORDER = %w[右 左 両].freeze
   ROLE_ORDER = %w[player staff manager].freeze # the Player::ROLE_GROUPS, in this order, then any other role
@@ -83,14 +85,22 @@ class PlayerSearch
   # The matching players in display order: newest entry year first (those with
   # none last), then university, then name. The id makes paging stable.
   #
-  # sort (one of SORT_KEYS) and direction ("asc" or "desc") put another column
-  # first, the display order breaking ties; blanks come last either way.
-  def ordered(sort: nil, direction: nil)
-    dir = direction == "desc" ? "DESC" : "ASC"
-    order = SORT_KEYS.include?(sort) ? sort_expressions(sort, dir) : []
-    order += [ "players.enter_year DESC NULLS LAST", "universities.position", "players.name", "players.id" ]
+  # A SortOrder of SORT_KEYS (see sort_order) puts up to three other columns
+  # first, each breaking the ties of the ones before it and the display order
+  # breaking the rest; blanks come last either way. sort and direction give the
+  # same order as a URL does.
+  def ordered(order = nil, sort: nil, direction: nil)
+    order ||= self.class.sort_order(sort, direction)
+    expressions = order.flat_map { |key| sort_expressions(key.column, key.sql_direction) }
+    expressions += [ "players.enter_year DESC NULLS LAST", "universities.position", "players.name", "players.id" ]
 
-    players.joins(:university).preload(:university).order(Arel.sql(order.join(", ")))
+    players.joins(:university).preload(:university).order(Arel.sql(expressions.join(", ")))
+  end
+
+  # The order sort and direction from a URL ask for (comma-separated lists, see
+  # SortOrder); unknown columns are dropped.
+  def self.sort_order(sort, direction)
+    SortOrder.from_params(sort, direction, columns: SORT_KEYS)
   end
 
   private
