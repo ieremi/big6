@@ -15,7 +15,7 @@ class MatchupsController < ApplicationController
       "r" => { season_id: latest_season_id }
     }
 
-    cache_key = "matchups_index_data/v2/#{latest_season_id}/#{Game.maximum(:updated_at)&.to_i}"
+    cache_key = "matchups_index_data/v3/#{latest_season_id}/#{Game.maximum(:updated_at)&.to_i}"
     data = Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) { build_data }
 
     @cells = data[:cells]
@@ -149,7 +149,9 @@ class MatchupsController < ApplicationController
         cells[[ a.id, b.id ]] = {
           "rate" => @periods.transform_values { |opts| matchup.percentage(a, **opts) },
           "attendance_avg" => @periods.transform_values { |opts| matchup.average_attendance(**opts) },
-          "attendance_sum" => @periods.transform_values { |opts| matchup.total_attendance(**opts) }
+          "attendance_sum" => @periods.transform_values { |opts| matchup.total_attendance(**opts) },
+          "attendance_avg_weekend" => @periods.transform_values { |opts| matchup.average_attendance(**opts, weekends_only: true) },
+          "attendance_sum_weekend" => @periods.transform_values { |opts| matchup.total_attendance(**opts, weekends_only: true) }
         }
       end
     end
@@ -165,12 +167,18 @@ class MatchupsController < ApplicationController
         end,
         "attendance" => @periods.transform_values do |opts|
           row_average(opponents.filter_map { |o| matchups[[ university.id, o.id ]].average_attendance(**opts) })
+        end,
+        "attendance_weekend" => @periods.transform_values do |opts|
+          row_average(opponents.filter_map { |o| matchups[[ university.id, o.id ]].average_attendance(**opts, weekends_only: true) })
         end
       }
 
       row_sum[university.id] = {
         "attendance" => @periods.transform_values do |opts|
           row_sum_of(opponents.filter_map { |o| matchups[[ university.id, o.id ]].total_attendance(**opts) })
+        end,
+        "attendance_weekend" => @periods.transform_values do |opts|
+          row_sum_of(opponents.filter_map { |o| matchups[[ university.id, o.id ]].total_attendance(**opts, weekends_only: true) })
         end
       }
     end
@@ -184,8 +192,12 @@ class MatchupsController < ApplicationController
       scoped = scoped.select { |g| g.season_id == opts[:season_id] } if opts[:season_id]
       scoped = scoped.select { |g| g.played_on >= opts[:since] } if opts[:since]
       values = scoped.filter_map(&:attendance)
+      weekend_values = scoped.select(&:weekend?).filter_map(&:attendance)
 
-      { "avg" => values.empty? ? nil : values.sum / values.size, "sum" => values.empty? ? nil : values.sum }
+      {
+        "avg" => row_average(values), "sum" => row_sum_of(values),
+        "avg_weekend" => row_average(weekend_values), "sum_weekend" => row_sum_of(weekend_values)
+      }
     end
   end
 

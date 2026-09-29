@@ -15,6 +15,12 @@ module Api
         University.where(slug: Array(params[:university])).pluck(:id)
       end
 
+      # exclude_weekdays=true (or 1) counts the attendance of the games played on
+      # a Saturday or a Sunday only (Game#weekend?).
+      def weekends_only_from_params
+        ActiveModel::Type::Boolean.new.cast(params[:exclude_weekdays]) == true
+      end
+
       def university_json(university)
         {
           slug: university.slug,

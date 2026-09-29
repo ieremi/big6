@@ -71,6 +71,13 @@ class Game < ApplicationRecord
     !not_held?
   end
 
+  # Played on a Saturday or a Sunday. Weekday games (平日) draw far smaller
+  # crowds, so attendance averages can leave them out. A national holiday on a
+  # weekday counts as a weekday: there is no holiday calendar here.
+  def weekend?
+    played_on.saturday? || played_on.sunday?
+  end
+
   # Over, with a result: what wins, losses and draws are counted from. A game under
   # way has a score too, but not a final one.
   def decided?

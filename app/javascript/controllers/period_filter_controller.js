@@ -5,10 +5,12 @@ const KEY_TO_PERIOD = { s: "5", m: "10", l: "20", a: "all", r: "r" }
 const KEY_TO_METRIC = { w: "rate", p: "attendance" }
 
 export default class extends Controller {
-  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "periodPanel", "gameRow", "gameCount", "statCell", "periodItem"]
+  static targets = ["cell", "rowAvg", "rowSum", "button", "metricButton", "weekendButton", "periodPanel", "gameRow", "gameCount", "statCell", "periodItem"]
   static values = {
     period: { type: String, default: "all" },
-    metric: { type: String, default: "rate" }
+    metric: { type: String, default: "rate" },
+    // Attendance of the games on a Saturday or a Sunday only (平日の試合をのぞく).
+    weekendsOnly: { type: Boolean, default: false }
   }
 
   connect() {
@@ -50,10 +52,24 @@ export default class extends Controller {
     this.metricValue = event.currentTarget.dataset.metric
   }
 
+  // Leaving weekday games out is about attendance, so from the win rates it
+  // switches to the attendance with them left out (the button only shows as
+  // on while the attendance is shown).
+  toggleWeekends() {
+    this.weekendsOnlyValue = this.metricValue === "attendance" ? !this.weekendsOnlyValue : true
+    this.metricValue = "attendance"
+  }
+
+  // The suffix of the attendance attributes for the games counted: "-weekend"
+  // for Saturdays and Sundays only.
+  attendanceSuffix() {
+    return this.weekendsOnlyValue ? "-weekend" : ""
+  }
+
   // The value attribute a "rowAvg"/"rowSum" element carries: each such element
   // already represents a single aggregate (avg or sum), so only metric+period matter.
   metricAttr() {
-    return this.metricValue === "attendance" ? `data-attendance-${this.periodValue}` : `data-rate-${this.periodValue}`
+    return this.metricValue === "attendance" ? `data-attendance-${this.periodValue}${this.attendanceSuffix()}` : `data-rate-${this.periodValue}`
   }
 
   sortByColumn(event) {
@@ -71,7 +87,7 @@ export default class extends Controller {
       let attr
       if (el.dataset.periodFilterTarget === "cell") {
         if (this.metricValue === "attendance") {
-          attr = kind === "sum" ? `data-attendance-sum-${this.periodValue}` : `data-attendance-avg-${this.periodValue}`
+          attr = `data-attendance-${kind === "sum" ? "sum" : "avg"}-${this.periodValue}${this.attendanceSuffix()}`
         } else {
           attr = `data-rate-${this.periodValue}`
         }
@@ -132,11 +148,15 @@ export default class extends Controller {
     this.render()
   }
 
+  weekendsOnlyValueChanged() {
+    this.render()
+  }
+
   render() {
     this.cellTargets.forEach((el) => {
       if (this.metricValue === "attendance") {
-        const avg = el.getAttribute(`data-attendance-avg-${this.periodValue}`) || "—"
-        const sum = el.getAttribute(`data-attendance-sum-${this.periodValue}`) || "—"
+        const avg = el.getAttribute(`data-attendance-avg-${this.periodValue}${this.attendanceSuffix()}`) || "—"
+        const sum = el.getAttribute(`data-attendance-sum-${this.periodValue}${this.attendanceSuffix()}`) || "—"
         el.innerHTML = `<span class="cell-line">平均: ${avg}</span><span class="cell-line">合計: ${sum}</span>`
       } else {
         el.textContent = el.getAttribute(`data-rate-${this.periodValue}`) || "—"
@@ -159,6 +179,12 @@ export default class extends Controller {
 
     this.metricButtonTargets.forEach((el) => {
       el.classList.toggle("active", el.dataset.metric === this.metricValue)
+    })
+
+    this.weekendButtonTargets.forEach((el) => {
+      const on = this.weekendsOnlyValue && this.metricValue === "attendance"
+      el.classList.toggle("active", on)
+      el.setAttribute("aria-pressed", on ? "true" : "false")
     })
 
     this.periodPanelTargets.forEach((el) => {

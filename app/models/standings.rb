@@ -1,12 +1,19 @@
 class Standings
-  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :attendance_total, :attendance_count, keyword_init: true) do
+  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :attendance_total, :attendance_count,
+                   :weekend_attendance_total, :weekend_attendance_count, keyword_init: true) do
     def percentage
       decided = wins + losses
       decided.zero? ? 0.0 : wins.to_f / decided
     end
 
-    def average_attendance
-      attendance_count.zero? ? nil : attendance_total / attendance_count
+    # weekends_only: of the games played on a Saturday or a Sunday (Game#weekend?).
+    def total_attendance(weekends_only: false)
+      weekends_only ? weekend_attendance_total : attendance_total
+    end
+
+    def average_attendance(weekends_only: false)
+      total, count = weekends_only ? [ weekend_attendance_total, weekend_attendance_count ] : [ attendance_total, attendance_count ]
+      count.zero? ? nil : total / count
     end
   end
 
@@ -39,7 +46,7 @@ class Standings
   def compute(preloaded_games)
     games = (preloaded_games || season.games.includes(:team0, :team1).order(:played_on, :game_number)).select { |g| decided?(g) }
 
-    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0 } }
+    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0, weekend_attendance_total: 0, weekend_attendance_count: 0 } }
     pair_games = Hash.new { |h, k| h[k] = [] }
 
     games.each do |g|
@@ -56,10 +63,14 @@ class Standings
       end
 
       if g.attendance
-        tallies[g.team0_id][:attendance_total] += g.attendance
-        tallies[g.team0_id][:attendance_count] += 1
-        tallies[g.team1_id][:attendance_total] += g.attendance
-        tallies[g.team1_id][:attendance_count] += 1
+        [ g.team0_id, g.team1_id ].each do |id|
+          tallies[id][:attendance_total] += g.attendance
+          tallies[id][:attendance_count] += 1
+          next unless g.weekend?
+
+          tallies[id][:weekend_attendance_total] += g.attendance
+          tallies[id][:weekend_attendance_count] += 1
+        end
       end
 
       pair_games[[g.team0_id, g.team1_id].sort] << g
@@ -93,7 +104,9 @@ class Standings
         points: points[u.id],
         games: t[:wins] + t[:losses] + t[:draws],
         attendance_total: t[:attendance_total],
-        attendance_count: t[:attendance_count]
+        attendance_count: t[:attendance_count],
+        weekend_attendance_total: t[:weekend_attendance_total],
+        weekend_attendance_count: t[:weekend_attendance_count]
       )
     end
 

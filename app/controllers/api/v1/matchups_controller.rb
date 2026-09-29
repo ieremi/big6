@@ -21,8 +21,8 @@ module Api
           draws: matchup.draws(**opts),
           percentage: { team0.slug => matchup.percentage(team0, **opts), team1.slug => matchup.percentage(team1, **opts) },
           attendance: {
-            average: matchup.average_attendance(**opts),
-            total: matchup.total_attendance(**opts)
+            average: matchup.average_attendance(**opts, weekends_only: weekends_only_from_params),
+            total: matchup.total_attendance(**opts, weekends_only: weekends_only_from_params)
           },
           duration_minutes: {
             average: matchup.average_duration_minutes(**opts),

@@ -65,15 +65,16 @@ class Matchup
     Streak.new(team: team, length: length, first_game: first_game, last_game: last_game)
   end
 
-  def average_attendance(since: nil, season_id: nil)
-    values = attendance_values(since: since, season_id: season_id)
+  # weekends_only: leave out the games played on a weekday (Game#weekend?).
+  def average_attendance(since: nil, season_id: nil, weekends_only: false)
+    values = attendance_values(since: since, season_id: season_id, weekends_only: weekends_only)
     return nil if values.empty?
 
     values.sum / values.size
   end
 
-  def total_attendance(since: nil, season_id: nil)
-    values = attendance_values(since: since, season_id: season_id)
+  def total_attendance(since: nil, season_id: nil, weekends_only: false)
+    values = attendance_values(since: since, season_id: season_id, weekends_only: weekends_only)
     return nil if values.empty?
 
     values.sum
@@ -136,9 +137,12 @@ class Matchup
   # re-instantiating GameScoreboard per game) — memoized per distinct args
   # instead, so a period's worth of stats costs one filter pass, not one per
   # method call.
-  def attendance_values(since: nil, season_id: nil)
-    (@attendance_values_cache ||= {})[[ since, season_id ]] ||=
-      scoped_games(since: since, season_id: season_id).filter_map(&:attendance)
+  def attendance_values(since: nil, season_id: nil, weekends_only: false)
+    (@attendance_values_cache ||= {})[[ since, season_id, weekends_only ]] ||= begin
+      games = scoped_games(since: since, season_id: season_id)
+      games = games.select(&:weekend?) if weekends_only
+      games.filter_map(&:attendance)
+    end
   end
 
   def duration_values(since: nil, season_id: nil)

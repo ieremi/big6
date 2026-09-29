@@ -56,6 +56,14 @@
 
 <h3><code>/api/v1/seasons/:year/:term/standings</code></h3>
 <p>そのシーズンの順位表。</p>
+<div class="table-scroll">
+  <table>
+    <thead><tr><th>パラメータ</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>exclude_weekdays</code></td><td><code>true</code>（または<code>1</code>）で、<code>attendance_total</code>と<code>average_attendance</code>を土日の試合だけで数えます（平日の試合をのぞく）。祝日も曜日どおりにあつかいます</td></tr>
+    </tbody>
+  </table>
+</div>
 <%= render "sandbox", path: "/seasons/1997/autumn/standings" %>
 
 <h3><code>/api/v1/seasons/:year/:term/og.png</code></h3>
@@ -115,6 +123,7 @@
     <tbody>
       <tr><td><code>since_years</code></td><td>直近N年に絞り込み</td></tr>
       <tr><td><code>year</code> / <code>term</code></td><td>特定のシーズンに絞り込み</td></tr>
+      <tr><td><code>exclude_weekdays</code></td><td><code>true</code>（または<code>1</code>）で、<code>attendance</code>の<code>average</code>と<code>total</code>を土日の試合だけで数えます（平日の試合をのぞく）。祝日も曜日どおりにあつかいます</td></tr>
     </tbody>
   </table>
 </div>

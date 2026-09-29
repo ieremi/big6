@@ -25,6 +25,9 @@
         <span class="muted">セル表示:</span>
         <button type="button" class="period-btn" data-mode="results" data-cell-toggle-target="button" data-action="cell-toggle#setMode">対戦成績</button>
         <button type="button" class="period-btn" data-mode="attendance" data-cell-toggle-target="button" data-action="cell-toggle#setMode">観衆数</button>
+        <%# Weekday games draw far smaller crowds; this leaves them out of the totals and averages (土日の試合だけ). %>
+        <button type="button" class="period-btn" data-cell-toggle-target="weekendButton" data-action="cell-toggle#toggleWeekends"
+                data-shortcut="h" data-shortcut-label="観衆: 平日の試合をのぞく" aria-pressed="false">平日の試合をのぞく <kbd>h</kbd></button>
       </div>
 
       <table class="standings-table">
@@ -79,8 +82,10 @@
               <td data-cell-toggle-target="resultsColumn"><%= row.draws %></td>
               <td data-cell-toggle-target="resultsColumn"><%= row.points %></td>
               <td data-cell-toggle-target="resultsColumn"><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
-              <td data-cell-toggle-target="attendanceColumn"><%= number_with_delimiter(row.attendance_total) %></td>
-              <td data-cell-toggle-target="attendanceColumn"><%= row.average_attendance ? number_with_delimiter(row.average_attendance) : "—" %></td>
+              <% total, weekend_total = [ false, true ].map { |weekends_only| number_with_delimiter(row.total_attendance(weekends_only:)) } %>
+              <% average, weekend_average = [ false, true ].map { |weekends_only| row.average_attendance(weekends_only:)&.then { number_with_delimiter(_1) } || "—" } %>
+              <%= tag.td total, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: total, weekend: weekend_total } %>
+              <%= tag.td average, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: average, weekend: weekend_average } %>
             </tr>
           <% end %>
         </tbody>

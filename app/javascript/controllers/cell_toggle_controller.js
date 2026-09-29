@@ -1,8 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["cell", "button", "resultsColumn", "attendanceColumn"]
-  static values = { mode: { type: String, default: "results" } }
+  static targets = ["cell", "button", "resultsColumn", "attendanceColumn", "attendanceFigure", "weekendButton"]
+  static values = {
+    mode: { type: String, default: "results" },
+    // The attendance totals and averages of the games on a Saturday or a Sunday only (平日の試合をのぞく).
+    weekendsOnly: { type: Boolean, default: false }
+  }
 
   connect() {
     this.render()
@@ -12,7 +16,18 @@ export default class extends Controller {
     this.modeValue = event.currentTarget.dataset.mode
   }
 
+  // Leaving weekday games out is about attendance, so from the results it
+  // switches to the attendance with them left out.
+  toggleWeekends() {
+    this.weekendsOnlyValue = this.modeValue === "attendance" ? !this.weekendsOnlyValue : true
+    this.modeValue = "attendance"
+  }
+
   modeValueChanged() {
+    this.render()
+  }
+
+  weekendsOnlyValueChanged() {
     this.render()
   }
 
@@ -45,6 +60,17 @@ export default class extends Controller {
 
     this.attendanceColumnTargets.forEach((el) => {
       el.hidden = this.modeValue !== "attendance"
+    })
+
+    // Each carries both figures, as data-all and data-weekend.
+    this.attendanceFigureTargets.forEach((el) => {
+      el.textContent = this.weekendsOnlyValue ? el.dataset.weekend : el.dataset.all
+    })
+
+    this.weekendButtonTargets.forEach((el) => {
+      const on = this.weekendsOnlyValue && attendance
+      el.classList.toggle("active", on)
+      el.setAttribute("aria-pressed", on ? "true" : "false")
     })
   }
 

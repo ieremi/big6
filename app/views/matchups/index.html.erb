@@ -14,6 +14,9 @@
     <span class="muted">表示指標:</span>
     <button type="button" class="period-btn" data-metric="rate" data-period-filter-target="metricButton" data-action="period-filter#setMetric">勝率 <kbd>w</kbd></button>
     <button type="button" class="period-btn" data-metric="attendance" data-period-filter-target="metricButton" data-action="period-filter#setMetric">観衆 <kbd>p</kbd></button>
+    <%# Weekday games draw far smaller crowds; this leaves them out of the attendance figures (土日の試合だけ). %>
+    <button type="button" class="period-btn" data-period-filter-target="weekendButton" data-action="period-filter#toggleWeekends"
+            data-shortcut="h" data-shortcut-label="観衆: 平日の試合をのぞく" aria-pressed="false">平日の試合をのぞく <kbd>h</kbd></button>
   </div>
 
   <div class="period-toolbar">
@@ -28,7 +31,7 @@
 
   <p class="muted">
     列見出しをクリック（または <kbd>W</kbd><kbd>K</kbd><kbd>M</kbd><kbd>H</kbd><kbd>T</kbd><kbd>R</kbd><kbd>A</kbd><kbd>S</kbd>）すると、その列の値で並べ替えられます。
-    観衆表示では各セルに平均・合計を2行で表示します。
+    観衆表示では各セルに平均・合計を2行で表示します。「平日の試合をのぞく」を選ぶと、土日の試合だけで数えます（祝日も曜日どおりに数えます）。
   </p>
 
   <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
@@ -83,11 +86,15 @@
                   <% rates = cell["rate"].transform_values { |v| pct.call(v) } %>
                   <% avgs = cell["attendance_avg"].transform_values { |v| num.call(v) } %>
                   <% sums = cell["attendance_sum"].transform_values { |v| num.call(v) } %>
+                  <% weekend_avgs = cell["attendance_avg_weekend"].transform_values { |v| num.call(v) } %>
+                  <% weekend_sums = cell["attendance_sum_weekend"].transform_values { |v| num.call(v) } %>
                   <% data = { period_filter_target: "cell" } %>
                   <% @periods.each_key do |k|
                        data["rate_#{k}".to_sym] = rates[k]
                        data["attendance_avg_#{k}".to_sym] = avgs[k]
                        data["attendance_sum_#{k}".to_sym] = sums[k]
+                       data["attendance_avg_#{k}_weekend".to_sym] = weekend_avgs[k]
+                       data["attendance_sum_#{k}_weekend".to_sym] = weekend_sums[k]
                      end %>
                   <%= link_to rates["all"],
                         matchup_path(team0_slug: row_university.slug, team1_slug: col_university.slug),
@@ -98,12 +105,16 @@
             <% row_rate_avg = @row_avg[row_university.id]["rate"].transform_values { |v| pct.call(v) } %>
             <% row_attendance_avg = @row_avg[row_university.id]["attendance"].transform_values { |v| num.call(v) } %>
             <% row_attendance_sum = @row_sum[row_university.id]["attendance"].transform_values { |v| num.call(v) } %>
+            <% row_weekend_avg = @row_avg[row_university.id]["attendance_weekend"].transform_values { |v| num.call(v) } %>
+            <% row_weekend_sum = @row_sum[row_university.id]["attendance_weekend"].transform_values { |v| num.call(v) } %>
             <% avg_data = { period_filter_target: "rowAvg" } %>
             <% sum_data = { period_filter_target: "rowSum" } %>
             <% @periods.each_key do |k|
                  avg_data["rate_#{k}".to_sym] = row_rate_avg[k]
                  avg_data["attendance_#{k}".to_sym] = row_attendance_avg[k]
                  sum_data["attendance_#{k}".to_sym] = row_attendance_sum[k]
+                 avg_data["attendance_#{k}_weekend".to_sym] = row_weekend_avg[k]
+                 sum_data["attendance_#{k}_weekend".to_sym] = row_weekend_sum[k]
                end %>
             <td class="result-cell avg-cell">
               <%= content_tag :span, row_rate_avg["all"], data: avg_data %>
@@ -126,6 +137,8 @@
           <% @periods.each_key do |k|
                grand_avg_data["attendance_#{k}".to_sym] = grand_avg[k]
                grand_sum_data["attendance_#{k}".to_sym] = grand_sum[k]
+               grand_avg_data["attendance_#{k}_weekend".to_sym] = num.call(@grand_attendance[k]["avg_weekend"])
+               grand_sum_data["attendance_#{k}_weekend".to_sym] = num.call(@grand_attendance[k]["sum_weekend"])
              end %>
           <td class="result-cell avg-cell">
             <%= content_tag :span, "—", data: grand_avg_data %>
