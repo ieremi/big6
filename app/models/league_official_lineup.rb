@@ -50,13 +50,18 @@ class LeagueOfficialLineup
   # specific game's date (it reflects whatever PlayerSync last saw), so
   # requiring an exact match loses real matches for anyone whose grade has
   # since ticked over.
+  #
+  # The high school is matched as a prefix too: the box score cuts a long
+  # school name short ("國學院久我" for 國學院久我山; the names seen cut so far are
+  # 5 characters), so an exact match leaves such a player out.
   def match_player(university, raw)
     short_name = raw["name"].to_s.delete(" 　")
     return nil if short_name.blank?
 
-    candidates = Player.active.where(university: university)
-    candidates = candidates.where(high_school: raw["high_school"]) if raw["high_school"].present?
-    candidates = candidates.to_a.select { |player| player.name.delete(" 　").start_with?(short_name) }
+    high_school = raw["high_school"].presence
+    candidates = Player.active.where(university: university).to_a.select do |player|
+      player.name.delete(" 　").start_with?(short_name) && (high_school.nil? || player.high_school.to_s.start_with?(high_school))
+    end
 
     return candidates.first if candidates.size == 1
     return nil if candidates.size < 2 || raw["grade"].nil?
