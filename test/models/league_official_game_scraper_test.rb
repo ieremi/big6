@@ -26,4 +26,37 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
     assert_nil LeagueOfficialGameScraper.url_for(Game.new(season: Season.new(year: 2004, term: "spring"), team0: @meiji, team1: @waseda, game_number: 1))
     assert_nil LeagueOfficialGameScraper.url_for(Game.new(season: @season, team0: @meiji, team1: @waseda, game_number: nil))
   end
+  # ---- the game's status from its page
+
+  # A page with the given innings on the scoreboard ("" for one not played yet)
+  # and the start time in its heading, as the league's site shows them.
+  def page(top_innings, bottom_innings, heading: "9月30日(水)　第2試合　試合開始13:30　終了　")
+    row = ->(letter, innings) { "<tr class=\"gamescore-score-run\"><td>#{letter}</td>#{innings.map { |run| "<td>#{run}</td>" }.join}<td></td></tr>" }
+    "<div class=\"gamescore-gameinfo\">#{heading}</div><table>#{row.("M", top_innings)}#{row.("W", bottom_innings)}</table>"
+  end
+
+  def scrape(game, html)
+    response = Net::HTTPOK.new("1.1", "200", "OK")
+    response.instance_variable_set(:@body, html)
+    response.instance_variable_set(:@read, true)
+    stub_method(Net::HTTP, :get_response, ->(_uri) { response }) { LeagueOfficialGameScraper.call(game) }
+    game.reload
+  end
+
+  test "a game whose page shows only its scheduled start, with an empty scoreboard, stays 試合前" do
+    game = game("2026-09-30", 2, 2)
+
+    scrape(game, page([ "" ] * 9, [ "" ] * 9))
+
+    assert game.scheduled?
+    assert_equal "13:30", game.league_official_data["startTime"]
+  end
+
+  test "a game becomes 試合中 once an inning on its scoreboard has runs, a 0 included" do
+    game = game("2026-09-30", 2, 2)
+
+    scrape(game, page([ "0" ] + [ "" ] * 8, [ "" ] * 9))
+
+    assert game.in_progress?
+  end
 end

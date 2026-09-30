@@ -59,9 +59,14 @@ class LeagueOfficialGameScraper
   # itself reports it under way — which can lag behind the game actually
   # having started by as much as its own polling interval. The official
   # site showing a start time (and not yet a finish time) is itself good
-  # enough evidence the game is on, so mark it in_progress from that alone
-  # when still scheduled — this is also what in_progress?-gated code (the
-  # provisional lineup) waits on to show anything.
+  # enough evidence the game is on, so mark it in_progress from that when
+  # still scheduled — this is also what in_progress?-gated code (the
+  # provisional lineup) waits on to show anything. The start time alone isn't
+  # enough, though: before a game begins its page already shows the
+  # *scheduled* start (「試合開始13:30」, with an empty scoreboard), and the
+  # hourly SyncRecentGamesJob reads today's games before they start. So the
+  # scoreboard must also have something in it: an inning's runs, which appear
+  # as each half-inning ends.
   def attrs_from(data)
     attrs = { league_official_data: data }
 
@@ -69,7 +74,7 @@ class LeagueOfficialGameScraper
       attrs[:team0_score] = data["runsTop"].compact.sum
       attrs[:team1_score] = data["runsBottom"].compact.sum
       attrs[:game_status] = "finished"
-    elsif data["startTime"].present? && @game.scheduled?
+    elsif data["startTime"].present? && play_begun?(data) && @game.scheduled?
       attrs[:game_status] = "in_progress"
     end
 
@@ -78,6 +83,12 @@ class LeagueOfficialGameScraper
     end
 
     attrs
+  end
+
+  # Whether any inning on the scoreboard has runs filled in (a 0 counts): a
+  # page from before the game has every inning blank.
+  def play_begun?(data)
+    (data["runsTop"] + data["runsBottom"]).any?
   end
 
   def game_url
