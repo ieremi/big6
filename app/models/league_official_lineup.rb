@@ -6,13 +6,17 @@
 # finished, well after an in-progress game already has a lineup worth
 # showing.
 #
-# Player matching is necessarily approximate: the box score gives an
+# Each entry carries the player's ID on the league's site ("id"), and a
+# player linked to that ID (Player#league_official_id, set by
+# LeagueOfficialPlayerLink when the box score is scraped) is matched by it.
+# Otherwise matching is necessarily approximate: the box score gives an
 # abbreviated name (family name, plus the first character of the given name
 # only when needed to tell teammates apart — "林純" for 林純司), grade, and
 # high school, not a Scorebook id. Matched against currently-enrolled
-# players of the right university/grade/high school whose real name starts
-# with that short form; anyone not uniquely matched this way is left out
-# rather than risk showing the wrong person.
+# players of the right university/high school whose real name starts
+# with that short form, and of the year of entry the ID gives; anyone not
+# uniquely matched this way is left out rather than risk showing the wrong
+# person.
 class LeagueOfficialLineup
   # role is always nil — the box score has no equivalent (it only shows
   # players who batted or pitched, not each one's general roster role) —
@@ -40,7 +44,7 @@ class LeagueOfficialLineup
 
   def resolve(raw)
     university = raw["side"] == "top" ? @game.team0 : @game.team1
-    player = match_player(university, raw)
+    player = players_by_league_id[raw["id"]] || match_player(university, raw)
     return nil unless player
 
     Entry.new(university: university, player: player, grade: raw["grade"], batting_order: raw["order"], fielding_position: raw["position"])
@@ -60,8 +64,10 @@ class LeagueOfficialLineup
     return nil if short_name.blank?
 
     high_school = raw["high_school"].presence
+    enter_year = enter_year_from(raw["id"])
     candidates = Player.active.where(university: university).to_a.select do |player|
-      player.name.delete(" 　").start_with?(short_name) && (high_school.nil? || player.high_school.to_s.start_with?(high_school))
+      player.name.delete(" 　").start_with?(short_name) && (high_school.nil? || player.high_school.to_s.start_with?(high_school)) &&
+        (enter_year.nil? || player.enter_year.nil? || player.enter_year == enter_year)
     end
 
     return candidates.first if candidates.size == 1
@@ -69,5 +75,19 @@ class LeagueOfficialLineup
 
     by_grade = candidates.select { |player| player.grade == raw["grade"] }
     by_grade.first if by_grade.size == 1
+  end
+
+  # The players linked to the IDs of the entries, by ID: one query for them all.
+  def players_by_league_id
+    @players_by_league_id ||= begin
+      ids = @raw_entries.filter_map { |raw| raw["id"] }
+      ids.empty? ? {} : Player.where(league_official_id: ids).index_by(&:league_official_id)
+    end
+  end
+
+  # The year of entry an ID of the league's site gives: 2023 for "AK23UT0".
+  def enter_year_from(id)
+    yy = id.to_s[/\AA[A-Z](\d{2})/, 1]
+    yy && 2000 + yy.to_i
   end
 end

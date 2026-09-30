@@ -61,10 +61,15 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
   end
   # ---- the pitchers, from the page's smartphone layout
 
+  # A player's name, linked to their page on the league's site when there's an ID.
+  def player_link(name, id)
+    id ? "<a class=\"game_player\" href=\"kojinseiseki_career_individual.php?m=pc&amp;p=#{id}\">#{name}</a>" : name
+  end
+
   # A team's block in the smartphone layout: its letter, its batters' table and its pitchers'.
   def team_block(letter, batters, pitchers)
-    batter_rows = batters.map { |code, name, school| "<tr class=\"gamescore-box-content\"><td class=\"gamescore-box-position\">#{code}</td><td>#{name}</td><td>#{school}</td><td></td></tr>" }
-    pitcher_rows = pitchers.map { |name, school| "<tr class=\"gamescore-box-content\"><td>#{name}</td><td>#{school}</td><td></td></tr>" }
+    batter_rows = batters.map { |code, name, school, id| "<tr class=\"gamescore-box-content\"><td class=\"gamescore-box-position\">#{code}</td><td>#{player_link(name, id)}</td><td>#{school}</td><td></td></tr>" }
+    pitcher_rows = pitchers.map { |name, school, id| "<tr class=\"gamescore-box-content\"><td>#{player_link(name, id)}</td><td>#{school}</td><td></td></tr>" }
     "<table><tr><td class=\"gamescore-box-teamname\">#{letter}</td></tr></table><table>#{batter_rows.join}</table><table>#{pitcher_rows.join}</table>"
   end
 
@@ -79,5 +84,19 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
     assert_equal [ [ "top", "広池", "投" ], [ "top", "鈴木佳", nil ], [ "bottom", "田中", "投" ] ],
       pitchers.map { |entry| entry.values_at("side", "name", "position") }
     assert_equal [ 4, "慶應" ], pitchers.first.values_at("grade", "high_school")
+  end
+  test "each player gets the ID on the league's site from the link on the name, but not 2005's placeholder" do
+    game = game("2026-09-30", 1, 1)
+    sp = team_block("M", [ [ "[8]", "丸田", "(3 慶應)", "AK24MM0" ] ], [ [ "広池", "(4 慶應)", "AK23HK0" ] ]) +
+      team_block("W", [ [ "[8]", "小林隼", "(3 広陵)", "ID" ] ], []) # the same starting position: the next team's batters
+
+    link = LeagueOfficialPlayerLink.new
+    link.define_singleton_method(:page) { |_id| nil }
+    stub_method(LeagueOfficialPlayerLink, :new, -> { link }) do
+      scrape(game, page([ "0" ] + [ "" ] * 8, [ "" ] * 9) + "<div id=\"game_scoreboard_sp\">#{sp}</div>")
+    end
+
+    ids = game.league_official_data["lineup"].to_h { |entry| [ entry["name"], entry["id"] ] }
+    assert_equal({ "丸田" => "AK24MM0", "小林隼" => nil, "広池" => "AK23HK0" }, ids)
   end
 end

@@ -46,4 +46,16 @@ class LeagueOfficialLineupTest < ActiveSupport::TestCase
     entries = LeagueOfficialLineup.new(@game).by_university.fetch(@alpha.id)
     assert_equal [ 9 ], entries.map(&:batting_order)
   end
+  test "a player linked to the entry's league ID is matched by it, whatever the short forms say" do
+    player = add_player(1, "上田 太陽", "國學院久我山", league_official_id: "AK23UT0")
+
+    assert_equal [ player.name ], lineup_of({ "name" => "植田", "high_school" => "別の高校", "id" => "AK23UT0" })
+  end
+
+  test "without a linked player, the year of entry in the league ID tells apart players of the same short form" do
+    add_player(1, "林 純司", "報徳学園", enter_year: 2024)
+    add_player(2, "林 純平", "報徳学園", enter_year: 2025)
+
+    assert_equal [ "林 純司" ], lineup_of({ "name" => "林純", "high_school" => "報徳学園", "grade" => nil, "id" => "AK24HJ0" })
+  end
 end

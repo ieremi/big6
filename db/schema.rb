@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_26_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -203,6 +203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_000001) do
     t.string "faculty"
     t.integer "grade"
     t.string "high_school"
+    t.string "league_official_id"
     t.string "name", null: false
     t.string "name_kana"
     t.string "pitching_hand"
@@ -212,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_26_000001) do
     t.bigint "university_id", null: false
     t.datetime "updated_at", null: false
     t.index ["enter_year"], name: "index_players_on_enter_year"
+    t.index ["league_official_id"], name: "index_players_on_league_official_id", unique: true
     t.index ["scorebook_id"], name: "index_players_on_scorebook_id", unique: true
     t.index ["university_id", "enter_year"], name: "index_players_on_university_id_and_enter_year"
     t.index ["university_id"], name: "index_players_on_university_id"

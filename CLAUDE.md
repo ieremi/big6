@@ -35,6 +35,7 @@ In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the comp
   - A game that wasn't held (`not_held?`) has **no `game_number`** and no score; a `before_validation` callback clears the number. `Game.record_cancellation` is the single path for recording one.
   - `counted_in_stats: false` marks the 優勝決定戦 playoffs. They are shown but left out of player totals and rankings.
 - **Player**: from Scorebook's 名鑑. Keyed by `scorebook_id`, which is also the id used in `/players/:id` URLs and the API. The table also holds staff (監督, 部長, ...), not just players.
+  - `league_official_id` is the player's ID on big6.gr.jp (`AK23UT0`, see `docs/league-site-player-id.md`). `LeagueOfficialPlayerLink` sets it when a scraped box score first shows the player, by reading the player's page there (full name, entry year and high school are shown only while the player is enrolled). `LeagueOfficialLineup` matches provisional lineups by it, and falls back to guessing from the short name, high school and entry year.
 - **GameMember** (roster per game, 2021 onward), **BattingLine**, **PitchingLine** (per-game box score; innings are stored as `outs`).
 - **PrimeMinisterTerm** and **GdpPerCapitaYear**: reference data shown on season pages (from Wikidata and the World Bank).
 

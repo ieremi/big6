@@ -43,10 +43,21 @@ class LeagueOfficialGameScraper
     return nil unless data
 
     @game.update!(attrs_from(data))
+    link_players
     data
   end
 
   private
+
+  # Links the box score's players to their IDs on the league's site, reading
+  # the page of each new one (LeagueOfficialPlayerLink). The box score itself
+  # is saved already: a page that can't be read here only leaves those
+  # players to be matched the old way (LeagueOfficialLineup), until next time.
+  def link_players
+    LeagueOfficialPlayerLink.link_lineup(@game)
+  rescue StandardError => e
+    Rails.logger.error("LeagueOfficialGameScraper: linking players of game #{@game.id}: #{e.class}: #{e.message}")
+  end
 
   # Only fills in the game's actual score once the official site shows it as
   # finished (finishTime present), and only if we don't already have a score
@@ -152,14 +163,52 @@ class LeagueOfficialGameScraper
   # The box score also repeats the same content a second time elsewhere on
   # the page; both parsers stop once they detect that repeat rather than
   # double their result.
+  #
+  # Each entry also gets the player's ID on the league's site ("id", see
+  # player_ids), which LeagueOfficialLineup matches players by.
   def lineup(doc)
     rows = doc.css(".gamescore-box-content").map { |row| row.css("td").map { |c| c.text.strip } }.reject(&:empty?)
-    parse_batters(rows) + (pitchers_by_team(doc) || parse_pitchers(rows))
+    entries = parse_batters(rows) + (pitchers_by_team(doc) || parse_pitchers(rows))
+    ids = player_ids(doc)
+    entries.each { |entry| entry["id"] = ids.dig(entry["side"], entry["name"]) }
   end
 
-  # Each team's pitchers from the page's smartphone layout (#game_scoreboard_sp),
-  # which, unlike the PC one, gives each team a block of its own: its letter
-  # (.gamescore-box-teamname, "K"), its batters' table, then its pitchers'. So
+  # { side => { short name => the league's player ID } }, from the links on the
+  # players' names in the smartphone layout, which says whose team each is (see
+  # team_rows). A team's short names are unique: the box score adds the given
+  # name's first character just to tell teammates apart. The ID is in the link
+  # (kojinseiseki_career_individual.php?p=AK23UT0); 2005's pages have the
+  # placeholder "ID" there, which is no ID. See docs/league-site-player-id.md.
+  def player_ids(doc)
+    ids = Hash.new { |hash, side| hash[side] = {} }
+    team_rows(doc).each do |side, row|
+      link = row.at_css("a.game_player") or next
+      id = link["href"].to_s[/[?&]p=(\w+)/, 1]
+      ids[side][link.text.strip] = id if id && id != "ID"
+    end
+    ids
+  end
+
+  # [side, row] for each box score row of the smartphone layout
+  # (#game_scoreboard_sp), which, unlike the PC one, gives each team a block of
+  # its own: its letter (.gamescore-box-teamname, "K"), its batters' table,
+  # then its pitchers'. Empty when the page has no such layout.
+  def team_rows(doc)
+    layout = doc.at_css("#game_scoreboard_sp") or return []
+    sides = { TEAM_LETTERS.fetch(@game.team0.slug) => "top", TEAM_LETTERS.fetch(@game.team1.slug) => "bottom" }
+    side = nil
+
+    # One XPath union underneath, so the nodes come in page order.
+    layout.css(".gamescore-box-teamname, .gamescore-box-content").filter_map do |node|
+      if node["class"].to_s.include?("gamescore-box-teamname")
+        side = sides[node.text.strip]
+        next
+      end
+      [ side, node ] if side
+    end
+  end
+
+  # Each team's pitchers from the page's smartphone layout (team_rows), so
   # the pitchers can be told apart while the game is still on, with no "計"
   # rows yet. They are listed in the order they pitched: the first is the
   # starter, who gets position 投 — as in Scorebook's own roster (GameMember),
@@ -167,18 +216,11 @@ class LeagueOfficialGameScraper
   # no batting order, and the relievers have no position. nil when the page
   # has no such layout.
   def pitchers_by_team(doc)
-    layout = doc.at_css("#game_scoreboard_sp") or return nil
-    sides = { TEAM_LETTERS.fetch(@game.team0.slug) => "top", TEAM_LETTERS.fetch(@game.team1.slug) => "bottom" }
-    side = nil
-    entries = []
+    return nil unless doc.at_css("#game_scoreboard_sp")
 
-    # One XPath union underneath, so the nodes come in page order.
-    layout.css(".gamescore-box-teamname, .gamescore-box-content").each do |node|
-      if node["class"].to_s.include?("gamescore-box-teamname")
-        side = sides[node.text.strip]
-        next
-      end
-      next if side.nil? || node.at_css(".gamescore-box-position") # a batter
+    entries = []
+    team_rows(doc).each do |side, node|
+      next if node.at_css(".gamescore-box-position") # a batter
 
       cells = node.css("td").map { |cell| cell.text.strip }
       next unless cells[1]&.match?(/\A\(.*\)\z/)
