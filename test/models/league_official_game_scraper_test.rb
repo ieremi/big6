@@ -59,4 +59,25 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
 
     assert game.in_progress?
   end
+  # ---- the pitchers, from the page's smartphone layout
+
+  # A team's block in the smartphone layout: its letter, its batters' table and its pitchers'.
+  def team_block(letter, batters, pitchers)
+    batter_rows = batters.map { |code, name, school| "<tr class=\"gamescore-box-content\"><td class=\"gamescore-box-position\">#{code}</td><td>#{name}</td><td>#{school}</td><td></td></tr>" }
+    pitcher_rows = pitchers.map { |name, school| "<tr class=\"gamescore-box-content\"><td>#{name}</td><td>#{school}</td><td></td></tr>" }
+    "<table><tr><td class=\"gamescore-box-teamname\">#{letter}</td></tr></table><table>#{batter_rows.join}</table><table>#{pitcher_rows.join}</table>"
+  end
+
+  test "each team's pitchers come from the smartphone layout while the game is on, the first marked as the starter" do
+    game = game("2026-09-30", 1, 1)
+    sp = team_block("M", [ [ "[8]", "丸田", "(3 慶應)" ] ], [ [ "広池", "(4 慶應)" ], [ "鈴木佳", "(2 慶應)" ] ]) +
+      team_block("W", [ [ "[6]", "小林隼", "(3 広陵)" ] ], [ [ "田中", "(3 仙台育英)" ] ])
+
+    scrape(game, page([ "0" ] + [ "" ] * 8, [ "" ] * 9) + "<div id=\"game_scoreboard_sp\">#{sp}</div>")
+
+    pitchers = game.league_official_data["lineup"].reject { |entry| entry["order"] }
+    assert_equal [ [ "top", "広池", "投" ], [ "top", "鈴木佳", nil ], [ "bottom", "田中", "投" ] ],
+      pitchers.map { |entry| entry.values_at("side", "name", "position") }
+    assert_equal [ 4, "慶應" ], pitchers.first.values_at("grade", "high_school")
+  end
 end

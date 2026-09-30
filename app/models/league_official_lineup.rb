@@ -30,9 +30,10 @@ class LeagueOfficialLineup
   end
 
   # Entry list per university id, in the order the box score listed them
-  # (batters in batting order, then pitchers).
+  # (batters in batting order, then pitchers). A pitcher who also bats (a game
+  # without a designated hitter) is listed once, as the batter.
   def by_university
-    @by_university ||= @raw_entries.filter_map { |raw| resolve(raw) }.group_by { |entry| entry.university.id }
+    @by_university ||= @raw_entries.filter_map { |raw| resolve(raw) }.uniq(&:player).group_by { |entry| entry.university.id }
   end
 
   private

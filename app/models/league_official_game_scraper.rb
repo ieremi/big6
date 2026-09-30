@@ -146,8 +146,7 @@ class LeagueOfficialGameScraper
     }
   end
 
-  # Each team's batters, then (only once "計" total rows confirm the
-  # boundaries — see parse_pitchers) each team's pitchers. A batter row is
+  # Each team's batters, then each team's pitchers (see pitchers_by_team). A batter row is
   # [position code, name, "(grade high_school)"]; a pitcher row is
   # [name, "(grade high_school)", innings pitched] — no position code cell.
   # The box score also repeats the same content a second time elsewhere on
@@ -155,7 +154,41 @@ class LeagueOfficialGameScraper
   # double their result.
   def lineup(doc)
     rows = doc.css(".gamescore-box-content").map { |row| row.css("td").map { |c| c.text.strip } }.reject(&:empty?)
-    parse_batters(rows) + parse_pitchers(rows)
+    parse_batters(rows) + (pitchers_by_team(doc) || parse_pitchers(rows))
+  end
+
+  # Each team's pitchers from the page's smartphone layout (#game_scoreboard_sp),
+  # which, unlike the PC one, gives each team a block of its own: its letter
+  # (.gamescore-box-teamname, "K"), its batters' table, then its pitchers'. So
+  # the pitchers can be told apart while the game is still on, with no "計"
+  # rows yet. They are listed in the order they pitched: the first is the
+  # starter, who gets position 投 — as in Scorebook's own roster (GameMember),
+  # where the starting pitcher of a game with a designated hitter has 投 and
+  # no batting order, and the relievers have no position. nil when the page
+  # has no such layout.
+  def pitchers_by_team(doc)
+    layout = doc.at_css("#game_scoreboard_sp") or return nil
+    sides = { TEAM_LETTERS.fetch(@game.team0.slug) => "top", TEAM_LETTERS.fetch(@game.team1.slug) => "bottom" }
+    side = nil
+    entries = []
+
+    # One XPath union underneath, so the nodes come in page order.
+    layout.css(".gamescore-box-teamname, .gamescore-box-content").each do |node|
+      if node["class"].to_s.include?("gamescore-box-teamname")
+        side = sides[node.text.strip]
+        next
+      end
+      next if side.nil? || node.at_css(".gamescore-box-position") # a batter
+
+      cells = node.css("td").map { |cell| cell.text.strip }
+      next unless cells[1]&.match?(/\A\(.*\)\z/)
+
+      starter = entries.none? { |entry| entry["side"] == side }
+      grade, high_school = grade_and_high_school(cells[1])
+      entries << { "side" => side, "order" => nil, "position" => (starter ? "投" : nil), "name" => cells[0], "grade" => grade, "high_school" => high_school }
+    end
+
+    entries.presence
   end
 
   # Splits into two teams from the box score's own content, not from "計"
@@ -208,6 +241,7 @@ class LeagueOfficialGameScraper
     entries
   end
 
+  # For a page without the smartphone layout (pitchers_by_team).
   # Unlike batters, a pitcher's row carries nothing that repeats reliably
   # once per team (no fixed position, and a team may have used only one
   # pitcher so far) to split on the same way — so this instead trusts "計"
@@ -232,8 +266,10 @@ class LeagueOfficialGameScraper
       next if phase < 2
       next unless cells[1]&.match?(/\A\(.*\)\z/)
 
+      side = phase == 2 ? "top" : "bottom"
+      starter = entries.none? { |entry| entry["side"] == side }
       grade, high_school = grade_and_high_school(cells[1])
-      entries << { "side" => (phase == 2 ? "top" : "bottom"), "order" => nil, "position" => "投", "name" => cells[0], "grade" => grade, "high_school" => high_school }
+      entries << { "side" => side, "order" => nil, "position" => (starter ? "投" : nil), "name" => cells[0], "grade" => grade, "high_school" => high_school }
     end
 
     entries

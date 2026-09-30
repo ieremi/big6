@@ -35,4 +35,15 @@ class LeagueOfficialLineupTest < ActiveSupport::TestCase
 
     assert_empty lineup_of({ "name" => "上田", "high_school" => "慶應" }, { "name" => "林純", "high_school" => "報徳学園", "grade" => nil })
   end
+  test "a pitcher who also bats is listed once, as the batter" do
+    add_player(1, "広池 浩成", "慶應")
+
+    @game.update!(league_official_data: { "lineup" => [
+      { "side" => "top", "name" => "広池", "high_school" => "慶應", "grade" => 4, "order" => 9, "position" => "投" },
+      { "side" => "top", "name" => "広池", "high_school" => "慶應", "grade" => 4, "order" => nil, "position" => "投" }
+    ] })
+
+    entries = LeagueOfficialLineup.new(@game).by_university.fetch(@alpha.id)
+    assert_equal [ 9 ], entries.map(&:batting_order)
+  end
 end
