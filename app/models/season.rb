@@ -1,6 +1,10 @@
 class Season < ApplicationRecord
     has_many :games
 
+    # Newest season first: within a year autumn comes before spring, which
+    # ordering by term (a string) would get the wrong way round.
+    scope :newest_first, -> { order(Arel.sql("seasons.year DESC, CASE seasons.term WHEN 'autumn' THEN 1 ELSE 0 END DESC")) }
+
     TERM_LABELS = { "spring" => "春季", "autumn" => "秋季" }.freeze
 
     def term_ja

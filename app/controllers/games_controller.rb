@@ -68,7 +68,7 @@ class GamesController < ApplicationController
 
     if @season.nil? && @year.nil?
       @games_counts = scope.held.group(:season_id).count
-      @seasons = Season.where(id: @games_counts.keys).order(year: :desc, term: :desc)
+      @seasons = Season.where(id: @games_counts.keys).newest_first
       render :team_seasons and return
     end
 

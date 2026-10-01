@@ -235,4 +235,11 @@ test "a team's season list has a section per week, headed with the season's week
   assert_equal [ "第2週: vs Beta Beta", "第3週: vs Gamma Gamma" ], css_select("h2").map { |h2| h2.text.squish }.grep(/週/)
   assert_equal %w[2026-08-17 2026-08-18], css_select("h2 + .table-scroll")[1].css("tbody tr td:first-child").map(&:text)
 end
+  test "a university's seasons are listed newest first, autumn before spring within a year" do
+    get "/games/alpha"
+
+    assert_response :success
+    hrefs = css_select("a[href^='/games/alpha/2026/']").map { |link| link["href"] }.uniq
+    assert_equal [ "/games/alpha/2026/autumn", "/games/alpha/2026/spring" ], hrefs
+  end
 end

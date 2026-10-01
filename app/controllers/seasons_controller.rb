@@ -8,7 +8,7 @@ class SeasonsController < ApplicationController
   def index
     # Only the columns the list needs: scorebook_data/scorebook_games are large
     # JSONB blobs (~20MB across all seasons) that nothing on this page reads.
-    @seasons = Season.select(:id, :year, :term).order(year: :desc, term: :desc).to_a
+    @seasons = Season.select(:id, :year, :term).newest_first.to_a
     @games_counts = Game.held.group(:season_id).count
     @season_tags = season_tags_by_id(@seasons)
 

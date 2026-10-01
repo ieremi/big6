@@ -231,9 +231,7 @@ class PlayerRanking
   end
 
   def self.seasons_with_stats(kind)
-    # Newest first: within a year the autumn season is the later one (term: :desc would put spring first).
-    Season.where(id: season_ids_with_stats(kind))
-      .order(Arel.sql("seasons.year DESC, CASE seasons.term WHEN 'autumn' THEN 1 ELSE 0 END DESC"))
+    Season.where(id: season_ids_with_stats(kind)).newest_first
   end
 
   # The ids of the seasons with stats of the kind. Finding them goes through

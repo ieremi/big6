@@ -2,7 +2,7 @@ module Api
   module V1
     class SeasonsController < BaseController
       def index
-        seasons = Season.order(year: :desc, term: :desc)
+        seasons = Season.newest_first
         render json: seasons.map { |s| season_json(s) }
       end
 
