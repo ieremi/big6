@@ -63,6 +63,10 @@ https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=2026a&gd=2026-09-27&gnd=
 
 ページは試合中に少しずつ更新されます。Big6 では、試合中の試合だけを5分ごとに読んでいて、それで途中経過を追えています。
 
+### 文字コードが変わることがある
+
+試合ページの文字コードは、2026年9月30日には UTF-8 でしたが、10月1日には Shift_JIS になっていました。どちらも同じ試合（慶大-立大2回戦）のページです。10月1日には、ブラウザの種類（User-Agent）を変えて試しても Shift_JIS でした。10月1日のページは、HTTP の `Content-Type` が `text/html; charset=SJIS` で、HTML の中には文字コードの指定（`<meta charset>`）がありません。UTF-8 と決めつけて読むと、日本語が文字化けします。`Content-Type` の charset を見て読むか、HTML のライブラリに文字コードを判定させる必要があります。選手のページ（[選手ID](league-site-player-id.md)）は、10月1日の時点でも UTF-8 でした。
+
 ### ボックススコアはPC用とスマートフォン用の2回載っている
 
 1つのページに、同じボックススコアがPC用（`#game_scoreboard_pc`）とスマートフォン用（`#game_scoreboard_sp`）の2通りで入っています。並びがちがいます。

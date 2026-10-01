@@ -68,6 +68,13 @@ class LeagueOfficialPlayerLink
     player
   end
 
+  # The body in UTF-8, from the charset of the response; Shift_JIS is read as
+  # Windows-31J, its superset that has the kanji the site uses (髙, 﨑).
+  def self.decode(body, charset)
+    encoding = charset.to_s.downcase.match?(/\A(s(hift)?[-_]?jis|cp932|windows-31j)\z/) ? Encoding::Windows_31J : Encoding::UTF_8
+    body.to_s.dup.force_encoding(encoding).encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+  end
+
   # A name as the two sites can be compared by: no spaces, and one form of each kanji.
   def self.normalize(name)
     name.to_s.unicode_normalize(:nfkc).gsub(/[[:space:]]/, "").gsub(Regexp.union(VARIANTS.keys), VARIANTS)
@@ -99,9 +106,12 @@ class LeagueOfficialPlayerLink
 
   private
 
+  # The page as UTF-8, decoded from the charset its Content-Type names. The
+  # league's site serves some pages in Shift_JIS ("charset=SJIS"; its game pages
+  # since 2026-10), so UTF-8 can't be taken for granted.
   def fetch(url)
     response = Net::HTTP.get_response(URI(url))
-    return response.body.force_encoding(Encoding::UTF_8) if response.is_a?(Net::HTTPSuccess)
+    return self.class.decode(response.body, response.type_params["charset"]) if response.is_a?(Net::HTTPSuccess)
 
     Rails.logger.warn("LeagueOfficialPlayerLink: #{url}: HTTP #{response.code}")
     nil

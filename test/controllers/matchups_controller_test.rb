@@ -120,8 +120,8 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 
     assert_select ".roster-diff a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 2)
-    assert_select ".roster-diff li", text: /スタメンに入った：落合 智哉（投・前回ベンチ外）/
-    assert_select ".roster-diff li", text: /スタメンから外れた：前回の先発（前回 投・ベンチ外）/
+    assert_select ".roster-diff li", text: /スタメンに入った：落合 智哉（投、前回はベンチ外）/
+    assert_select ".roster-diff li", text: /スタメンから外れた：前回の先発（前回 投、今回はベンチ外）/
   end
 
   # ---- the game's status on its page

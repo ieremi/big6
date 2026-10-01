@@ -11,10 +11,10 @@
     <% if diff.any? %>
       <ul>
         <% if diff.new_starters.any? %>
-          <li>スタメンに入った：<%= safe_join(diff.new_starters.map { |move| roster_diff_player(move.player, [ roster_slot_label(move.to_order, move.to_position), ("前回ベンチ外" if diff.from_outside?(move.player)) ].compact.join("・")) }, "、") %></li>
+          <li>スタメンに入った：<%= safe_join(diff.new_starters.map { |move| roster_diff_player(move.player, [ roster_slot_label(move.to_order, move.to_position), ("前回はベンチ外" if diff.from_outside?(move.player)) ].compact.join("、")) }, "、") %></li>
         <% end %>
         <% if diff.dropped_starters.any? %>
-          <li>スタメンから外れた：<%= safe_join(diff.dropped_starters.map { |move| roster_diff_player(move.player, [ "前回 #{roster_slot_label(move.from_order, move.from_position)}", ("ベンチ外" if diff.now_outside?(move.player)) ].compact.join("・")) }, "、") %></li>
+          <li>スタメンから外れた：<%= safe_join(diff.dropped_starters.map { |move| roster_diff_player(move.player, [ "前回 #{roster_slot_label(move.from_order, move.from_position)}", ("今回はベンチ外" if diff.now_outside?(move.player)) ].compact.join("、")) }, "、") %></li>
         <% end %>
         <% if diff.order_changes.any? %>
           <li>打順：<%= safe_join(diff.order_changes.map { |move| roster_diff_player(move.player, "#{move.from_order || "—"}番→#{move.to_order || "—"}番") }, "、") %></li>

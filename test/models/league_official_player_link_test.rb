@@ -86,4 +86,11 @@ class LeagueOfficialPlayerLinkTest < ActiveSupport::TestCase
 
     assert_equal LeagueOfficialPlayerLink::MAX_FETCHES, fetched.size
   end
+  test "a page is read in the charset the server names, Shift_JIS included" do
+    sjis = page_html("髙橋 宏﨑", "（2023年入学・慶應）").encode(Encoding::Windows_31J).b
+
+    assert_equal "髙橋 宏﨑", LeagueOfficialPlayerLink.new.parse(LeagueOfficialPlayerLink.decode(sjis, "SJIS")).name
+    assert_equal "上田", LeagueOfficialPlayerLink.decode("上田".b, "UTF-8")
+    assert_equal "上田", LeagueOfficialPlayerLink.decode("上田".b, nil)
+  end
 end
