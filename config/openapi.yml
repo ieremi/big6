@@ -226,7 +226,7 @@ paths:
       parameters:
         - name: q
           in: query
-          description: 氏名・よみ・出身高校のキーワード（例 湯田統真）
+          description: 氏名・よみ・出身高校のキーワード（例 田中優飛）
           schema: { type: string }
         - $ref: "#/components/parameters/Universities"
         - name: start_year
