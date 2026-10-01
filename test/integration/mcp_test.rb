@@ -76,4 +76,9 @@ class McpTest < ActionDispatch::IntegrationTest
     assert_equal true, result["isError"]
     assert_equal({ "error" => "not found" }, result["structuredContent"])
   end
+  test "the MCP page of docs/ lists every tool, and no tool that isn't there" do
+    listed = File.read(Rails.root.join("docs/mcp.md")).scan(/^\| `(\w+)` \|/).flatten
+
+    assert_equal tools.map { |tool| tool["name"] }.sort, listed.sort
+  end
 end
