@@ -33,6 +33,8 @@
           <%= team.short_name %>（<%= members.size %>人<%= "・出場#{members.count { |member| played.include?(member.player_id) }}人" if played %>）
         </summary>
 
+        <%= render "games/roster_diff", team: team, diff: local_assigns[:roster_diffs]&.dig(team.id) %>
+
         <div class="table-scroll">
           <table data-controller="sortable-table">
             <thead>

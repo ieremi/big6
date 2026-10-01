@@ -61,6 +61,7 @@ class MatchupsController < ApplicationController
       if @game_members_by_university.blank?
         @official_lineup = LeagueOfficialLineup.new(@game)
       end
+      @roster_diffs = RosterDiff.for_game(@game, members_by_university: @game_members_by_university, official_lineup: @official_lineup)
       render "games/show" and return
     end
 

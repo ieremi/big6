@@ -109,6 +109,21 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "ベンチ入りメンバー", response.body
   end
 
+  test "game page tells each team's changes from its previous game, linked to it" do
+    previous = Game.create!(season: @game.season, team0: @alpha, team1: @beta, played_on: @game.played_on - 1, game_number: 2,
+      team0_score: 1, team1_score: 0, game_status: "試合終了")
+    @game.update!(played_on: previous.played_on + 1)
+    old = Player.create!(scorebook_id: 9, university: @alpha, name: "前回の先発", enter_year: 2023, role: "選手", enrollment_status: 1)
+    GameMember.create!(game: previous, player: old, university: @alpha, fielding_position: "投")
+    add_member(1, @alpha, "落合 智哉", fielding_position: "投")
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select ".roster-diff a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 2)
+    assert_select ".roster-diff li", text: /スタメンに入った：落合 智哉（投・前回ベンチ外）/
+    assert_select ".roster-diff li", text: /スタメンから外れた：前回の先発（前回 投・ベンチ外）/
+  end
+
   # ---- the game's status on its page
 
   def status_tag

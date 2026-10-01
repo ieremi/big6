@@ -1,0 +1,34 @@
+<%# What changed in a team's members from its previous game of the season (RosterDiff): above the team's roster on a game page.
+    Nothing when the team has no earlier game of the season with members. When either game has only the provisional
+    lineup (no bench), only the starters are compared. %>
+<% if diff %>
+  <% previous = diff.previous_game %>
+  <% opponent = previous.team0_id == team.id ? previous.team1 : previous.team0 %>
+  <div class="roster-diff">
+    <p class="muted">
+      前回の試合（<%= link_to "#{previous.played_on.month}月#{previous.played_on.day}日 #{opponent.short_name}戦 #{round_label(previous)}", game_path(previous) %>）からの変更<%= "（スタメンのみ比較）" unless diff.compare_bench? %><%= "：なし" unless diff.any? %>
+    </p>
+    <% if diff.any? %>
+      <ul>
+        <% if diff.new_starters.any? %>
+          <li>スタメンに入った：<%= safe_join(diff.new_starters.map { |move| roster_diff_player(move.player, [ roster_slot_label(move.to_order, move.to_position), ("前回ベンチ外" if diff.from_outside?(move.player)) ].compact.join("・")) }, "、") %></li>
+        <% end %>
+        <% if diff.dropped_starters.any? %>
+          <li>スタメンから外れた：<%= safe_join(diff.dropped_starters.map { |move| roster_diff_player(move.player, [ "前回 #{roster_slot_label(move.from_order, move.from_position)}", ("ベンチ外" if diff.now_outside?(move.player)) ].compact.join("・")) }, "、") %></li>
+        <% end %>
+        <% if diff.order_changes.any? %>
+          <li>打順：<%= safe_join(diff.order_changes.map { |move| roster_diff_player(move.player, "#{move.from_order || "—"}番→#{move.to_order || "—"}番") }, "、") %></li>
+        <% end %>
+        <% if diff.position_changes.any? %>
+          <li>守備：<%= safe_join(diff.position_changes.map { |move| roster_diff_player(move.player, "#{move.from_position.presence || "—"}→#{move.to_position.presence || "—"}") }, "、") %></li>
+        <% end %>
+        <% if diff.joined.any? %>
+          <li>ベンチ入りした：<%= safe_join(diff.joined.map { |player| roster_diff_player(player) }, "、") %></li>
+        <% end %>
+        <% if diff.left.any? %>
+          <li>ベンチから外れた：<%= safe_join(diff.left.map { |player| roster_diff_player(player) }, "、") %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+<% end %>

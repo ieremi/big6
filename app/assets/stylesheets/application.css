@@ -1451,6 +1451,20 @@ tr.bench-only td a {
   color: inherit;
 }
 
+/* What changed from the team's previous game, above its roster (games/_roster_diff). */
+.roster-diff {
+  margin: 0.5rem 0;
+}
+
+.roster-diff p {
+  margin: 0 0 0.25rem;
+}
+
+.roster-diff ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
 /* A message after an action, such as signing in (layouts/application). */
 .flash {
   border: 1px solid var(--border);

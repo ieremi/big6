@@ -92,4 +92,15 @@ module GamesHelper
   def sortable_game_header(key, label, shortcut, first: "asc")
     sortable_link_header(key, label, shortcut, order: @sort_order, default: GameSortable::DEFAULT_KEY, first: first)
   end
+  # A starter's place in a RosterDiff, as "6番・遊", "投" (a starting pitcher
+  # with a designated hitter) or "" when there is none.
+  def roster_slot_label(order, position)
+    [ ("#{order}番" if order), position.presence ].compact.join("・")
+  end
+
+  # A player of a RosterDiff, linked to their page, with what is said about
+  # them after it in parentheses (nothing when detail is blank).
+  def roster_diff_player(player, detail = nil)
+    safe_join([ link_to(player.name, player_path(player)), ("（#{detail}）" if detail.present?) ].compact)
+  end
 end
