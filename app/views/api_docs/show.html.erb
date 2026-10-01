@@ -27,6 +27,18 @@
   画像の項目は、最初は画像を表示せず、「試す」を押すとその下に画像を表示します（パスを書き換えれば、別の画像も試せます）。
 </p>
 
+<h2>OpenAPI（ChatGPT の GPT などから使う）</h2>
+<p>
+  この API の仕様を OpenAPI 3.0 の形で <code><%= link_to api_v1_openapi_path, api_v1_openapi_path %></code> に置いています（JSON）。
+  ChatGPT の GPT の編集画面で "Configure" → "Create new action" → "Import from URL" にこの URL を入れると、GPT が会話のなかでこの API を呼べるようになります。"Authentication" は "None" です。
+  画像（<code>og.png</code>）の項目は含めていません。
+</p>
+<p class="muted">
+  ChatGPT のコード実行（Python）の環境は外部に接続できず、ウェブ検索の機能も API の URL を開けないことがあります。
+  そのため、ChatGPT からこの API を使うにはアクションが必要です。
+</p>
+<%= render "sandbox", path: "/openapi.json" %>
+
 <h2>大学</h2>
 
 <h3><code>/api/v1/universities</code></h3>

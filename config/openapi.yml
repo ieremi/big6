@@ -1,0 +1,492 @@
+# The Web API described for machines (OpenAPI 3.0, which more tools read than 3.1): served as JSON at
+# /api/v1/openapi.json (Api::V1::OpenapiController), with `servers` filled in
+# from the request. Its main use is a ChatGPT GPT's Actions, which call the API
+# only through such a spec. The page for people is /api/docs
+# (app/views/api_docs/show.html.erb): keep the two in step whenever the API
+# changes. test/controllers/api/v1/openapi_controller_test.rb checks that every
+# JSON route is here and that nothing here isn't a route. The og.png routes are
+# left out: they return images, which a GPT can't use.
+#
+# Operation descriptions are kept under 300 characters, GPT Actions' limit.
+openapi: 3.0.3
+info:
+  title: Big6 東京六大学野球 Web API
+  version: "1"
+  description: >-
+    東京六大学野球（1925年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキング。
+    すべて GET・JSON・認証不要。大学の slug は waseda（早大）・keio（慶大）・meiji（明大）・
+    hosei（法大）・tokyo（東大）・rikkio（立大）。選手の id は BIG6 Scorebook の選手ID。
+    人向けの説明は /api/docs。
+paths:
+  /universities:
+    get:
+      operationId: listUniversities
+      summary: 6大学の一覧
+      description: 6大学の slug・名前・略称・頭文字・色・表示順。
+      responses:
+        "200":
+          description: 大学の配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/University" }
+  /universities/{slug}:
+    get:
+      operationId: getUniversity
+      summary: 1大学の情報と通算成績
+      description: 大学の情報と、全対戦相手を合わせた通算成績（勝・敗・分・勝率・最多連勝・現在の連勝）。連勝がなければ null。
+      parameters:
+        - $ref: "#/components/parameters/UniversitySlug"
+      responses:
+        "200":
+          description: 大学と通算成績
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UniversityRecord" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /seasons:
+    get:
+      operationId: listSeasons
+      summary: 全シーズンの一覧
+      description: 1925年からの全シーズン（新しい順）。
+      responses:
+        "200":
+          description: シーズンの配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Season" }
+  /seasons/{year}/{term}:
+    get:
+      operationId: getSeason
+      summary: 1シーズンの全試合
+      description: シーズンの情報と、その全試合（日付順）。試合前の試合は score が null。中止・ノーゲームは cancelled が true で、round も null。昨日の試合を知るにはこれを使い、played_on で絞る。
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/Term"
+      responses:
+        "200":
+          description: シーズンと試合
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Season"
+                  - type: object
+                    properties:
+                      games:
+                        type: array
+                        items: { $ref: "#/components/schemas/Game" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /seasons/{year}/{term}/standings:
+    get:
+      operationId: getStandings
+      summary: シーズンの順位表
+      description: 順位順の各大学の勝・敗・分・勝ち点・試合数・勝率・総観衆・平均観衆。
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/Term"
+        - $ref: "#/components/parameters/ExcludeWeekdays"
+      responses:
+        "200":
+          description: 順位表の行の配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StandingsRow" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /games:
+    get:
+      operationId: searchGames
+      summary: 試合の検索
+      description: 大学・シーズン・年で試合を検索（日付順、1ページ100件）。中止の試合も1件に数える。
+      parameters:
+        - $ref: "#/components/parameters/Universities"
+        - name: term[]
+          in: query
+          description: spring（春季）/ autumn（秋季）。複数可
+          schema:
+            type: array
+            items: { type: string, enum: [spring, autumn] }
+          style: form
+          explode: true
+        - name: start_year
+          in: query
+          description: 試合日の年の下限
+          schema: { type: integer }
+        - name: end_year
+          in: query
+          description: 試合日の年の上限
+          schema: { type: integer }
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: 試合の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  games:
+                    type: array
+                    items: { $ref: "#/components/schemas/Game" }
+  /games/{year}/{term}/{team0}/{team1}/{round}:
+    get:
+      operationId: getGame
+      summary: 1試合とスコアボード
+      description: 1試合の情報と、回ごとの得点・安打・失策・開始終了時刻・試合時間・審判のスコアボード（データがなければ null）。team0 と team1 は順不同。round は第何回戦か。スコアボードの値は文字列。
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/Term"
+        - name: team0
+          in: path
+          required: true
+          description: 一方の大学の slug
+          schema: { $ref: "#/components/schemas/Slug" }
+        - name: team1
+          in: path
+          required: true
+          description: もう一方の大学の slug
+          schema: { $ref: "#/components/schemas/Slug" }
+        - name: round
+          in: path
+          required: true
+          description: 回戦（1回戦なら 1）
+          schema: { type: integer }
+      responses:
+        "200":
+          description: 試合
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Game"
+                  - type: object
+                    properties:
+                      scoreboard:
+                        type: object
+                        nullable: true
+                        description: 回ごとの得点（innings）、安打（hits）、失策（errors）、stadium、started_at、finished_at、duration_minutes、umpires
+        "404": { $ref: "#/components/responses/NotFound" }
+  /matchups/{team0_slug}/{team1_slug}:
+    get:
+      operationId: getMatchup
+      summary: 2大学の対戦成績
+      description: 2大学の勝ち数・引き分け・勝率・観衆（平均と合計）・試合時間。通算、直近N年、または1シーズン。
+      parameters:
+        - name: team0_slug
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/Slug" }
+        - name: team1_slug
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/Slug" }
+        - name: since_years
+          in: query
+          description: 直近N年に絞る
+          schema: { type: integer }
+        - name: year
+          in: query
+          description: シーズンの年（term と両方で1シーズンに絞る）
+          schema: { type: integer }
+        - name: term
+          in: query
+          description: シーズン（year と両方で指定）
+          schema: { type: string, enum: [spring, autumn] }
+        - $ref: "#/components/parameters/ExcludeWeekdays"
+      responses:
+        "200":
+          description: 対戦成績
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  team0: { $ref: "#/components/schemas/Slug" }
+                  team1: { $ref: "#/components/schemas/Slug" }
+                  wins: { type: object, description: "slug ごとの勝ち数", additionalProperties: { type: integer } }
+                  draws: { type: integer }
+                  percentage: { type: object, description: "slug ごとの勝率", additionalProperties: { type: number, nullable: true } }
+                  attendance: { type: object, properties: { average: { type: integer, nullable: true }, total: { type: integer, nullable: true } } }
+                  duration_minutes: { type: object }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /players:
+    get:
+      operationId: searchPlayers
+      summary: 選手・スタッフの検索
+      description: 氏名・よみ・出身高校で選手やスタッフを検索（入学年の新しい順、1ページ100件）。名前から選手の id を知るのに使う。q の姓名の間の空白は無視される。
+      parameters:
+        - name: q
+          in: query
+          description: 氏名・よみ・出身高校のキーワード（例 湯田統真）
+          schema: { type: string }
+        - $ref: "#/components/parameters/Universities"
+        - name: start_year
+          in: query
+          description: 入学年の下限
+          schema: { type: integer }
+        - name: end_year
+          in: query
+          description: 入学年の上限
+          schema: { type: integer }
+        - name: role
+          in: query
+          description: player（選手）/ manager（マネージャー）/ staff（監督・コーチ・部長など）/ other（学生コーチなど）
+          schema: { type: string, enum: [player, manager, staff, other] }
+        - name: status
+          in: query
+          description: active（現役）/ alumni（卒業生）
+          schema: { type: string, enum: [active, alumni] }
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: 選手の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  players:
+                    type: array
+                    items: { $ref: "#/components/schemas/Player" }
+  /players/{id}:
+    get:
+      operationId: getPlayer
+      summary: 1人のプロフィールとシーズン別・通算成績
+      description: プロフィールと、打撃（batting）・投手（pitching）のシーズン別（古い順）と通算の成績。成績がなければ null。優勝決定戦は含まない。打率・OPS・防御率などは計算値。
+      parameters:
+        - $ref: "#/components/parameters/PlayerId"
+      responses:
+        "200":
+          description: 選手と成績
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Player"
+                  - type: object
+                    properties:
+                      batting: { type: object, nullable: true, description: "seasons（シーズン別）と career（通算）" }
+                      pitching: { type: object, nullable: true, description: "seasons（シーズン別）と career（通算）" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /players/{id}/games:
+    get:
+      operationId: getPlayerGames
+      summary: 1人の試合ごとの記録
+      description: 試合ごとの記録（新しい順）。roster（背番号・打順・守備位置、2021年以降）、batting（打撃）、pitching（投球、勝敗の result を含む）のうち、その試合にあるものだけ。game は getGame のパスと同じ値。
+      parameters:
+        - $ref: "#/components/parameters/PlayerId"
+      responses:
+        "200":
+          description: 試合ごとの記録の配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    game:
+                      type: object
+                      properties:
+                        year: { type: integer }
+                        term: { type: string }
+                        team0: { type: string }
+                        team1: { type: string }
+                        round: { type: integer, nullable: true }
+                        played_on: { type: string, format: date }
+                    opponent: { $ref: "#/components/schemas/Slug" }
+                    counted_in_stats: { type: boolean, description: "false は優勝決定戦（成績に含めない）" }
+                    roster: { type: object, nullable: true }
+                    batting: { type: object, nullable: true }
+                    pitching: { type: object, nullable: true }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /rankings/{kind}:
+    get:
+      operationId: getRanking
+      summary: 打者（OPS）・投手（防御率）のランキング
+      description: batting は OPS の高い順、pitching は防御率の低い順。year と term で1シーズン、省略で通算。最低打席数・投球回（minimum）に届いた選手だけ。sort で別の列（3列まで、カンマ区切り）で並べ替えられる。1ページ100件。
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [batting, pitching] }
+        - name: year
+          in: query
+          description: シーズンの年（term と両方で指定。省略で通算）
+          schema: { type: integer }
+        - name: term
+          in: query
+          schema: { type: string, enum: [spring, autumn] }
+        - $ref: "#/components/parameters/Universities"
+        - name: minimum
+          in: query
+          description: 最低打席数（batting）か最低投球回（pitching）。0 で制限なし。省略で通算40、シーズン10
+          schema: { type: integer }
+        - name: sort
+          in: query
+          description: >-
+            並べ替える列（カンマ区切りで3列まで）。batting: rank, player, university, ops, average, obp, slg, games, pa, ab, hits, home_runs。
+            pitching: rank, player, university, era, games, outs, wins, losses, hits, strikeouts, walks, earned_runs
+          schema: { type: string }
+        - name: direction
+          in: query
+          description: asc / desc（sort の列ごとにカンマ区切り）。省略で列ごとの既定
+          schema: { type: string }
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: ランキング
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind: { type: string }
+                  season: { allOf: [{ $ref: "#/components/schemas/Season" }], nullable: true }
+                  minimum: { type: object }
+                  sort: { type: string }
+                  direction: { type: string }
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  rankings:
+                    type: array
+                    items:
+                      type: object
+                      description: rank、default_rank、player（id・name・university）と、batting は ops・obp・slg・average・games・pa・ab・hits・home_runs、pitching は era・innings・wins・losses・strikeouts など
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  parameters:
+    UniversitySlug:
+      name: slug
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Slug" }
+    Year:
+      name: year
+      in: path
+      required: true
+      description: シーズンの年（例 2026）
+      schema: { type: integer }
+    Term:
+      name: term
+      in: path
+      required: true
+      description: spring（春季）または autumn（秋季）
+      schema: { type: string, enum: [spring, autumn] }
+    PlayerId:
+      name: id
+      in: path
+      required: true
+      description: 選手の id（BIG6 Scorebook の選手ID。searchPlayers で調べられる）
+      schema: { type: integer }
+    Universities:
+      name: university[]
+      in: query
+      description: 大学の slug（複数可）。指定した大学が関わるものだけ
+      schema:
+        type: array
+        items: { $ref: "#/components/schemas/Slug" }
+      style: form
+      explode: true
+    ExcludeWeekdays:
+      name: exclude_weekdays
+      in: query
+      description: true で、観衆の数字を土日の試合だけで数える（平日の試合をのぞく）
+      schema: { type: boolean }
+    Page:
+      name: page
+      in: query
+      description: ページ番号（1から）
+      schema: { type: integer, minimum: 1 }
+  responses:
+    NotFound:
+      description: 存在しない大学・シーズン・試合・選手
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+  schemas:
+    Slug:
+      type: string
+      enum: [waseda, keio, meiji, hosei, tokyo, rikkio]
+    University:
+      type: object
+      properties:
+        slug: { $ref: "#/components/schemas/Slug" }
+        name: { type: string }
+        short_name: { type: string }
+        initial: { type: string }
+        color: { type: string }
+        position: { type: integer }
+    UniversityRecord:
+      allOf:
+        - $ref: "#/components/schemas/University"
+        - type: object
+          properties:
+            record:
+              type: object
+              description: wins・losses・draws・percentage・longest_streak・current_streak
+    Season:
+      type: object
+      properties:
+        year: { type: integer }
+        term: { type: string, enum: [spring, autumn] }
+        title: { type: string, description: "2026年秋季 など" }
+    Game:
+      type: object
+      properties:
+        season: { $ref: "#/components/schemas/Season" }
+        played_on: { type: string, format: date }
+        round: { type: integer, nullable: true, description: "回戦。中止・ノーゲームは null" }
+        team0: { $ref: "#/components/schemas/GameSide" }
+        team1: { $ref: "#/components/schemas/GameSide" }
+        attendance: { type: integer, nullable: true }
+        status: { type: string, enum: [scheduled, in_progress, finished, cancelled, no_game] }
+        cancelled: { type: boolean }
+    GameSide:
+      type: object
+      properties:
+        slug: { $ref: "#/components/schemas/Slug" }
+        score: { type: integer, nullable: true }
+    StandingsRow:
+      type: object
+      properties:
+        university: { $ref: "#/components/schemas/University" }
+        wins: { type: integer }
+        losses: { type: integer }
+        draws: { type: integer }
+        points: { type: integer, description: 勝ち点 }
+        games: { type: integer }
+        percentage: { type: number, description: 勝率 }
+        attendance_total: { type: integer }
+        average_attendance: { type: integer, nullable: true }
+    Player:
+      type: object
+      properties:
+        id: { type: integer, description: "BIG6 Scorebook の選手ID" }
+        name: { type: string }
+        name_kana: { type: string, nullable: true }
+        university: { $ref: "#/components/schemas/Slug" }
+        enter_year: { type: integer, nullable: true }
+        role: { type: string, nullable: true, description: "選手・監督・マネージャーなど" }
+        position: { type: string, nullable: true }
+        batting_hand: { type: string, nullable: true }
+        pitching_hand: { type: string, nullable: true }
+        high_school: { type: string, nullable: true }
+        faculty: { type: string, nullable: true }
+        grade: { type: integer, nullable: true }
+        status: { type: string, nullable: true, enum: [active, alumni] }

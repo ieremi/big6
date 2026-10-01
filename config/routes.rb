@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
+      # The API described in OpenAPI (config/openapi.yml), for GPT Actions and the like.
+      get "openapi", to: "openapi#show", as: :openapi, defaults: { format: :json }
       resources :universities, only: [ :index, :show ], param: :slug
       get "universities/:slug/og.png", to: "universities#og_image", as: :university_og_image
       resources :games, only: [ :index ]
