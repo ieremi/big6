@@ -122,4 +122,10 @@ class ApiDocsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p code", text: "cancelled"
     assert_match "中止", response.body
   end
+  test "says where the MCP server and the OpenAPI description are" do
+    get api_docs_url
+
+    assert_match "http://www.example.com/mcp", response.body
+    assert_select "a[href=?]", api_v1_openapi_path
+  end
 end

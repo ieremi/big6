@@ -1,7 +1,8 @@
 # The Web API described for machines (OpenAPI 3.0, which more tools read than 3.1): served as JSON at
 # /api/v1/openapi.json (Api::V1::OpenapiController), with `servers` filled in
-# from the request. Its main use is a ChatGPT GPT's Actions, which call the API
-# only through such a spec. The page for people is /api/docs
+# from the request, for a ChatGPT GPT's Actions and the like. The MCP server's
+# tools are made from it too (Big6Mcp): one per operation, named after its
+# operationId, taking its parameters. The page for people is /api/docs
 # (app/views/api_docs/show.html.erb): keep the two in step whenever the API
 # changes. test/controllers/api/v1/openapi_controller_test.rb checks that every
 # JSON route is here and that nothing here isn't a route. The og.png routes are

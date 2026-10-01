@@ -26,6 +26,10 @@ Rails.application.routes.draw do
 
   get "api/docs", to: "api_docs#show", as: :api_docs
 
+  # The MCP server (Big6Mcp): the Web API as tools for AI assistants. A lambda, so
+  # that code reloading in development reaches it.
+  mount ->(env) { Big6Mcp.call(env) }, at: "/mcp"
+
   get "news", to: "news#index", as: :news
   get "developers", to: "developers#show", as: :developers
   get "developers/:page", to: "developers#show", as: :developer_page, constraints: { page: /[a-z0-9][a-z0-9-]*/ }

@@ -27,15 +27,25 @@
   画像の項目は、最初は画像を表示せず、「試す」を押すとその下に画像を表示します（パスを書き換えれば、別の画像も試せます）。
 </p>
 
-<h2>OpenAPI（ChatGPT の GPT などから使う）</h2>
+<h2>AI アシスタントから使う（MCP サーバー）</h2>
 <p>
-  この API の仕様を OpenAPI 3.0 の形で <code><%= link_to api_v1_openapi_path, api_v1_openapi_path %></code> に置いています（JSON）。
-  ChatGPT の GPT の編集画面で "Configure" → "Create new action" → "Import from URL" にこの URL を入れると、GPT が会話のなかでこの API を呼べるようになります。"Authentication" は "None" です。
-  画像（<code>og.png</code>）の項目は含めていません。
+  この API は、MCP（Model Context Protocol）のサーバーとしても使えます。URL は <code><%= request.base_url %>/mcp</code> です（Streamable HTTP、認証なし）。
+  ツールは下の各 API と1対1で、名前は <code>search_players</code>・<code>get_player</code>・<code>get_season</code> のような形です。返す JSON も同じです。
+</p>
+<p>
+  ChatGPT では、"Settings" → "Security and login" で "Developer mode" をオンにし、サイドバーの "Plugins" の "+" から、この URL のアプリを追加します。
+  Claude などの MCP に対応したアシスタントでも、カスタムのコネクタとしてこの URL を追加すれば使えます。
 </p>
 <p class="muted">
   ChatGPT のコード実行（Python）の環境は外部に接続できず、ウェブ検索の機能も API の URL を開けないことがあります。
-  そのため、ChatGPT からこの API を使うにはアクションが必要です。
+  そのため、ChatGPT からこの API を使うには、MCP のアプリ（または下の GPT のアクション）が必要です。
+</p>
+
+<h2>OpenAPI</h2>
+<p>
+  この API の仕様を OpenAPI 3.0 の形で <code><%= link_to api_v1_openapi_path, api_v1_openapi_path %></code> に置いています（JSON）。画像（<code>og.png</code>）の項目は含めていません。
+  ChatGPT の GPT の編集画面で "Configure" → "Create new action" → "Import from URL" にこの URL を入れると、GPT がこの API を呼べるようになります（"Authentication" は "None"）。
+  ただし、GPT は2026年12月11日に廃止され、プラグインに移行してもアクションは引き継がれません。続けて使うなら、上の MCP サーバーを使ってください。
 </p>
 <%= render "sandbox", path: "/openapi.json" %>
 
