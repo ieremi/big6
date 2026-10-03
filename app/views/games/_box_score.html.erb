@@ -1,0 +1,98 @@
+<%# Each team's batting and pitching lines for the game (BattingLine, PitchingLine), from Scorebook, with a total row.
+    Lines are in Scorebook's own order (batters in batting order, each substitute after the one replaced; pitchers in
+    the order they pitched), which is what a box score is read in, so the tables aren't sortable.
+    The 打順 column counts the starters (a bracketed position, "[4]") in turn; a substitute has none.
+    Nothing is shown until Scorebook's box score has been imported (GameStatsImport). %>
+<% teams = [ game.team0, game.team1 ] %>
+<% batting = teams.filter_map { |team| [ team, batting_lines_by_university[team.id] ] if batting_lines_by_university[team.id].present? } %>
+<% pitching = teams.filter_map { |team| [ team, pitching_lines_by_university[team.id] ] if pitching_lines_by_university[team.id].present? } %>
+
+<% if batting.any? %>
+  <h2 class="card-heading">打撃成績</h2>
+  <% unless game.counted_in_stats %>
+    <p class="muted">この試合（優勝決定戦）の成績は通算・ランキングに含みません。</p>
+  <% end %>
+
+  <% batting.each do |team, lines| %>
+    <h3 class="box-score-team">
+      <span class="team-chip" style="background: <%= team.color %>"><%= team.initial %></span>
+      <%= team.short_name %>
+    </h3>
+    <% totals = BattingLine.totals(lines) %>
+    <% batting_order = 0 %>
+    <div class="table-scroll">
+      <table class="box-score">
+        <thead>
+          <tr>
+            <% %w[打順 守備 氏名 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策].each do |label| %>
+              <th><%= label %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% lines.each do |line| %>
+            <% starter = line.position.to_s.start_with?("[") %>
+            <%= tag.tr class: ("box-score-sub" unless starter) do %>
+              <td><%= batting_order += 1 if starter %></td>
+              <td><%= batting_positions_label(line.position) %></td>
+              <td class="box-score-name"><%= link_to line.player.name, player_path(line.player) %></td>
+              <td><%= line.pa %></td><td><%= line.ab %></td><td><%= line.hits %></td><td><%= line.doubles %></td><td><%= line.triples %></td><td><%= line.home_runs %></td>
+              <td><%= line.rbi %></td><td><%= line.runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td><td><%= line.sacrifices %></td>
+              <td><%= line.stolen_bases %></td><td><%= line.gidp %></td><td><%= line.fielding_errors %></td>
+            <% end %>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" scope="row">計</th>
+            <td><%= totals.pa %></td><td><%= totals.ab %></td><td><%= totals.hits %></td><td><%= totals.doubles %></td><td><%= totals.triples %></td><td><%= totals.home_runs %></td>
+            <td><%= totals.rbi %></td><td><%= totals.runs %></td><td><%= totals.strikeouts %></td><td><%= totals.walks %></td><td><%= totals.sacrifices %></td>
+            <td><%= totals.stolen_bases %></td><td><%= totals.gidp %></td><td><%= totals.fielding_errors %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  <% end %>
+<% end %>
+
+<% if pitching.any? %>
+  <h2 class="card-heading">投手成績</h2>
+
+  <% pitching.each do |team, lines| %>
+    <h3 class="box-score-team">
+      <span class="team-chip" style="background: <%= team.color %>"><%= team.initial %></span>
+      <%= team.short_name %>
+    </h3>
+    <% totals = PitchingLine.totals(lines) %>
+    <div class="table-scroll">
+      <table class="box-score">
+        <thead>
+          <tr>
+            <% %w[氏名 結果 投球回 打者 球数 被安打 被本塁打 奪三振 与四死球 失点 自責点].each do |label| %>
+              <th><%= label %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% lines.each do |line| %>
+            <tr>
+              <td class="box-score-name"><%= link_to line.player.name, player_path(line.player) %></td>
+              <td><%= pitching_result_label(line) %></td>
+              <td><%= innings_label(line.outs) %></td>
+              <td><%= line.batters_faced %></td><td><%= line.pitches %></td><td><%= line.hits %></td><td><%= line.home_runs %></td>
+              <td><%= line.strikeouts %></td><td><%= line.walks %></td><td><%= line.runs %></td><td><%= line.earned_runs %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2" scope="row">計</th>
+            <td><%= innings_label(totals.outs) %></td>
+            <td><%= totals.batters_faced %></td><td><%= totals.pitches %></td><td><%= totals.hits %></td><td><%= totals.home_runs %></td>
+            <td><%= totals.strikeouts %></td><td><%= totals.walks %></td><td><%= totals.runs %></td><td><%= totals.earned_runs %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  <% end %>
+<% end %>

@@ -1451,6 +1451,42 @@ tr.bench-only td a {
   color: inherit;
 }
 
+/* A game's batting and pitching lines (games/_box_score): compact, numbers right-aligned, the name never wrapped. */
+.box-score-team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.box-score th,
+.box-score td {
+  padding: 0.4rem 0.6rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.box-score th:first-child,
+.box-score td:first-child,
+.box-score td:nth-child(2),
+.box-score .box-score-name,
+.box-score tfoot th {
+  text-align: left;
+}
+
+.box-score tfoot th,
+.box-score tfoot td {
+  font-weight: 700;
+  background: var(--row-alt);
+  border-bottom: none;
+}
+
+/* A substitute (pinch hitter, runner or defensive sub), set in under the starter replaced. */
+.box-score tr.box-score-sub .box-score-name {
+  padding-left: 1.4rem;
+}
+
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */
 .roster-diff {
   margin: 0.5rem 0;

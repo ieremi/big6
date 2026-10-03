@@ -78,7 +78,7 @@
                   <%= link_to "#{opponent_name(line)}（#{line.game.game_number}回戦）", player_game_path(line.game) %>
                   <% unless line.game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
                 </td>
-                <%= sort_cell "#{line.wins.positive? ? '勝' : (line.losses.positive? ? '敗' : '')}#{'先発' if line.started.positive?}", pitching_result_sort_value(line) %>
+                <%= sort_cell pitching_result_label(line), pitching_result_sort_value(line) %>
                 <%= sort_cell innings_label(line.outs), line.outs %><td><%= line.batters_faced %></td><td><%= line.pitches %></td>
                 <td><%= line.hits %></td><td><%= line.home_runs %></td><td><%= line.strikeouts %></td><td><%= line.walks %></td>
                 <td><%= line.runs %></td><td><%= line.earned_runs %></td>

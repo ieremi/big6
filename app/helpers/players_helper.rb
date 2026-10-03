@@ -131,6 +131,11 @@ module PlayersHelper
     season.year + (season.term == "autumn" ? 0.5 : 0)
   end
 
+  # A pitching line's result: 勝 or 敗, then 先発 for the starter ("勝先発").
+  def pitching_result_label(line)
+    "#{line.wins.positive? ? '勝' : (line.losses.positive? ? '敗' : '')}#{'先発' if line.started.positive?}"
+  end
+
   # A pitching line's result sorts wins first, then losses, then none.
   def pitching_result_sort_value(line)
     line.wins.positive? ? 0 : (line.losses.positive? ? 1 : nil)

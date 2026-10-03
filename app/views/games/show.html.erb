@@ -126,6 +126,8 @@
   <% end %>
 <% end %>
 
+<%= render "games/box_score", game: @game, batting_lines_by_university: @batting_lines_by_university, pitching_lines_by_university: @pitching_lines_by_university %>
+
 <%= render "games/members", game: @game, members_by_university: @game_members_by_university, official_lineup: @official_lineup, played_player_ids: @played_player_ids, roster_diffs: @roster_diffs %>
 
 <% if (url = league_official_game_url(@game)) %>

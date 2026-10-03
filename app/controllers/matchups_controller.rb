@@ -50,6 +50,11 @@ class MatchupsController < ApplicationController
 
       @game_members_by_university = @game.game_members.includes(:player).group_by(&:university_id)
       @played_player_ids = @game.played_player_ids if @game_members_by_university.present?
+      # In id order, which is the order GameStatsImport inserted them in: Scorebook's
+      # own, batters in batting order (each substitute after the one replaced) and
+      # pitchers in the order they pitched.
+      @batting_lines_by_university = @game.batting_lines.includes(:player).order(:id).group_by(&:university_id)
+      @pitching_lines_by_university = @game.pitching_lines.includes(:player).order(:id).group_by(&:university_id)
       @scoreboard = GameScoreboard.new(@game)
       @official_scoreboard = LeagueOfficialScoreboard.new(@game)
       # Scorebook only has GameMember lists once it's fully processed a
