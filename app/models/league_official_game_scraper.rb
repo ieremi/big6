@@ -39,7 +39,11 @@ class LeagueOfficialGameScraper
     response = Net::HTTP.get_response(URI(url))
     return nil unless response.is_a?(Net::HTTPSuccess)
 
-    data = parse(Nokogiri::HTML(response.body))
+    # Decoded first, not left to libxml2: the page says shift_jis but has
+    # Windows-31J kanji (髙, 德), and libxml2 stops reading at the first one,
+    # losing everything after it (the second team's batters, the pitchers).
+    html = LeagueOfficialPlayerLink.decode(response.body, response.type_params["charset"])
+    data = parse(Nokogiri::HTML(html, nil, "UTF-8"))
     return nil unless data
 
     @game.update!(attrs_from(data))

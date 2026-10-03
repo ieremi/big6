@@ -35,8 +35,9 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
     "<div class=\"gamescore-gameinfo\">#{heading}</div><table>#{row.("M", top_innings)}#{row.("W", bottom_innings)}</table>"
   end
 
-  def scrape(game, html)
+  def scrape(game, html, charset: nil)
     response = Net::HTTPOK.new("1.1", "200", "OK")
+    response["content-type"] = "text/html; charset=#{charset}" if charset
     response.instance_variable_set(:@body, html)
     response.instance_variable_set(:@read, true)
     stub_method(Net::HTTP, :get_response, ->(_uri) { response }) { LeagueOfficialGameScraper.call(game) }
@@ -85,6 +86,17 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
       pitchers.map { |entry| entry.values_at("side", "name", "position") }
     assert_equal [ 4, "慶應" ], pitchers.first.values_at("grade", "high_school")
   end
+  test "a Shift_JIS page with Windows-31J kanji is read to the end, not just up to the first such kanji" do
+    game = game("2026-09-30", 1, 1)
+    sp = team_block("M", [ [ "[8]", "丸田", "(3 慶應)" ] ], [ [ "広池", "(4 慶應)" ] ]) +
+      team_block("W", [ [ "[5]", "髙橋海", "(3 山梨学院)" ], [ "[9]", "德丸", "(2 大阪桐蔭)" ] ], [ [ "安田", "(3 日大三)" ] ])
+    html = "<meta charset=\"shift_jis\">" + page([ "0" ] + [ "" ] * 8, [ "" ] * 9) + "<div id=\"game_scoreboard_sp\">#{sp}</div>"
+
+    scrape(game, html.encode(Encoding::Windows_31J).b, charset: "SJIS")
+
+    assert_equal [ "丸田", "髙橋海", "德丸", "広池", "安田" ], game.league_official_data["lineup"].map { |entry| entry["name"] }
+  end
+
   test "each player gets the ID on the league's site from the link on the name, but not 2005's placeholder" do
     game = game("2026-09-30", 1, 1)
     sp = team_block("M", [ [ "[8]", "丸田", "(3 慶應)", "AK24MM0" ] ], [ [ "広池", "(4 慶應)", "AK23HK0" ] ]) +
