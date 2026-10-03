@@ -109,46 +109,61 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "ベンチ入りメンバー", response.body
   end
 
-test "game page shows each team's batting lines in Scorebook's order, starters numbered, with a total row" do
-  starter = add_member(1, @alpha, "落合 智哉").player
-  pinch = add_member(2, @alpha, "山田 太郎").player
-  second = add_member(3, @alpha, "今津 慶介").player
-  BattingLine.create!(game: @game, player: starter, university: @alpha, position: "[2]", pa: 4, ab: 3, hits: 1, rbi: 2)
-  BattingLine.create!(game: @game, player: pinch, university: @alpha, position: "H", pa: 1, ab: 1, hits: 1)
-  BattingLine.create!(game: @game, player: second, university: @alpha, position: "[4]6", pa: 4, ab: 4)
+  test "game page shows each team's batting lines in Scorebook's order, starters numbered, with a total row" do
+    starter = add_member(1, @alpha, "落合 智哉").player
+    pinch = add_member(2, @alpha, "山田 太郎").player
+    second = add_member(3, @alpha, "今津 慶介").player
+    BattingLine.create!(game: @game, player: starter, university: @alpha, position: "[2]", pa: 4, ab: 3, hits: 1, rbi: 2)
+    BattingLine.create!(game: @game, player: pinch, university: @alpha, position: "H", pa: 1, ab: 1, hits: 1)
+    BattingLine.create!(game: @game, player: second, university: @alpha, position: "[4]6", pa: 4, ab: 4)
 
-  get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 
-  assert_select "h2", text: "打撃成績"
-  rows = css_select("table.box-score tbody tr").map { |row| row.css("td").first(4).map { |cell| cell.text.strip } }
-  assert_equal [ [ "1", "[捕]", "落合 智哉", "4" ], [ "", "打", "山田 太郎", "1" ], [ "2", "[二]遊", "今津 慶介", "4" ] ], rows
-  assert_select "table.box-score tr.box-score-sub a", text: "山田 太郎"
-  assert_select "table.box-score tfoot tr" do |footer|
-    assert_equal %w[計 9 8 2], footer.first.css("th, td").first(4).map { |cell| cell.text.strip }
+    assert_select "h2", text: "打撃成績"
+    assert_select "[data-controller=decade-fold] details.decade:not([open]) table.box-score", 1
+    assert_select "details.decade summary", text: /#{Regexp.escape(@alpha.short_name)}（3人）/
+    rows = css_select("table.box-score tbody tr").map { |row| row.css("td").first(4).map { |cell| cell.text.strip } }
+    assert_equal [ [ "1", "[捕]", "落合 智哉", "4" ], [ "", "打", "山田 太郎", "1" ], [ "2", "[二]遊", "今津 慶介", "4" ] ], rows
+    assert_select "table.box-score tr.box-score-sub a", text: "山田 太郎"
+    assert_select "table.box-score tfoot tr" do |footer|
+      assert_equal %w[計 9 8 2], footer.first.css("th, td").first(4).map { |cell| cell.text.strip }
+    end
   end
-end
 
-test "game page shows each team's pitching lines, with the result and innings" do
-  starter = add_member(1, @beta, "今津 慶介").player
-  reliever = add_member(2, @beta, "落合 智哉").player
-  PitchingLine.create!(game: @game, player: starter, university: @beta, started: 1, wins: 1, outs: 20, earned_runs: 1)
-  PitchingLine.create!(game: @game, player: reliever, university: @beta, outs: 7)
+  test "game page shows each team's pitching lines, with the result and innings" do
+    starter = add_member(1, @beta, "今津 慶介").player
+    reliever = add_member(2, @beta, "落合 智哉").player
+    PitchingLine.create!(game: @game, player: starter, university: @beta, started: 1, wins: 1, outs: 20, earned_runs: 1)
+    PitchingLine.create!(game: @game, player: reliever, university: @beta, outs: 7)
 
-  get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 
-  assert_select "h2", text: "投手成績"
-  rows = css_select("table.box-score tbody tr").map { |row| row.css("td").first(3).map { |cell| cell.text.strip } }
-  assert_equal [ [ "今津 慶介", "勝先発", "6 2/3" ], [ "落合 智哉", "", "2 1/3" ] ], rows
-  assert_select "table.box-score tfoot td", text: "9"
-end
+    assert_select "h2", text: "投手成績"
+    rows = css_select("table.box-score tbody tr").map { |row| row.css("td").first(3).map { |cell| cell.text.strip } }
+    assert_equal [ [ "今津 慶介", "勝先発", "6 2/3" ], [ "落合 智哉", "", "2 1/3" ] ], rows
+    assert_select "table.box-score tfoot td", text: "9"
+  end
 
-test "game page has no batting or pitching section before the box score is in" do
-  get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+  test "game page puts the box score after the bench, and u and f open and close both at once" do
+    member = add_member(1, @alpha, "落合 智哉")
+    BattingLine.create!(game: @game, player: member.player, university: @alpha, position: "[2]", pa: 4)
+    PitchingLine.create!(game: @game, player: member.player, university: @alpha, outs: 3)
 
-  assert_select "table.box-score", 0
-  assert_select "h2", text: "打撃成績", count: 0
-  assert_select "h2", text: "投手成績", count: 0
-end
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    headings = css_select("h2.card-heading").map { |heading| heading.text.strip }
+    assert_equal %w[ベンチ入りメンバー 打撃成績 投手成績], headings
+    assert_select "button[data-action='decade-fold#openAll'][data-shortcut=u][data-shortcut-all]", 2
+    assert_select "button[data-action='decade-fold#closeAll'][data-shortcut=f][data-shortcut-all]", 2
+  end
+
+  test "game page has no batting or pitching section before the box score is in" do
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "table.box-score", 0
+    assert_select "h2", text: "打撃成績", count: 0
+    assert_select "h2", text: "投手成績", count: 0
+  end
 
   test "game page tells each team's changes from its previous game, linked to it" do
     previous = Game.create!(season: @game.season, team0: @alpha, team1: @beta, played_on: @game.played_on - 1, game_number: 2,

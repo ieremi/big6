@@ -1452,14 +1452,6 @@ tr.bench-only td a {
 }
 
 /* A game's batting and pitching lines (games/_box_score): compact, numbers right-aligned, the name never wrapped. */
-.box-score-team {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0 0.5rem;
-  font-size: 1rem;
-}
-
 .box-score th,
 .box-score td {
   padding: 0.4rem 0.6rem;
