@@ -1,5 +1,7 @@
 class Standings
-  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :attendance_total, :attendance_count,
+  # runs_scored and runs_allowed (得点・失点) are summed over the same games as the
+  # wins and losses: the ones with a final score.
+  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :runs_scored, :runs_allowed, :attendance_total, :attendance_count,
                    :weekend_attendance_total, :weekend_attendance_count, keyword_init: true) do
     def percentage
       decided = wins + losses
@@ -46,7 +48,7 @@ class Standings
   def compute(preloaded_games)
     games = (preloaded_games || season.games.includes(:team0, :team1).order(:played_on, :game_number)).select { |g| decided?(g) }
 
-    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, attendance_total: 0, attendance_count: 0, weekend_attendance_total: 0, weekend_attendance_count: 0 } }
+    tallies = universities.each_with_object({}) { |u, h| h[u.id] = { wins: 0, losses: 0, draws: 0, runs_scored: 0, runs_allowed: 0, attendance_total: 0, attendance_count: 0, weekend_attendance_total: 0, weekend_attendance_count: 0 } }
     pair_games = Hash.new { |h, k| h[k] = [] }
 
     games.each do |g|
@@ -61,6 +63,11 @@ class Standings
         tallies[g.team0_id][:draws] += 1
         tallies[g.team1_id][:draws] += 1
       end
+
+      tallies[g.team0_id][:runs_scored] += g.team0_score
+      tallies[g.team0_id][:runs_allowed] += g.team1_score
+      tallies[g.team1_id][:runs_scored] += g.team1_score
+      tallies[g.team1_id][:runs_allowed] += g.team0_score
 
       if g.attendance
         [ g.team0_id, g.team1_id ].each do |id|
@@ -103,6 +110,8 @@ class Standings
         draws: t[:draws],
         points: points[u.id],
         games: t[:wins] + t[:losses] + t[:draws],
+        runs_scored: t[:runs_scored],
+        runs_allowed: t[:runs_allowed],
         attendance_total: t[:attendance_total],
         attendance_count: t[:attendance_count],
         weekend_attendance_total: t[:weekend_attendance_total],

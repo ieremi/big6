@@ -48,6 +48,8 @@
             <th data-cell-toggle-target="resultsColumn">引分</th>
             <th data-cell-toggle-target="resultsColumn">勝ち点</th>
             <th data-cell-toggle-target="resultsColumn">勝率</th>
+            <th data-cell-toggle-target="resultsColumn">得点</th>
+            <th data-cell-toggle-target="resultsColumn">失点</th>
             <th data-cell-toggle-target="attendanceColumn">総観衆</th>
             <th data-cell-toggle-target="attendanceColumn">平均観衆</th>
           </tr>
@@ -82,6 +84,8 @@
               <td data-cell-toggle-target="resultsColumn"><%= row.draws %></td>
               <td data-cell-toggle-target="resultsColumn"><%= row.points %></td>
               <td data-cell-toggle-target="resultsColumn"><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.runs_scored %></td>
+              <td data-cell-toggle-target="resultsColumn"><%= row.runs_allowed %></td>
               <% total, weekend_total = [ false, true ].map { |weekends_only| number_with_delimiter(row.total_attendance(weekends_only:)) } %>
               <% average, weekend_average = [ false, true ].map { |weekends_only| row.average_attendance(weekends_only:)&.then { number_with_delimiter(_1) } || "—" } %>
               <%= tag.td total, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: total, weekend: weekend_total } %>

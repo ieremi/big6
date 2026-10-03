@@ -33,6 +33,8 @@ module Api
             points: row.points,
             games: row.games,
             percentage: row.percentage,
+            runs_scored: row.runs_scored,
+            runs_allowed: row.runs_allowed,
             attendance_total: row.total_attendance(weekends_only: weekends_only_from_params),
             average_attendance: row.average_attendance(weekends_only: weekends_only_from_params)
           }

@@ -85,7 +85,7 @@ paths:
     get:
       operationId: getStandings
       summary: シーズンの順位表
-      description: 順位順の各大学の勝・敗・分・勝ち点・試合数・勝率・総観衆・平均観衆。
+      description: 順位順の各大学の勝・敗・分・勝ち点・試合数・勝率・得点・失点・総観衆・平均観衆。
       parameters:
         - $ref: "#/components/parameters/Year"
         - $ref: "#/components/parameters/Term"
@@ -479,6 +479,8 @@ components:
         points: { type: integer, description: 勝ち点 }
         games: { type: integer }
         percentage: { type: number, description: 勝率 }
+        runs_scored: { type: integer, description: 得点（勝敗のついた試合と引き分けの合計） }
+        runs_allowed: { type: integer, description: 失点 }
         attendance_total: { type: integer }
         average_attendance: { type: integer, nullable: true }
     Player:
