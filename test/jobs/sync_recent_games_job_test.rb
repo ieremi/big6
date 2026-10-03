@@ -13,16 +13,19 @@ class SyncRecentGamesJobTest < ActiveJob::TestCase
   end
 
   # Runs the job with every outside source stubbed, and returns what it asked for:
-  # { synced: [season, ...], pages: [game, ...] }. The schedule stub gets the season.
+  # { synced: [season, ...], pages: [game, ...], stats: [game, ...] }. The schedule
+  # stub gets the season.
   def run_job(schedule: ->(_season) { })
-    calls = { synced: [], pages: [] }
+    calls = { synced: [], pages: [], stats: [] }
 
     stub_method(LeagueOfficialScheduleScraper, :call, schedule) do
       stub_method(SportsbullVideoScraper, :call, ->(_season) { }) do
         stub_method(JmaWeatherScraper, :call, ->(_year, _month) { }) do
           stub_method(ScorebookSync, :call, ->(season) { calls[:synced] << season }) do
             stub_method(LeagueOfficialGameScraper, :call, ->(game) { calls[:pages] << game }) do
-              SyncRecentGamesJob.perform_now
+              stub_method(GameStatsImport, :call, ->(games) { calls[:stats].concat(games) }) do
+                SyncRecentGamesJob.perform_now
+              end
             end
           end
         end
@@ -85,4 +88,27 @@ class SyncRecentGamesJobTest < ActiveJob::TestCase
     assert_empty calls[:synced]
     assert_empty calls[:pages]
   end
+
+# ---- player box scores, which Scorebook can publish days after the game
+
+def final_game(number, played_on)
+  create_game(number, played_on: played_on, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090100 + number)
+end
+
+test "a final game with no player lines is still fetched after the lookback window, even in a week with no games" do
+  late = final_game(1, Date.current - 6)
+
+  calls = run_job
+
+  assert_equal [ late ], calls[:stats]
+  assert_empty calls[:synced] # nothing recent to poll otherwise
+end
+
+test "a final game with player lines, or one too old, is not fetched again" do
+  done = final_game(1, Date.current - 1)
+  BattingLine.create!(game: done, player: Player.create!(scorebook_id: 20231001, university: @alpha, name: "田中 太郎", enter_year: 2023), university: @alpha)
+  final_game(2, Date.current - SyncRecentGamesJob::STATS_LOOKBACK_DAYS - 1)
+
+  assert_empty run_job[:stats]
+end
 end

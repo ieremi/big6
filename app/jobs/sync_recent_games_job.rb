@@ -36,12 +36,27 @@
 #
 # Finally, fetches each final game's player box score from Scorebook
 # (GameStatsImport) once it has none, for the players' season and career stats.
+# This looks further back (STATS_LOOKBACK_DAYS), since Scorebook has published a
+# box score more than LOOKBACK_DAYS after its game (2026-09-27's 立大-慶大, after
+# 2026-09-30), and it isn't skipped in a week with no games.
 class SyncRecentGamesJob < ApplicationJob
   queue_as :default
 
   LOOKBACK_DAYS = 3
 
+  # How far back a final game with no player lines is still retried: about a
+  # season (eight weeks of games), so a late box score is picked up whenever it
+  # comes, without retrying forever one that Scorebook never publishes.
+  STATS_LOOKBACK_DAYS = 60
+
   def perform
+    sync_recent_games
+    import_player_stats
+  end
+
+  private
+
+  def sync_recent_games
     games = Game.where(played_on: (Date.current - LOOKBACK_DAYS)..Date.current).includes(:team0, :team1, :season)
     return if games.none?
 
@@ -59,17 +74,14 @@ class SyncRecentGamesJob < ApplicationJob
       incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
       incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }
     end
-
-    import_player_stats(games)
   end
 
-  private
-
   # Fetches player box scores for games that are now final but have none yet.
-  # Scorebook can publish them a day late, so a game is retried on each run
-  # while it is inside the lookback window.
-  def import_player_stats(games)
-    pending = Game.needing_stats.where(id: games.map(&:id)).to_a
+  # Scorebook can publish them days late, so a game is retried on each run
+  # while it is inside STATS_LOOKBACK_DAYS. Usually there are none, so this is a
+  # single query with no HTTP call.
+  def import_player_stats
+    pending = Game.needing_stats.where(played_on: (Date.current - STATS_LOOKBACK_DAYS)..Date.current).to_a
     GameStatsImport.call(pending) if pending.any?
   end
 
