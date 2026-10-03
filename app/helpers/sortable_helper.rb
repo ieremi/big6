@@ -49,9 +49,9 @@ module SortableHelper
   # A heading for a table in a sortable-table controller. Columns that hold
   # numbers should give each cell a data-sort-value (see sort_cell); `first` is
   # the direction of the first click. Several tables on a page can share a
-  # shortcut: it sorts them all.
-  def sortable_column_header(label, shortcut, first: "asc", shortcut_label: nil, title: nil)
-    tag.th(class: "sortable", title: title) do
+  # shortcut: it sorts them all. Any other attributes (data, a class) go on the <th>.
+  def sortable_column_header(label, shortcut, first: "asc", shortcut_label: nil, title: nil, **attributes)
+    tag.th(**attributes, class: [ "sortable", *attributes[:class] ], title: title) do
       tag.button(type: "button", class: "sort-button", data: {
         action: "sortable-table#sort", sortable_table_first_param: first,
         shortcut: shortcut, shortcut_all: true, shortcut_label: "#{shortcut_label || label}でソート"

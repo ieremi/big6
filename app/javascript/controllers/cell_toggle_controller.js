@@ -62,9 +62,11 @@ export default class extends Controller {
       el.hidden = this.modeValue !== "attendance"
     })
 
-    // Each carries both figures, as data-all and data-weekend.
+    // Each carries both figures, as data-all and data-weekend. The value a
+    // sortable table sorts it by follows the figure shown ("33,000" → 33000).
     this.attendanceFigureTargets.forEach((el) => {
       el.textContent = this.weekendsOnlyValue ? el.dataset.weekend : el.dataset.all
+      el.dataset.sortValue = el.textContent.replace(/,/g, "")
     })
 
     this.weekendButtonTargets.forEach((el) => {

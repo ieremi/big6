@@ -109,6 +109,8 @@ export default class extends Controller {
   }
 
   // The reset button sits just above the table (above its scrolling wrapper, if any).
+  // Inside a table-zoom panel (the standings) it goes in the panel, right above the
+  // table, so that it is still there to press while the panel is zoomed.
   showResetButton() {
     if (this.keys.length === 0) {
       this.resetButton?.remove()
@@ -123,7 +125,8 @@ export default class extends Controller {
     button.textContent = "並べ替えをリセット"
     button.addEventListener("click", () => this.reset())
 
-    const wrapper = this.element.closest(".table-scroll") || this.element
+    const inZoomPanel = this.element.closest("[data-table-zoom-target='panel']")
+    const wrapper = inZoomPanel ? this.element : (this.element.closest(".table-scroll") || this.element)
     wrapper.before(button)
     this.resetButton = button
   }
