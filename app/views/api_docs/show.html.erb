@@ -231,7 +231,7 @@
 
 <p class="muted">
   OPS（打者）と防御率（投手）のランキング。期間は、<code>year</code>と<code>term</code>でシーズンを指定した場合はそのシーズン、指定しなければ通算です。
-  最低打席数（打者）・最低投球回数（投手）に届いた選手だけを載せます。<code>minimum</code>で指定でき（<code>0</code>で制限なし）、省略すると通算は40、シーズンは10です（レスポンスの<code>minimum</code>）。
+  最低打席数（打者）・最低投球回数（投手）に届いた選手だけを載せます。<code>minimum</code>で指定でき（<code>0</code>で制限なし）、省略すると通算は40、シーズンは10です（レスポンスの<code>minimum</code>）。シーズンでは<code>minimum=league</code>で連盟の規定打席・規定投球回も使えます。
   Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。OPSの出塁率は犠飛を含めない簡易式です。
   表示される値（OPSは小数第3位、防御率は第2位）が同じ選手は、同じ<code>rank</code>になります。
 </p>
@@ -248,7 +248,7 @@
     <tbody>
       <tr><td><code>year</code> / <code>term</code></td><td>シーズンを指定（両方）。省略すると通算。存在しないシーズンは404</td></tr>
       <tr><td><code>university</code></td><td>大学のslug（複数指定可、例: <code>university[]=rikkio&amp;university[]=tokyo</code>）。該当する大学がなければ0件</td></tr>
-      <tr><td><code>minimum</code></td><td>最低打席数（<code>batting</code>）または最低投球回数（<code>pitching</code>）。整数で、<code>0</code>なら制限なし。省略、または整数でない値は既定（通算40、シーズン10）</td></tr>
+      <tr><td><code>minimum</code></td><td>最低打席数（<code>batting</code>）または最低投球回数（<code>pitching</code>）。整数で、<code>0</code>なら制限なし。省略、または整数でない値は既定（通算40、シーズン10）。<code>league</code>なら連盟の規定打席・規定投球回で、大学ごとにチームの試合数 × 3.1（四捨五入）打席、試合数 × 2 投球回です。<code>year</code>と<code>term</code>でシーズンを指定したときだけ使え、通算では既定になります。レスポンスの<code>minimum</code>は<code>league: true</code>と、大学のslugごとの<code>plate_appearances_by_university</code>（<code>pitching</code>は<code>innings_by_university</code>）です</td></tr>
       <tr><td><code>sort</code></td><td>並べ替える列。<code>batting</code>: <code>rank</code>（既定）/ <code>player</code>（選手名）/ <code>university</code> / <code>ops</code> / <code>average</code> / <code>obp</code> / <code>slg</code> / <code>games</code> / <code>pa</code> / <code>ab</code> / <code>hits</code> / <code>home_runs</code>。<code>pitching</code>: <code>rank</code>（既定）/ <code>player</code> / <code>university</code> / <code>era</code> / <code>games</code> / <code>outs</code> / <code>wins</code> / <code>losses</code> / <code>hits</code> / <code>strikeouts</code> / <code>walks</code> / <code>earned_runs</code>。カンマ区切りで3列まで指定でき（例: <code>home_runs,average</code>）、2列目以降はそれより前の列が同じ値の行の順を決めます（値は表示の桁で比べます。OPSなら小数3桁）。並べ替えると、<code>rank</code>もその順につけ直されます（指定したすべての列で同じ値なら同順位。1列目が<code>rank</code>のときは既定の順位のまま）。レスポンスの<code>sort</code>・<code>direction</code>も同じカンマ区切りで返ります。既定の順（OPS／防御率）での順位は、常に<code>default_rank</code>に入っています</td></tr>
       <tr><td><code>direction</code></td><td><code>asc</code>（小さい順）/ <code>desc</code>（大きい順）。<code>sort</code>に複数の列を指定したときは、同じ順にカンマ区切りで列ごとに指定します（例: <code>desc,asc</code>）。省略した列や足りない分は列ごとの既定（<code>rank</code>・<code>player</code>・<code>university</code>・<code>era</code>は<code>asc</code>、それ以外は<code>desc</code>）。<code>university</code>はリーグの標準順（慶・明・早・法・立・東）</td></tr>
       <tr><td><code>page</code></td><td>ページ番号（1始まり）</td></tr>
@@ -257,6 +257,7 @@
 </div>
 <%= render "sandbox", path: "/rankings/batting?year=1997&term=autumn" %>
 <%= render "sandbox", path: "/rankings/batting?year=1997&term=autumn&sort=home_runs,average" %>
+<%= render "sandbox", path: "/rankings/batting?year=2026&term=spring&minimum=league&sort=average" %>
 <%= render "sandbox", path: "/rankings/pitching?year=1997&term=autumn&university[]=rikkio" %>
 
 <h2>エラー</h2>

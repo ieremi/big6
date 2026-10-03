@@ -12,6 +12,14 @@
 #
 #   career: 40, season: 10 (plate appearances, or innings)
 #
+# A season ranking can instead use the league's own minimum (minimum "league",
+# LEAGUE), which is per university, from the number of games the team has played
+# that season. The league publishes the numbers above its rankings on big6.gr.jp
+# (「規定打席数：早16・慶12・…」, 「規定投球回数：早10・慶8・…」) but not how it
+# works them out; every number checked (three seasons, 2025 autumn to 2026 autumn)
+# is the team's games × 3.1, rounded half up, for plate appearances and the team's
+# games × 2 for innings (LEAGUE_PA_PER_GAME_TENTHS, LEAGUE_INNINGS_PER_GAME).
+#
 # Games left out of players' stats (the 優勝決定戦 playoffs) don't count, as on
 # the player pages. Players with equal displayed values (three decimals for OPS,
 # two for ERA) share a rank.
@@ -21,6 +29,11 @@ class PlayerRanking
   # The minimum when none is asked for: plate appearances for batting, innings
   # pitched for pitching.
   DEFAULT_MINIMUMS = { "batting" => { season: 10, career: 40 }, "pitching" => { season: 10, career: 40 } }.freeze
+
+  # The minimum that asks for the league's own, per university (see above).
+  LEAGUE = "league".freeze
+  LEAGUE_PA_PER_GAME_TENTHS = 31 # 3.1 plate appearances a game, in tenths so the rounding is exact
+  LEAGUE_INNINGS_PER_GAME = 2
 
   # The most a minimum can be asked to be (nobody has that many, but it keeps the SQL sane).
   MAX_MINIMUM = 100_000
@@ -81,7 +94,8 @@ class PlayerRanking
 
   # kind is "batting" or "pitching". season nil ranks whole careers, or with
   # since (a Season) only the seasons from it on (complete_since).
-  # university_ids nil means any university. minimum nil is the default one.
+  # university_ids nil means any university. minimum nil is the default one, and
+  # LEAGUE the league's own (only for a season: for a career it is the default).
   # active_only leaves out anyone no longer on their team's roster (a graduate,
   # most often), so a career ranking can be narrowed to who could play today.
   def initialize(kind, season: nil, since: nil, university_ids: nil, minimum: nil, active_only: false)
@@ -91,7 +105,7 @@ class PlayerRanking
     @season = season
     @since = since unless season
     @university_ids = university_ids&.map(&:to_i)
-    @minimum = minimum && Integer(minimum).clamp(0, MAX_MINIMUM)
+    @minimum = minimum == LEAGUE ? (LEAGUE if season) : minimum && Integer(minimum).clamp(0, MAX_MINIMUM)
     @active_only = ActiveModel::Type::Boolean.new.cast(active_only)
   end
 
@@ -124,16 +138,45 @@ class PlayerRanking
     top ? entries.select { |entry| entry.rank <= top } : entries
   end
 
-  # A minimum from a request parameter: a whole number, or nil (so that the default
-  # applies) for anything else, including a blank.
+  # A minimum from a request parameter: a whole number, LEAGUE, or nil (so that
+  # the default applies) for anything else, including a blank.
   def self.minimum_from(value)
     string = value.to_s.strip
+    return LEAGUE if string == LEAGUE
+
     string.match?(/\A\d+\z/) ? [ string.to_i, MAX_MINIMUM ].min : nil
   end
 
-  # The minimum in force: plate appearances for batting, innings for pitching.
+  # The minimum in force: plate appearances for batting, innings for pitching, or
+  # LEAGUE for the league's own (league_minimums has the numbers).
   def minimum
     @minimum || self.class.default_minimum(kind, season: season)
+  end
+
+  def league_minimum?
+    minimum == LEAGUE
+  end
+
+  # { University => the league's minimum for its players } for the season, in the
+  # league's order of universities: plate appearances for batting, innings for
+  # pitching. A team's games are the ones it has finished that count in the stats
+  # (not one cancelled or still under way, nor a 優勝決定戦 playoff). nil unless
+  # the ranking uses the league's minimum.
+  def league_minimums
+    return nil unless league_minimum?
+
+    @league_minimums ||= begin
+      games = Game.finished.where(season_id: season.id, counted_in_stats: true)
+      counts = Hash.new(0)
+      games.pluck(:team0_id, :team1_id).flatten.each { |id| counts[id] += 1 }
+      University.order(:position).to_h { |university| [ university, self.class.league_minimum_for(kind, counts[university.id]) ] }
+    end
+  end
+
+  # The league's minimum for a team that has played this many games: the games
+  # × 3.1 plate appearances rounded half up (16 for 5 games), or the games × 2 innings.
+  def self.league_minimum_for(kind, games)
+    kind == "batting" ? (games * LEAGUE_PA_PER_GAME_TENTHS + 5) / 10 : games * LEAGUE_INNINGS_PER_GAME
   end
 
   # The ranked entries in the default order, best first. The expensive part
@@ -255,7 +298,7 @@ class PlayerRanking
   def cache_key
     [
       "player_ranking/entries/v2", kind, season&.id || (@since && "since-#{@since.id}") || "career",
-      @university_ids&.sort&.join(","), minimum, @active_only, line_class.maximum(:updated_at)&.to_i
+      @university_ids&.sort&.join(","), minimum, league_minimums&.values&.join(","), @active_only, line_class.maximum(:updated_at)&.to_i
     ].join("/")
   end
 
@@ -287,7 +330,14 @@ class PlayerRanking
   end
 
   def minimum_condition
-    kind == "batting" ? "SUM(batting_lines.pa) >= #{minimum}" : "SUM(pitching_lines.outs) >= #{minimum * 3}"
+    column = kind == "batting" ? "SUM(batting_lines.pa)" : "SUM(pitching_lines.outs)"
+    to_units = ->(number) { kind == "batting" ? number : number * 3 } # innings are counted in outs
+    return "#{column} >= #{to_units.(minimum)}" unless league_minimum?
+
+    # Each player against their own university's minimum (a player's lines are all
+    # for one university, so MAX picks it).
+    cases = league_minimums.map { |university, number| "WHEN #{university.id.to_i} THEN #{to_units.(number).to_i}" }
+    "#{column} >= CASE MAX(#{line_class.table_name}.university_id) #{cases.join(" ")} END"
   end
 
   # [player, totals] pairs, best first by OPS (batting) or ERA (pitching); ties in

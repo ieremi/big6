@@ -65,7 +65,9 @@ https://big6.gr.jp/system/prog/game.php?m=pc&e=league&s=2026a&gd=2026-09-27&gnd=
 
 ### 文字コードが変わることがある
 
-試合ページの文字コードは、2026年9月30日には UTF-8 でしたが、10月1日には Shift_JIS になっていました。どちらも同じ試合（慶大-立大2回戦）のページです。10月1日には、ブラウザの種類（User-Agent）を変えて試しても Shift_JIS でした。10月1日のページは、HTTP の `Content-Type` が `text/html; charset=SJIS` で、HTML の中には文字コードの指定（`<meta charset>`）がありません。UTF-8 と決めつけて読むと、日本語が文字化けします。`Content-Type` の charset を見て読むか、HTML のライブラリに文字コードを判定させる必要があります。選手のページ（[選手ID](league-site-player-id.md)）は、10月1日の時点でも UTF-8 でした。
+試合ページの文字コードは、2026年9月30日には UTF-8 でしたが、10月1日には Shift_JIS になっていました。どちらも同じ試合（慶大-立大2回戦）のページです。10月1日には、ブラウザの種類（User-Agent）を変えて試しても Shift_JIS でした。10月1日のページは、HTTP の `Content-Type` が `text/html; charset=SJIS` で、HTML の中には文字コードの指定（`<meta charset>`）がありません。UTF-8 と決めつけて読むと、日本語が文字化けします。`Content-Type` の charset を見て読む必要があります。選手のページ（[選手ID](league-site-player-id.md)）は、10月1日の時点でも UTF-8 でした。
+
+10月3日の東大-早大1回戦のページは、HTML の中にも `<meta charset="shift_jis">` がありました。ただし、本当の Shift_JIS にはない文字が入っています。「髙」（髙橋）や「德」（德丸）は、Shift_JIS を拡張した Windows-31J（CP932）の文字です。ページの指定どおり Shift_JIS として読むと、こうした文字でエラーになります。HTML のライブラリによっては、そこから後ろを読まずに止まります。たとえば libxml2（Nokogiri の `Nokogiri::HTML`）は、最初の「髙」で読むのをやめ、それより後ろにある2チーム目の打者・両チームの投手・スマートフォン用のボックススコアがまるごと抜けました。エラーにはならないので、気づきにくい抜けです。Shift_JIS と書かれていても **Windows-31J として読み**、UTF-8 に変換してから HTML のライブラリに渡すのが確実です。（2026年10月3日に確認）
 
 ### ボックススコアはPC用とスマートフォン用の2回載っている
 

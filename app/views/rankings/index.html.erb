@@ -55,16 +55,26 @@
   <fieldset>
     <legend>最低<%= ranking_unit(@kind) %>数</legend>
     <div class="period-toolbar">
-      <%# Always the minimum in force, so that the arrows step from it (40 to 41). The default it is shown beside is sent too: a minimum still equal to it is "not asked for", and follows the period. %>
-      <%= number_field_tag :minimum, @minimum, min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1, "aria-label": "最低#{ranking_unit(@kind)}数", data: { manual_submit: true } %>
-      <%= hidden_field_tag :default_minimum, @default_minimum, id: "default_minimum" %>
-      <%= ranking_unit(@kind) %>以上
-      <%# The page reloads on this button (or Enter), not on every change of the number. %>
-      <button type="submit" class="period-btn">絞り込む</button>
-      <% if @minimum == @default_minimum %>
-        <span class="muted">（既定）</span>
+      <% if @league_minimums %>
+        <%# The league's minimum, per university; kept through the form's other changes by the hidden field, and dropped (back to the default) when the period is no longer a season. %>
+        <%= hidden_field_tag :minimum, PlayerRanking::LEAGUE %>
+        <span>連盟の規定<%= ranking_unit(@kind) %>（<%= league_minimums_label %>）</span>
+        <%= link_to "数で指定する", rankings_league_minimum_path(false), class: "period-btn" %>
       <% else %>
-        <%= link_to "既定（#{@default_minimum}#{ranking_unit(@kind)}）に戻す", ranking_path(@kind, rankings_filter_params.except(*RankingsHelper::MINIMUM_PARAMS)), class: "period-btn" %>
+        <%# Always the minimum in force, so that the arrows step from it (40 to 41). The default it is shown beside is sent too: a minimum still equal to it is "not asked for", and follows the period. %>
+        <%= number_field_tag :minimum, @minimum, min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1, "aria-label": "最低#{ranking_unit(@kind)}数", data: { manual_submit: true } %>
+        <%= hidden_field_tag :default_minimum, @default_minimum, id: "default_minimum" %>
+        <%= ranking_unit(@kind) %>以上
+        <%# The page reloads on this button (or Enter), not on every change of the number. %>
+        <button type="submit" class="period-btn">絞り込む</button>
+        <% if @minimum == @default_minimum %>
+          <span class="muted">（既定）</span>
+        <% else %>
+          <%= link_to "既定（#{@default_minimum}#{ranking_unit(@kind)}）に戻す", ranking_path(@kind, rankings_filter_params.except(*RankingsHelper::MINIMUM_PARAMS)), class: "period-btn" %>
+        <% end %>
+        <% if @period == :season %>
+          <%= link_to "連盟の規定#{ranking_unit(@kind)}にする", rankings_league_minimum_path(true), class: "period-btn" %>
+        <% end %>
       <% end %>
     </div>
   </fieldset>
@@ -93,7 +103,7 @@
 <% end %>
 
 <p class="muted">
-  <%= @period == :season ? "シーズン" : ranking_period_title %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @minimum.zero? %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
+  <%= @period == :season ? "シーズン" : ranking_period_title %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @league_minimums %>連盟の規定<%= ranking_unit(@kind) %>は、チームの試合数 × <%= @kind == "batting" ? "3.1（四捨五入）" : PlayerRanking::LEAGUE_INNINGS_PER_GAME %>で計算しています（連盟のランキングに載っている規定数と一致する式です）。<% end %><% if @minimum == 0 %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
   Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。
   <% if @missing_seasons.any? %>
     Scorebook には、試合ごとのデータがないシーズンが<%= @missing_seasons.size %>あります。<% if @period == :career %>通算では、その期間にいた選手の成績が実際より少なくなります（名前の横に「一部データなし」）。<% end %><% if @complete_since %>全試合のデータがそろっているのは<%= @complete_since.title %>以降です。<% end %>

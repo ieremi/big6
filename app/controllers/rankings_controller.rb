@@ -22,11 +22,15 @@ class RankingsController < ApplicationController
     # The form always sends the minimum it shows, and the default it showed it beside
     # (default_minimum): a minimum still equal to that wasn't changed, so the default
     # of the period now chosen applies, not the one of the period it was left.
+    # The league's minimum (PlayerRanking::LEAGUE) is only for a season; any other
+    # period falls back to its default.
     @default_minimum = PlayerRanking.default_minimum(@kind, season: @season)
     asked = PlayerRanking.minimum_from(params[:minimum])
+    asked = nil if asked == PlayerRanking::LEAGUE && @season.nil?
     @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
     ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
+    @league_minimums = ranking.league_minimums
     @sort_order = PlayerRanking.sort_order(@kind, params[:sort], params[:direction]) # empty for the ranking's own order
     sorted = ranking.entries_sorted(@sort_order)
     @ranked_count = sorted.size

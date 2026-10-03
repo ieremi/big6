@@ -577,4 +577,53 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[少ない 同じ一 同じ二], ranked_names
     assert_equal %w[3 1 1], css_select("tbody tr td:first-child").map(&:text) # the OPS ranks, worst first
   end
+
+  # ---- the league's minimum
+
+  # A season of its own (the fixtures have games in the others) where alpha and beta
+  # have each finished 4 games: the league's minimum is 12 plate appearances, 8 innings.
+  def league_season
+    season = Season.create!(year: 2030, term: "spring")
+    (1..4).map { |number| game(season, number).tap { |game| game.update!(game_status: "finished") } }
+    season
+  end
+
+  test "a season ranking can use the league's minimum, each university's shown as the league writes it" do
+    season = league_season
+    some_game = Game.where(season: season).first
+    bat(player("十二"), some_game, pa: 12)
+    bat(player("十一"), some_game, pa: 11)
+
+    get rankings_url, params: { season: "2030-spring" }
+    assert_select "a.period-btn[href*='minimum=league']", text: "連盟の規定打席にする"
+
+    get rankings_url, params: { season: "2030-spring", minimum: "league" }
+    assert_equal %w[十二], ranked_names
+    assert_select "input[type=hidden][name=minimum][value=league]"
+    assert_select "input[type=number][name=minimum]", 0
+    assert_select "span", text: "連盟の規定打席（A12・B12）"
+    assert_select "p.muted", text: /連盟の規定打席（A12・B12）に達した打者が対象です/
+    assert_select "a[href*='/rankings/pitching'][href*='minimum=league']" # kept when switching to pitchers
+  end
+
+  test "the league's minimum is in innings for pitchers" do
+    season = league_season
+    some_game = Game.where(season: season).first
+    pitch(player("8回"), some_game, outs: 24)
+    pitch(player("7回2/3"), some_game, outs: 23)
+
+    get ranking_url("pitching"), params: { season: "2030-spring", minimum: "league" }
+
+    assert_equal %w[8回], ranked_names
+    assert_select "span", text: "連盟の規定投球回（A8・B8）"
+  end
+
+  test "the league's minimum isn't offered for a career, and asking for it there gives the default" do
+    bat(player("通算"), game(@spring, 1), pa: 40)
+
+    get rankings_url, params: { season: "", minimum: "league" }
+
+    assert_select "a", text: "連盟の規定打席にする", count: 0
+    assert_select "input[type=number][name=minimum][value='40']"
+  end
 end

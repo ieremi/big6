@@ -5,7 +5,8 @@ module Api
 
       # GET /api/v1/rankings/batting and /api/v1/rankings/pitching: the whole career unless
       # year and term name a season; university[] limits it to those universities;
-      # minimum is the least plate appearances (batting) or innings (pitching) to be ranked.
+      # minimum is the least plate appearances (batting) or innings (pitching) to be ranked, or
+      # "league" for the league's own minimum of each university (a season only; see PlayerRanking).
       # sort and direction reorder the rows (comma-separated lists of up to three columns,
       # each breaking the ties of the ones before, see SortOrder), and rank is then the position in that order;
       # default_rank is always the rank in the default order (OPS for batting, ERA for pitching).
@@ -19,7 +20,7 @@ module Api
         render json: {
           kind: ranking.kind,
           season: season && season_json(season),
-          minimum: { (ranking.kind == "batting" ? :plate_appearances : :innings) => ranking.minimum },
+          minimum: minimum_json(ranking),
           sort: order.sort_param,
           direction: order.direction_param,
           total: entries.size,
@@ -30,6 +31,15 @@ module Api
       end
 
       private
+
+      # { plate_appearances: 10 } (innings: for pitching), or with the league's minimum
+      # { league: true, plate_appearances_by_university: { "keio" => 12, ... } }.
+      def minimum_json(ranking)
+        unit = ranking.kind == "batting" ? "plate_appearances" : "innings"
+        return { unit => ranking.minimum } unless ranking.league_minimum?
+
+        { league: true, "#{unit}_by_university" => ranking.league_minimums.to_h { |university, number| [ university.slug, number ] } }
+      end
 
       def entry_json(kind, entry)
         player = { id: entry.player.scorebook_id, name: entry.player.name, university: entry.player.university.slug }

@@ -332,8 +332,10 @@ paths:
         - $ref: "#/components/parameters/Universities"
         - name: minimum
           in: query
-          description: 最低打席数（batting）か最低投球回（pitching）。0 で制限なし。省略で通算40、シーズン10
-          schema: { type: integer }
+          description: >-
+            最低打席数（batting）か最低投球回（pitching）。0 で制限なし。省略で通算40、シーズン10。
+            league で連盟の規定打席・規定投球回（大学ごと。チームの試合数 × 3.1 を四捨五入した打席、試合数 × 2 の投球回）。league は year と term を指定したときだけで、通算では既定になる
+          schema: { type: string, example: "league" }
         - name: sort
           in: query
           description: >-
@@ -355,7 +357,11 @@ paths:
                 properties:
                   kind: { type: string }
                   season: { allOf: [{ $ref: "#/components/schemas/Season" }], nullable: true }
-                  minimum: { type: object }
+                  minimum:
+                    type: object
+                    description: >-
+                      使われた最低数。数なら plate_appearances（batting）か innings（pitching）。
+                      league のときは league: true と、大学の slug ごとの plate_appearances_by_university か innings_by_university
                   sort: { type: string }
                   direction: { type: string }
                   total: { type: integer }

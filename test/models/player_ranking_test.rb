@@ -39,6 +39,64 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_equal 10, PlayerRanking.default_minimum("batting", season: @autumn)
   end
 
+  # ---- the league's minimum
+
+  test "the league's minimum is the team's games × 3.1 plate appearances rounded half up, or × 2 innings" do
+    assert_equal [ 12, 16, 37, 40, 47 ], [ 4, 5, 12, 13, 15 ].map { |games| PlayerRanking.league_minimum_for("batting", games) }
+    assert_equal [ 8, 10, 30 ], [ 4, 5, 15 ].map { |games| PlayerRanking.league_minimum_for("pitching", games) }
+    assert_equal PlayerRanking::LEAGUE, PlayerRanking.minimum_from("league")
+  end
+
+  # A season of its own (the fixtures have games in the others) with finished games:
+  # alpha plays beta `both` times, and gamma `alpha_only` more.
+  def league_season(both:, alpha_only:)
+    season = Season.create!(year: 2030, term: "spring")
+    gamma = University.create!(name: "Gamma University", short_name: "Gamma", slug: "gamma", position: 3)
+    (1..both).each { |number| game(season, number).update!(game_status: "finished") }
+    (1..alpha_only).each do |number|
+      Game.create!(season: season, team0: gamma, team1: @alpha, played_on: "2026-06-#{number.to_s.rjust(2, '0')}", game_number: number, game_status: "finished")
+    end
+    season
+  end
+
+  test "with the league's minimum, each player needs their own team's: alpha after 5 games 16 plate appearances, beta after 4 games 12" do
+    season = league_season(both: 4, alpha_only: 1)
+    some_game = Game.where(season: season).first
+    bat(player("早16"), some_game, pa: 16)
+    bat(player("早15"), some_game, pa: 15)
+    bat(player("慶12", university: @beta), some_game, pa: 12)
+    bat(player("慶11", university: @beta), some_game, pa: 11)
+
+    ranking = PlayerRanking.new("batting", season: season, minimum: PlayerRanking::LEAGUE)
+
+    assert ranking.league_minimum?
+    assert_equal({ "alpha" => 16, "beta" => 12, "gamma" => 3 }, ranking.league_minimums.transform_keys(&:slug))
+    assert_equal %w[早16 慶12].sort, names(ranking).sort
+  end
+
+  test "the league's minimum counts only finished games that count in the stats, and innings for pitchers" do
+    season = league_season(both: 4, alpha_only: 0)
+    game(season, 5) # 試合前
+    game(season, 6).update!(game_status: "cancelled")
+    game(season, 7, counted: false).update!(game_status: "finished") # a 優勝決定戦
+    some_game = Game.where(season: season).first
+    pitch(player("8回"), some_game, outs: 24)
+    pitch(player("7回2/3"), some_game, outs: 23)
+
+    ranking = PlayerRanking.new("pitching", season: season, minimum: PlayerRanking::LEAGUE)
+
+    assert_equal 8, ranking.league_minimums.transform_keys(&:slug)["alpha"]
+    assert_equal %w[8回], names(ranking)
+  end
+
+  test "the league's minimum is only for a season: a career ranking uses the default" do
+    ranking = PlayerRanking.new("batting", minimum: PlayerRanking::LEAGUE)
+
+    assert_not ranking.league_minimum?
+    assert_equal 40, ranking.minimum
+    assert_nil ranking.league_minimums
+  end
+
   test "a season ranks only batters with at least 10 plate appearances" do
     bat(player("十打席"), game(@spring, 1), pa: 10)
     bat(player("九打席"), game(@spring, 2), pa: 9)

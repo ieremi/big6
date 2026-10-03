@@ -274,4 +274,22 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ 3, 1, 1 ], json["rankings"].map { |row| row["rank"] }
     assert_equal [ 3, 1, 1 ], json["rankings"].map { |row| row["default_rank"] }
   end
+
+  test "minimum=league uses each university's league minimum, given per slug" do
+    season = Season.create!(year: 2030, term: "spring")
+    games = (1..5).map { |number| game(season, number).tap { |game| game.update!(game_status: "finished") } }
+    bat(player("十六"), games.first, pa: 16)
+    bat(player("十五"), games.first, pa: 15)
+
+    get api_v1_ranking_url("batting"), params: { year: 2030, term: "spring", minimum: "league" }
+
+    assert_equal({ "league" => true, "plate_appearances_by_university" => { "alpha" => 16, "beta" => 16 } }, json["minimum"])
+    assert_equal %w[十六], names
+  end
+
+  test "minimum=league for a career is the default minimum" do
+    get api_v1_ranking_url("pitching"), params: { minimum: "league" }
+
+    assert_equal({ "innings" => 40 }, json["minimum"])
+  end
 end

@@ -51,11 +51,19 @@ module RankingsHelper
     kind == "batting" ? "打者" : "投手"
   end
 
-  # "40打席以上の打者" / "10投球回以上の投手", or "打席のある打者すべて" with no minimum: who is ranked.
+  # "40打席以上の打者" / "10投球回以上の投手", "打席のある打者すべて" with no minimum, or
+  # "連盟の規定打席（慶12・明12・…）に達した打者" with the league's: who is ranked.
   def ranking_target_label(kind, minimum)
+    return "連盟の規定#{ranking_unit(kind)}（#{league_minimums_label}）に達した#{ranking_noun(kind)}" if minimum == PlayerRanking::LEAGUE
     return "#{ranking_unit(kind)}のある#{ranking_noun(kind)}すべて" if minimum.zero?
 
     "#{minimum}#{ranking_unit(kind)}以上の#{ranking_noun(kind)}"
+  end
+
+  # The league's minimum of each university, as the league writes it above its
+  # rankings: "慶12・明12・早16・法16・立12・東12" (in the league's order).
+  def league_minimums_label
+    @league_minimums.map { |university, number| "#{university.short_name[0]}#{number}" }.join("・")
   end
 
   # The ranking's own URL for another page, keeping the filters and the sort.
@@ -66,9 +74,17 @@ module RankingsHelper
   # The other kind of ranking with the same filters (the period is dropped by the
   # controller if the other kind has no stats for it). Its sort starts over, since
   # the other kind has other columns.
-  # The minimum isn't kept: it is counted in plate appearances for one and in innings for the other.
+  # A number as the minimum isn't kept: it is counted in plate appearances for one and in innings for
+  # the other. The league's minimum is, since the league has one for both.
   def rankings_kind_path(kind)
-    ranking_path(kind, rankings_filter_params.except(*MINIMUM_PARAMS))
+    params = rankings_filter_params.except(*MINIMUM_PARAMS)
+    ranking_path(kind, @minimum == PlayerRanking::LEAGUE ? params.merge("minimum" => PlayerRanking::LEAGUE) : params)
+  end
+
+  # The same ranking with the league's minimum, or (league false) back to the default one.
+  def rankings_league_minimum_path(league)
+    params = rankings_filter_params.except(*MINIMUM_PARAMS)
+    ranking_path(@kind, league ? params.merge("minimum" => PlayerRanking::LEAGUE) : params)
   end
 
   # A column heading that sorts the table by it: a click on the first key
