@@ -7,6 +7,9 @@ FROM ghcr.io/rails/devcontainer/images/ruby:$RUBY_VERSION
 ENV BINDING="0.0.0.0"
 
 # A Japanese font, so OG images can draw Japanese names (libvips falls back to it).
+# The base image runs as vscode, so installing needs root, and then back to vscode.
+USER root
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y fonts-ipafont-gothic && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
+USER vscode
