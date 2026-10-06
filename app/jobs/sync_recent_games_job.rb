@@ -74,6 +74,20 @@ class SyncRecentGamesJob < ApplicationJob
       incomplete_games.map(&:season).uniq.each { |season| ScorebookSync.call(season) }
       incomplete_games.each { |game| LeagueOfficialGameScraper.call(game) }
     end
+
+    fill_attendance(games.reload)
+  end
+
+  # Scorebook sometimes leaves a game's attendance blank although the league's
+  # site gives it (2026 spring's 立大-東大 1回戦 and two more), and a game it has
+  # complete otherwise is never scraped above. So a final game without
+  # attendance has the league's page read once, which fills it in
+  # (LeagueOfficialGameScraper takes attendance only when there is none). Once:
+  # a game behind closed doors (無観客試合, as in 2021's spring) has none there
+  # either, and its page needn't be read every hour.
+  def fill_attendance(games)
+    games.select { |game| game.finished? && game.attendance.nil? && game.league_official_data.blank? }
+      .each { |game| LeagueOfficialGameScraper.call(game) }
   end
 
   # Fetches player box scores for games that are now final but have none yet.

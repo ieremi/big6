@@ -81,12 +81,24 @@ class SyncRecentGamesJobTest < ActiveJob::TestCase
   end
 
   test "a game that is over, with a score and innings, is not polled" do
-    with_innings(create_game(1, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090101))
+    with_innings(create_game(1, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090101, attendance: 8000))
 
     calls = run_job
 
     assert_empty calls[:synced]
     assert_empty calls[:pages]
+  end
+
+  test "a game that is over but has no attendance from Scorebook has its league page read for it, once" do
+    game = with_innings(create_game(1, game_status: "finished", team0_score: 1, team1_score: 0, scorebook_game_id: 2026090101))
+
+    calls = run_job
+
+    assert_empty calls[:synced]
+    assert_equal [ game ], calls[:pages]
+
+    game.update!(league_official_data: { "attendance" => nil }) # read already: 無観客試合, say
+    assert_empty run_job[:pages]
   end
 
 # ---- player box scores, which Scorebook can publish days after the game
