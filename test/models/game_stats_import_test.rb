@@ -105,11 +105,49 @@ class GameStatsImportTest < ActiveSupport::TestCase
   end
 
   test "re-importing replaces a game's lines instead of adding to them" do
-    import({ "batterTop" => [ batter(20231007, 2), batter(20236010, 6) ] })
-    import({ "batterTop" => [ batter(20231007, 2, "hb" => 3) ] })
+    import({ "batterTop" => [ batter(20231007, 2), batter(20236010, 6) ], "pitcherTop" => [ pitcher(20231007, 2) ] })
+    import({ "batterTop" => [ batter(20231007, 2, "hb" => 3), batter(20236010, 6) ], "pitcherTop" => [ pitcher(20231007, 2, "sop" => 9) ] })
+
+    assert_equal [ @imazu.id, @ochiai.id ].sort, @game.batting_lines.pluck(:player_id).sort
+    assert_equal 3, @game.batting_lines.find_by(player: @imazu).hits
+    assert_equal [ 9 ], @game.pitching_lines.pluck(:strikeouts)
+  end
+
+  test "re-importing drops a player's line the page no longer has, within a team the page still has" do
+    other = Player.create!(scorebook_id: 20231008, university: @keio, name: "林 純司", enter_year: 2024)
+    import({ "batterTop" => [ batter(20231007, 2), batter(20231008, 2) ] })
+    import({ "batterTop" => [ batter(20231007, 2) ] })
 
     assert_equal [ @imazu.id ], @game.batting_lines.pluck(:player_id)
-    assert_equal 3, @game.batting_lines.first.hits
+    assert_not other.batting_lines.exists?
+  end
+
+  test "re-importing a page that has lost a team's batting rows keeps that team's lines" do
+    import({ "batterTop" => [ batter(20231007, 2) ], "batterBottom" => [ batter(20236010, 6) ],
+             "pitcherTop" => [ pitcher(20231007, 2) ], "pitcherBottom" => [ pitcher(20236010, 6) ] })
+
+    import({ "batterTop" => [ batter(20231007, 2, "hb" => 3) ], "batterBottom" => [],
+             "pitcherTop" => [ pitcher(20231007, 2) ], "pitcherBottom" => [ pitcher(20236010, 6) ] })
+
+    assert_equal [ @imazu.id, @ochiai.id ].sort, @game.batting_lines.pluck(:player_id).sort
+    assert_equal 3, @game.batting_lines.find_by(player: @imazu).hits
+  end
+
+  test "re-importing a page with no batting rows at all, only pitching, keeps every batting line" do
+    import({ "batterTop" => [ batter(20231007, 2) ], "batterBottom" => [ batter(20236010, 6) ], "pitcherTop" => [ pitcher(20231007, 2) ] })
+
+    import({ "batterTop" => [], "batterBottom" => [], "pitcherTop" => [ pitcher(20231007, 2, "sop" => 9) ] }) # as 2025100502 now is
+
+    assert_equal 2, @game.batting_lines.count
+    assert_equal [ 9 ], @game.pitching_lines.pluck(:strikeouts)
+  end
+
+  test "re-importing a page that has lost a team's pitching rows keeps that team's pitching lines" do
+    import({ "batterTop" => [ batter(20231007, 2) ], "pitcherTop" => [ pitcher(20231007, 2) ], "pitcherBottom" => [ pitcher(20236010, 6) ] })
+
+    import({ "batterTop" => [ batter(20231007, 2) ], "pitcherTop" => [ pitcher(20231007, 2) ], "pitcherBottom" => [] })
+
+    assert_equal [ @imazu.id, @ochiai.id ].sort, @game.pitching_lines.pluck(:player_id).sort
   end
 
   test "re-importing keeps the lines an applied suggestion added, unless the page now has the player's own line" do

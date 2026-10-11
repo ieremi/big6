@@ -7,10 +7,15 @@ require "json"
 # keyed by Scorebook member id. Only people already imported by PlayerSync are
 # kept; anyone else is counted as skipped.
 #
-# A game's rows are replaced together, so re-running is safe; batting lines
-# added by applying a FixSuggestion are kept, unless the page has the player's
-# line itself. A game whose page can't be fetched, or carries no player stats,
-# keeps whatever rows it had.
+# A game's rows are replaced team by team, so re-running is safe. A team's
+# batting lines are replaced only when the page has batting rows of that team,
+# and its pitching lines likewise: Scorebook has been seen to lose a team's rows
+# from a game page after they were imported (2025-10-05's 早大-法大 2回戦, whose
+# page lost both teams' batting rows in 2026-10, after they had strayed to the
+# other game of the day), and a page that has less than before shouldn't take
+# lines away from what we have. Batting lines added by applying a FixSuggestion
+# are kept too, unless the page has the player's line itself. A game whose page
+# can't be fetched, or carries no player stats, keeps whatever rows it had.
 # stats_checked_at records a successful fetch (even one with no stats) so a
 # backfill can skip games it has already tried.
 #
@@ -67,10 +72,10 @@ class GameStatsImport
           # as empty, and a caller still holding this game would see no lines.
           # Lines added by an applied FixSuggestion stay (the game page doesn't have
           # them: that's why they were added), unless it now has the player's own.
-          BattingLine.where(game_id: game.id)
+          BattingLine.where(game_id: game.id, university_id: batting.map { |row| row[:university_id] }.uniq)
             .where("fix_suggestion_id IS NULL OR player_id IN (?)", batting.map { |row| row[:player_id] }.presence || [ 0 ])
             .delete_all
-          PitchingLine.where(game_id: game.id).delete_all
+          PitchingLine.where(game_id: game.id, university_id: pitching.map { |row| row[:university_id] }.uniq).delete_all
           BattingLine.insert_all!(batting) if batting.any?
           PitchingLine.insert_all!(pitching) if pitching.any?
         end
