@@ -76,4 +76,4 @@ gem "omniauth-rails_csrf_protection", "~> 1.0"
 gem "commonmarker", "~> 2.0"
 
 # The MCP server at /mcp (Big6Mcp), which lets ChatGPT and other AI assistants call the Web API
-gem "mcp", "~> 1.6"
+gem "mcp", "~> 1.7"

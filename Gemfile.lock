@@ -84,7 +84,7 @@ GEM
       version_gem (~> 1.1, >= 1.1.14)
     base64 (0.3.0)
     bcrypt_pbkdf (1.1.2)
-    bigdecimal (4.1.2)
+    bigdecimal (4.1.3)
     bindex (0.8.1)
     bootsnap (1.25.0)
       msgpack (~> 1.5)
@@ -195,7 +195,7 @@ GEM
       net-smtp
     marcel (1.2.1)
     matrix (0.4.3)
-    mcp (1.6.1)
+    mcp (1.7.0)
       json_schemer (>= 2.4)
     mini_magick (5.3.3)
       logger
@@ -340,7 +340,7 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    regexp_parser (2.12.0)
+    regexp_parser (2.13.1)
     reline (0.7.0)
       io-console (~> 0.5)
     rexml (3.4.4)
@@ -463,7 +463,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
-  mcp (~> 1.6)
+  mcp (~> 1.7)
   nokogiri
   omniauth (~> 2.1)
   omniauth-google-oauth2 (~> 1.2)
