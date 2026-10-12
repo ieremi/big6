@@ -66,36 +66,90 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
       end
     end
 
-    # 勝敗表: each cell is the wins against that opponent plus one △ per draw.
+    # 勝敗表: each cell is the wins against that opponent, plus one △ per draw in
+    # books that mark draws there. The columns after the cells (勝・分・勝点・率)
+    # vary from table to table, so the file names them, and says whether the
+    # average is taken over all games or over decisions only.
     if (standings = data["standings"])
       test "#{name}: the standings agree with themselves" do
-        opponents, teams = standings.values_at("opponents", "teams")
-        wins_against = ->(team, other) { teams[team][1 + opponents.index(other)].to_i }
-        draws_against = ->(team, other) { teams[team][1 + opponents.index(other)].count("△") }
+        opponents, teams, columns = standings.values_at("opponents", "teams", "columns")
+        cell = ->(team, other) { teams[team][1 + opponents.index(other)] }
+        wins_against = ->(team, other) { cell.(team, other).to_i }
+        draws_against = ->(team, other) { cell.(team, other).count("△") }
+        marks_draws = teams.values.flatten.any? { |value| value.to_s.include?("△") }
 
-        teams.each do |team, (games, *cells, wins, draws, points, average)|
+        teams.each do |team, row|
+          games = row.first
+          stats = columns.zip(row.last(columns.size)).to_h
           others = opponents - [ team ]
+          wins = others.sum { |other| wins_against.(team, other) }
           losses = others.sum { |other| wins_against.(other, team) }
-          assert_equal "×", cells[opponents.index(team)], team
-          assert_equal wins, others.sum { |other| wins_against.(team, other) }, team
-          assert_equal draws, others.sum { |other| draws_against.(team, other) }, team
+          draws = stats.fetch("draws", 0)
+          assert_equal standings["self_mark"], cell.(team, team), team
+          assert_equal stats["wins"], wins, team
           assert_equal standings.dig("losses", team), losses, team
           assert_equal games, wins + losses + draws, team
-          assert_equal points, others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
-          assert_equal average, format("%.3f", (wins.to_f / (wins + losses)).round(3)).sub(/\A0/, ""), team
-          others.each { |other| assert_equal draws_against.(other, team), draws_against.(team, other), "#{team} #{other}" }
+          if marks_draws
+            assert_equal draws, others.sum { |other| draws_against.(team, other) }, team
+            others.each { |other| assert_equal draws_against.(other, team), draws_against.(team, other), "#{team} #{other}" }
+          end
+          if stats.key?("points")
+            assert_equal stats["points"], others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
+          end
+          denominator = standings["average"] == "wins_per_game" ? games : wins + losses
+          assert_equal stats["average"], format("%.3f", (wins.to_f / denominator).round(3)).sub(/\A0/, ""), team
         end
       end
     end
 
-    # チーム守備成績: the book truncates the fielding average to four places.
+    # チーム守備成績: the book prints the fielding average to three or four
+    # places, sometimes rounded and sometimes truncated, even within one table.
     if (fielding = data["team_fielding"])
       test "#{name}: the fielding averages agree with the chances" do
-        fielding.each do |team, (_games, putouts, assists, errors, average)|
+        fielding.each do |team, row|
           next if known.include?("team_fielding.#{team}")
 
-          expected = ((putouts + assists) * 10_000 / (putouts + assists + errors)).to_s.rjust(4, "0")
-          assert_equal average, ".#{expected}", team
+          putouts, assists, errors, average = row.last(4)
+          places = average.length - 1
+          ratio = Rational(putouts + assists, putouts + assists + errors) * 10**places
+          candidates = [ ratio.floor, ratio.round ].map { |digits| ".#{digits.to_s.rjust(places, "0")}" }
+          assert_includes candidates, average, team
+        end
+      end
+    end
+
+    # チーム攻撃成績 and 立教's individual batting for the season: each row's
+    # average agrees with its hits, and 立教's players add up to 立教's row.
+    if (season = data["season_batting"])
+      test "#{name}: the season batting agrees with itself" do
+        columns = season["columns"]
+        at = ->(row, column) { row[columns.index(column)] }
+        average = ->(row) { format("%.3f", (at.(row, "安打").to_f / at.(row, "打撃数")).round(3)).sub(/\A0/, "") }
+
+        season["teams"].each do |team, row|
+          next if known.include?("season_batting.teams.#{team}")
+
+          assert_equal at.(row, "打撃率"), average.(row), team
+        end
+
+        players = Array(season["rikkio_players"]).map { |name, *row| [ name, row ] }
+        players.each { |name, row| assert_equal at.(row, "打撃率"), average.(row), name }
+        if players.any?
+          team = season.dig("teams", "rikkio")
+          (columns - %w[試合数 打撃率]).each do |column|
+            assert_equal at.(team, column), players.sum { |_, row| at.(row, column) }, column
+          end
+        end
+      end
+    end
+
+    # 個人打撃成績 (the league's leaders): average against hits and at-bats.
+    if (leaders = data["batting_leaders"])
+      test "#{name}: the batting leaders' averages agree with their hits" do
+        leaders.each do |name, _university, _games, at_bats, hits, average|
+          next if known.include?("batting_leaders[#{name}]")
+
+          assert_equal average, format("%.3f", (hits.to_f / at_bats).round(3)).sub(/\A0/, ""), name
         end
       end
     end

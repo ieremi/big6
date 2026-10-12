@@ -149,6 +149,9 @@ games:
 standings:
   # 対戦の欄の大学の順。
   opponents: [meiji, keio, waseda, tokyo, hosei, rikkio]
+  self_mark: "×"
+  columns: [wins, draws, points, average]
+  average: wins_per_decision
   teams:
     meiji: [15, "×", "1△", "2", "2△", "2△", "2△", 9, 4, 4, ".818"]
     keio: [13, "2△", "×", "2", "2", "1", "2", 9, 1, 4, ".750"]
