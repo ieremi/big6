@@ -392,7 +392,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the sitemap lists the rankings" do
-    get sitemap_url(format: :xml)
+    get sitemap_part_url("pages", format: :xml)
 
     assert_includes response.body, rankings_url
     assert_includes response.body, ranking_url("pitching")

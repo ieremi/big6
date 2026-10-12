@@ -54,7 +54,8 @@ Rails.application.routes.draw do
     end
   end
 
-  get "sitemap.xml", to: "sitemaps#show", as: :sitemap, defaults: { format: "xml" }
+  get "sitemap.xml", to: "sitemaps#index", as: :sitemap, defaults: { format: "xml" }
+  get "sitemaps/:part", to: "sitemaps#show", as: :sitemap_part, constraints: { part: /pages|games|players/, format: "xml" }
 
   get "og/site.png", to: "home#og_image", as: :site_og_image
 

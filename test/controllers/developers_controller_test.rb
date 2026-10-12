@@ -34,7 +34,7 @@ class DevelopersControllerTest < ActionDispatch::IntegrationTest
     get api_docs_path
     assert_select "a[href=?]", developers_path
 
-    get sitemap_path
+    get sitemap_part_path("pages", format: :xml)
     assert_includes response.body, "/developers/league-site-game-page"
   end
 end

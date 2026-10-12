@@ -144,7 +144,7 @@ class CancelledGamesTest < ActionDispatch::IntegrationTest
   # ---- sitemap
 
   test "the sitemap lists the round number a cancelled game shares with its replay once, and not the cancelled game" do
-    get sitemap_url(format: :xml)
+    get sitemap_part_url("games", format: :xml)
 
     assert_response :success
     locs = response.body.scan(%r{<loc>([^<]*)</loc>}).flatten

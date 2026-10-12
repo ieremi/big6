@@ -35,7 +35,7 @@ class NewsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".news-item p a[href=?]", "https://big6scorebook.jp/game/2026081001"
     assert_select "a[href=?]", matchup_game_path("alpha", "beta", 2026, "spring", 1), text: "試合のページへ →"
 
-    get sitemap_path
+    get sitemap_part_path("pages", format: :xml)
     assert_includes response.body, news_item_url(notice)
   end
 
