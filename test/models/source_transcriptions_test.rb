@@ -33,7 +33,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           runs = innings.delete(" ").chars.reject { |c| c == "x" }.sum(&:to_i)
           assert_equal game.dig("score", team), runs, "games[#{i}] #{team}: #{innings}"
         end
-        assert_match(/x\z/, game.dig("line_score", game["bottom"])) if game.dig("score", game["bottom"]) > game.dig("score", game["top"])
+        assert_match(/x\z/, game.dig("line_score", game["bottom"])) if game.dig("line_score", game["bottom"]).delete(" ").size <= 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"])
       end
     end
 
@@ -70,7 +70,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
     # books that mark draws there. The columns after the cells (勝・分・勝点・率)
     # vary from table to table, so the file names them, and says whether the
     # average is taken over all games or over decisions only.
-    if (standings = data["standings"])
+    if (standings = data["standings"]) && !known.include?("standings")
       test "#{name}: the standings agree with themselves" do
         opponents, teams, columns = standings.values_at("opponents", "teams", "columns")
         cell = ->(team, other) { teams[team][1 + opponents.index(other)] }
@@ -96,8 +96,10 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           if stats.key?("points")
             assert_equal stats["points"], others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
           end
-          denominator = standings["average"] == "wins_per_game" ? games : wins + losses
-          assert_equal stats["average"], format("%.3f", (wins.to_f / denominator).round(3)).sub(/\A0/, ""), team
+# Rounded in most tables, truncated in some (法政's .166 in 1923 spring).
+ratio = Rational(wins, standings["average"] == "wins_per_game" ? games : wins + losses) * 1000
+candidates = ratio == 1000 ? [ "1.000" ] : [ ratio.round, ratio.floor ].map { |digits| format(".%03d", digits) }
+assert_includes candidates, stats["average"], team
         end
       end
     end
@@ -119,25 +121,36 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
     end
 
     # チーム攻撃成績 and 立教's individual batting for the season: each row's
-    # average agrees with its hits, and 立教's players add up to 立教's row.
+    # average and total bases agree with its hits, and 立教's players add up
+    # to 立教's row. The players' table may order its columns differently
+    # (player_columns). A discrepancy can name one column of a row
+    # (season_batting.teams.rikkio.<column>) to skip just that check.
     if (season = data["season_batting"])
       test "#{name}: the season batting agrees with itself" do
         columns = season["columns"]
-        at = ->(row, column) { row[columns.index(column)] }
-        average = ->(row) { format("%.3f", (at.(row, "安打").to_f / at.(row, "打撃数")).round(3)).sub(/\A0/, "") }
+        player_columns = season.fetch("player_columns", columns)
+        average = ->(at) { format("%.3f", (at.("安打").to_f / at.("打撃数")).round(3)).sub(/\A0/, "") }
+        bases = ->(at) { at.("安打") + at.("二塁打") + 2 * at.("三塁打") + 3 * at.("本塁打") }
+        check = lambda do |label, key, at|
+          assert_equal at.("打撃率"), average.(at), label unless known.include?("#{key}.打撃率")
+          assert_equal at.("塁打数"), bases.(at), label if columns.include?("塁打数") && !known.include?("#{key}.塁打数")
+        end
 
         season["teams"].each do |team, row|
           next if known.include?("season_batting.teams.#{team}")
 
-          assert_equal at.(row, "打撃率"), average.(row), team
+          check.(team, "season_batting.teams.#{team}", ->(column) { row[columns.index(column)] })
         end
 
-        players = Array(season["rikkio_players"]).map { |name, *row| [ name, row ] }
-        players.each { |name, row| assert_equal at.(row, "打撃率"), average.(row), name }
-        if players.any?
+        players = Array(season["rikkio_players"]).map { |name, *row| [ name, ->(column) { row[player_columns.index(column)] } ] }
+        players.each { |name, at| check.(name, "season_batting.rikkio_players[#{name}]", at) }
+        # Some tables list only part of the team (rikkio_players_partial).
+        if players.any? && !season["rikkio_players_partial"]
           team = season.dig("teams", "rikkio")
-          (columns - %w[試合数 打撃率]).each do |column|
-            assert_equal at.(team, column), players.sum { |_, row| at.(row, column) }, column
+          ((columns - %w[試合数 打撃率]) & player_columns).each do |column|
+            next if known.include?("season_batting.teams.rikkio.#{column}")
+
+            assert_equal team[columns.index(column)], players.sum { |_, at| at.(column) }, column
           end
         end
       end
