@@ -1,0 +1,36 @@
+<% base = request.base_url -%>
+# Big6（東京六大学野球データベース）
+
+> 東京六大学野球のリーグ戦（1925年〜）の全試合の結果、シーズンの順位表、大学どうしの対戦成績、選手・スタッフの名鑑と成績、ランキングのデータベース。A database of the Tokyo Big6 Baseball League (Japanese university baseball) since 1925: every game, standings, head-to-head records, players and their stats.
+
+- データの元は、東京六大学野球連盟の公式記録室「BIG6 Scorebook」（big6scorebook.jp）と、連盟公式サイト（big6.gr.jp）。試合中や確定前の数字は連盟サイトの暫定データ。
+- 選手の打撃・投手成績は、Scorebook に試合ごとの記録がある試合だけの集計。1976年以前の多くのシーズンと、2010〜2011年・2014〜2016年は記録がなく、その時期の選手の成績は少ないか、ない。
+- 優勝決定戦は、Scorebook に合わせて選手成績に含めない。
+- 大学の slug：waseda（早大・早稲田大学）、keio（慶大・慶應義塾大学）、meiji（明大・明治大学）、hosei（法大・法政大学）、tokyo（東大・東京大学）、rikkio（立大・立教大学。綴りは rikkio）。シーズンは「年」と spring（春季）／autumn（秋季）。
+- 各ページの冒頭に、内容を文章で要約した段落がある（試合結果、選手の通算成績、シーズンの優勝校など）。引用にはその文とページの URL を使える。
+
+## 主なページ
+
+- [シーズン一覧](<%= base %>/seasons): 1925年からの全シーズン。各シーズンの試合結果・日程は /seasons/{年}/{spring|autumn}、順位表は /seasons/{年}/{spring|autumn}/standings
+- [対戦カード](<%= base %>/matchups): 2大学の対戦成績。/matchups/{slug}/{slug} で通算、/{年}/{spring|autumn} を足すとそのシーズン
+- [試合](<%= base %>/games): 試合の検索。1試合のページは /matchups/{slug}/{slug}/{年}/{spring|autumn}/{回戦}（スコアボード、ベンチ入りメンバー、前の試合からのメンバーの変更）
+- [大学](<%= base %>/universities): 各大学の通算成績。/universities/{slug}
+- [選手](<%= base %>/players): 選手・スタッフの検索。1人のページは /players/{id}（id は BIG6 Scorebook の選手ID）。プロフィール、シーズン別・通算成績、試合ごとの記録
+- [ランキング](<%= base %>/rankings): 打者（OPS）・投手（防御率）のランキング。シーズンや期間、大学で絞り込める
+- [おしらせ](<%= base %>/news): データの修正などのおしらせ
+
+## データを機械で取る
+
+- [Web API の説明](<%= base %>/api/docs): 読み取り専用・JSON・認証なし。ベース URL は <%= base %>/api/v1。試合は /games/{年}/{spring|autumn}/{slug}/{slug}/{回戦}、選手は /players/{id}、選手の検索は /players?q={名前}
+- [OpenAPI の仕様](<%= base %>/api/v1/openapi.json): 上の API の OpenAPI 3.0 の定義（JSON）
+- MCP サーバー（<%= base %>/mcp）: Streamable HTTP、認証なし、読み取り専用。API の各項目が1つずつツールになっている（search_players、get_player、get_season、get_game、get_standings など）。名前から選手を調べるときは search_players で id を得てから get_player
+
+## 開発者向けの解説
+
+<% @docs.each do |doc| -%>
+- [<%= doc.title %>](<%= base %><%= doc.site_path %>): <%= doc.summary.to_s.gsub(/\[([^\]]*)\]\([^)]*\)/, '\1').delete("*").squish.truncate(120) %>
+<% end -%>
+
+## Optional
+
+- [サイトマップ](<%= base %>/sitemap.xml): 全ページ（試合・選手を含む）の一覧

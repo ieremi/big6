@@ -54,6 +54,7 @@ Rails.application.routes.draw do
     end
   end
 
+  get "llms.txt", to: "llms#show", as: :llms, defaults: { format: "text" }
   get "sitemap.xml", to: "sitemaps#index", as: :sitemap, defaults: { format: "xml" }
   get "sitemaps/:part", to: "sitemaps#show", as: :sitemap_part, constraints: { part: /pages|games|players/, format: "xml" }
 
