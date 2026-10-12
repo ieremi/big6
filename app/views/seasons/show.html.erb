@@ -1,10 +1,14 @@
 <%
   content_for :title, site_title("#{@season.title} 試合結果・日程")
-  content_for :description, season_meta_description(@season, @standings)
+  summary = SeasonSummary.new(@season, @standings, @games.to_a)
+  content_for :description, summary.to_s
   content_for :image_url, season_og_image_url(@season.year, @season.term)
 %>
 
 <h1><%= @season.title %></h1>
+
+<%# The season in a sentence or two (SeasonSummary), also the page's description. %>
+<p class="game-summary"><%= summary %></p>
 
 <% if @prime_ministers.any? || @gdp_per_capita %>
   <p class="muted">

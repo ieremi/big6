@@ -1479,6 +1479,12 @@ tr.bench-only td a {
   padding-left: 1.4rem;
 }
 
+/* A game told in a few sentences, below its heading (games/show). */
+.game-summary {
+  margin: 0.5rem 0 1rem;
+  line-height: 1.7;
+}
+
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */
 .roster-diff {
   margin: 0.5rem 0;

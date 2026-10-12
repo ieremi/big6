@@ -1,7 +1,8 @@
 <%
   title = "#{@player.name}（#{@player.university.short_name}）"
   content_for :title, site_title("#{title} 成績")
-  content_for :description, player_meta_description(@player, @stats)
+  summary = PlayerSummary.new(@player, @stats)
+  content_for :description, summary.to_s
   content_for :head, structured_data(player_structured_data(@player))
   content_for :image_url, player_og_image_url(@player)
 %>
@@ -13,6 +14,9 @@
 <% if @player.name_kana.present? %>
   <p class="muted"><%= @player.name_kana %></p>
 <% end %>
+
+<%# The player in a few sentences (PlayerSummary), also the page's description. %>
+<p class="game-summary"><%= summary %></p>
 
 <dl class="scoreboard-meta">
   <div>
