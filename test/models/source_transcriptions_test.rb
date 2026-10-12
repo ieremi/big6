@@ -48,19 +48,55 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
       end
     end
 
-    test "#{name}: a team's total bases and average agree with its hits" do
-      Hash(data.dig("year_batting", "teams")).each do |team, (_games, ab, _runs, hits, bases, doubles, triples, homers, *, average)|
-        assert_equal bases, hits + doubles + 2 * triples + 3 * homers, team
-        next if known.include?("year_batting.teams.#{team}")
+    if data["year_batting"]
+      test "#{name}: a team's total bases and average agree with its hits" do
+        Hash(data.dig("year_batting", "teams")).each do |team, (_games, ab, _runs, hits, bases, doubles, triples, homers, *, average)|
+          assert_equal bases, hits + doubles + 2 * triples + 3 * homers, team
+          next if known.include?("year_batting.teams.#{team}")
 
-        assert_equal average, format("%.3f", (hits.to_f / ab).round(3)).sub(/\A0/, ""), team
+          assert_equal average, format("%.3f", (hits.to_f / ab).round(3)).sub(/\A0/, ""), team
+        end
+
+        Array(data.dig("year_batting", "rikkio_players")).each do |name, _games, ab, _runs, hits, bases, doubles, triples, homers, *, average|
+          assert_equal average, format("%.3f", (hits.to_f / ab).round(3)).sub(/\A0/, ""), name
+          next if known.include?("year_batting.rikkio_players[#{name}]")
+
+          assert_equal bases, hits + doubles + 2 * triples + 3 * homers, name
+        end
       end
+    end
 
-      Array(data.dig("year_batting", "rikkio_players")).each do |name, _games, ab, _runs, hits, bases, doubles, triples, homers, *, average|
-        assert_equal average, format("%.3f", (hits.to_f / ab).round(3)).sub(/\A0/, ""), name
-        next if known.include?("year_batting.rikkio_players[#{name}]")
+    # 勝敗表: each cell is the wins against that opponent plus one △ per draw.
+    if (standings = data["standings"])
+      test "#{name}: the standings agree with themselves" do
+        opponents, teams = standings.values_at("opponents", "teams")
+        wins_against = ->(team, other) { teams[team][1 + opponents.index(other)].to_i }
+        draws_against = ->(team, other) { teams[team][1 + opponents.index(other)].count("△") }
 
-        assert_equal bases, hits + doubles + 2 * triples + 3 * homers, name
+        teams.each do |team, (games, *cells, wins, draws, points, average)|
+          others = opponents - [ team ]
+          losses = others.sum { |other| wins_against.(other, team) }
+          assert_equal "×", cells[opponents.index(team)], team
+          assert_equal wins, others.sum { |other| wins_against.(team, other) }, team
+          assert_equal draws, others.sum { |other| draws_against.(team, other) }, team
+          assert_equal standings.dig("losses", team), losses, team
+          assert_equal games, wins + losses + draws, team
+          assert_equal points, others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
+          assert_equal average, format("%.3f", (wins.to_f / (wins + losses)).round(3)).sub(/\A0/, ""), team
+          others.each { |other| assert_equal draws_against.(other, team), draws_against.(team, other), "#{team} #{other}" }
+        end
+      end
+    end
+
+    # チーム守備成績: the book truncates the fielding average to four places.
+    if (fielding = data["team_fielding"])
+      test "#{name}: the fielding averages agree with the chances" do
+        fielding.each do |team, (_games, putouts, assists, errors, average)|
+          next if known.include?("team_fielding.#{team}")
+
+          expected = ((putouts + assists) * 10_000 / (putouts + assists + errors)).to_s.rjust(4, "0")
+          assert_equal average, ".#{expected}", team
+        end
       end
     end
   end
