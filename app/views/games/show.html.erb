@@ -5,12 +5,14 @@
   provisional = detail.innings.any? && !@scoreboard.innings.any?
   game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
   content_for :title, site_title("#{game_score}（#{@game.season.title}第#{@game.game_number}回戦）")
-  content_for :description, [
+  description = [
     "東京六大学野球 #{@game.season.title}リーグ戦",
     "#{@game.played_on.year}年#{@game.played_on.month}月#{@game.played_on.day}日",
     game_score,
     (detail.attendance.present? ? "観衆#{detail.attendance.to_s.strip}人" : nil)
   ].compact.join(" ")
+  content_for :description, description
+  content_for :head, structured_data(game_structured_data(@game, description: description, stadium: detail.stadium))
   content_for :image_url, game_og_image_url(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term, @game.game_number)
 %>
 

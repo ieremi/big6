@@ -2,6 +2,7 @@
   title = "#{@player.name}（#{@player.university.short_name}）"
   content_for :title, site_title("#{title} 成績")
   content_for :description, player_meta_description(@player, @stats)
+  content_for :head, structured_data(player_structured_data(@player))
   content_for :image_url, player_og_image_url(@player)
 %>
 

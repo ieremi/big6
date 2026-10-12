@@ -1,6 +1,7 @@
 <%
   content_for :title, site_title("#{@university.name} 通算成績・試合結果")
   content_for :description, university_meta_description(@university, @record)
+  content_for :head, structured_data(university_structured_data(@university))
   content_for :image_url, university_og_image_url(@university.slug)
 %>
 
