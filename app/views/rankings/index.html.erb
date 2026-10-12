@@ -1,7 +1,7 @@
 <%
   kind_title = @kind == "batting" ? "打者ランキング" : "投手ランキング"
   period_title = ranking_period_title
-  content_for :title, "#{kind_title}（#{period_title}） - Big6"
+  content_for :title, site_title("#{kind_title}（#{period_title}）")
   content_for :description, "東京六大学野球の#{kind_title}（#{period_title}、#{ranking_target_label(@kind, @minimum)}）"
 %>
 

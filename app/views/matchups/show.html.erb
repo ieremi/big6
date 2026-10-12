@@ -1,7 +1,7 @@
 <%
   period_label = @season ? @season.title : (@year ? "#{@year}年" : nil)
-  content_for :title, "#{@team0.short_name} vs #{@team1.short_name}#{period_label ? " #{period_label}" : ""} - Big6"
-  content_for :description, "#{@team0.short_name}と#{@team1.short_name}の対戦成績・試合一覧"
+  content_for :title, site_title("#{@team0.short_name} vs #{@team1.short_name}#{" #{period_label}" if period_label} 対戦成績")
+  content_for :description, matchup_meta_description(@team0, @team1, @games, period_label: period_label)
   content_for :image_url, if @season
     matchup_season_og_image_url(@team0.slug, @team1.slug, @season.year, @season.term)
   elsif @year

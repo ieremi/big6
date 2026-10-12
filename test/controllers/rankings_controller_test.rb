@@ -37,7 +37,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "打者ランキング"
-    assert_select "title", /打者ランキング（2026年春季） - Big6/
+    assert_select "title", "打者ランキング（2026年春季） - 東京六大学野球 - Big6"
     assert_equal %w[高い 低い], ranked_names
     assert_select "tbody tr:first-child td:first-child", "1"
     assert_select "thead th", text: "OPS"
@@ -50,7 +50,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     get ranking_url("pitching"), params: { season: "2026-spring" }
 
     assert_response :success
-    assert_select "title", /投手ランキング（2026年春季） - Big6/
+    assert_select "title", "投手ランキング（2026年春季） - 東京六大学野球 - Big6"
     assert_select "h1", "投手ランキング"
     assert_equal %w[好投 打たれた], ranked_names
     assert_select "thead th", text: "防御率"

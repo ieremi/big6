@@ -1,6 +1,6 @@
 <%
-  content_for :title, "#{@university.name} - Big6"
-  content_for :description, "#{@university.name}の通算成績・試合時間統計"
+  content_for :title, site_title("#{@university.name} 通算成績・試合結果")
+  content_for :description, university_meta_description(@university, @record)
   content_for :image_url, university_og_image_url(@university.slug)
 %>
 

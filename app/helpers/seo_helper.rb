@@ -1,0 +1,70 @@
+# Titles and descriptions of the public pages, written for search engines and
+# AI search as much as for the browser tab: a title says what the page is in
+# the words people search with (東京六大学野球, 成績, 順位表, 対戦成績), and a
+# description gives the figures themselves, so a search result or an AI's
+# answer can quote it without opening the page.
+module SeoHelper
+  SITE_SUFFIX = "東京六大学野球 - Big6".freeze
+
+  # "2026年秋季 順位表 - 東京六大学野球 - Big6".
+  def site_title(*parts)
+    [ *parts.compact_blank, SITE_SUFFIX ].join(" - ")
+  end
+
+  # ".456", or "-" for none.
+  def seo_rate(value)
+    value.nil? ? "-" : format("%.3f", value).sub(/\A0/, "")
+  end
+
+  # The season's games and, once any are decided, its top of the table.
+  def season_meta_description(season, standings)
+    leader = standings.rows.first
+    lead = if leader.nil? || leader.games.zero?
+      "まだ試合結果はありません。"
+    else
+      "#{season.finished? ? "優勝" : "現在1位"}は#{leader.university.short_name}（勝ち点#{leader.points}、#{leader.wins}勝#{leader.losses}敗）。"
+    end
+    "東京六大学野球 #{season.title}リーグ戦の全試合の結果と日程。#{lead}"
+  end
+
+  # Every university's place, 勝ち点 and record.
+  def standings_meta_description(season, standings)
+    table = standings.rows.each_with_index.map do |row, index|
+      "#{index + 1}位 #{row.university.short_name}（勝ち点#{row.points}、#{row.wins}勝#{row.losses}敗#{"#{row.draws}分" if row.draws.positive?}）"
+    end
+    "東京六大学野球 #{season.title}の順位表。#{table.join('、')}"
+  end
+
+  def university_meta_description(university, record)
+    "#{university.name}の東京六大学野球リーグ戦での通算成績（#{record.wins}勝#{record.losses}敗#{record.draws}分、勝率#{seo_rate(record.percentage)}）と、シーズンごとの成績・試合結果。"
+  end
+
+  # The player's university, year, role and school, and their career totals in
+  # league games (batting, pitching or both).
+  def player_meta_description(player, stats)
+    profile = [ player.university.name, ("#{player.enter_year}年入学" if player.enter_year), player.role, player.position ].compact.join(" ")
+    profile += "（#{player.high_school}）" if player.high_school.present?
+
+    career = []
+    if stats.pitching?
+      t = stats.pitching_total
+      career << "投手 #{t.games}試合 #{t.wins}勝#{t.losses}敗 防御率#{t.era ? format('%.2f', t.era) : '-'} #{t.strikeouts}奪三振"
+    end
+    if stats.batting?
+      t = stats.batting_total
+      career << "打撃 #{t.games}試合 打率#{seo_rate(t.average)} #{t.hits}安打 #{t.home_runs}本塁打 #{t.rbi}打点"
+    end
+
+    [ "#{profile}。", ("東京六大学野球リーグ戦の通算成績：#{career.join('、')}。" if career.any?) ].compact.join
+  end
+
+  # Wins of each side and draws in the games the page lists (the whole history,
+  # a year or a season).
+  def matchup_meta_description(team0, team1, games, period_label: nil)
+    decided = games.select(&:decided?)
+    wins = ->(team) { decided.count { |game| (game.team0_id == team.id ? game.team0_score - game.team1_score : game.team1_score - game.team0_score).positive? } }
+    draws = decided.count { |game| game.team0_score == game.team1_score }
+    record = "#{team0.short_name}#{wins.(team0)}勝、#{team1.short_name}#{wins.(team1)}勝、#{draws}分"
+    "東京六大学野球 #{team0.short_name}と#{team1.short_name}の#{period_label || "通算"}の対戦成績（#{record}）と試合結果。"
+  end
+end

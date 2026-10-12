@@ -45,6 +45,7 @@ class SeasonsController < ApplicationController
     end
 
     season_weeks = SeasonWeeks.new(@games)
+    @standings = Standings.new(@season, games: @games.to_a) # for the page's description
     @weeks = season_weeks.weeks_with(@selected_university_ids)
     @shown_game_count = @weeks.sum { |week| week.games.count { |game| !game.not_held? } }
     @played_game_count = @games.count { |game| !game.not_held? }
