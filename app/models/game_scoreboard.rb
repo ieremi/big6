@@ -9,9 +9,12 @@ class GameScoreboard
     match[1].to_i * 60 + match[2].to_i
   end
 
+  # Scorebook's game data, or for a game taken from a printed source (one
+  # Scorebook doesn't have), the line score transcribed from it, stored in the
+  # same shape (Game#source_scoreboard).
   def initialize(game)
     @game = game
-    @detail = game.season.scorebook_game(game.scorebook_game_id) || {}
+    @detail = game.season.scorebook_game(game.scorebook_game_id) || game.source_scoreboard || {}
   end
 
   def present?

@@ -24,7 +24,7 @@ bin/ci                           # everything in config/ci.rb: rubocop, audits, 
 bin/rails runner script/big6/<script>.rb   # data import and maintenance (see below)
 ```
 
-In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the compose Postgres (user and password are `postgres`). `db/seeds.rb` creates the 6 universities and every Season from 1925 through 2026. Games, players and stats are not seeded; they come from the import scripts.
+In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the compose Postgres (user and password are `postgres`). `db/seeds.rb` creates the 6 universities and every Season from 1925 through 2026, plus 1924 autumn (before the league of six, for games from printed sources). Games, players and stats are not seeded; they come from the import scripts.
 
 ## Domain model
 
@@ -33,6 +33,7 @@ In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the comp
 - **Game**: `team0` and `team1` (team0 = top/visitor as Scorebook records it), `game_number` (the round: 1回戦, 2回戦, ...), scores, attendance, weather, video URL, and `league_official_data` (JSONB, a provisional box score from big6.gr.jp).
   - `game_status` is an enum whose stored values are Japanese: `scheduled 試合前`, `in_progress 試合中`, `finished 試合終了`, `cancelled 中止`, `no_game ノーゲーム`.
   - A game that wasn't held (`not_held?`) has **no `game_number`** and no score; a `before_validation` callback clears the number. `Game.record_cancellation` is the single path for recording one.
+  - A game Scorebook doesn't have can come from a transcription of a printed source (`db/sources`, `SourceGameImport`, `script/big6/import_source_game.rb`). It has `source_citation` and `source_url` (shown on the game page, and as `source` in the API) and its line score in `source_scoreboard`, in Scorebook's own shape, which `GameScoreboard` falls back to.
   - `counted_in_stats: false` marks the 優勝決定戦 playoffs. They are shown but left out of player totals and rankings.
 - **Player**: from Scorebook's 名鑑. Keyed by `scorebook_id`, which is also the id used in `/players/:id` URLs and the API. The table also holds staff (監督, 部長, ...), not just players.
   - `league_official_id` is the player's ID on big6.gr.jp (`AK23UT0`, see `docs/league-site-player-id.md`). `LeagueOfficialPlayerLink` sets it when a scraped box score first shows the player, by reading the player's page there (full name, entry year and high school are shown only while the player is enrolled). `LeagueOfficialLineup` matches provisional lineups by it, and falls back to guessing from the short name, high school and entry year.

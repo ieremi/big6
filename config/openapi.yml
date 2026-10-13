@@ -14,7 +14,7 @@ info:
   title: Big6 東京六大学野球 Web API
   version: "1"
   description: >-
-    東京六大学野球（1925年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキング。
+    東京六大学野球（1924年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキング。
     すべて GET・JSON・認証不要。大学の slug は waseda（早大）・keio（慶大）・meiji（明大）・
     hosei（法大）・tokyo（東大）・rikkio（立大）。選手の id は BIG6 Scorebook の選手ID。
     人向けの説明は /api/docs。
@@ -50,7 +50,7 @@ paths:
     get:
       operationId: listSeasons
       summary: 全シーズンの一覧
-      description: 1925年からの全シーズン（新しい順）。
+      description: 1924年秋季からの全シーズン（新しい順）。1924年秋季は六大学になる前（帝大の加盟前）の季。
       responses:
         "200":
           description: シーズンの配列
@@ -464,6 +464,13 @@ components:
         attendance: { type: integer, nullable: true }
         status: { type: string, enum: [scheduled, in_progress, finished, cancelled, no_game] }
         cancelled: { type: boolean }
+        source:
+          type: object
+          nullable: true
+          description: "BIG6 Scorebook にない試合を部史などの刊行物から入れたときの出典。Scorebook の試合は null"
+          properties:
+            citation: { type: string, description: "書誌（書名・ページなど）" }
+            url: { type: string, nullable: true, description: "出典の所在（国立国会図書館デジタルコレクションなど）" }
     GameSide:
       type: object
       properties:

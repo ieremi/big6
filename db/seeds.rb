@@ -24,6 +24,10 @@ universities.each_with_index do |attributes, index|
   end
 end
 
+# 1924 autumn, before 帝大 joined (the five universities), is here for the
+# games taken from printed sources (db/sources); the league of six began in 1925.
+Season.find_or_create_by!(year: 1924, term: "autumn")
+
 (1925..2026).each do |year|
   Season.find_or_create_by!(year: year, term: "spring")
   Season.find_or_create_by!(year: year, term: "autumn")

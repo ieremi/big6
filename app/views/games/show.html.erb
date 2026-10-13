@@ -132,6 +132,11 @@
 
 <%= render "games/box_score", game: @game, batting_lines_by_university: @batting_lines_by_university, pitching_lines_by_university: @pitching_lines_by_university %>
 
+<% if @game.source_citation.present? %>
+  <p class="muted">
+    出典：<%= @game.source_url.present? ? link_to(@game.source_citation, @game.source_url, target: "_blank", rel: "noopener noreferrer") : @game.source_citation %>
+  </p>
+<% end %>
 <% if (url = league_official_game_url(@game)) %>
   <p class="muted">
     <%= link_to "東京六大学野球連盟のページで見る →", url, target: "_blank", rel: "noopener noreferrer" %>

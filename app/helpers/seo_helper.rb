@@ -54,7 +54,7 @@ module SeoHelper
 
   def website_structured_data
     { "@type" => "WebSite", "name" => "Big6", "alternateName" => "東京六大学野球データベース", "url" => root_url, "inLanguage" => "ja",
-      "description" => "東京六大学野球（1925年〜）の試合結果・順位表・対戦成績・選手成績のデータベース" }
+      "description" => "東京六大学野球（1924年〜）の試合結果・順位表・対戦成績・選手成績のデータベース" }
   end
 
   def university_structured_data(university)

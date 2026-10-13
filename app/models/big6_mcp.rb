@@ -20,7 +20,7 @@ class Big6Mcp
   TITLE = "Big6 東京六大学野球"
 
   INSTRUCTIONS = <<~TEXT.freeze
-    東京六大学野球（1925年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキングを調べるツールです。すべて読み取り専用です。
+    東京六大学野球（1924年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキングを調べるツールです。すべて読み取り専用です。
     大学は slug で指定します: waseda（早大）、keio（慶大）、meiji（明大）、hosei（法大）、tokyo（東大）、rikkio（立大）。
     シーズンは year（年）と term（spring＝春季、autumn＝秋季）です。
     選手は id（BIG6 Scorebook の選手ID）で指定します。名前しかわからないときは、まず search_players で id を調べてください。

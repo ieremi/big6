@@ -50,7 +50,8 @@ module Api
           team1: { slug: game.team1.slug, score: game.team1_score },
           attendance: game.attendance,
           status: game.game_status,
-          cancelled: game.not_held?
+          cancelled: game.not_held?,
+          source: game.source_citation.present? ? { citation: game.source_citation, url: game.source_url } : nil
         }
         json.delete(:season) unless include_season
         json.delete(:id) unless include_id

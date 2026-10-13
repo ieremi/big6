@@ -17,8 +17,8 @@ require "json"
 class ReferenceDataSync
   USER_AGENT = "big6-reference-data/1.0"
 
-  # Seasons start in 1925, so drop terms that ended before then.
-  FIRST_DATE = Date.new(1925, 1, 1)
+  # Seasons start in 1924, so drop terms that ended before then.
+  FIRST_DATE = Date.new(1924, 1, 1)
 
   # Wikidata lists these as holders of the office, but they were acting
   # (臨時代理) rather than appointed Prime Minister.

@@ -224,4 +224,22 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal [ [ "scheduled", "試合前" ] ], status_tag
   end
+
+  test "game page cites the printed source of a game taken from one, and shows its line score" do
+    @game.update!(source_citation: "立教大学野球部 編『立教大学野球部史』（1981年）pp.29–31", source_url: "https://dl.ndl.go.jp/pid/12172714/1/37",
+      source_scoreboard: { "stadium" => "池袋", "runs1Top" => "1", "runs1Bottom" => "0", "runs9Top" => "0", "runs9Bottom" => "1" })
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_response :success
+    assert_select "a[href=?]", "https://dl.ndl.go.jp/pid/12172714/1/37", text: "立教大学野球部 編『立教大学野球部史』（1981年）pp.29–31"
+    assert_select "table.scoreboard-table"
+    assert_match "池袋", response.body
+  end
+
+  test "game page cites no source for a Scorebook game" do
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_no_match "出典", response.body
+  end
 end

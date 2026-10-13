@@ -1,7 +1,7 @@
 <% base = request.base_url -%>
 # Big6（東京六大学野球データベース）
 
-> 東京六大学野球のリーグ戦（1925年〜）の全試合の結果、シーズンの順位表、大学どうしの対戦成績、選手・スタッフの名鑑と成績、ランキングのデータベース。A database of the Tokyo Big6 Baseball League (Japanese university baseball) since 1925: every game, standings, head-to-head records, players and their stats.
+> 東京六大学野球のリーグ戦（1924年〜）の全試合の結果、シーズンの順位表、大学どうしの対戦成績、選手・スタッフの名鑑と成績、ランキングのデータベース。A database of the Tokyo Big6 Baseball League (Japanese university baseball) since 1924: every game, standings, head-to-head records, players and their stats.
 
 - データの元は、東京六大学野球連盟の公式記録室「BIG6 Scorebook」（big6scorebook.jp）と、連盟公式サイト（big6.gr.jp）。試合中や確定前の数字は連盟サイトの暫定データ。
 - 選手の打撃・投手成績は、Scorebook に試合ごとの記録がある試合だけの集計。1976年以前の多くのシーズンと、2010〜2011年・2014〜2016年は記録がなく、その時期の選手の成績は少ないか、ない。
@@ -11,7 +11,7 @@
 
 ## 主なページ
 
-- [シーズン一覧](<%= base %>/seasons): 1925年からの全シーズン。各シーズンの試合結果・日程は /seasons/{年}/{spring|autumn}、順位表は /seasons/{年}/{spring|autumn}/standings
+- [シーズン一覧](<%= base %>/seasons): 1924年秋季からの全シーズン（1924年秋季は帝大の加盟前、五大学の季）。各シーズンの試合結果・日程は /seasons/{年}/{spring|autumn}、順位表は /seasons/{年}/{spring|autumn}/standings
 - [対戦カード](<%= base %>/matchups): 2大学の対戦成績。/matchups/{slug}/{slug} で通算、/{年}/{spring|autumn} を足すとそのシーズン
 - [試合](<%= base %>/games): 試合の検索。1試合のページは /matchups/{slug}/{slug}/{年}/{spring|autumn}/{回戦}（スコアボード、ベンチ入りメンバー、前の試合からのメンバーの変更）
 - [大学](<%= base %>/universities): 各大学の通算成績。/universities/{slug}
