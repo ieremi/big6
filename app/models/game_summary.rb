@@ -1,9 +1,11 @@
 # A game told in a few plain sentences (試合の要約), at the top of its page and
 # as its description: who beat whom and by what score, on which day and where,
 # extra innings and walk-off wins, the winning and losing pitchers, the home
-# runs, the attendance, the weather, where the card stands afterwards, and in
-# the second half of a season how the game moved each side's chance of the
-# title (ChampionshipOdds).
+# runs, the attendance, the weather, where the card stands afterwards (and the
+# 勝ち点 it won), a season's only win or loss, and in the second half of a
+# season how the game moved each side's chance of the title (ChampionshipOdds),
+# or that it decided the title, with how many seasons in a row
+# (SeasonChampion).
 #
 # Written for people and for search engines and AI search alike, which quote
 # a sentence more readily than a scoreboard. Every fact comes from the data the
@@ -12,8 +14,9 @@
 # and their sentence says how they are worked out.
 #
 # The card's standing is told as a count of wins (「このカードは慶大の2勝1敗」),
-# not as 勝ち点 won: the formats of some seasons (2020's one-game and two-game
-# cards, and many before the war) don't award it the usual way.
+# and 勝ち点 only for the seasons ranked by it (Season#ranked?): the formats of
+# some seasons (2020's one-game and two-game cards, and many before the war)
+# don't award it the usual way.
 class GameSummary
   WEEKDAYS = %w[日 月 火 水 木 金 土].freeze
 
@@ -26,7 +29,7 @@ class GameSummary
 
   def sentences
     @sentences ||= if @game.decided?
-      [ result, pitchers, home_runs, crowd_and_time, card_standing, title_race ].compact
+      [ result, pitchers, home_runs, crowd_and_time, card_standing, only_win_or_loss, title_race ].compact
     elsif @game.in_progress?
       [ "#{event_name}、#{teams_label}は#{date_label}#{" #{stadium}で" if stadium}試合中。" ]
     elsif @game.scheduled?
@@ -143,16 +146,42 @@ class GameSummary
       "これでこのカードは#{draws}引き分け。"
     elsif wins.(leader) == wins.(other)
       "これでこのカードは#{record}の五分。"
+    elsif wins.(leader) == 2 && sides.first == leader && @game.season.ranked?
+      "これでこのカードは#{leader.short_name}の#{record}となり、#{leader.short_name}が勝ち点を得た（今季の勝ち点#{points_so_far(leader)}）。"
     else
       "これでこのカードは#{leader.short_name}の#{record}。"
     end
   end
 
+  # The 勝ち点 university has won in the season up to this game's day.
+  def points_so_far(university)
+    games = Game.held.where(season_id: @game.season_id, counted_in_stats: true).where("played_on <= ?", @game.played_on).to_a
+    Standings.new(@game.season, games: games).row_for(university).points
+  end
+
+  # 「立大にとってこのシーズン唯一の負けとなった。」 (or 唯一の勝利): only once the
+  # season is over, and only for one Scorebook has (a season taken from a
+  # printed source has only the games of one university).
+  def only_win_or_loss
+    winner, loser = sides
+    return nil unless winner && @game.counted_in_stats
+    return nil unless @game.season.scorebook_games.present? && @game.season.finished?
+
+    games = Game.held.where(season_id: @game.season_id, counted_in_stats: true).to_a.select(&:decided?)
+    results = ->(team, won) { games.select { |game| [ game.team0_id, game.team1_id ].include?(team.id) && (game.team0_score != game.team1_score) && ((game.team0_score > game.team1_score ? game.team0_id : game.team1_id) == team.id) == won } }
+    parts = []
+    parts << "#{loser.short_name}にとってこのシーズン唯一の負け" if results.(loser, false) == [ @game ]
+    parts << "#{winner.short_name}にとってこのシーズン唯一の勝利" if results.(winner, true) == [ @game ]
+    "#{parts.join('、')}となった。" if parts.any?
+  end
+
   # 「残りの試合の勝敗を五分とした優勝確率は、明大が54%から66%に上がり、法大が12%から5%に下がった。」
-  # or 「これで明大の優勝が決まった。」 (ChampionshipOdds). Left out when they
-  # aren't worked out (the first half of a season), when the title was already
-  # decided, and when the game moved neither side's chance.
+  # or 「これで明大の優勝が決まった。」 (ChampionshipOdds), as for a playoff won.
+  # Left out when they aren't worked out (the first half of a season), when the
+  # title was already decided, and when the game moved neither side's chance.
   def title_race
+    return title_decided(sides.first) if !@game.counted_in_stats && sides.first
+
     odds = ChampionshipOdds.around(@game) or return nil
     before, after = odds.values_at(:before, :after)
 
@@ -160,7 +189,7 @@ class GameSummary
     if champion
       return nil if before[champion] >= 1
 
-      return "これで#{University.find(champion).short_name}の優勝が決まった。"
+      return title_decided(University.find(champion))
     end
 
     winner, loser = sides
@@ -179,6 +208,13 @@ class GameSummary
     # Every clause but the last ends 「〜り、」, the last 「〜った。」.
     clauses = changes.each_with_index.map { |(stem, cont, last), i| stem + (i == changes.size - 1 ? last : cont) }
     "残りの試合の勝敗を五分とした優勝確率は、#{clauses.join('、')}。"
+  end
+
+  # 「これで明大の優勝が決まった。」, or 「これで明大の3シーズン連続の優勝が決まった。」
+  # when it won the seasons just before (SeasonChampion).
+  def title_decided(champion)
+    streak = SeasonChampion.streak(@game.season, champion)
+    "これで#{champion.short_name}の#{"#{streak}シーズン連続の" if streak > 1}優勝が決まった。"
   end
 
   def percent_label(chance)

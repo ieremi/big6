@@ -19,6 +19,11 @@ class GameSummaryTest < ActiveSupport::TestCase
       game_status: "試合終了", scorebook_game_id: id, duration_minutes: 175 }.merge(attributes))
   end
 
+# A game still to play in Scorebook's data, so the season isn't over.
+def pending_game_left
+  @season.update!(scorebook_games: @details + [ { "id" => 1, "gameStatus" => "試合前" } ])
+end
+
   def summary(game)
     GameSummary.new(game.reload, scoreboard: GameScoreboard.new(game)).to_s
   end
@@ -29,6 +34,7 @@ class GameSummaryTest < ActiveSupport::TestCase
 
   test "tells the result, where and when, the crowd and the time, and where the card stands" do
     first = game("2026-04-11", 1, 4, 2)
+    pending_game_left
 
     assert_equal "2026年4月11日（土）、神宮球場で行われた東京六大学野球 2026年春季リーグ戦 第1回戦は、#{@alpha.short_name}が#{@beta.short_name}に4-2で勝った。" \
       "観衆は8,000人、試合時間は2時間55分。これでこのカードは#{@alpha.short_name}の1勝0敗。" \
@@ -98,5 +104,45 @@ class GameSummaryTest < ActiveSupport::TestCase
 
     assert_match "残りの試合の勝敗を五分とした優勝確率は、#{@beta.short_name}が25%から50%に上がり、#{@alpha.short_name}が75%から50%に下がった。", summary(decider)
     assert_match "これで#{@beta.short_name}の優勝が決まった。", summary(clincher)
+  end
+
+  test "tells the 勝ち点 won with the second win of a card, and how many the side has" do
+    game("2026-04-11", 1, 4, 2)
+    second = game("2026-04-12", 2, 3, 1)
+
+    assert_match "これでこのカードは#{@alpha.short_name}の2勝0敗となり、#{@alpha.short_name}が勝ち点を得た（今季の勝ち点1）。", summary(second)
+  end
+
+  test "tells no 勝ち点 in a season not ranked by it" do
+    @season = Season.create!(year: 2020, term: "autumn")
+    game("2020-09-19", 1, 4, 2)
+    second = game("2020-09-20", 2, 3, 1)
+
+    assert_match "これでこのカードは#{@alpha.short_name}の2勝0敗。", summary(second)
+    assert_no_match "勝ち点を得た", summary(second)
+  end
+
+  test "tells a season's only win and only loss, once the season is over" do
+    first = game("2026-04-11", 1, 4, 2)
+    game("2026-04-12", 2, 1, 3)
+    last = game("2026-04-13", 3, 5, 0)
+
+    assert_match "#{@alpha.short_name}にとってこのシーズン唯一の負け、#{@beta.short_name}にとってこのシーズン唯一の勝利となった。",
+      summary(Game.find_by!(game_number: 2))
+    assert_no_match "唯一", summary(first)
+    assert_no_match "唯一", summary(last)
+
+    pending_game_left
+    assert_no_match "唯一", summary(Game.find_by!(game_number: 2))
+  end
+
+  test "tells how many seasons in a row the side has won when the game decides the title" do
+    autumn = Season.create!(year: 2025, term: "autumn")
+    Game.create!(season: autumn, team0: @alpha, team1: @beta, played_on: "2025-09-13", game_number: 1, team0_score: 2, team1_score: 0, game_status: "試合終了")
+    Game.create!(season: autumn, team0: @beta, team1: @alpha, played_on: "2025-09-14", game_number: 2, team0_score: 0, team1_score: 1, game_status: "試合終了")
+    game("2026-04-11", 1, 4, 2)
+    clincher = game("2026-04-12", 2, 3, 1)
+
+    assert_match "これで#{@alpha.short_name}の2シーズン連続の優勝が決まった。", summary(clincher)
   end
 end

@@ -15,6 +15,24 @@ class Season < ApplicationRecord
         "#{year}年#{term_ja}"
     end
 
+    # Seasons ranked the usual way, by 勝ち点 (best-of-three cards won) and then
+    # 勝率: from 1950, the formats before it having varied, but not 2020 and 2021
+    # (a one-game round, then two-game cards scored in points, which the
+    # standings here don't follow).
+    POINTS_SEASONS = [ [ 2020, "spring" ], [ 2020, "autumn" ], [ 2021, "spring" ], [ 2021, "autumn" ] ].freeze
+    FIRST_YEAR_RANKED = 1950
+
+    def ranked?
+        year >= FIRST_YEAR_RANKED && !POINTS_SEASONS.include?([ year, term ])
+    end
+
+    # The season before this one (spring before autumn, the year's autumn before
+    # the next spring), without the large Scorebook columns.
+    def previous
+        year_before, term_before = term == "autumn" ? [ year, "spring" ] : [ year - 1, "autumn" ]
+        Season.select(:id, :year, :term).find_by(year: year_before, term: term_before)
+    end
+
     def finished?
         return true if scorebook_games.blank?
 
