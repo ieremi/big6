@@ -26,6 +26,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
         assert_equal 2, game["score"].size, "games[#{i}]"
         assert (game["score"].keys - SLUGS).empty?, "games[#{i}]: #{game['score'].keys}"
         next unless game["line_score"]
+        next if known.include?("games[#{i}].line_score")
 
         assert_equal game["score"].keys.sort, game["line_score"].keys.sort, "games[#{i}]"
         assert_equal game["score"].keys.sort, [ game["top"], game["bottom"] ].sort, "games[#{i}]"

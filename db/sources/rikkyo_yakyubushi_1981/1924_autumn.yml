@@ -1,7 +1,7 @@
 # 大正13年（1924年）秋季リーグの立教の試合。立教大学野球部史 pp.29–30 の書き起こし。
-# 立教の個人打撃成績は p.31 にあり、まだ書き起こしていない。形式と方針は README.md を参照。
+# 立教の個人打撃成績・チーム守備成績・その他の戦績は p.31 から。形式と方針は README.md を参照。
 source:
-  pages: "29-30"
+  pages: "29-31"
   # p.29 のコマ。p.30 はコマ38（https://dl.ndl.go.jp/pid/12172714/1/38）。
   ndl_url: https://dl.ndl.go.jp/pid/12172714/1/37
   transcribed_on: 2026-10-12
@@ -307,15 +307,57 @@ standings:
   losses: { waseda: 0, keio: 1, meiji: 3, rikkio: 6, hosei: 8 }
 
 # チーム打撃成績（p.30）。印刷の順。慶應の打撃率は切り捨て、明治の打撃率は合わない（discrepancies を参照）。
-# 立教の個人打撃成績は p.31 にあり、ここには入れていない。
+# 立教の個人打撃成績（p.31）は打点の列があり、列の順もチームの表と違う。
 season_batting:
   columns: [試合数, 打撃数, 得点, 安打, 塁打数, 二塁打, 三塁打, 本塁打, 犠牲打, 盗塁, 三振, 四死球, 打撃率]
+  player_columns: [試合数, 打撃数, 得点, 安打, 塁打数, 二塁打, 三塁打, 本塁打, 打点, 犠牲打, 盗塁, 三振, 四死球, 打撃率]
   teams:
     waseda: [6, 195, 49, 57, 94, 7, 12, 2, 17, 14, 17, 32, ".292"]
     meiji: [10, 345, 55, 98, 126, 9, 8, 1, 10, 36, 48, 37, ".283"]
     keio: [8, 269, 39, 72, 92, 10, 5, 0, 3, 19, 28, 27, ".267"]
     hosei: [8, 247, 15, 40, 52, 8, 2, 0, 6, 3, 52, 19, ".162"]
     rikkio: [8, 251, 20, 40, 44, 0, 2, 0, 11, 17, 64, 35, ".159"]
+  rikkio_players:
+    - [斎藤, 5, 18, 2, 6, 6, 0, 0, 0, 0, 1, 3, 1, 0, ".333"]
+    - [荒井, 7, 19, 4, 6, 6, 0, 0, 0, 1, 1, 3, 6, 7, ".316"]
+    - [竹中, 6, 17, 1, 4, 4, 0, 0, 0, 2, 0, 0, 3, 0, ".235"]
+    - [原, 8, 27, 3, 5, 7, 0, 1, 0, 2, 2, 2, 4, 4, ".185"]
+    - [大仲, 6, 17, 3, 3, 3, 0, 0, 0, 0, 0, 0, 7, 6, ".176"]
+    - [永田, 8, 30, 1, 5, 5, 0, 0, 0, 2, 1, 3, 8, 1, ".167"]
+    - [山田, 8, 32, 3, 3, 0, 0, 0, 2, 1, 1, 0, 4, 5, ".120"]
+    - [水谷, 8, 26, 0, 3, 3, 0, 0, 0, 1, 2, 1, 7, 2, ".115"]
+    - [太田, 8, 21, 1, 2, 2, 0, 0, 0, 1, 1, 1, 9, 3, ".085"]
+    - [二神, 7, 25, 1, 1, 1, 0, 0, 0, 0, 0, 1, 10, 1, ".040"]
+    - [野田, 1, 4, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, ".250"]
+    - [築地, 2, 6, 2, 1, 3, 0, 1, 0, 0, 0, 0, 1, 0, ".167"]
+    - [片田, 2, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, ".000"]
+    - [銀田, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, ".000"]
+    - [南條, 2, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, ".000"]
+    - [市村, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, ".000"]
+
+# チーム守備成績（p.31）。印刷の順。columns は 試合数・刺殺・補殺・失策・守備率。
+team_fielding:
+  waseda: [6, 162, 76, 7, ".971"]
+  keio: [8, 210, 102, 18, ".945"]
+  meiji: [10, 258, 132, 27, ".935"]
+  rikkio: [8, 210, 124, 27, ".925"]
+  hosei: [8, 204, 84, 25, ".917"]
+
+# その他の戦績（p.31）。リーグ戦以外の試合。大正13年の項の終わり、大正14年の見出しの前に載っているが、
+# 日付は11月から翌年の4月・6月・10月・11月にわたり、年の記載がないため month_day だけを書く。
+# 印刷は上下2段で、上段・下段の順にそれぞれ右から書き写した。
+other_games:
+  - { month_day: "11-01", venue: 池袋, opponent: フレスノ, score: { rikkio: 8, opponent: 11 }, line_score: { rikkio: "040 200 002", opponent: "001 134 20x" } }
+  - { month_day: "04-01", venue: 三田, opponent: 大毎野球団, score: { rikkio: 9, opponent: 23 } }
+  - { month_day: "04-04", venue: 宝塚運動場, opponent: 宝塚運動協会, score: { rikkio: 2, opponent: 1 } }
+  - { month_day: "04-05", venue: 宝塚運動場, opponent: 市岡倶楽部, score: { rikkio: 7, opponent: 6 }, line_score: { opponent: "320 001 000", rikkio: "100 040 101" } }
+  - { month_day: "04-07", venue: 宝塚運動場, opponent: ダイヤモンド, score: { rikkio: 3, opponent: 5 }, line_score: { rikkio: "200 000 100", opponent: "000 000 22x" } }
+  - { month_day: "05-30", venue: 東北協会運動場, opponent: 五條倶楽部, score: { rikkio: 4, opponent: 5 } }
+  - { month_day: "06-01", venue: 東北協会運動場, opponent: 仙台鐵道局, score: { rikkio: 6, opponent: 1 } }
+  - { month_day: "06-05", opponent: 新潟芦原倶楽部, score: { rikkio: 3, opponent: 6 } }
+  - { month_day: "06-29", venue: 池袋, opponent: 浦和高校, team: 立教大予科, score: { rikkio: 10, opponent: 2 } }
+  - { month_day: "10-16", venue: 池袋, opponent: 東京帝大, score: { rikkio: 2, opponent: 5 } }
+  - { month_day: "11-15", venue: 戸塚, opponent: 宝塚協会, score: { rikkio: 5, opponent: 5 } }
 
 # 個人打撃成績（p.30）。この季のリーグ全体の上位。印刷の順。columns は 名前・大学・試・打・安・打率。
 batting_leaders:
@@ -344,3 +386,27 @@ discrepancies:
     note: 慶應の打撃率 .267。72÷269＝.2676 で、四捨五入なら .268（切り捨てなら .267）。
   - where: batting_leaders[大門]
     note: 大門（明）の打率 .429。12÷23＝.522（12÷28なら .429）。
+  - where: season_batting.rikkio_players[山田].打撃率
+    note: 山田の行は 塁打数0・本塁打2 と読め、列がずれている可能性がある。打撃率 .120 も 3÷32＝.094 と合わない（3÷25なら .120）。
+  - where: season_batting.rikkio_players[山田].塁打数
+    note: 山田の塁打数0。安打3と本塁打2からは9。
+  - where: season_batting.rikkio_players[太田].打撃率
+    note: 太田の打撃率 .085。2÷21＝.095。
+  - where: season_batting.teams.rikkio.打撃数
+    note: 立教の打撃数251。個人の合計は256。
+  - where: season_batting.teams.rikkio.得点
+    note: 立教の得点20。個人の合計は21。
+  - where: season_batting.teams.rikkio.塁打数
+    note: 立教の塁打数44。個人の合計は41（山田を3とすると44）。
+  - where: season_batting.teams.rikkio.本塁打
+    note: 立教の本塁打0。個人の合計は2（山田の行）。
+  - where: season_batting.teams.rikkio.犠牲打
+    note: 立教の犠牲打11。個人の合計は10。
+  - where: season_batting.teams.rikkio.盗塁
+    note: 立教の盗塁17。個人の合計は14。
+  - where: season_batting.teams.rikkio.三振
+    note: 立教の三振64。個人の合計は66。
+  - where: season_batting.teams.rikkio.四死球
+    note: 立教の四死球35。個人の合計は29。
+  - where: team_fielding.hosei
+    note: 法政の守備率 .917。（204＋84）÷（204＋84＋25）＝.920。
