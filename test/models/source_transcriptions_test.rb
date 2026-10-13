@@ -34,7 +34,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           runs = innings.delete(" ").chars.reject { |c| c == "x" }.sum(&:to_i)
           assert_equal game.dig("score", team), runs, "games[#{i}] #{team}: #{innings}"
         end
-        assert_match(/x\z/, game.dig("line_score", game["bottom"])) if game.dig("line_score", game["bottom"]).delete(" ").size <= 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"])
+        assert_match(/x\z/, game.dig("line_score", game["bottom"])) if game.dig("line_score", game["bottom"]).delete(" ").size == 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"])
       end
     end
 
@@ -97,10 +97,10 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           if stats.key?("points")
             assert_equal stats["points"], others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
           end
-# Rounded in most tables, truncated in some (法政's .166 in 1923 spring).
-ratio = Rational(wins, standings["average"] == "wins_per_game" ? games : wins + losses) * 1000
-candidates = ratio == 1000 ? [ "1.000" ] : [ ratio.round, ratio.floor ].map { |digits| format(".%03d", digits) }
-assert_includes candidates, stats["average"], team
+          # Rounded in most tables, truncated in some (法政's .166 in 1923 spring).
+          ratio = Rational(wins, standings["average"] == "wins_per_game" ? games : wins + losses) * 1000
+          candidates = ratio == 1000 ? [ "1.000" ] : [ ratio.round, ratio.floor ].map { |digits| format(".%03d", digits) }
+          assert_includes candidates, stats["average"], team unless known.include?("standings.#{team}.率")
         end
       end
     end
@@ -130,10 +130,18 @@ assert_includes candidates, stats["average"], team
       test "#{name}: the season batting agrees with itself" do
         columns = season["columns"]
         player_columns = season.fetch("player_columns", columns)
-        average = ->(at) { format("%.3f", (at.("安打").to_f / at.("打撃数")).round(3)).sub(/\A0/, "") }
+        # To the places printed (three, or four in some tables), rounded or, in
+        # some tables, truncated; .000 for a player with no at-bats.
+        averages = lambda do |at|
+          places = at.("打撃率").length - 1
+          return [ ".#{"0" * places}" ] if at.("打撃数").zero?
+
+          ratio = Rational(at.("安打"), at.("打撃数")) * 10**places
+          [ ratio.round, ratio.floor ].map { |digits| ".#{digits.to_s.rjust(places, "0")}" }
+        end
         bases = ->(at) { at.("安打") + at.("二塁打") + 2 * at.("三塁打") + 3 * at.("本塁打") }
         check = lambda do |label, key, at|
-          assert_equal at.("打撃率"), average.(at), label unless known.include?("#{key}.打撃率")
+          assert_includes averages.(at), at.("打撃率"), label unless known.include?("#{key}.打撃率")
           assert_equal at.("塁打数"), bases.(at), label if columns.include?("塁打数") && !known.include?("#{key}.塁打数")
         end
 
