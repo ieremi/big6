@@ -1,12 +1,15 @@
 # A game told in a few plain sentences (試合の要約), at the top of its page and
 # as its description: who beat whom and by what score, on which day and where,
 # extra innings and walk-off wins, the winning and losing pitchers, the home
-# runs, the attendance, the weather, and where the card stands afterwards.
+# runs, the attendance, the weather, where the card stands afterwards, and in
+# the second half of a season how the game moved each side's chance of the
+# title (ChampionshipOdds).
 #
 # Written for people and for search engines and AI search alike, which quote
 # a sentence more readily than a scoreboard. Every fact comes from the data the
 # page shows (the game, its scoreboard, its box score), and a fact that isn't
-# there is left out rather than guessed.
+# there is left out rather than guessed. The title odds are the one estimate,
+# and their sentence says how they are worked out.
 #
 # The card's standing is told as a count of wins (「このカードは慶大の2勝1敗」),
 # not as 勝ち点 won: the formats of some seasons (2020's one-game and two-game
@@ -23,7 +26,7 @@ class GameSummary
 
   def sentences
     @sentences ||= if @game.decided?
-      [ result, pitchers, home_runs, crowd_and_time, card_standing ].compact
+      [ result, pitchers, home_runs, crowd_and_time, card_standing, title_race ].compact
     elsif @game.in_progress?
       [ "#{event_name}、#{teams_label}は#{date_label}#{" #{stadium}で" if stadium}試合中。" ]
     elsif @game.scheduled?
@@ -142,6 +145,48 @@ class GameSummary
       "これでこのカードは#{record}の五分。"
     else
       "これでこのカードは#{leader.short_name}の#{record}。"
+    end
+  end
+
+  # 「残りの試合の勝敗を五分とした優勝確率は、明大が54%から66%に上がり、法大が12%から5%に下がった。」
+  # or 「これで明大の優勝が決まった。」 (ChampionshipOdds). Left out when they
+  # aren't worked out (the first half of a season), when the title was already
+  # decided, and when the game moved neither side's chance.
+  def title_race
+    odds = ChampionshipOdds.around(@game) or return nil
+    before, after = odds.values_at(:before, :after)
+
+    champion = after.find { |_, chance| chance >= 1 }&.first
+    if champion
+      return nil if before[champion] >= 1
+
+      return "これで#{University.find(champion).short_name}の優勝が決まった。"
+    end
+
+    winner, loser = sides
+    changes = (winner ? [ winner, loser ] : [ @game.team0, @game.team1 ]).filter_map do |team|
+      from, to = before[team.id], after[team.id]
+      next if percent_label(from) == percent_label(to)
+
+      if to.zero?
+        [ "#{team.short_name}が#{percent_label(from)}から0%になって優勝の可能性がなくな", "り", "った" ]
+      else
+        [ "#{team.short_name}が#{percent_label(from)}から#{percent_label(to)}に#{to > from ? "上が" : "下が"}", "り", "った" ]
+      end
+    end
+    return nil if changes.empty?
+
+    # Every clause but the last ends 「〜り、」, the last 「〜った。」.
+    clauses = changes.each_with_index.map { |(stem, cont, last), i| stem + (i == changes.size - 1 ? last : cont) }
+    "残りの試合の勝敗を五分とした優勝確率は、#{clauses.join('、')}。"
+  end
+
+  def percent_label(chance)
+    if chance.zero? then "0%"
+    elsif chance >= 1 then "100%"
+    elsif chance < 0.005 then "1%未満"
+    elsif chance >= 0.995 then "99%超"
+    else "#{(chance * 100).round}%"
     end
   end
 

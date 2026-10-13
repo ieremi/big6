@@ -31,7 +31,8 @@ class GameSummaryTest < ActiveSupport::TestCase
     first = game("2026-04-11", 1, 4, 2)
 
     assert_equal "2026年4月11日（土）、神宮球場で行われた東京六大学野球 2026年春季リーグ戦 第1回戦は、#{@alpha.short_name}が#{@beta.short_name}に4-2で勝った。" \
-      "観衆は8,000人、試合時間は2時間55分。これでこのカードは#{@alpha.short_name}の1勝0敗。", summary(first)
+      "観衆は8,000人、試合時間は2時間55分。これでこのカードは#{@alpha.short_name}の1勝0敗。" \
+      "残りの試合の勝敗を五分とした優勝確率は、#{@alpha.short_name}が50%から75%に上がり、#{@beta.short_name}が50%から25%に下がった。", summary(first)
 
     second = game("2026-04-12", 2, 1, 3)
     assert_match "#{@beta.short_name}が#{@alpha.short_name}に3-1で勝った。", summary(second)
@@ -88,5 +89,14 @@ class GameSummaryTest < ActiveSupport::TestCase
 
     assert_equal "東京六大学野球 2026年春季リーグ戦 第1回戦、#{@alpha.short_name}対#{@beta.short_name}は2026年4月18日（土）に行われる予定。",
       GameSummary.new(scheduled, scoreboard: GameScoreboard.new(scheduled)).to_s
+  end
+
+  test "tells how the game moved the title race, winner first, and when it decided the title" do
+    game("2026-04-11", 1, 4, 2)
+    decider = game("2026-04-12", 2, 0, 5)
+    clincher = game("2026-04-13", 3, 1, 2)
+
+    assert_match "残りの試合の勝敗を五分とした優勝確率は、#{@beta.short_name}が25%から50%に上がり、#{@alpha.short_name}が75%から50%に下がった。", summary(decider)
+    assert_match "これで#{@beta.short_name}の優勝が決まった。", summary(clincher)
   end
 end
