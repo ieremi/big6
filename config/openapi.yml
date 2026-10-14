@@ -14,7 +14,7 @@ info:
   title: Big6 東京六大学野球 Web API
   version: "1"
   description: >-
-    東京六大学野球（1924年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキング。
+    東京六大学野球（1922年〜）の試合・シーズン・順位表・対戦成績・選手と成績・ランキング。
     すべて GET・JSON・認証不要。大学の slug は waseda（早大）・keio（慶大）・meiji（明大）・
     hosei（法大）・tokyo（東大）・rikkio（立大）。選手の id は BIG6 Scorebook の選手ID。
     人向けの説明は /api/docs。
@@ -50,7 +50,7 @@ paths:
     get:
       operationId: listSeasons
       summary: 全シーズンの一覧
-      description: 1924年秋季からの全シーズン（新しい順）。1924年秋季は六大学になる前（帝大の加盟前）の季。
+      description: 1922年春季からの全シーズン（新しい順）。1937年以前の季の一部は、立教の試合だけを部史から載せている（1925年春季までは帝大の加盟前の季）。
       responses:
         "200":
           description: シーズンの配列
@@ -483,13 +483,20 @@ components:
         wins: { type: integer }
         losses: { type: integer }
         draws: { type: integer }
-        points: { type: integer, description: 勝ち点 }
+        points: { type: integer, nullable: true, description: "勝ち点。部史の勝敗表に勝ち点の欄がない季は null" }
         games: { type: integer }
         percentage: { type: number, description: 勝率 }
-        runs_scored: { type: integer, description: 得点（勝敗のついた試合と引き分けの合計） }
-        runs_allowed: { type: integer, description: 失点 }
-        attendance_total: { type: integer }
+        runs_scored: { type: integer, nullable: true, description: 得点（勝敗のついた試合と引き分けの合計）。source のある季は null }
+        runs_allowed: { type: integer, nullable: true, description: 失点。source のある季は null }
+        attendance_total: { type: integer, nullable: true }
         average_attendance: { type: integer, nullable: true }
+        source:
+          type: object
+          nullable: true
+          description: "BIG6 Scorebook にない季（1937年以前の一部）は、部史などの刊行物の勝敗表をそのまま返す。その出典。行の順は表の順。Scorebook の季では null（キーなし）"
+          properties:
+            citation: { type: string }
+            url: { type: string, nullable: true }
     Player:
       type: object
       properties:

@@ -1,0 +1,62 @@
+<%# The 勝敗表 of a season whose games come from a printed source (Season#source_standings), as printed there: the site has only one club's games of the season, so the table isn't worked out from them. %>
+<% table = season.source_standings
+   universities = University.where(slug: table["opponents"]).index_by(&:slug)
+   with_points = table["rows"].any? { |row| row["points"] } %>
+<p class="muted">
+  この季の試合は、このサイトには<%= link_to "一部しかありません", season_path(season.year, season.term) %>。
+  下の表は出典の勝敗表をそのまま載せています。
+</p>
+
+<div class="table-scroll">
+  <table class="standings-table">
+    <thead>
+      <tr>
+        <th class="col-team"></th>
+        <th>試</th>
+        <% table["opponents"].each do |slug| %>
+          <th>
+            <span class="team-chip" style="background: <%= universities[slug]&.color %>"><%= universities[slug]&.initial %></span>
+          </th>
+        <% end %>
+        <th>勝</th>
+        <th>敗</th>
+        <th>分</th>
+        <% if with_points %><th>勝点</th><% end %>
+        <th>率</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% table["rows"].each do |row| %>
+        <% university = universities[row["university"]] %>
+        <tr>
+          <td class="col-team">
+            <span class="team-chip" style="background: <%= university&.color %>"><%= university&.initial %></span>
+          </td>
+          <td><%= row["games"] %></td>
+          <% table["opponents"].each do |slug| %>
+            <td class="result-cell">
+              <% cell = row["cells"][slug] %>
+              <% if slug == row["university"] %>
+                <span class="dash">---</span>
+              <% else %>
+                <%= cell %>
+              <% end %>
+            </td>
+          <% end %>
+          <td><%= row["wins"] %></td>
+          <td><%= row["losses"] %></td>
+          <td><%= row["draws"] %></td>
+          <% if with_points %><td><%= row["points"] %></td><% end %>
+          <td><%= row["average"] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<p class="muted">
+  対戦の欄の数字はその相手に勝った試合数、△は引き分け1試合、×は対戦なしです（出典の表記のまま）。
+</p>
+<p class="muted">
+  出典：<%= table["url"].present? ? link_to(table["citation"], table["url"], target: "_blank", rel: "noopener noreferrer") : table["citation"] %>
+</p>

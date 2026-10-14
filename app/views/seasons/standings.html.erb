@@ -6,7 +6,9 @@
 
 <h1><%= @season.title %> 順位表</h1>
 
-<% if @standings.rows.all? { |row| row.games.zero? } %>
+<% if @season.source_standings %>
+  <%= render "seasons/printed_standings", season: @season %>
+<% elsif @standings.rows.all? { |row| row.games.zero? } %>
   <p class="muted">試合データがありません。</p>
 <% else %>
   <p class="muted">

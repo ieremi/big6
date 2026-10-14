@@ -51,4 +51,31 @@ class SourceGameImportTest < ActiveSupport::TestCase
   test "refuses a date with no game in the file" do
     assert_raises(ArgumentError) { SourceGameImport.call(FILE, played_on: Date.new(1924, 9, 25)) }
   end
+
+  test "adds every game of a file that has a line score, and the printed standings" do
+    University.create!(name: "Waseda University", short_name: "早大", slug: "waseda", position: 13)
+    University.create!(name: "Meiji University", short_name: "明大", slug: "meiji", position: 15)
+
+    games, skipped = SourceGameImport.season(FILE)
+
+    assert_equal 8, games.size
+    assert_empty skipped
+    table = @season.reload.source_standings
+    assert_equal "立教大学野球部 編『立教大学野球部史』（1981年）pp.29–31", table["citation"]
+    assert_equal %w[waseda keio meiji rikkio hosei], table["rows"].map { |row| row["university"] }
+    assert_equal({ "university" => "rikkio", "games" => 8, "wins" => 2, "losses" => 6, "draws" => 0, "points" => nil, "average" => ".250",
+      "cells" => { "waseda" => "0", "keio" => "0", "meiji" => "0", "rikkio" => "：", "hosei" => "2" } }, table["rows"][3])
+    assert @season.from_printed_sources?
+  end
+
+  test "skips the games of a file with no line score" do
+    season = Season.create!(year: 1928, term: "spring")
+    %w[waseda tokyo meiji].each.with_index(20) { |slug, position| University.create!(name: slug, short_name: slug, slug: slug, position: position) }
+
+    games, skipped = SourceGameImport.season(Rails.root.join("db/sources/rikkyo_yakyubushi_1981/1928_spring.yml"))
+
+    assert_equal 4, games.size
+    assert_equal [ Date.new(1928, 5, 5), Date.new(1928, 5, 6), Date.new(1928, 5, 14), Date.new(1928, 5, 15), Date.new(1928, 5, 16) ], skipped
+    assert_nil season.reload.source_standings
+  end
 end

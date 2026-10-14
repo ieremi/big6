@@ -40,6 +40,8 @@ class SeasonTags
   def tags
     return [] if season_games.empty?
     return [] unless @season.finished?
+    # Only one club's games, from its history: tags would be about those alone.
+    return [] if season_games.any?(&:source_citation)
 
     [
       tokyo_won_a_point,

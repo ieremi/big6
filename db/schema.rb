@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_031205) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_234801) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -263,6 +263,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_031205) do
     t.datetime "created_at", null: false
     t.jsonb "scorebook_data"
     t.jsonb "scorebook_games"
+    t.jsonb "source_standings"
     t.string "term"
     t.datetime "updated_at", null: false
     t.integer "year"

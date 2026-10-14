@@ -8,6 +8,10 @@
 # Only the game itself is added: no players or batting lines, since the
 # players of those years aren't in Scorebook's 名鑑 and many transcribed box
 # scores give only names. Running it again updates the same game.
+#
+# A club's history has only that club's games, so a season imported this way
+# is partial (Season#from_printed_sources?): its standings are the printed
+# table (Season#source_standings), not worked out from the games.
 class SourceGameImport
   # The book each directory of db/sources transcribes, as it is cited.
   CITATIONS = {
@@ -20,9 +24,24 @@ class SourceGameImport
     new(path).call(played_on: played_on)
   end
 
+  # Every game of the file that has a line score, and the season's standings
+  # (勝敗表) as printed (Season#source_standings). A game with no line score is
+  # skipped: which side batted first isn't known. Returns the games added and
+  # the dates skipped.
+  def self.season(path)
+    new(path).season
+  end
+
   def initialize(path)
     @path = Pathname(path)
     @data = YAML.safe_load_file(@path, permitted_classes: [ Date ])
+  end
+
+  def season
+    added, skipped = @data["games"].partition { |entry| entry["top"] && entry["bottom"] }
+    games = added.map { |entry| call(played_on: entry["date"]) }
+    find_season.update!(source_standings: standings) if @data["standings"]
+    [ games, skipped.map { |entry| entry["date"] } ]
   end
 
   def call(played_on:)
@@ -30,7 +49,7 @@ class SourceGameImport
     raise ArgumentError, "#{@path}: no game on #{played_on}" unless entry
     raise ArgumentError, "#{@path}: the game on #{played_on} has no line score, so its home and away sides aren't known" unless entry["top"] && entry["bottom"]
 
-    season = Season.find_by!(year: @data.dig("season", "year"), term: @data.dig("season", "term"))
+    season = find_season
     top = University.find_by!(slug: entry["top"])
     bottom = University.find_by!(slug: entry["bottom"])
 
@@ -48,6 +67,33 @@ class SourceGameImport
   end
 
   private
+
+  def find_season
+    Season.find_by!(year: @data.dig("season", "year"), term: @data.dig("season", "term"))
+  end
+
+  # The printed 勝敗表, in its own order: for each university the games, wins,
+  # losses, draws, 勝ち点 (in the tables that have it) and 勝率 as printed, and
+  # its cell against each opponent ("2", "1△", "×" for no games, "：" or "×"
+  # for itself), with the citation.
+  def standings
+    table = @data["standings"]
+    opponents, columns = table.values_at("opponents", "columns")
+    rows = table["teams"].map do |slug, row|
+      stats = columns.zip(row.last(columns.size)).to_h
+      {
+        "university" => slug,
+        "games" => row.first,
+        "wins" => stats.fetch("wins"),
+        "losses" => table.dig("losses", slug),
+        "draws" => stats.fetch("draws", 0),
+        "points" => stats["points"],
+        "average" => stats.fetch("average"),
+        "cells" => opponents.zip(row[1, opponents.size]).to_h
+      }
+    end
+    { "citation" => citation, "url" => @data.dig("source", "ndl_url"), "opponents" => opponents, "self_mark" => table["self_mark"], "rows" => rows }
+  end
 
   def citation
     book = CITATIONS.fetch(@path.dirname.basename.to_s)

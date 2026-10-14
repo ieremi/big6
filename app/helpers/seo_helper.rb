@@ -23,7 +23,16 @@ module SeoHelper
   end
 
   # Every university's place, 勝ち点 and record.
+  # For a season taken from a club's history, from the printed table.
   def standings_meta_description(season, standings)
+    if (table = season.source_standings)
+      names = University.where(slug: table["rows"].map { |row| row["university"] }).index_by(&:slug)
+      rows = table["rows"].map do |row|
+        "#{names[row["university"]]&.short_name} #{row["wins"]}勝#{row["losses"]}敗#{"#{row["draws"]}分" if row["draws"].to_i.positive?}"
+      end
+      return "東京六大学野球 #{season.title}の勝敗表（#{table["citation"]}より）。#{rows.join("、")}"
+    end
+
     table = standings.rows.each_with_index.map do |row, index|
       "#{index + 1}位 #{row.university.short_name}（勝ち点#{row.points}、#{row.wins}勝#{row.losses}敗#{"#{row.draws}分" if row.draws.positive?}）"
     end
@@ -54,7 +63,7 @@ module SeoHelper
 
   def website_structured_data
     { "@type" => "WebSite", "name" => "Big6", "alternateName" => "東京六大学野球データベース", "url" => root_url, "inLanguage" => "ja",
-      "description" => "東京六大学野球（1924年〜）の試合結果・順位表・対戦成績・選手成績のデータベース" }
+      "description" => "東京六大学野球（1922年〜）の試合結果・順位表・対戦成績・選手成績のデータベース" }
   end
 
   def university_structured_data(university)

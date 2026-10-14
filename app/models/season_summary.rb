@@ -25,6 +25,7 @@ class SeasonSummary
     decided = held.select(&:decided?)
     return "試合の記録がない。" if @games.empty? && @season.year < Date.current.year
     return "まだ試合が行われていない。" if decided.empty?
+    return printed_source_body(decided) if decided.any?(&:source_citation)
     return "全#{held.size}試合が行われた。" unless @season.ranked?
 
     @season.finished? ? champion : "#{last_date(decided)}までに#{decided.size}試合を終え、#{leaders}。"
@@ -54,6 +55,21 @@ class SeasonSummary
     else
       "#{top.map { |row| row.university.short_name }.join('と')}が勝ち点#{first.points}で首位に並ぶ"
     end
+  end
+
+  # A season taken from a club's history (Season#from_printed_sources?): only
+  # that club's games are here, so the sentence says so, and takes the top of
+  # the standings from the printed table. 「このサイトに立大の13試合だけがある（立教大学
+  # 野球部史より）。同書の勝敗表では慶大が首位（8勝3敗）。」
+  def printed_source_body(decided)
+    clubs = decided.flat_map { |game| [ game.team0, game.team1 ] }.tally.max_by(&:last).first
+    sentence = "このサイトに#{clubs.short_name}の#{decided.size}試合だけがある（#{decided.first.source_citation.sub(/（.*/, "")}より）。"
+    table = @season.source_standings or return sentence
+
+    top = table["rows"].max_by { |row| [ row["points"] || 0, row["average"].to_f ] }
+    university = University.find_by(slug: top["university"])
+    record = "#{top["wins"]}勝#{top["losses"]}敗#{"#{top["draws"]}分" if top["draws"].to_i.positive?}"
+    "#{sentence}同書の勝敗表では#{university&.short_name}が首位（#{record}）。"
   end
 
   def last_date(games)

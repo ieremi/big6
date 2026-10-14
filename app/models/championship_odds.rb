@@ -25,6 +25,7 @@ class ChampionshipOdds
     return nil if GameDataCheck::SPECIAL_FORMATS.key?([ game.season.year, game.season.term ])
 
     season_games = Game.held.where(season_id: game.season_id, counted_in_stats: true).order(:played_on, :game_number).to_a
+    return nil if season_games.any?(&:source_citation) # only one club's games (Season#from_printed_sources?)
     key = [ "championship_odds/v1", game.id, season_games.map(&:updated_at).max&.to_i, season_games.size ]
     Rails.cache.fetch(key) { new(game, season_games).around }
   end

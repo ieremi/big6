@@ -22,6 +22,8 @@ module Api
 
       def standings
         season = Season.find_by!(year: params[:year], term: params[:term])
+        return render(json: printed_standings_json(season)) if season.source_standings
+
         standings = Standings.new(season)
 
         rows = standings.rows.map do |row|
@@ -41,6 +43,33 @@ module Api
         end
 
         render json: rows
+      end
+
+      private
+
+      # A season taken from a club's history has only that club's games, so its
+      # rows are the printed 勝敗表 (Season#source_standings), in the printed
+      # order, with the figures the table has and the source; runs and
+      # attendance aren't known.
+      def printed_standings_json(season)
+        table = season.source_standings
+        universities = University.where(slug: table["rows"].map { |row| row["university"] }).index_by(&:slug)
+        table["rows"].map do |row|
+          {
+            university: university_json(universities.fetch(row["university"])),
+            wins: row["wins"],
+            losses: row["losses"],
+            draws: row["draws"],
+            points: row["points"],
+            games: row["games"],
+            percentage: row["average"].to_f,
+            runs_scored: nil,
+            runs_allowed: nil,
+            attendance_total: nil,
+            average_attendance: nil,
+            source: { citation: table["citation"], url: table["url"] }
+          }
+        end
       end
     end
   end

@@ -33,6 +33,14 @@ class Season < ApplicationRecord
         Season.select(:id, :year, :term).find_by(year: year_before, term: term_before)
     end
 
+    # A season whose games come from a printed source (SourceGameImport), such
+    # as a club's history with only that club's games: the site doesn't have
+    # all of its games, so nothing is worked out from them as if it did
+    # (standings, tags, title odds).
+    def from_printed_sources?
+        games.where.not(source_citation: nil).exists?
+    end
+
     def finished?
         return true if scorebook_games.blank?
 
