@@ -34,7 +34,12 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           runs = innings.delete(" ").chars.reject { |c| c == "x" }.sum(&:to_i)
           assert_equal game.dig("score", team), runs, "games[#{i}] #{team}: #{innings}"
         end
-        assert_match(/x\z/, game.dig("line_score", game["bottom"])) if game.dig("line_score", game["bottom"]).delete(" ").size == 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"])
+        # A home side ahead after nine has an x for the half it didn't bat,
+        # unless it won in that half (a walk-off, printed as the runs).
+        bottom = game.dig("line_score", game["bottom"]).delete(" ")
+        if bottom.size == 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"]) && !bottom.end_with?("x")
+          assert bottom[-1].to_i.positive?, "games[#{i}]: the home side won but batted in the ninth without scoring"
+        end
       end
     end
 
