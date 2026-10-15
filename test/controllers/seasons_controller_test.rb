@@ -202,6 +202,50 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", standings_orders_seasons_path
   end
 
+  test "the conventions page lists each season's results, and the seasons page links to it" do
+    season = Season.create!(year: 1990, term: "spring")
+    results = ScheduleConventions::RULES.to_h { |rule| [ rule.key, nil ] }.merge("first" => :followed, "w2" => :broken, "w7" => :unknown)
+    result = ScheduleConventions::Result.new(season: season, previous: [ [ universities(:one) ], [ universities(:two) ] ], results: results)
+    stub_method(ScheduleConventions, :all, -> { [ result ] }) do
+      get conventions_seasons_url
+    end
+
+    assert_response :success
+    assert_select "table.conventions-rules tbody tr", ScheduleConventions::RULES.size
+    assert_select "table.conventions-table tbody tr", 1
+    assert_select "td.conventions-followed", "○"
+    assert_select "td.conventions-broken", "×"
+    assert_select "td.conventions-unknown", "？"
+    assert_select "a[href=?]", season_path(1990, "spring")
+
+    get seasons_url
+    assert_select "a[href=?]", conventions_seasons_path
+  end
+
+  test "the season page shows its conventions results, those whose condition doesn't hold greyed out" do
+    season = seasons(:one)
+    results = ScheduleConventions::RULES.to_h { |rule| [ rule.key, nil ] }.merge("first" => :followed, "w2" => :broken)
+    result = ScheduleConventions::Result.new(season: season, previous: [ [ universities(:one) ], [ universities(:two) ] ], results: results)
+    stub_method(ScheduleConventions, :for, ->(_) { result }) do
+      get season_url(2026, "spring")
+    end
+
+    assert_response :success
+    assert_select "details.season-conventions summary", /日程の慣例：○1 ×1/
+    assert_select "details.season-conventions tr", ScheduleConventions::RULES.size
+    assert_select "details.season-conventions tr.conventions-row-na", ScheduleConventions::RULES.size - 2
+    assert_select "details.season-conventions td.conventions-na", "−"
+    assert_select "details.season-conventions a[href=?]", conventions_seasons_path(anchor: "season-2026-spring")
+  end
+
+  test "the season page has no conventions section for a season not checked" do
+    stub_method(ScheduleConventions, :for, ->(_) { nil }) do
+      get season_url(2026, "spring")
+    end
+
+    assert_select "details.season-conventions", 0
+  end
+
   def create_season_with_game(year, term, played_on)
     season = Season.create!(year: year, term: term)
     Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: played_on, game_number: 1)

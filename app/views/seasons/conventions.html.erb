@@ -1,0 +1,60 @@
+<%
+  content_for :title, site_title("日程の慣例")
+  content_for :description, "東京六大学野球の各シーズンのカードの日程が、前季の順位にもとづく慣例（第1週に誰が出るか、各週の対戦など）にしたがっているかの一覧。1950年以降の#{@results.size}シーズン。"
+  content_for :image_url, seasons_index_og_image_url
+%>
+
+<h1>日程の慣例</h1>
+
+<p>
+  リーグ戦の日程は、前季の順位から決まる慣例にそって組まれてきました。1950年以降の<%= @results.size %>シーズンについて、その日程が下の慣例にしたがっているかを調べました。
+</p>
+<p class="muted">
+  早慶明法立東を W K M H R T と書き、「明法立東のなかの前季○位」はこの4校だけで前季の順位を数えたものです。前季の順位は<%= link_to "順位で見るシーズン", standings_orders_seasons_path %>と同じ決め方です。
+  週は、カードの最初の試合が予定された日で決めています（<%= link_to "カードの順番で見るシーズン", card_orders_seasons_path %>と同じ）。
+  ○はしたがっている、×はしたがっていない、−は条件にあてはまらない、？は前季に同順位があって判定できない季です。
+</p>
+
+<table class="conventions-rules">
+  <thead>
+    <tr><th></th><th>週</th><th>慣例</th><th>○</th><th>×</th></tr>
+  </thead>
+  <tbody>
+    <% ScheduleConventions::RULES.each_with_index do |rule, index| %>
+      <% tally = @results.map { |result| result.results[rule.key] }.tally %>
+      <tr>
+        <td><%= index + 1 %></td>
+        <td><%= rule.week ? "第#{rule.week}週" : "—" %></td>
+        <td><%= rule.text %></td>
+        <td><%= tally[:followed].to_i %></td>
+        <td><%= tally[:broken].to_i %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="table-scroll">
+  <table class="conventions-table">
+    <thead>
+      <tr>
+        <th>シーズン</th>
+        <th>前季の順位</th>
+        <% ScheduleConventions::RULES.each_with_index do |rule, index| %>
+          <th title="<%= rule.text %>"><%= index + 1 %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% @results.each do |result| %>
+        <tr id="season-<%= result.season.year %>-<%= result.season.term %>">
+          <td><%= link_to result.season.title, season_path(result.season.year, result.season.term) %></td>
+          <td><%= StandingsOrders::Order.new(places: result.previous, seasons: []).label %></td>
+          <% ScheduleConventions::RULES.each do |rule| %>
+            <% mark, title = conventions_mark(result.results[rule.key]) %>
+            <td class="conventions-mark conventions-<%= result.results[rule.key] || "na" %>" title="<%= title %>"><%= mark %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

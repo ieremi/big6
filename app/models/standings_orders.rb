@@ -46,18 +46,26 @@ class StandingsOrders
   end
 
   def orders
+    orders = {}
+    places_by_season.each do |season, places|
+      (orders[places.map { |place| place.map(&:id) }] ||= Order.new(places: places, seasons: [])).seasons << season
+    end
+    orders.values.sort_by { |order| [ -order.seasons.size, -order.seasons.first.year ] }
+  end
+
+  # { Season => places } for each season over, newest first (see Order); of
+  # the seasons given, or all.
+  def places_by_season(seasons = nil)
     universities = University.order(:position).to_a
-    seasons = Season.select(:id, :year, :term).newest_first.to_a.select { |season| season.ranked? || points_season?(season) }
+    seasons = (seasons || Season.select(:id, :year, :term).newest_first).select { |season| season.ranked? || points_season?(season) }
     games = Game.where(season_id: seasons.map(&:id))
       .select(:id, :season_id, :team0_id, :team1_id, :team0_score, :team1_score, :game_status, :counted_in_stats, :played_on, :attendance)
       .group_by(&:season_id)
 
-    orders = {}
-    seasons.each do |season|
-      places = places_of(season, Array(games[season.id]), universities) or next
-      (orders[places.map { |place| place.map(&:id) }] ||= Order.new(places: places, seasons: [])).seasons << season
-    end
-    orders.values.sort_by { |order| [ -order.seasons.size, -order.seasons.first.year ] }
+    seasons.filter_map do |season|
+      places = places_of(season, Array(games[season.id]), universities)
+      [ season, places ] if places
+    end.to_h
   end
 
   private

@@ -1,0 +1,22 @@
+<%# Whether this season's schedule followed the conventions (ScheduleConventions): the counts in the summary, every convention with its mark when opened; those whose condition doesn't hold this season greyed out. %>
+<% tally = result.results.values.compact.tally %>
+<details class="season-conventions">
+  <summary>
+    日程の慣例：○<%= tally[:followed].to_i %> ×<%= tally[:broken].to_i %><%= " ？#{tally[:unknown]}" if tally[:unknown] %>
+    <span class="muted">（前季の順位 <%= StandingsOrders::Order.new(places: result.previous, seasons: []).label %>）</span>
+  </summary>
+  <table class="conventions-rules">
+    <tbody>
+      <% ScheduleConventions::RULES.each_with_index do |rule, index| %>
+        <% outcome = result.results[rule.key] %>
+        <% mark, title = conventions_mark(outcome) %>
+        <tr class="<%= "conventions-row-na" unless outcome %>">
+          <td class="conventions-mark conventions-<%= outcome || "na" %>" title="<%= title %>"><%= mark %></td>
+          <td><%= rule.week ? "第#{rule.week}週" : "—" %></td>
+          <td><%= index + 1 %>. <%= rule.text %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="muted">−は、この季は条件にあてはまらない慣例です。<%= link_to "ほかのシーズンの判定を見る", conventions_seasons_path(anchor: "season-#{result.season.year}-#{result.season.term}") %></p>
+</details>

@@ -6,7 +6,7 @@
 
 <h1>シーズン一覧</h1>
 
-<p class="muted"><%= link_to "カードの順番で見る", card_orders_seasons_path %>・<%= link_to "順位で見る", standings_orders_seasons_path %></p>
+<p class="muted"><%= link_to "カードの順番で見る", card_orders_seasons_path %>・<%= link_to "順位で見る", standings_orders_seasons_path %>・<%= link_to "日程の慣例", conventions_seasons_path %></p>
 
 <%= form_with url: seasons_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
   <fieldset>

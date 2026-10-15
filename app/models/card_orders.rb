@@ -26,17 +26,24 @@ class CardOrders
   end
 
   def orders
-    universities = University.all.index_by(&:id)
-    seasons = Season.select(:id, :year, :term).where(year: Season::FIRST_YEAR_RANKED..).newest_first.to_a
-    games = Game.where(season_id: seasons.map(&:id), counted_in_stats: true).pluck(:season_id, :played_on, :team0_id, :team1_id).group_by(&:first)
-
     orders = {}
-    seasons.each do |season|
-      weeks = weeks_of(Array(games[season.id]), universities) or next
-      order = (orders[weeks] ||= Order.new(weeks: weeks, seasons: []))
-      order.seasons << season
+    weeks_by_season.each do |season, weeks|
+      (orders[weeks] ||= Order.new(weeks: weeks, seasons: [])).seasons << season
     end
     orders.values.sort_by { |order| [ -order.seasons.size, -order.seasons.first.year ] }
+  end
+
+  # { Season => weeks } for each season with all its cards, newest first (see
+  # Order); of the seasons given, or all from 1950.
+  def weeks_by_season(seasons = nil)
+    universities = University.all.index_by(&:id)
+    seasons = (seasons || Season.select(:id, :year, :term).newest_first).select { |season| season.year >= Season::FIRST_YEAR_RANKED }
+    games = Game.where(season_id: seasons.map(&:id), counted_in_stats: true).pluck(:season_id, :played_on, :team0_id, :team1_id).group_by(&:first)
+
+    seasons.filter_map do |season|
+      weeks = weeks_of(Array(games[season.id]), universities)
+      [ season, weeks ] if weeks
+    end.to_h
   end
 
   private

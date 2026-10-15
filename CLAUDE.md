@@ -40,7 +40,7 @@ In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the comp
 - **GameMember** (roster per game, 2021 onward), **BattingLine**, **PitchingLine** (per-game box score; innings are stored as `outs`).
 - **PrimeMinisterTerm** and **GdpPerCapitaYear**: reference data shown on season pages (from Wikidata and the World Bank).
 
-Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and importers, view-model calculators (`Standings`, `ChampionshipOdds`, `SeasonChampion`, `CardOrders`, `StandingsOrders`, `Matchup`, `TeamRecord`, `PlayerStats`, `PlayerRanking`, `PlayerSearch`, `SeasonWeeks`, `GameScoreboard`, ...) and OG image renderers (`OgImage` subclasses; `OgImages` is the shared entry point for both the site and the API). Every class opens with a comment explaining why it exists. Read that comment before changing the class.
+Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and importers, view-model calculators (`Standings`, `ChampionshipOdds`, `SeasonChampion`, `CardOrders`, `StandingsOrders`, `ScheduleConventions`, `Matchup`, `TeamRecord`, `PlayerStats`, `PlayerRanking`, `PlayerSearch`, `SeasonWeeks`, `GameScoreboard`, ...) and OG image renderers (`OgImage` subclasses; `OgImages` is the shared entry point for both the site and the API). Every class opens with a comment explaining why it exists. Read that comment before changing the class.
 
 ## Data sources and syncing
 
@@ -76,7 +76,7 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 
 ## Routes and controllers
 
-- HTML pages: `/games` (search, plus per-team browsing at `/games/:team`), `/seasons/:year/:term` (plus `/standings`), `/seasons/card_orders`, `/seasons/standings_orders`, `/matchups/:team0/:team1[/:year[/:term[/:game_number]]]` (a single game page is a matchup URL), `/universities/:slug`, `/players`, `/players/:id`, `/rankings/:kind`.
+- HTML pages: `/games` (search, plus per-team browsing at `/games/:team`), `/seasons/:year/:term` (plus `/standings`), `/seasons/card_orders`, `/seasons/standings_orders`, `/seasons/conventions`, `/matchups/:team0/:team1[/:year[/:term[/:game_number]]]` (a single game page is a matchup URL), `/universities/:slug`, `/players`, `/players/:id`, `/rankings/:kind`.
 - Almost every page has a sibling `.../og.png` route that renders its OG image.
 - Seasons and games also serve `.ics` calendars (`IcsCalendar`, `IcsGameEvent`). `/sitemap.xml` is a sitemap index of `/sitemaps/{pages,games,players}.xml`. `/llms.txt` (`LlmsController`, llmstxt.org format) describes the site, its URL layout, the API and the MCP server for AI assistants; keep it in step when those change.
 - The Web API lives under `/api/v1/*` (`Api::V1::BaseController < ActionController::API`). Games are identified by `year/term/team0/team1/round`, never by database id. The API is documented in the page at `/api/docs` (`app/views/api_docs/show.html.erb`, which includes a live sandbox) and, for machines such as ChatGPT GPT Actions, in OpenAPI 3.0 at `config/openapi.yml` (served as `/api/v1/openapi.json`; a test checks it covers exactly the JSON routes). The MCP server at `/mcp` (`Big6Mcp`, the `mcp` gem, stateless Streamable HTTP, no auth) turns each operation of that spec into a read-only tool that GETs the API inside the app, so it follows the spec with no code of its own. **Update both whenever you change the API.**

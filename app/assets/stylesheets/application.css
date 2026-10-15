@@ -1785,3 +1785,35 @@ tr.bench-only td a {
 .standings-orders-table td:last-child {
   min-width: 16rem;
 }
+
+/* 日程の慣例: one column a convention, ○ × − ？. */
+.conventions-rules {
+  margin-bottom: 1.5rem;
+}
+
+.conventions-table .conventions-mark {
+  text-align: center;
+}
+
+.conventions-broken {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.conventions-na,
+.conventions-unknown {
+  color: var(--text-muted);
+}
+
+.season-conventions {
+  margin: 1rem 0;
+}
+
+.season-conventions summary {
+  cursor: pointer;
+}
+
+/* A convention whose condition doesn't hold this season: greyed out. */
+.conventions-row-na td {
+  color: var(--text-muted);
+}

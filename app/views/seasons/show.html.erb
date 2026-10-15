@@ -46,6 +46,10 @@
   <%= render "attendance_trend", trend: @attendance_trend %>
 <% end %>
 
+<% if @conventions %>
+  <%= render "conventions", result: @conventions %>
+<% end %>
+
 <% if @games.any? %>
   <%= form_with url: season_path(@season.year, @season.term), method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
     <fieldset>

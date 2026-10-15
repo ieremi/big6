@@ -17,4 +17,14 @@ module SeasonsHelper
       sortable_column_header(label, shortcut, first: first, data: { cell_toggle_target: group })
     end)
   end
+
+  # The mark of a convention's result (ScheduleConventions) and what it means.
+  CONVENTION_MARKS = {
+    followed: [ "○", "したがっている" ], broken: [ "×", "したがっていない" ],
+    unknown: [ "？", "前季に同順位があって判定できない" ], nil => [ "−", "条件にあてはまらない" ]
+  }.freeze
+
+  def conventions_mark(outcome)
+    CONVENTION_MARKS.fetch(outcome)
+  end
 end

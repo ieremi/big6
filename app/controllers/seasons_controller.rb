@@ -53,6 +53,7 @@ class SeasonsController < ApplicationController
     @gdp_per_capita = GdpPerCapitaYear.usd_for(@season.year)
     @tags = SeasonTags.new(@season).tags
     @attendance_trend = SeasonAttendanceTrend.new(@season)
+    @conventions = ScheduleConventions.for(@season)
   end
 
   def standings
@@ -68,6 +69,11 @@ class SeasonsController < ApplicationController
   # The seasons grouped by their final standings (StandingsOrders).
   def standings_orders
     @orders = StandingsOrders.all
+  end
+
+  # Whether each season's schedule followed the conventions (ScheduleConventions).
+  def conventions
+    @results = ScheduleConventions.all
   end
 
   def index_og_image
