@@ -1,0 +1,52 @@
+<%
+  content_for :title, site_title("カードの順番で見るシーズン")
+  content_for :description, "東京六大学野球のシーズンを、どの週にどのカード（対戦の組み合わせ）が行われたかの順番でまとめた一覧。1950年以降の#{@orders.sum { |order| order.seasons.size }}シーズンが#{@orders.size}通りの順番に分かれる。"
+  content_for :image_url, seasons_index_og_image_url
+%>
+
+<h1>カードの順番で見るシーズン</h1>
+
+<p>
+  1950年以降の<%= @orders.sum { |order| order.seasons.size } %>シーズンを、各週に行われたカードの順番でまとめました。<%= @orders.size %>通りに分かれ、同じ順番の季が何十年もおいて繰り返されています。
+</p>
+<p class="muted">
+  カードの週は、そのカードの最初の試合が予定された日で決めています（中止になった試合の日も含めます）。2日以内に始まったカードは同じ週です。
+  15カードがそろっていない季（1950年より前、2020年・2021年など）はのぞいています。
+  <%= link_to "シーズン一覧へ", seasons_path %>
+</p>
+
+<div class="table-scroll">
+  <table class="card-orders-table">
+    <thead>
+      <tr>
+        <th>季の数</th>
+        <% (1..@orders.map { |order| order.weeks.size }.max.to_i).each do |week| %>
+          <th>第<%= week %>週</th>
+        <% end %>
+        <th>シーズン</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr id="<%= order.key %>">
+          <td><%= order.seasons.size %></td>
+          <% order.weeks.each do |cards| %>
+            <td class="card-order-week">
+              <% cards.each do |pair| %>
+                <div class="card-order-card">
+                  <% pair.each do |university| %>
+                    <span class="team-chip" style="background: <%= university.color %>" title="<%= university.short_name %>"><%= university.initial %></span>
+                  <% end %>
+                </div>
+              <% end %>
+            </td>
+          <% end %>
+          <% (@orders.map { |o| o.weeks.size }.max - order.weeks.size).times do %><td></td><% end %>
+          <td>
+            <%= safe_join(order.seasons.map { |season| link_to(season.title, season_path(season.year, season.term)) }, "、") %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

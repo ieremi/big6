@@ -1744,3 +1744,19 @@ tr.bench-only td a {
     margin-left: 1em;
   }
 }
+
+/* カードの順番で見るシーズン: each week's cards stacked, two chips a card. */
+.card-orders-table td {
+  vertical-align: top;
+}
+
+.card-order-card {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.card-orders-table td:last-child {
+  min-width: 16rem;
+}

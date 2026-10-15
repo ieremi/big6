@@ -169,6 +169,21 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
+  test "the card orders page lists each order's seasons, and the seasons page links to it" do
+    season = Season.create!(year: 1990, term: "spring")
+    order = CardOrders::Order.new(weeks: [ [ [ universities(:one), universities(:two) ] ] ], seasons: [ season ])
+    stub_method(CardOrders, :all, -> { [ order ] }) do
+      get card_orders_seasons_url
+    end
+
+    assert_response :success
+    assert_select "table.card-orders-table tbody tr", 1
+    assert_select "a[href=?]", season_path(1990, "spring"), text: "1990年春季"
+
+    get seasons_url
+    assert_select "a[href=?]", card_orders_seasons_path
+  end
+
   def create_season_with_game(year, term, played_on)
     season = Season.create!(year: year, term: term)
     Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: played_on, game_number: 1)
