@@ -56,4 +56,16 @@ class PrintedSourceSeasonsTest < ActionDispatch::IntegrationTest
     assert_empty SeasonTags.new(@season).tags
     assert_nil ChampionshipOdds.around(Game.find_by!(game_number: 3))
   end
+
+  test "a season with such games but no printed table shows no standings" do
+    @season.update!(source_standings: nil)
+
+    get standings_season_url(1926, "spring")
+    assert_response :success
+    assert_select "table.standings-table", 0
+    assert_match "出典に勝敗表がないため、順位表は載せていません。", response.body
+
+    get "/api/v1/seasons/1926/spring/standings"
+    assert_equal [], response.parsed_body
+  end
 end

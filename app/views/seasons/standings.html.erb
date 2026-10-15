@@ -8,6 +8,12 @@
 
 <% if @season.source_standings %>
   <%= render "seasons/printed_standings", season: @season %>
+<% elsif @season.from_printed_sources? %>
+  <%# Only one club's games, from its history, and no 勝敗表 there: a table worked out from them would be wrong. %>
+  <p class="muted">
+    この季の試合は、このサイトには<%= link_to "一部しかありません", season_path(@season.year, @season.term) %>。
+    出典に勝敗表がないため、順位表は載せていません。
+  </p>
 <% elsif @standings.rows.all? { |row| row.games.zero? } %>
   <p class="muted">試合データがありません。</p>
 <% else %>

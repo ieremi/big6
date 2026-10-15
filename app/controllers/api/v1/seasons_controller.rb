@@ -23,6 +23,8 @@ module Api
       def standings
         season = Season.find_by!(year: params[:year], term: params[:term])
         return render(json: printed_standings_json(season)) if season.source_standings
+        # Only one club's games and no printed table: no standings to give.
+        return render(json: []) if season.from_printed_sources?
 
         standings = Standings.new(season)
 
