@@ -15,6 +15,18 @@ class StandingsOrders
       places.map { |universities| universities.map(&:slug).join("=") }.join("-")
     end
 
+    # For sorting by the order: the universities' display positions from first
+    # place to last (慶明早法立東 = 123456), so the orders sort by the 1st place,
+    # then the 2nd and so on. Tied universities keep their display order.
+    def sort_value
+      places.flatten.map(&:position).join.to_i
+    end
+
+    # For sorting by the latest season: 20242 for 2024 autumn, 20241 for spring.
+    def latest_season_value
+      seasons.map { |season| season.year * 10 + (season.term == "autumn" ? 2 : 1) }.max
+    end
+
     # 「早明慶法立東」, with 「=」 between universities tied: 「早明慶=法立東」.
     def label
       places.map { |universities| universities.map { |university| university.short_name[0] }.join("=") }.join

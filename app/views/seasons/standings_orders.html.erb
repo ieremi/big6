@@ -17,19 +17,20 @@
 </p>
 
 <div class="table-scroll">
-  <table class="standings-orders-table">
+  <%# Sortable in the browser: 順位 by the 1st place's university, then the 2nd's and so on, in the site's order of the universities (慶明早法立東); シーズン by the latest season. %>
+  <table class="standings-orders-table" data-controller="sortable-table">
     <thead>
       <tr>
-        <th>季の数</th>
-        <th>順位</th>
-        <th>シーズン</th>
+        <%= sortable_column_header("季の数", "N", first: "desc") %>
+        <%= sortable_column_header("順位", "O") %>
+        <%= sortable_column_header("シーズン", "Y", first: "desc", shortcut_label: "最新のシーズン") %>
       </tr>
     </thead>
     <tbody>
       <% @orders.each do |order| %>
         <tr id="<%= order.key %>">
           <td><%= order.seasons.size %></td>
-          <td class="standings-order-places" aria-label="<%= order.label %>">
+          <td class="standings-order-places" aria-label="<%= order.label %>" data-sort-value="<%= order.sort_value %>">
             <% order.places.each_with_index do |universities, index| %>
               <% if index.positive? %><span class="standings-order-sep" aria-hidden="true">›</span><% end %>
               <span class="standings-order-place">
@@ -40,7 +41,7 @@
               </span>
             <% end %>
           </td>
-          <td>
+          <td data-sort-value="<%= order.latest_season_value %>">
             <%= safe_join(order.seasons.map { |season| link_to(season.title, standings_season_path(season.year, season.term)) }, "、") %>
           </td>
         </tr>

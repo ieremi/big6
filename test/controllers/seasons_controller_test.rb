@@ -194,6 +194,8 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "table.standings-orders-table tbody tr", 1
     assert_select ".standings-order-tie", 1
+    assert_select "table.standings-orders-table[data-controller=sortable-table] th.sortable", 3
+    assert_select "td.standings-order-places[data-sort-value=?]", "12"
     assert_select "a[href=?]", standings_season_path(1990, "spring"), text: "1990年春季"
 
     get seasons_url

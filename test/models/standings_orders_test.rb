@@ -41,6 +41,8 @@ class StandingsOrdersTest < ActiveSupport::TestCase
     assert_equal [ [ second, first ], [ other ] ], orders.map(&:seasons)
     assert_equal "ABCDEF", orders.first.label
     assert_equal "a-b-c-d-e-f", orders.first.key
+    assert_equal [ 123456, 213456 ], orders.map(&:sort_value)
+    assert_equal [ 20102, 20001 ], orders.map(&:latest_season_value)
   end
 
   test "shows universities level on 勝ち点 and 勝率 as tied, and puts a playoff's winner first" do
