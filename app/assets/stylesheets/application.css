@@ -1760,3 +1760,28 @@ tr.bench-only td a {
 .card-orders-table td:last-child {
   min-width: 16rem;
 }
+
+/* 順位で見るシーズン: the places in a row, tied universities joined by ＝. */
+.standings-orders-table td {
+  vertical-align: top;
+}
+
+.standings-order-places {
+  white-space: nowrap;
+}
+
+.standings-order-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.standings-order-sep,
+.standings-order-tie {
+  color: var(--text-muted);
+  margin: 0 2px;
+}
+
+.standings-orders-table td:last-child {
+  min-width: 16rem;
+}

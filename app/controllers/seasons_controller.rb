@@ -65,6 +65,11 @@ class SeasonsController < ApplicationController
     @orders = CardOrders.all
   end
 
+  # The seasons grouped by their final standings (StandingsOrders).
+  def standings_orders
+    @orders = StandingsOrders.all
+  end
+
   def index_og_image
     send_data SiteOgImage.new(title: "Seasons").to_png, type: "image/png", disposition: "inline"
   end

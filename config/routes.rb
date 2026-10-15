@@ -82,6 +82,7 @@ Rails.application.routes.draw do
   resources :seasons, only: [ :index ]
   get "seasons/og.png", to: "seasons#index_og_image", as: :seasons_index_og_image
   get "seasons/card_orders", to: "seasons#card_orders", as: :card_orders_seasons
+  get "seasons/standings_orders", to: "seasons#standings_orders", as: :standings_orders_seasons
   get "seasons/:year/:term/og.png", to: "seasons#og_image", as: :season_og_image, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }

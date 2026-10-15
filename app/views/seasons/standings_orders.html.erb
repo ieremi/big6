@@ -1,0 +1,50 @@
+<%
+  season_count = @orders.sum { |order| order.seasons.size }
+  content_for :title, site_title("順位で見るシーズン")
+  content_for :description, "東京六大学野球のシーズンを、最終順位（1位から6位までの並び）でまとめた一覧。1950年以降の#{season_count}シーズンが#{@orders.size}通りの順位に分かれる。"
+  content_for :image_url, seasons_index_og_image_url
+%>
+
+<h1>順位で見るシーズン</h1>
+
+<p>
+  1950年以降の<%= season_count %>シーズンを、1位から6位までの最終順位の並びでまとめました。<%= @orders.size %>通りに分かれます。
+</p>
+<p class="muted">
+  順位は勝ち点、次に勝率で決め、優勝決定戦があった季はその勝者を1位にしています。勝ち点も勝率も並んだ大学は同順位（＝）で、同順位のない並びとは別に数えます。
+  終わっていない季と、15カードがそろっていない季（1950年より前、2020年・2021年など）はのぞいています。
+  <%= link_to "シーズン一覧へ", seasons_path %>
+</p>
+
+<div class="table-scroll">
+  <table class="standings-orders-table">
+    <thead>
+      <tr>
+        <th>季の数</th>
+        <th>順位</th>
+        <th>シーズン</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr id="<%= order.key %>">
+          <td><%= order.seasons.size %></td>
+          <td class="standings-order-places" aria-label="<%= order.label %>">
+            <% order.places.each_with_index do |universities, index| %>
+              <% if index.positive? %><span class="standings-order-sep" aria-hidden="true">›</span><% end %>
+              <span class="standings-order-place">
+                <% universities.each_with_index do |university, tied| %>
+                  <% if tied.positive? %><span class="standings-order-tie" aria-hidden="true">＝</span><% end %>
+                  <span class="team-chip" style="background: <%= university.color %>" title="<%= university.short_name %>"><%= university.initial %></span>
+                <% end %>
+              </span>
+            <% end %>
+          </td>
+          <td>
+            <%= safe_join(order.seasons.map { |season| link_to(season.title, standings_season_path(season.year, season.term)) }, "、") %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
