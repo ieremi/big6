@@ -56,11 +56,34 @@ class StandingsOrdersTest < ActiveSupport::TestCase
     assert_equal "BACDEF", StandingsOrders.new.orders.first.label
   end
 
-  test "leaves out seasons not over, and those not ranked by 勝ち点" do
+  test "leaves out seasons not over, and those before 1950" do
     play_season(2026, "autumn", %w[a b c d e f], unplayed: true)
-    play_season(2020, "autumn", %w[a b c d e f])
     play_season(1949, "spring", %w[a b c d e f])
 
     assert_empty StandingsOrders.new.orders
+  end
+
+  test "ranks 2020 and 2021 by points, a draw half a win" do
+    season = play_season(2020, "autumn", %w[a b c d e f])
+    # a and b's card: a draw, then a win for b. a 8.5 points (8–1–1), b 9.5 (9–0–1).
+    Game.where(season: season, team0: @universities["a"], team1: @universities["b"], game_number: 1).update_all(team0_score: 2, team1_score: 2)
+    Game.where(season: season, team0: @universities["a"], team1: @universities["b"], game_number: 2).update_all(team0_score: 1, team1_score: 3)
+
+    assert_equal "BACDEF", StandingsOrders.new.orders.first.label
+  end
+
+  test "puts two universities level on points and 勝率 in 2020 and 2021 in the order of the games between them" do
+    season = play_season(2020, "autumn", %w[a b c d e f])
+    # c and d split their card 1–1: both 7–3, level, and even between them.
+    Game.where(season: season, team0: @universities["c"], team1: @universities["d"], game_number: 2).update_all(team0_score: 1, team1_score: 3)
+    assert_equal "ABC=DEF", StandingsOrders.new.orders.first.label
+
+    # 2020 spring, one game a card: a loses to e and e to f, so e and f are
+    # both 1–4, f having beaten e, and f goes above e.
+    spring = play_season(2020, "spring", %w[a b c d e f])
+    Game.where(season: spring, game_number: 2).delete_all
+    Game.where(season: spring, team0: @universities["a"], team1: @universities["e"]).update_all(team0_score: 0, team1_score: 1)
+    Game.where(season: spring, team0: @universities["e"], team1: @universities["f"]).update_all(team0_score: 0, team1_score: 1)
+    assert_equal "ABCDFE", StandingsOrders.new.orders.find { |order| order.seasons.include?(spring) }.label
   end
 end

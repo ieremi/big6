@@ -6,8 +6,9 @@
 # A card's week is the day its first game was scheduled, a game called off
 # included (a cancelled game keeps its date), so a rained-out card stays in
 # the week it was planned for. Cards starting within two days of each other
-# are one week. Only seasons with all fifteen cards are classified: from 1950,
-# the formats before then having varied, and not 2020 or 2021 (Season#ranked?).
+# are one week. Only seasons with all fifteen cards are classified, from 1950
+# (Season::FIRST_YEAR_RANKED), the formats before then having varied. The 2020
+# and 2021 seasons are in: fewer games a card, but all fifteen cards.
 # Seasons with only a club history's games are left out by the same rule.
 class CardOrders
   # A schedule: its weeks, each the cards begun that week (pairs of
@@ -26,7 +27,7 @@ class CardOrders
 
   def orders
     universities = University.all.index_by(&:id)
-    seasons = Season.select(:id, :year, :term).newest_first.to_a.select(&:ranked?)
+    seasons = Season.select(:id, :year, :term).where(year: Season::FIRST_YEAR_RANKED..).newest_first.to_a
     games = Game.where(season_id: seasons.map(&:id), counted_in_stats: true).pluck(:season_id, :played_on, :team0_id, :team1_id).group_by(&:first)
 
     orders = {}

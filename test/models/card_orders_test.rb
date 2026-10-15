@@ -48,11 +48,16 @@ class CardOrdersTest < ActiveSupport::TestCase
     assert_equal [ [ rained_out, first ] ], CardOrders.new.orders.map(&:seasons)
   end
 
-  test "leaves out seasons without all fifteen cards, and those not ranked by 勝ち点" do
+  test "leaves out seasons without all fifteen cards, and those before 1950" do
     play_season(1990, "spring", weeks: WEEKS[0..6])
-    play_season(2020, "autumn")
     play_season(1949, "spring")
 
     assert_empty CardOrders.new.orders
+  end
+
+  test "includes the 2020 and 2021 seasons, with all fifteen cards" do
+    season = play_season(2020, "autumn")
+
+    assert_equal [ [ season ] ], CardOrders.new.orders.map(&:seasons)
   end
 end

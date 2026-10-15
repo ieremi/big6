@@ -5,8 +5,14 @@
 # Ranked as the league ranks a season, by 勝ち点 and then 勝率 (Standings),
 # with the winner of a playoff (優勝決定戦) first. Universities level on both
 # are tied (同順位), and a tie makes a different order from one without it.
-# Only seasons over and ranked that way are grouped (Season#ranked?): from
-# 1950, not 2020 or 2021, with all fifteen cards played and none still to play.
+#
+# The 2020 and 2021 seasons (Season::POINTS_SEASONS), of one- and two-game
+# cards, are ranked by points instead: a win 1, a draw 0.5, then 勝率, and two
+# universities still level by the games between them (2020 spring's 法大
+# over 慶大, its champion). This gives each of them its real champion.
+#
+# Only seasons over are grouped, from 1950 (Season::FIRST_YEAR_RANKED), with
+# all fifteen cards played and none still to play.
 class StandingsOrders
   # An order: its places, each the universities in it (more than one when
   # tied), and the seasons that ended that way.
@@ -41,7 +47,7 @@ class StandingsOrders
 
   def orders
     universities = University.order(:position).to_a
-    seasons = Season.select(:id, :year, :term).newest_first.to_a.select(&:ranked?)
+    seasons = Season.select(:id, :year, :term).newest_first.to_a.select { |season| season.ranked? || points_season?(season) }
     games = Game.where(season_id: seasons.map(&:id))
       .select(:id, :season_id, :team0_id, :team1_id, :team0_score, :team1_score, :game_status, :counted_in_stats, :played_on, :attendance)
       .group_by(&:season_id)
@@ -65,6 +71,8 @@ class StandingsOrders
     return nil unless league.map { |game| [ game.team0_id, game.team1_id ].sort }.uniq.size == CARDS
 
     rows = Standings.new(season, games: league, universities: universities).rows
+    return points_places(rows, league) if points_season?(season)
+
     places = rows.chunk_while { |a, b| [ a.points, a.percentage.round(6) ] == [ b.points, b.percentage.round(6) ] }
       .map { |tied| tied.map(&:university).sort_by(&:position) }
 
@@ -73,6 +81,35 @@ class StandingsOrders
       places = [ [ winner ], top - [ winner ], *places.drop(1) ].reject(&:empty?)
     end
     places
+  end
+
+  def points_season?(season)
+    Season::POINTS_SEASONS.include?([ season.year, season.term ])
+  end
+
+  # A win 1 point and a draw 0.5, then 勝率; two universities still level
+  # are put in the order of the games between them, if one won more of them.
+  def points_places(rows, games)
+    key = ->(row) { [ row.wins * 2 + row.draws, row.percentage.round(6) ] }
+    rows.sort_by { |row| [ key.(row).map(&:-@), row.university.position ] }
+      .chunk_while { |a, b| key.(a) == key.(b) }
+      .flat_map do |tied|
+        universities = tied.map(&:university).sort_by(&:position)
+        next [ universities ] unless universities.size == 2
+
+        a, b = universities
+        margin = head_to_head(a, b, games)
+        margin.zero? ? [ universities ] : (margin.positive? ? [ [ a ], [ b ] ] : [ [ b ], [ a ] ])
+      end
+  end
+
+  # a's wins less b's in the games between them.
+  def head_to_head(a, b, games)
+    games.sum do |game|
+      next 0 unless [ game.team0_id, game.team1_id ].sort == [ a.id, b.id ].sort && game.decided? && game.team0_score != game.team1_score
+
+      (game.team0_score > game.team1_score ? game.team0_id : game.team1_id) == a.id ? 1 : -1
+    end
   end
 
   def playoff_winner(games)
