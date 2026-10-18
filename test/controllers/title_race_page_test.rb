@@ -35,6 +35,7 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     assert_equal [ "", "③Beta-Gamma" ], header_rows[0].css("th").map { |th| th.text.strip }
     assert_equal "4", header_rows[0].css("th").last["colspan"]
     assert_equal [ "②Alpha-Gamma", "2-0", "2-1", "1-2", "0-2" ], header_rows[1].css("th").map { |th| th.text.strip }
+    assert_select ".title-race-table thead th.title-race-edge", 2 # the last cell on the left of each header row
   end
 
   test "once the champion is settled, the page says so instead of a grid" do

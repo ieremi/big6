@@ -29,22 +29,22 @@
       <div class="table-scroll">
         <table class="title-race-table">
           <thead>
-            <%# Each card along the top has two rows: its name over the results it spans, then its results. The cards down the left are named in the last row, over their columns. %>
+            <%# Each card along the top has two rows: its name over the results it spans, then its results. The cards down the left are named in the last row, over their columns. A faint line (title-race-edge) parts the left from the results. %>
             <% left = [ rows.size, 1 ].max %>
             <% columns.each_with_index do |card, k| %>
               <% span = columns.drop(k + 1).map { |c| c.results.size }.inject(1, :*) %>
               <% repeat = columns.first(k).map { |c| c.results.size }.inject(1, :*) %>
               <tr>
-                <%= tag.th colspan: (left if left > 1) %>
+                <%= tag.th colspan: (left if left > 1), class: "title-race-edge" %>
                 <% repeat.times do %>
                   <%= tag.th card.label, class: "title-race-card", colspan: card.results.size * span %>
                 <% end %>
               </tr>
               <tr>
                 <% if k == columns.size - 1 && rows.any? %>
-                  <% rows.each do |row_card| %><th class="title-race-card"><%= row_card.label %></th><% end %>
+                  <% rows.each_with_index do |row_card, j| %><%= tag.th row_card.label, class: [ "title-race-card", ("title-race-edge" if j == rows.size - 1) ] %><% end %>
                 <% else %>
-                  <%= tag.th colspan: (left if left > 1) %>
+                  <%= tag.th colspan: (left if left > 1), class: "title-race-edge" %>
                 <% end %>
                 <% repeat.times do %>
                   <% card.results.each do |result| %><%= tag.th label.(result), colspan: (span if span > 1) %><% end %>

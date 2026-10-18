@@ -1504,6 +1504,11 @@ tr.bench-only td a {
   color: var(--text);
 }
 
+/* The faint line between the cards named down the left and the results along the top. */
+.title-race-table thead th.title-race-edge {
+  border-right: 1px solid var(--border);
+}
+
 .title-race-table td.title-race-cell {
   color: #fff;
   font-weight: 700;
