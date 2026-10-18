@@ -1486,6 +1486,36 @@ tr.bench-only td a {
   line-height: 1.7;
 }
 
+/* 優勝のゆくえ (seasons/_title_race): a compact grid, each cell the champion in its
+   colours (white text, as on the team chips), a playoff's on a plain background. */
+.title-race-table {
+  width: auto;
+}
+
+.title-race-table th,
+.title-race-table td {
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.title-race-table .title-race-card {
+  color: var(--text);
+}
+
+.title-race-table td.title-race-cell {
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid var(--surface);
+}
+
+.title-race-table td.title-race-playoff {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */
 .roster-diff {
   margin: 0.5rem 0;

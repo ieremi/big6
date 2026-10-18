@@ -59,6 +59,7 @@ class SeasonsController < ApplicationController
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
+    @title_race = TitleRace.new(@season)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).

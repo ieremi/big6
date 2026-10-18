@@ -1,0 +1,82 @@
+<%# 優勝のゆくえ (TitleRace): who wins the season for every way the cards still open can end, as a grid —
+    the earlier cards' results down the left, the later ones' along the top (each from the side of the university named
+    first), and the champion in each cell, in its colours; two or more names are a playoff (優勝決定戦). Under it, each
+    university's chance with every game still to play an even chance. Only while the season is open and the counting
+    small enough; a card that never changes the champion is left out. %>
+<% race = local_assigns[:race] %>
+<% if race&.applicable? %>
+  <section class="title-race">
+    <h2 class="card-heading">優勝のゆくえ</h2>
+
+    <% if (settled = race.settled) %>
+      <p>
+        <% if settled.size == 1 %>
+          <strong><%= settled.first.short_name %>の優勝が決まりました。</strong>残りの試合の結果にかかわらず、ほかの大学は届きません。
+        <% else %>
+          <strong><%= settled.map(&:short_name).join("・") %>の優勝決定戦になります。</strong>残りの試合の結果にかかわらず、勝ち点と勝率で並びます。
+        <% end %>
+      </p>
+    <% elsif race.too_many_cards? %>
+      <p class="muted">優勝にかかわるカードがまだ多いため、表は<%= TitleRace::MAX_CARDS %>カード以下になってから出します。</p>
+    <% else %>
+      <% rows, columns = race.row_cards, race.column_cards %>
+      <% row_combos, column_combos = TitleRace.combinations(rows), TitleRace.combinations(columns) %>
+      <% label = ->(result) { result.join("-") } %>
+      <p class="muted">
+        残りのカードの結果（カード名の左の大学から見た勝敗）ごとの優勝校です。大学名が2つ以上のマスは優勝決定戦です。
+        結果を変えても優勝校が変わらないカードは省いています。
+      </p>
+      <div class="table-scroll">
+        <table class="title-race-table">
+          <thead>
+            <% columns.each_with_index do |card, k| %>
+              <tr>
+                <% if k == columns.size - 1 %>
+                  <% rows.each do |row_card| %><th class="title-race-card"><%= row_card.label %></th><% end %>
+                <% elsif rows.any? %>
+                  <th colspan="<%= rows.size %>"></th>
+                <% end %>
+                <th class="title-race-card"><%= card.label %></th>
+                <% span = columns.drop(k + 1).map { |c| c.results.size }.inject(1, :*) %>
+                <% repeat = columns.first(k).map { |c| c.results.size }.inject(1, :*) %>
+                <% repeat.times do %>
+                  <% card.results.each do |result| %><%= tag.th label.(result), colspan: (span if span > 1) %><% end %>
+                <% end %>
+              </tr>
+            <% end %>
+          </thead>
+          <tbody>
+            <% row_combos.each_with_index do |row_results, i| %>
+              <tr>
+                <% if rows.empty? %>
+                  <th>優勝</th>
+                <% end %>
+                <% rows.each_with_index do |row_card, j| %>
+                  <% block = rows.drop(j + 1).map { |c| c.results.size }.inject(1, :*) %>
+                  <% if (i % block).zero? %>
+                    <%= tag.th label.(row_results[j]), rowspan: (block if block > 1), colspan: (2 if j == rows.size - 1), scope: "row" %>
+                  <% end %>
+                <% end %>
+                <% column_combos.each do |column_results| %>
+                  <% champions = race.champions_for(row_results + column_results) %>
+                  <% names = champions.map { |team| team.short_name[0] }.join %>
+                  <% if champions.size == 1 %>
+                    <%= tag.td names, class: "title-race-cell", style: "background: #{champions.first.color}", title: "#{champions.first.short_name}の優勝" %>
+                  <% else %>
+                    <%= tag.td names, class: "title-race-cell title-race-playoff", title: "#{champions.map(&:short_name).join("・")}の優勝決定戦" %>
+                  <% end %>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <% if race.chances.any? && race.settled.nil? %>
+      <p class="muted">
+        優勝の可能性（残りの試合をすべて五分五分とした場合）：<%= race.chances.map { |team, chance| "#{team.short_name} #{number_to_percentage(chance * 100, precision: 1)}" }.join("、") %>
+      </p>
+    <% end %>
+  </section>
+<% end %>
