@@ -1,6 +1,6 @@
 <%# 優勝のゆくえ (TitleRace): who wins the season for every way the cards still open can end, as a grid —
     the earlier cards' results down the left, the later ones' along the top (each from the side of the university named
-    first), and the champion in each cell, in its colours; two or more names are a playoff (優勝決定戦). Under it, each
+    first), and the champion in each cell, in its colours and by its initial (K, W, ...); two or more are a playoff (優勝決定戦). Under it, each
     university's chance with every game still to play an even chance. Only while the season is open and the counting
     small enough; a card that never changes the champion is left out. %>
 <% race = local_assigns[:race] %>
@@ -29,16 +29,23 @@
       <div class="table-scroll">
         <table class="title-race-table">
           <thead>
+            <%# Each card along the top has two rows: its name over the results it spans, then its results. The cards down the left are named in the last row, over their columns. %>
+            <% left = [ rows.size, 1 ].max %>
             <% columns.each_with_index do |card, k| %>
+              <% span = columns.drop(k + 1).map { |c| c.results.size }.inject(1, :*) %>
+              <% repeat = columns.first(k).map { |c| c.results.size }.inject(1, :*) %>
               <tr>
-                <% if k == columns.size - 1 %>
-                  <% rows.each do |row_card| %><th class="title-race-card"><%= row_card.label %></th><% end %>
-                <% elsif rows.any? %>
-                  <th colspan="<%= rows.size %>"></th>
+                <%= tag.th colspan: (left if left > 1) %>
+                <% repeat.times do %>
+                  <%= tag.th card.label, class: "title-race-card", colspan: card.results.size * span %>
                 <% end %>
-                <th class="title-race-card"><%= card.label %></th>
-                <% span = columns.drop(k + 1).map { |c| c.results.size }.inject(1, :*) %>
-                <% repeat = columns.first(k).map { |c| c.results.size }.inject(1, :*) %>
+              </tr>
+              <tr>
+                <% if k == columns.size - 1 && rows.any? %>
+                  <% rows.each do |row_card| %><th class="title-race-card"><%= row_card.label %></th><% end %>
+                <% else %>
+                  <%= tag.th colspan: (left if left > 1) %>
+                <% end %>
                 <% repeat.times do %>
                   <% card.results.each do |result| %><%= tag.th label.(result), colspan: (span if span > 1) %><% end %>
                 <% end %>
@@ -54,12 +61,12 @@
                 <% rows.each_with_index do |row_card, j| %>
                   <% block = rows.drop(j + 1).map { |c| c.results.size }.inject(1, :*) %>
                   <% if (i % block).zero? %>
-                    <%= tag.th label.(row_results[j]), rowspan: (block if block > 1), colspan: (2 if j == rows.size - 1), scope: "row" %>
+                    <%= tag.th label.(row_results[j]), rowspan: (block if block > 1), scope: "row" %>
                   <% end %>
                 <% end %>
                 <% column_combos.each do |column_results| %>
                   <% champions = race.champions_for(row_results + column_results) %>
-                  <% names = champions.map { |team| team.short_name[0] }.join %>
+                  <% names = champions.map(&:initial).join %>
                   <% if champions.size == 1 %>
                     <%= tag.td names, class: "title-race-cell", style: "background: #{champions.first.color}", title: "#{champions.first.short_name}の優勝" %>
                   <% else %>

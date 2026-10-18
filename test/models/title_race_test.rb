@@ -35,10 +35,10 @@ class TitleRaceTest < ActiveSupport::TestCase
     race = TitleRace.new(@season)
 
     assert race.applicable?
-    assert_equal [ "②A-G", "③B-G" ], race.cards.map(&:label)
+    assert_equal [ "②Alpha-Gamma", "③Beta-Gamma" ], race.cards.map(&:label)
     assert_equal [ [ 2, 0 ], [ 2, 1 ], [ 1, 2 ], [ 0, 2 ] ], race.cards.first.results
-    assert_equal [ "②A-G" ], race.row_cards.map(&:label)
-    assert_equal [ "③B-G" ], race.column_cards.map(&:label)
+    assert_equal [ "②Alpha-Gamma" ], race.row_cards.map(&:label)
+    assert_equal [ "③Beta-Gamma" ], race.column_cards.map(&:label)
 
     assert_equal %w[alpha], names(race, [ [ 2, 1 ], [ 0, 2 ] ]) # alpha's second card: 2 points
     assert_equal %w[gamma], names(race, [ [ 1, 2 ], [ 0, 2 ] ]) # gamma's two cards

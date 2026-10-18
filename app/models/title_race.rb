@@ -26,7 +26,7 @@ class TitleRace
   # chance of each (paths: { result => how many orders of wins and losses reach it }).
   Card = Struct.new(:first, :second, :week, :wins, :results, :paths, keyword_init: true) do
     def label
-      "#{TitleRace.circled(week)}#{first.short_name[0]}-#{second.short_name[0]}"
+      "#{TitleRace.circled(week)}#{first.initial}-#{second.initial}"
     end
   end
 

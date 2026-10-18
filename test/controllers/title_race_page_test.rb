@@ -18,13 +18,23 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     get standings_season_url(2026, "spring")
 
     assert_select "section.title-race h2", "優勝のゆくえ"
-    assert_select ".title-race-table thead th.title-race-card", text: "③B-G"
-    assert_select ".title-race-table tbody th", text: "②A-G", count: 0
-    assert_select ".title-race-table thead th.title-race-card", text: "②A-G"
+    assert_select ".title-race-table thead th.title-race-card", text: "③Beta-Gamma"
+    assert_select ".title-race-table tbody th", text: "②Alpha-Gamma", count: 0
+    assert_select ".title-race-table thead th.title-race-card", text: "②Alpha-Gamma"
     assert_select ".title-race-table tbody tr", 4 # alpha v gamma: 2-0, 2-1, 1-2, 0-2
     assert_select ".title-race-table td.title-race-cell", 16
-    assert_select ".title-race-table td.title-race-playoff[title=?]", "Alpha・Beta・Gammaの優勝決定戦", text: "ABG"
+    assert_select ".title-race-table td.title-race-playoff[title=?]", "Alpha・Beta・Gammaの優勝決定戦", text: "AlphaBetaGamma"
     assert_select "section.title-race p.muted", text: /優勝の可能性（残りの試合をすべて五分五分とした場合）：Alpha 64.6%、Gamma 33.3%、Beta 2.1%/
+  end
+
+  test "a card along the top is named above its results, and the cards down the left over their column" do
+    get standings_season_url(2026, "spring")
+
+    header_rows = css_select(".title-race-table thead tr")
+    assert_equal 2, header_rows.size
+    assert_equal [ "", "③Beta-Gamma" ], header_rows[0].css("th").map { |th| th.text.strip }
+    assert_equal "4", header_rows[0].css("th").last["colspan"]
+    assert_equal [ "②Alpha-Gamma", "2-0", "2-1", "1-2", "0-2" ], header_rows[1].css("th").map { |th| th.text.strip }
   end
 
   test "once the champion is settled, the page says so instead of a grid" do
