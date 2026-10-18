@@ -1545,6 +1545,27 @@ tr.bench-only td a {
   font-size: 1.4rem;
 }
 
+/* How far a check has got, on the admin dashboard (CheckProgress). */
+.admin-progress progress {
+  width: 100%;
+  max-width: 32rem;
+  height: 0.9rem;
+  accent-color: var(--accent);
+}
+
+.admin-progress p {
+  margin: 0.25rem 0;
+}
+
+.admin-progress-table {
+  max-width: 32rem;
+}
+
+.admin-progress-table td:not(:first-child),
+.admin-progress-table th:not(:first-child) {
+  text-align: right;
+}
+
 .admin-facts {
   display: grid;
   grid-template-columns: max-content 1fr;

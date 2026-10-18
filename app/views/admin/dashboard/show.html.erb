@@ -1,4 +1,4 @@
-<%# The admin pages' front page: who is signed in, and what the nightly Scorebook check (CheckScorebookStatsJob) has recorded so far. %>
+<%# The admin pages' front page: who is signed in, how far the nightly Scorebook check (CheckScorebookStatsJob) and the review of the games data check have got (CheckProgress), and what they have found. %>
 <%
   content_for :title, "管理画面 - Big6"
   content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
@@ -13,14 +13,53 @@
 </div>
 
 <h2 class="card-heading">Scorebook との照合（夜間ジョブ）</h2>
+<% progress = @progress %>
+<div class="admin-progress">
+  <progress value="<%= progress.players_checked %>" max="<%= [ progress.players_total, 1 ].max %>"></progress>
+  <p>
+    <strong><%= number_with_delimiter(progress.players_checked) %> / <%= number_with_delimiter(progress.players_total) %>人</strong>
+    （<%= number_to_percentage(progress.players_total.zero? ? 0 : 100.0 * progress.players_checked / progress.players_total, precision: 1) %>）を1回以上照合
+  </p>
+  <p class="muted">
+    <% if progress.players_remaining.positive? %>
+      残り<%= number_with_delimiter(progress.players_remaining) %>人、あと約<%= progress.nights_remaining %>晩（1晩に<%= CheckProgress::PLAYERS_PER_NIGHT %>人）。
+    <% else %>
+      全員を1回以上照合しました。1巡に約<%= progress.nights_per_round %>晩かかり、照合の古い選手から順に照合し直しています<% if (oldest = progress.oldest_check_at) %>（いちばん古い照合：<%= oldest.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d") %>）<% end %>。
+    <% end %>
+    直近24時間に<%= number_with_delimiter(progress.checked_in_last_day) %>人<% if (latest = progress.latest_check_at) %>、最後の照合は<%= latest.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %><% end %>。
+  </p>
+</div>
 <ul class="admin-stats">
-  <li><strong><%= number_with_delimiter(ScorebookStatsPlayerCheck.count) %></strong>照合した選手</li>
   <li><strong><%= number_with_delimiter(ScorebookStatsDifference.unknown.count) %></strong>新しい差</li>
   <li><strong><%= number_with_delimiter(ScorebookStatsDifference.counted.where(known: true).count) %></strong>既知の差</li>
   <li><strong><%= number_with_delimiter(ScorebookStatsDifference.where(kind: ScorebookStatsDifference::NOT_COUNTED_KINDS).distinct.count(:scorebook_game_id)) %></strong>成績未取り込みの試合</li>
 </ul>
 
 <h2 class="card-heading">試合データの点検</h2>
+<div class="admin-progress">
+  <progress value="<%= progress.game_findings_reviewed %>" max="<%= [ progress.game_findings_total, 1 ].max %>"></progress>
+  <p>
+    <strong><%= number_with_delimiter(progress.game_findings_reviewed) %> / <%= number_with_delimiter(progress.game_findings_total) %>件</strong>
+    （<%= number_to_percentage(progress.game_findings_total.zero? ? 0 : 100.0 * progress.game_findings_reviewed / progress.game_findings_total, precision: 1) %>）を確認済み
+  </p>
+</div>
+<% if progress.game_check_counts.any? %>
+  <div class="table-scroll">
+    <table class="admin-progress-table">
+      <thead><tr><th>種類</th><th>指摘</th><th>確認済み</th><th>残り</th></tr></thead>
+      <tbody>
+        <% progress.game_check_counts.each do |kind, total, reviewed| %>
+          <tr>
+            <td><%= link_to GameDataCheck::KINDS.fetch(kind), admin_game_checks_path(kind: kind, anchor: kind) %></td>
+            <td><%= total %></td>
+            <td><%= reviewed %></td>
+            <td><%= total - reviewed %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
 <p><%= link_to "試合データの点検 →", admin_game_checks_path %> <span class="muted">（同じ日の2試合、回戦番号の抜け・重複など。見るだけで、試合データは変えません）</span></p>
 
 <h2 class="card-heading">修正の提案</h2>

@@ -14,6 +14,10 @@ class CheckScorebookStatsJob < ApplicationJob
   queue_as :default
 
   BATCH_SIZE = 40
+  # How many runs a night: config/recurring.yml has one at 0, 20 and 40 past each
+  # hour from 1 to 4 (Tokyo time). Keep the two in step; the admin dashboard
+  # works out from this how many nights a full round of checks takes.
+  RUNS_PER_NIGHT = 12
   SLEEP_SECONDS = 1
 
   # A run still going when the next is due makes that one wait for nothing.
