@@ -71,7 +71,7 @@ MCP に対応したアシスタントでは、カスタムのコネクタ（リ�
 - **「立大の田中優飛投手の今季の成績は？」**：`search_players`（`q: "田中優飛"`）で id を調べ、`get_player` でシーズン別の成績を見る。
 - **「昨日の試合の結果は？」**：`get_season` でそのシーズンの全試合を取り、`played_on`（試合日）で昨日の試合に絞る。詳しいスコアは `get_game`。
 - **「立大と東大の通算の対戦成績は？」**：`get_matchup`（`team0_slug: "rikkio"`、`team1_slug: "tokyo"`）。
-- **「今季の打率のランキング」**：`get_ranking`（`kind: "batting"`、`year`・`term`、`sort: "average"`）。
+- **「今季の打率のランキング」**：`get_ranking`（`kind: "batting"`、`year`・`term`、`minimum: "league"`、`sort: "average"`）。`minimum: "league"` で連盟の規定打席になり、連盟のランキングと同じ顔ぶれ・順位になります。省略すると10打席以上の選手が対象です。
 
 ## 注意点
 

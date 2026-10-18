@@ -29,18 +29,19 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     css_select("tbody tr td:nth-child(2) a").map(&:text)
   end
 
-  test "the OPS ranking is the default and lists batters best first with their rank" do
-    bat(player("低い"), game(@spring, 1), hits: 5, total_bases: 6)
-    bat(player("高い"), game(@spring, 2), hits: 12, total_bases: 24)
+  test "batters are ranked by batting average, as the league ranks them, with OPS beside it" do
+    bat(player("長打"), game(@spring, 1), hits: 8, total_bases: 30) # .296, the higher OPS
+    bat(player("巧打"), game(@spring, 2), hits: 12, total_bases: 12) # .444
 
     get rankings_url, params: { season: "2026-spring" }
 
     assert_response :success
     assert_select "h1", "打者ランキング"
     assert_select "title", "打者ランキング（2026年春季） - 東京六大学野球 - Big6"
-    assert_equal %w[高い 低い], ranked_names
+    assert_equal %w[巧打 長打], ranked_names
     assert_select "tbody tr:first-child td:first-child", "1"
     assert_select "thead th", text: "OPS"
+    assert_select "p.muted", text: /順位は打率の高い順です（連盟のランキングと同じ）/
   end
 
   test "the ERA ranking lists pitchers lowest first" do
@@ -57,13 +58,26 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr:first-child td", text: "1.20" # 2 earned runs in 15 innings (45 outs)
   end
 
-  test "without a season the ranking is over the whole career, from a minimum of 40 plate appearances" do
+  test "without a season the ranking is the latest season's, from the league's minimum, as the league's own is" do
+    bat(player("春"), game(@spring, 1), pa: 30)
+    bat(player("秋"), game(@autumn, 2), pa: 3)
+    bat(player("秋二打席"), game(@autumn, 3), pa: 2, ab: 2, hits: 1, total_bases: 1)
+
+    get rankings_url
+
+    assert_select "title", /（2026年秋季）/
+    assert_select "select#season option[selected]", "2026年秋季"
+    assert_equal %w[秋], ranked_names # each team has finished 1 game: 3 plate appearances (1 × 3.1)
+    assert_select "p.muted", text: /連盟の規定打席（A3・B3）に達した打者が対象です/
+  end
+
+  test "the whole career (通算) is from a minimum of 40 plate appearances" do
     over = player("通算")
     bat(over, game(@spring, 1), pa: 25)
     bat(over, game(@autumn, 2), pa: 15)
     bat(player("通算39"), game(@spring, 3), pa: 39)
 
-    get rankings_url
+    get rankings_url, params: { season: "" }
 
     assert_select "title", /（通算）/
     assert_equal %w[通算], ranked_names
@@ -71,22 +85,32 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "meta[name=description][content=?]", "東京六大学野球の打者ランキング（通算、40打席以上の打者）"
   end
 
-  test "a season's minimum is 10 plate appearances" do
-    bat(player("十"), game(@spring, 1), pa: 10)
-    bat(player("九"), game(@spring, 2), pa: 9)
+  test "a season's minimum is the league's by default, and 10 plate appearances as a number" do
+    bat(player("三"), game(@spring, 1), pa: 3)
+    bat(player("二"), game(@spring, 2), pa: 2, ab: 2, hits: 1, total_bases: 1)
 
     get rankings_url, params: { season: "2026-spring" }
 
-    assert_equal %w[十], ranked_names
+    assert_equal %w[三], ranked_names
+    assert_select "input[type=hidden][name=minimum][value=league]"
+    assert_select "form .muted", text: "（既定）"
+    assert_select "a.period-btn[href*='minimum=10']", text: "数で指定する"
+
+    get rankings_url, params: { season: "2026-spring", minimum: 10 }
+
+    assert_empty ranked_names
     assert_select "p.muted", text: /シーズンで10打席以上の打者が対象です/
+    assert_select "a[href=?]", ranking_path("batting", season: "2026-spring"), text: "既定（連盟の規定打席）に戻す"
+
+    get rankings_url, params: { season: "2026-spring" }
     assert_select "p.muted", text: /優勝決定戦は含みません/
     assert_select "p.muted", text: /出塁率は犠飛を含めない簡易式/
   end
 
-  test "the ERA page counts its minimum in innings: 40 for a career, 10 for a season" do
+  test "the ERA page counts its minimum in innings: 40 for a career, the league's for a season" do
     pitch(player("投手"), game(@spring, 1))
 
-    get ranking_url("pitching")
+    get ranking_url("pitching"), params: { season: "" }
 
     assert_select "p.muted", text: /通算で40投球回以上の投手が対象です/
     assert_select "fieldset legend", text: "最低投球回数"
@@ -94,8 +118,9 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     get ranking_url("pitching"), params: { season: "2026-spring" }
 
-    assert_select "p.muted", text: /シーズンで10投球回以上の投手が対象です/
-    assert_select "input#minimum[value=?]", "10"
+    assert_select "p.muted", text: /シーズンで連盟の規定投球回（A2・B2）に達した投手が対象です/
+    assert_select "p.muted", text: /順位は防御率の低い順です/
+    assert_select "a.period-btn[href*='minimum=10']", text: "数で指定する"
   end
 
   # ---- asking for another minimum
@@ -103,7 +128,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "the form has a field holding the minimum, so that the arrows step from it, and the default it is beside" do
     bat(player("選手"), game(@spring, 1), pa: 100)
 
-    get rankings_url
+    get rankings_url, params: { season: "" }
 
     assert_select "fieldset legend", text: "最低打席数"
     assert_select "input#minimum[type=number][min='0'][value=?]", "40" # 40 to 41, not 0 to 1
@@ -116,14 +141,14 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     bat(player("二十"), game(@spring, 1), pa: 20)
     bat(player("五十"), game(@spring, 2), pa: 50)
 
-    get rankings_url, params: { minimum: 15 }
+    get rankings_url, params: { season: "", minimum: 15 }
 
     assert_equal %w[二十 五十].sort, ranked_names.sort
     assert_select "p.muted", text: /通算で15打席以上の打者が対象です/
     assert_select "input#minimum[value=?]", "15"
-    assert_select "a[href=?]", ranking_path("batting"), text: "既定（40打席）に戻す"
+    assert_select "a[href=?]", ranking_path("batting", season: ""), text: "既定（40打席）に戻す"
 
-    get rankings_url, params: { minimum: 30 }
+    get rankings_url, params: { season: "", minimum: 30 }
 
     assert_equal %w[五十], ranked_names
   end
@@ -131,7 +156,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "a minimum of 0 ranks everyone, and the page says why the few-at-bat players are on top" do
     bat(player("一打席"), game(@spring, 1), pa: 1, ab: 1, hits: 1, total_bases: 4)
 
-    get rankings_url, params: { minimum: 0 }
+    get rankings_url, params: { season: "", minimum: 0 }
 
     assert_equal %w[一打席], ranked_names
     assert_select "p.muted", text: /通算で打席のある打者すべてが対象です/
@@ -143,7 +168,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     bat(player("選手"), game(@spring, 1), pa: 100)
 
     [ "", "abc", "-5", "2.5" ].each do |value|
-      get rankings_url, params: { minimum: value }
+      get rankings_url, params: { season: "", minimum: value }
 
       assert_equal %w[選手], ranked_names, value.inspect
       assert_select "p.muted", text: /通算で40打席以上の打者が対象です/
@@ -164,7 +189,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "the minimum is applied by a button, not by every change of the number" do
     bat(player("選手"), game(@spring, 1), pa: 100)
 
-    get rankings_url
+    get rankings_url, params: { season: "" }
 
     assert_select "form[data-action=?]", "change->search-filter#submit" # the other fields still submit as they change
     assert_select "input#minimum[data-manual-submit]" # this one waits
@@ -181,9 +206,8 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     get rankings_url, params: { season: "2026-spring", minimum: 40, default_minimum: 40 } # left a career for a season
 
-    assert_equal %w[十五], ranked_names
-    assert_select "input#minimum[value=?]", "10"
-    assert_select "input#default_minimum[value=?]", "10"
+    assert_equal %w[十五 五].sort, ranked_names.sort # the league's 3 plate appearances
+    assert_select "input[type=hidden][name=minimum][value=league]"
     assert_select "form .muted", text: "（既定）"
   end
 
@@ -195,7 +219,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal %w[二十五], ranked_names
     assert_select "input#minimum[value=?]", "20"
-    assert_select "a[href=?]", ranking_path("batting", season: "2026-spring"), text: "既定（10打席）に戻す"
+    assert_select "a[href=?]", ranking_path("batting", season: "2026-spring"), text: "既定（連盟の規定打席）に戻す"
   end
 
   test "a minimum with no default beside it (a link someone shared) is what was asked for, even if it is the default" do
@@ -278,19 +302,16 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     bat(player("新人"), game(@spring, 3), pa: 50)
   end
 
-  test "with seasons lacking stats, the ranking is at first over the stretch since the last of them" do
+  test "with seasons lacking stats, the stretch since the last of them can be chosen" do
     seasons_with_a_gap
 
-    get rankings_url
+    get rankings_url, params: { season: "complete" }
 
     assert_select "select#season option[selected][value=complete]", "2025年秋季以降（全試合のデータあり）"
     assert_select "title", /（2025年秋季以降）/
     assert_equal %w[古株 新人], ranked_names # both over 40 plate appearances from 2025 autumn on
     assert_select "p.muted", /全試合のデータがそろっているのは2025年秋季以降です/
     assert_select ".season-tag", 0 # nobody is short in a complete stretch
-
-    get rankings_url, params: { season: "complete" }
-    assert_equal %w[古株 新人], ranked_names
   end
 
   test "the career ranking marks players whose four years include a season without stats, and lists those seasons" do
@@ -308,19 +329,19 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   test "without any season lacking stats, the ranking is over the whole career as before" do
     bat(player("選手"), game(@spring, 1), pa: 50)
 
-    get rankings_url
+    get rankings_url, params: { season: "" }
 
     assert_select "select#season option[value=complete]", 0
     assert_select "select#season option[selected]", "通算"
     assert_select "details.missing-seasons", 0
   end
 
-  # 13 batters: 8 with their own OPS (ranks 1 to 8), then 3 sharing the 9th
-  # place, then 2 below them (ranks 12 and 13).
+  # 13 batters: 8 with their own batting average (ranks 1 to 8), then 3 sharing
+  # the 9th place, then 2 below them (ranks 12 and 13).
   def thirteen_batters
-    (1..8).each { |i| bat(player("上位#{i}"), game(@spring, i), total_bases: 30 - i) }
-    (1..3).each { |i| bat(player("九位#{i}"), game(@spring, 8 + i), total_bases: 20) }
-    (1..2).each { |i| bat(player("下位#{i}"), game(@spring, 11 + i), total_bases: 12 - i) }
+    (1..8).each { |i| bat(player("上位#{i}"), game(@spring, i), hits: 22 - i, total_bases: 22 - i) }
+    (1..3).each { |i| bat(player("九位#{i}"), game(@spring, 8 + i), hits: 12, total_bases: 12) }
+    (1..2).each { |i| bat(player("下位#{i}"), game(@spring, 11 + i), hits: 10 - i, total_bases: 10 - i) }
   end
 
   test "the ranking shows the top 10 places at first, with everyone tied for the last of them" do
@@ -594,8 +615,8 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     bat(player("十二"), some_game, pa: 12)
     bat(player("十一"), some_game, pa: 11)
 
-    get rankings_url, params: { season: "2030-spring" }
-    assert_select "a.period-btn[href*='minimum=league']", text: "連盟の規定打席にする"
+    get rankings_url, params: { season: "2030-spring" } # the default
+    assert_equal %w[十二], ranked_names
 
     get rankings_url, params: { season: "2030-spring", minimum: "league" }
     assert_equal %w[十二], ranked_names
@@ -603,7 +624,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=number][name=minimum]", 0
     assert_select "span", text: "連盟の規定打席（A12・B12）"
     assert_select "p.muted", text: /連盟の規定打席（A12・B12）に達した打者が対象です/
-    assert_select "a[href*='/rankings/pitching'][href*='minimum=league']" # kept when switching to pitchers
+    assert_select ".ranking-kinds a[href*='minimum']", 0 # the other kind's default is the league's too
   end
 
   test "the league's minimum is in innings for pitchers" do
@@ -618,7 +639,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "span", text: "連盟の規定投球回（A8・B8）"
   end
 
-  test "the league's minimum isn't offered for a career, and asking for it there gives the default" do
+  test "the league's minimum isn't for a career, and asking for it there gives the default" do
     bat(player("通算"), game(@spring, 1), pa: 40)
 
     get rankings_url, params: { season: "", minimum: "league" }

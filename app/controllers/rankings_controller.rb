@@ -7,11 +7,13 @@ class RankingsController < ApplicationController
     @missing_seasons = PlayerRanking.seasons_without_stats(@kind)
     @complete_since = PlayerRanking.complete_since(@kind)
     # The period: one season (season=2026-spring), the whole career (season=, as
-    # the 通算 choice sends it), or, with no season at all, the stretch from
-    # which every season has per-game stats (complete_since), so that a player's
-    # totals aren't short of seasons Scorebook has no box scores for. Without
-    # any such gap, that stretch is the whole career.
-    @season = @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] }
+    # the 通算 choice sends it), or the stretch from which every season has
+    # per-game stats (season=complete, complete_since), so that a player's totals
+    # aren't short of seasons Scorebook has no box scores for; without any such
+    # gap, that stretch is the whole career. With no season at all it is the
+    # latest season with stats (the current one, as the league's own rankings
+    # are).
+    @season = params[:season].nil? ? @seasons.first : @seasons.find { |season| "#{season.year}-#{season.term}" == params[:season] }
     @since = @complete_since if @season.nil? && (params[:season].nil? || params[:season] == "complete")
     @period = @season ? :season : (@since ? :complete : :career)
     @universities = University.order(:position)
@@ -22,14 +24,20 @@ class RankingsController < ApplicationController
     # The form always sends the minimum it shows, and the default it showed it beside
     # (default_minimum): a minimum still equal to that wasn't changed, so the default
     # of the period now chosen applies, not the one of the period it was left.
-    # The league's minimum (PlayerRanking::LEAGUE) is only for a season; any other
-    # period falls back to its default.
-    @default_minimum = PlayerRanking.default_minimum(@kind, season: @season)
+    # A season's default is the league's minimum (PlayerRanking::LEAGUE), as on the
+    # league's rankings; it is only for a season, and any other period falls back to
+    # its default number. number_minimum is the number shown when a season's
+    # minimum is switched to a number (数で指定する).
+    @number_minimum = PlayerRanking.default_minimum(@kind, season: @season)
+    @default_minimum = @season ? PlayerRanking::LEAGUE : @number_minimum
     asked = PlayerRanking.minimum_from(params[:minimum])
     asked = nil if asked == PlayerRanking::LEAGUE && @season.nil?
     @minimum = (asked unless asked == PlayerRanking.minimum_from(params[:default_minimum])) || @default_minimum
 
-    ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum, active_only: @active_only)
+    # Batters are ranked by batting average, as the league ranks them (the Web API
+    # keeps OPS); pitchers by ERA either way.
+    ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum,
+      active_only: @active_only, order_by: "average")
     @league_minimums = ranking.league_minimums
     @sort_order = PlayerRanking.sort_order(@kind, params[:sort], params[:direction]) # empty for the ranking's own order
     sorted = ranking.entries_sorted(@sort_order)

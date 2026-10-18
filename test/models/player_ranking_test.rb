@@ -39,6 +39,24 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_equal 10, PlayerRanking.default_minimum("batting", season: @autumn)
   end
 
+  # ---- what the rank is by
+
+  test "a batting ranking is by OPS unless asked to be by batting average, which equal to three decimals share a rank" do
+    bat(player("長打"), game(@spring, 1), hits: 8, total_bases: 30) # .296, OPS 1.411
+    bat(player("巧打"), game(@spring, 2), hits: 12, total_bases: 12) # .444, OPS .900
+    bat(player("巧打二"), game(@spring, 3), hits: 12, total_bases: 13) # .444 too
+
+    assert_equal %w[長打 巧打二 巧打], names(PlayerRanking.new("batting", season: @spring))
+    by_average = PlayerRanking.new("batting", season: @spring, order_by: "average")
+    assert_equal "average", by_average.order_by
+    assert_equal [ [ "巧打", 1 ], [ "巧打二", 1 ], [ "長打", 3 ] ], by_average.entries.map { |entry| [ entry.player.name, entry.rank ] }
+  end
+
+  test "an order the kind doesn't have is its default" do
+    assert_equal "era", PlayerRanking.new("pitching", order_by: "average").order_by
+    assert_equal "ops", PlayerRanking.new("batting", order_by: "nonsense").order_by
+  end
+
   # ---- the league's minimum
 
   test "the league's minimum is the team's games × 3.1 plate appearances rounded half up, or × 2 innings" do

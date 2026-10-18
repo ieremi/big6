@@ -3,7 +3,9 @@
 #
 # A batting ranking is in order of OPS and a pitching ranking in order of earned
 # run average (its default order), but either can be reordered by any of its
-# columns (entries_sorted_by).
+# columns (entries_sorted_by). A batting ranking can instead be in order of
+# batting average (order_by "average"), as the league ranks its batters: the
+# rankings page does that, while the Web API keeps OPS.
 #
 # Only players who reach a minimum are ranked, since a rate over a handful of plate
 # appearances says nothing (one at-bat gives an OPS of 2.000). The minimum is of
@@ -84,13 +86,16 @@ class PlayerRanking
   # The ranking's own order, when no other is asked for.
   DEFAULT_KEY = SortOrder::Key.new("rank", "asc")
 
+  # What a ranking's own order (its rank) can be by: the first is the default.
+  ORDERS = { "batting" => %w[ops average], "pitching" => %w[era] }.freeze
+
   # Sorted by these, every row gets its own number. By the others, equal values
   # share one, compared as displayed (three decimals for the batting rates, two
   # for ERA, whole numbers for counts).
   NO_TIES = %w[player university].freeze
   TIE_DIGITS = { "ops" => 3, "average" => 3, "obp" => 3, "slg" => 3, "era" => 2 }.freeze
 
-  attr_reader :kind, :season, :since
+  attr_reader :kind, :season, :since, :order_by
 
   # kind is "batting" or "pitching". season nil ranks whole careers, or with
   # since (a Season) only the seasons from it on (complete_since).
@@ -98,10 +103,13 @@ class PlayerRanking
   # LEAGUE the league's own (only for a season: for a career it is the default).
   # active_only leaves out anyone no longer on their team's roster (a graduate,
   # most often), so a career ranking can be narrowed to who could play today.
-  def initialize(kind, season: nil, since: nil, university_ids: nil, minimum: nil, active_only: false)
+  # order_by is what the rank is by (one of ORDERS; nil, or one the kind doesn't
+  # have, is the kind's default: OPS or ERA).
+  def initialize(kind, season: nil, since: nil, university_ids: nil, minimum: nil, active_only: false, order_by: nil)
     raise ArgumentError, "unknown ranking: #{kind.inspect}" unless KINDS.include?(kind)
 
     @kind = kind
+    @order_by = ORDERS.fetch(kind).include?(order_by) ? order_by : ORDERS.fetch(kind).first
     @season = season
     @since = since unless season
     @university_ids = university_ids&.map(&:to_i)
@@ -297,7 +305,7 @@ class PlayerRanking
 
   def cache_key
     [
-      "player_ranking/entries/v2", kind, season&.id || (@since && "since-#{@since.id}") || "career",
+      "player_ranking/entries/v2", kind, order_by, season&.id || (@since && "since-#{@since.id}") || "career",
       @university_ids&.sort&.join(","), minimum, league_minimums&.values&.join(","), @active_only, line_class.maximum(:updated_at)&.to_i
     ].join("/")
   end
@@ -340,11 +348,14 @@ class PlayerRanking
     "#{column} >= CASE MAX(#{line_class.table_name}.university_id) #{cases.join(" ")} END"
   end
 
-  # [player, totals] pairs, best first by OPS (batting) or ERA (pitching); ties in
-  # the value go to whoever has more plate appearances or innings, then by name.
+  # [player, totals] pairs, best first by OPS or batting average (batting, see
+  # order_by) or ERA (pitching); ties in the value go to whoever has more plate
+  # appearances or innings, then by name. A batter without the value (no at-bats,
+  # for the average) isn't ranked.
   def in_default_order(totals_by_player)
     if kind == "batting"
-      totals_by_player.select { |_, totals| totals.ops }.sort_by { |player, totals| [ -totals.ops, -totals.pa, player.name ] }
+      totals_by_player.filter_map { |player, totals| [ player, totals, batting_order_value(totals) ] if batting_order_value(totals) }
+        .sort_by { |player, totals, value| [ -value, -totals.pa, player.name ] }.map { |player, totals, _| [ player, totals ] }
     else
       totals_by_player.select { |_, totals| totals.era }.sort_by { |player, totals| [ totals.era, -totals.outs, player.name ] }
     end
@@ -387,8 +398,12 @@ class PlayerRanking
     digits && value ? value.round(digits) : value
   end
 
-  # The value the default order is by, as displayed: OPS or ERA.
+  # The value the default order is by, as displayed: OPS or the average, or ERA.
   def default_order_value(totals)
-    kind == "batting" ? totals.ops.round(3) : totals.era.round(2)
+    kind == "batting" ? batting_order_value(totals).round(3) : totals.era.round(2)
+  end
+
+  def batting_order_value(totals)
+    order_by == "average" ? totals.average : totals.ops
   end
 end

@@ -56,10 +56,11 @@
     <legend>最低<%= ranking_unit(@kind) %>数</legend>
     <div class="period-toolbar">
       <% if @league_minimums %>
-        <%# The league's minimum, per university; kept through the form's other changes by the hidden field, and dropped (back to the default) when the period is no longer a season. %>
+        <%# The league's minimum, per university, which is a season's default; kept through the form's other changes by the hidden field, and dropped (back to the default number) when the period is no longer a season. %>
         <%= hidden_field_tag :minimum, PlayerRanking::LEAGUE %>
         <span>連盟の規定<%= ranking_unit(@kind) %>（<%= league_minimums_label %>）</span>
-        <%= link_to "数で指定する", rankings_league_minimum_path(false), class: "period-btn" %>
+        <span class="muted">（既定）</span>
+        <%= link_to "数で指定する", rankings_number_minimum_path, class: "period-btn" %>
       <% else %>
         <%# Always the minimum in force, so that the arrows step from it (40 to 41). The default it is shown beside is sent too: a minimum still equal to it is "not asked for", and follows the period. %>
         <%= number_field_tag :minimum, @minimum, min: 0, max: PlayerRanking::MAX_MINIMUM, step: 1, "aria-label": "最低#{ranking_unit(@kind)}数", data: { manual_submit: true } %>
@@ -70,10 +71,8 @@
         <% if @minimum == @default_minimum %>
           <span class="muted">（既定）</span>
         <% else %>
-          <%= link_to "既定（#{@default_minimum}#{ranking_unit(@kind)}）に戻す", ranking_path(@kind, rankings_filter_params.except(*RankingsHelper::MINIMUM_PARAMS)), class: "period-btn" %>
-        <% end %>
-        <% if @period == :season %>
-          <%= link_to "連盟の規定#{ranking_unit(@kind)}にする", rankings_league_minimum_path(true), class: "period-btn" %>
+          <% default_label = @default_minimum == PlayerRanking::LEAGUE ? "連盟の規定#{ranking_unit(@kind)}" : "#{@default_minimum}#{ranking_unit(@kind)}" %>
+          <%= link_to "既定（#{default_label}）に戻す", ranking_path(@kind, rankings_filter_params.except(*RankingsHelper::MINIMUM_PARAMS)), class: "period-btn" %>
         <% end %>
       <% end %>
     </div>
@@ -108,6 +107,7 @@
   <% if @missing_seasons.any? %>
     Scorebook には、試合ごとのデータがないシーズンが<%= @missing_seasons.size %>あります。<% if @period == :career %>通算では、その期間にいた選手の成績が実際より少なくなります（名前の横に「一部データなし」）。<% end %><% if @complete_since %>全試合のデータがそろっているのは<%= @complete_since.title %>以降です。<% end %>
   <% end %>
+  順位は<%= @kind == "batting" ? "打率の高い順" : "防御率の低い順" %>です（連盟のランキングと同じ）。
   <% if @kind == "batting" %>OPS ＝ 出塁率 ＋ 長打率（出塁率は犠飛を含めない簡易式です）。<% end %>
   見出しをクリックすると並べ替えられ、順位もその列の順につけ直されます（同じ値は同順位）。
 </p>

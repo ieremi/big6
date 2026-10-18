@@ -74,17 +74,16 @@ module RankingsHelper
   # The other kind of ranking with the same filters (the period is dropped by the
   # controller if the other kind has no stats for it). Its sort starts over, since
   # the other kind has other columns.
-  # A number as the minimum isn't kept: it is counted in plate appearances for one and in innings for
-  # the other. The league's minimum is, since the league has one for both.
+  # The minimum isn't kept: a number is counted in plate appearances for one and in innings
+  # for the other, and the league's minimum, which both have, is a season's default anyway.
   def rankings_kind_path(kind)
-    params = rankings_filter_params.except(*MINIMUM_PARAMS)
-    ranking_path(kind, @minimum == PlayerRanking::LEAGUE ? params.merge("minimum" => PlayerRanking::LEAGUE) : params)
+    ranking_path(kind, rankings_filter_params.except(*MINIMUM_PARAMS))
   end
 
-  # The same ranking with the league's minimum, or (league false) back to the default one.
-  def rankings_league_minimum_path(league)
-    params = rankings_filter_params.except(*MINIMUM_PARAMS)
-    ranking_path(@kind, league ? params.merge("minimum" => PlayerRanking::LEAGUE) : params)
+  # The same season ranking with a number as the minimum instead of the league's
+  # (数で指定する): the period's default number, to change from there.
+  def rankings_number_minimum_path
+    ranking_path(@kind, rankings_filter_params.except(*MINIMUM_PARAMS).merge("minimum" => @number_minimum))
   end
 
   # A column heading that sorts the table by it: a click on the first key

@@ -316,7 +316,7 @@ paths:
     get:
       operationId: getRanking
       summary: 打者（OPS）・投手（防御率）のランキング
-      description: batting は OPS の高い順、pitching は防御率の低い順。year と term で1シーズン、省略で通算。最低打席数・投球回（minimum）に届いた選手だけ。sort で別の列（3列まで、カンマ区切り）で並べ替えられる。1ページ100件。
+      description: batting は OPS の高い順、pitching は防御率の低い順。year と term で1シーズン、省略で通算。最低打席数・投球回（minimum）に届いた選手だけ。sort で別の列（3列まで、カンマ区切り）で並べ替えられる。連盟のランキングと同じ結果は minimum=league と sort=average（打者）。1ページ100件。
       parameters:
         - name: kind
           in: path
