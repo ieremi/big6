@@ -419,19 +419,20 @@ ul.list li {
    another (○●○ splitting mid-cell, "勝ち点" stacking letter by letter).
    Fitting rank + team + the 6-team results grid on one line without
    either wrapping or scrolling is realistic; fitting that AND 6-8 more
-   stat columns is not without shrinking text past legibility. So those
-   trailing columns (試合/勝利/敗戦/引分/勝ち点/勝率 or 総観衆/平均観衆,
-   whichever cell-toggle has selected) are hidden outside "拡大表示" —
+   stat columns is not without shrinking text past legibility. So the
+   results' trailing columns (試合 to 失点) are hidden outside "拡大表示" —
    the zoomed overlay has the room to show them on one line at a normal
    size. :not([hidden]) still defers to cell-toggle's own results-vs-
-   attendance choice once zoomed. */
-.standings-table [data-cell-toggle-target="resultsColumn"],
-.standings-table [data-cell-toggle-target="attendanceColumn"] {
+   attendance choice once zoomed. The attendance's two (総観衆/平均観衆) fit,
+   and show either way, headings and figures alike; cell-toggle's hidden
+   alone switches them. ~= matches a cell with other targets too (a figure
+   is also an attendanceFigure): an exact match missed those, and left the
+   attendance figures showing under hidden headings. */
+.standings-table [data-cell-toggle-target~="resultsColumn"] {
   display: none;
 }
 
-.table-zoom.is-zoomed .standings-table [data-cell-toggle-target="resultsColumn"]:not([hidden]),
-.table-zoom.is-zoomed .standings-table [data-cell-toggle-target="attendanceColumn"]:not([hidden]) {
+.table-zoom.is-zoomed .standings-table [data-cell-toggle-target~="resultsColumn"]:not([hidden]) {
   display: table-cell;
 }
 

@@ -88,9 +88,9 @@
               <td data-cell-toggle-target="resultsColumn"><%= row.runs_allowed %></td>
               <% total, weekend_total = [ false, true ].map { |weekends_only| number_with_delimiter(row.total_attendance(weekends_only:)) } %>
               <% average, weekend_average = [ false, true ].map { |weekends_only| row.average_attendance(weekends_only:)&.then { number_with_delimiter(_1) } || "—" } %>
-              <%# sort_value follows the figure shown (cell-toggle sets it when 平日の試合をのぞく is switched). %>
-              <%= tag.td total, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: total, weekend: weekend_total, sort_value: total.delete(",") } %>
-              <%= tag.td average, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: average, weekend: weekend_average, sort_value: average.delete(",") } %>
+              <%# sort_value follows the figure shown (cell-toggle sets it when 平日の試合をのぞく is switched). Hidden until cell-toggle shows the attendance. %>
+              <%= tag.td total, hidden: true, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: total, weekend: weekend_total, sort_value: total.delete(",") } %>
+              <%= tag.td average, hidden: true, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: average, weekend: weekend_average, sort_value: average.delete(",") } %>
             </tr>
           <% end %>
         </tbody>

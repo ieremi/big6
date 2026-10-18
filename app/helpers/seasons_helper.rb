@@ -11,10 +11,11 @@ module SeasonsHelper
     "総観衆" => [ "T", "desc", "attendanceColumn" ], "平均観衆" => [ "V", "desc", "attendanceColumn" ]
   }.freeze
 
-  # The headings of those columns, in order.
+  # The headings of those columns, in order. The attendance's start hidden, as the
+  # table first shows the results (cell-toggle switches them once it starts).
   def standings_stat_headers
     safe_join(STANDINGS_COLUMNS.map do |label, (shortcut, first, group)|
-      sortable_column_header(label, shortcut, first: first, data: { cell_toggle_target: group })
+      sortable_column_header(label, shortcut, first: first, hidden: group == "attendanceColumn", data: { cell_toggle_target: group })
     end)
   end
 

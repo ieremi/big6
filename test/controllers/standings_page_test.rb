@@ -40,6 +40,14 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_select "th.col-rank:not(.sortable)"
   end
 
+  test "the attendance columns start hidden, headings and figures alike, until the attendance is chosen" do
+    get standings_season_url(2026, "spring")
+
+    assert_select "th.sortable[data-cell-toggle-target=attendanceColumn][hidden]", 2
+    assert_select "td[data-cell-toggle-target~=attendanceColumn][hidden]", 2 * css_select("table.standings-table tbody tr").size
+    assert_select "th.sortable[data-cell-toggle-target=resultsColumn]:not([hidden])", SeasonsHelper::STANDINGS_COLUMNS.size - 2
+  end
+
   test "the rate and the attendance sort by their values, not by the text shown" do
     Game.update_all(attendance: 12_000)
 
