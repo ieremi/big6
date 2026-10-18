@@ -33,12 +33,13 @@ module Api
       private
 
       # { plate_appearances: 10 } (innings: for pitching), or with the league's minimum
-      # { league: true, plate_appearances_by_university: { "keio" => 12, ... } }.
+      # { league: true, plate_appearances_by_university: { "keio" => 12, ... }, through: the date of the last
+      # game counted }.
       def minimum_json(ranking)
         unit = ranking.kind == "batting" ? "plate_appearances" : "innings"
         return { unit => ranking.minimum } unless ranking.league_minimum?
 
-        { league: true, "#{unit}_by_university" => ranking.league_minimums.to_h { |university, number| [ university.slug, number ] } }
+        { league: true, "#{unit}_by_university" => ranking.league_minimums.to_h { |university, number| [ university.slug, number ] }, through: ranking.stats_through }
       end
 
       def entry_json(kind, entry)

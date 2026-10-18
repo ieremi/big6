@@ -39,6 +39,7 @@ class RankingsController < ApplicationController
     ranking = PlayerRanking.new(@kind, season: @season, since: @since, university_ids: @selected_university_ids.presence, minimum: @minimum,
       active_only: @active_only, order_by: "average")
     @league_minimums = ranking.league_minimums
+    @stats_through = ranking.stats_through
     @sort_order = PlayerRanking.sort_order(@kind, params[:sort], params[:direction]) # empty for the ranking's own order
     sorted = ranking.entries_sorted(@sort_order)
     @ranked_count = sorted.size

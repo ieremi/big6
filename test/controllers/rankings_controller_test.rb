@@ -59,9 +59,9 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "without a season the ranking is the latest season's, from the league's minimum, as the league's own is" do
-    bat(player("春"), game(@spring, 1), pa: 30)
-    bat(player("秋"), game(@autumn, 2), pa: 3)
-    bat(player("秋二打席"), game(@autumn, 3), pa: 2, ab: 2, hits: 1, total_bases: 1)
+    bat(player("春"), games(:one), pa: 30)
+    bat(player("秋"), games(:two), pa: 3) # the fixtures' finished game of each season
+    bat(player("秋二打席"), games(:two), pa: 2, ab: 2, hits: 1, total_bases: 1)
 
     get rankings_url
 
@@ -69,6 +69,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select#season option[selected]", "2026年秋季"
     assert_equal %w[秋], ranked_names # each team has finished 1 game: 3 plate appearances (1 × 3.1)
     assert_select "p.muted", text: /連盟の規定打席（A3・B3）に達した打者が対象です/
+    assert_select "p.muted", text: /8月10日の試合までの成績です/
   end
 
   test "the whole career (通算) is from a minimum of 40 plate appearances" do
@@ -86,8 +87,8 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a season's minimum is the league's by default, and 10 plate appearances as a number" do
-    bat(player("三"), game(@spring, 1), pa: 3)
-    bat(player("二"), game(@spring, 2), pa: 2, ab: 2, hits: 1, total_bases: 1)
+    bat(player("三"), games(:one), pa: 3)
+    bat(player("二"), games(:one), pa: 2, ab: 2, hits: 1, total_bases: 1)
 
     get rankings_url, params: { season: "2026-spring" }
 
@@ -108,7 +109,7 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the ERA page counts its minimum in innings: 40 for a career, the league's for a season" do
-    pitch(player("投手"), game(@spring, 1))
+    pitch(player("投手"), games(:one))
 
     get ranking_url("pitching"), params: { season: "" }
 
@@ -602,10 +603,16 @@ class RankingsControllerTest < ActionDispatch::IntegrationTest
   # ---- the league's minimum
 
   # A season of its own (the fixtures have games in the others) where alpha and beta
-  # have each finished 4 games: the league's minimum is 12 plate appearances, 8 innings.
+  # have each finished 4 games, with their box scores in (a line for a bench player,
+  # who never qualifies): the league's minimum is 12 plate appearances, 8 innings.
   def league_season
     season = Season.create!(year: 2030, term: "spring")
-    (1..4).map { |number| game(season, number).tap { |game| game.update!(game_status: "finished") } }
+    bench = player("控え")
+    (1..4).each do |number|
+      game = game(season, number).tap { |g| g.update!(game_status: "finished") }
+      BattingLine.create!(game: game, player: bench, university: bench.university, pa: 0, ab: 0, hits: 0, total_bases: 0)
+      PitchingLine.create!(game: game, player: bench, university: bench.university, outs: 0, earned_runs: 0)
+    end
     season
   end
 

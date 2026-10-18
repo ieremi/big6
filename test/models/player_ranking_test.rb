@@ -65,16 +65,26 @@ class PlayerRankingTest < ActiveSupport::TestCase
     assert_equal PlayerRanking::LEAGUE, PlayerRanking.minimum_from("league")
   end
 
-  # A season of its own (the fixtures have games in the others) with finished games:
-  # alpha plays beta `both` times, and gamma `alpha_only` more.
+  # A season of its own (the fixtures have games in the others) with finished games
+  # whose box scores are in: alpha plays beta `both` times, and gamma `alpha_only` more.
   def league_season(both:, alpha_only:)
     season = Season.create!(year: 2030, term: "spring")
     gamma = University.create!(name: "Gamma University", short_name: "Gamma", slug: "gamma", position: 3)
-    (1..both).each { |number| game(season, number).update!(game_status: "finished") }
-    (1..alpha_only).each do |number|
+    games = (1..both).map { |number| game(season, number).tap { |game| game.update!(game_status: "finished") } }
+    games += (1..alpha_only).map do |number|
       Game.create!(season: season, team0: gamma, team1: @alpha, played_on: "2026-06-#{number.to_s.rjust(2, '0')}", game_number: number, game_status: "finished")
     end
+    box_scores_in(games)
     season
+  end
+
+  # A line for a bench player, who never qualifies, in each game: its box score is in.
+  def box_scores_in(games)
+    bench = player("控え")
+    games.each do |game|
+      BattingLine.create!(game: game, player: bench, university: bench.university, pa: 0, ab: 0, hits: 0, total_bases: 0)
+      PitchingLine.create!(game: game, player: bench, university: bench.university, outs: 0, earned_runs: 0)
+    end
   end
 
   test "with the league's minimum, each player needs their own team's: alpha after 5 games 16 plate appearances, beta after 4 games 12" do
@@ -105,6 +115,17 @@ class PlayerRankingTest < ActiveSupport::TestCase
 
     assert_equal 8, ranking.league_minimums.transform_keys(&:slug)["alpha"]
     assert_equal %w[8回], names(ranking)
+  end
+
+  test "the league's minimum counts only the games whose box score is in, and says how far that goes" do
+    season = league_season(both: 4, alpha_only: 0)
+    game(season, 5).update!(game_status: "finished", played_on: "2026-05-20") # finished, but Scorebook hasn't its box score yet
+
+    ranking = PlayerRanking.new("batting", season: season, minimum: PlayerRanking::LEAGUE)
+
+    assert_equal 12, ranking.league_minimums.transform_keys(&:slug)["alpha"] # 4 games, not 5
+    assert_equal Game.where(season: season, game_number: 4).first.played_on, ranking.stats_through
+    assert_nil PlayerRanking.new("batting").stats_through
   end
 
   test "the league's minimum is only for a season: a career ranking uses the default" do

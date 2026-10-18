@@ -102,7 +102,8 @@
 <% end %>
 
 <p class="muted">
-  <%= @period == :season ? "シーズン" : ranking_period_title %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @league_minimums %>連盟の規定<%= ranking_unit(@kind) %>は、チームの試合数 × <%= @kind == "batting" ? "3.1（四捨五入）" : PlayerRanking::LEAGUE_INNINGS_PER_GAME %>で計算しています（連盟のランキングに載っている規定数と一致する式です）。<% end %><% if @minimum == 0 %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
+  <% if @stats_through %><%= @stats_through.month %>月<%= @stats_through.day %>日の試合までの成績です（Scorebookに成績が出た試合まで）。<% end %>
+  <%= @period == :season ? "シーズン" : ranking_period_title %>で<%= ranking_target_label(@kind, @minimum) %>が対象です（最低<%= ranking_unit(@kind) %>数は上の欄で変えられます）。<% if @league_minimums %>連盟の規定<%= ranking_unit(@kind) %>は、チームの試合数 × <%= @kind == "batting" ? "3.1（四捨五入）" : PlayerRanking::LEAGUE_INNINGS_PER_GAME %>で計算しています（連盟のランキングに載っている規定数と一致する式です）。試合数は、成績と同じく成績の出た試合で数えます。<% end %><% if @minimum == 0 %>最低数がないため、<%= ranking_unit(@kind) %>の少ない選手が上位に並びます（見出しの「<%= ranking_unit(@kind) %>」で並べ替えられます）。<% end %>
   Scorebookに試合ごとのデータがある試合だけの集計で、優勝決定戦は含みません。
   <% if @missing_seasons.any? %>
     Scorebook には、試合ごとのデータがないシーズンが<%= @missing_seasons.size %>あります。<% if @period == :career %>通算では、その期間にいた選手の成績が実際より少なくなります（名前の横に「一部データなし」）。<% end %><% if @complete_since %>全試合のデータがそろっているのは<%= @complete_since.title %>以降です。<% end %>

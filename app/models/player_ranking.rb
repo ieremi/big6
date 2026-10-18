@@ -168,17 +168,29 @@ class PlayerRanking
   # { University => the league's minimum for its players } for the season, in the
   # league's order of universities: plate appearances for batting, innings for
   # pitching. A team's games are the ones it has finished that count in the stats
-  # (not one cancelled or still under way, nor a 優勝決定戦 playoff). nil unless
-  # the ranking uses the league's minimum.
+  # (not one cancelled or still under way, nor a 優勝決定戦 playoff) and whose
+  # box score is in: the same games as the players' totals. Scorebook can take a
+  # day or more to publish a box score, and a minimum counting a game the totals
+  # don't have yet would leave out players the league ranks. nil unless the
+  # ranking uses the league's minimum.
   def league_minimums
     return nil unless league_minimum?
 
     @league_minimums ||= begin
-      games = Game.finished.where(season_id: season.id, counted_in_stats: true)
+      games = Game.finished.where(season_id: season.id, counted_in_stats: true).where(id: line_class.select(:game_id))
       counts = Hash.new(0)
       games.pluck(:team0_id, :team1_id).flatten.each { |id| counts[id] += 1 }
       University.order(:position).to_h { |university| [ university, self.class.league_minimum_for(kind, counts[university.id]) ] }
     end
+  end
+
+  # The date of the season's last game whose box score is in (of the kind ranked):
+  # how far the ranking goes, which the league's own puts as 「○月○日現在」. nil
+  # for a career ranking, or a season with none.
+  def stats_through
+    return nil unless season
+
+    @stats_through ||= line_class.joins(:game).where(games: { season_id: season.id, counted_in_stats: true }).maximum("games.played_on")
   end
 
   # The league's minimum for a team that has played this many games: the games

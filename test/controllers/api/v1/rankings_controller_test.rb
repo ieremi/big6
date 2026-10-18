@@ -278,12 +278,14 @@ class Api::V1::RankingsControllerTest < ActionDispatch::IntegrationTest
   test "minimum=league uses each university's league minimum, given per slug" do
     season = Season.create!(year: 2030, term: "spring")
     games = (1..5).map { |number| game(season, number).tap { |game| game.update!(game_status: "finished") } }
+    bench = player("控え")
+    games.each { |game| bat(bench, game, pa: 0, ab: 0, hits: 0, walks: 0, total_bases: 0) } # every box score in
     bat(player("十六"), games.first, pa: 16)
     bat(player("十五"), games.first, pa: 15)
 
     get api_v1_ranking_url("batting"), params: { year: 2030, term: "spring", minimum: "league" }
 
-    assert_equal({ "league" => true, "plate_appearances_by_university" => { "alpha" => 16, "beta" => 16 } }, json["minimum"])
+    assert_equal({ "league" => true, "plate_appearances_by_university" => { "alpha" => 16, "beta" => 16 }, "through" => games.last.played_on.to_s }, json["minimum"])
     assert_equal %w[十六], names
   end
 

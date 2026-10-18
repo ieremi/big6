@@ -361,7 +361,7 @@ paths:
                     type: object
                     description: >-
                       使われた最低数。数なら plate_appearances（batting）か innings（pitching）。
-                      league のときは league: true と、大学の slug ごとの plate_appearances_by_university か innings_by_university
+                      league のときは league: true と、大学の slug ごとの plate_appearances_by_university か innings_by_university、数えた最後の試合の日付 through。チームの試合数は成績の出た試合だけで数える
                   sort: { type: string }
                   direction: { type: string }
                   total: { type: integer }
