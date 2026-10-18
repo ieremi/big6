@@ -1,11 +1,20 @@
 class Standings
   # runs_scored and runs_allowed (得点・失点) are summed over the same games as the
   # wins and losses: the ones with a final score.
-  Row = Struct.new(:university, :wins, :losses, :draws, :points, :games, :runs_scored, :runs_allowed, :attendance_total, :attendance_count,
+  # rank is the place in the standings: teams level on both 勝ち点 and 勝率 share
+  # one, and the next place skips ahead (1, 2, 3, 3, 3, 6).
+  Row = Struct.new(:university, :rank, :wins, :losses, :draws, :points, :games, :runs_scored, :runs_allowed, :attendance_total, :attendance_count,
                    :weekend_attendance_total, :weekend_attendance_count, keyword_init: true) do
     def percentage
       decided = wins + losses
       decided.zero? ? 0.0 : wins.to_f / decided
+    end
+
+    # What the standings are ordered by, exactly: 勝ち点, then 勝率 as a fraction
+    # (so that 5勝5敗 and 4勝4敗 are level, with no rounding in the way).
+    def standing_key
+      decided = wins + losses
+      [ points, decided.zero? ? 0 : Rational(wins, decided) ]
     end
 
     # weekends_only: of the games played on a Saturday or a Sunday (Game#weekend?).
@@ -120,6 +129,10 @@ class Standings
     end
 
     @rows = @rows_by_id.values.sort_by { |r| [-r.points, -r.percentage] }
+    @rows.each_with_index do |row, index|
+      previous = @rows[index - 1] if index.positive?
+      row.rank = previous && previous.standing_key == row.standing_key ? previous.rank : index + 1
+    end
   end
 
   def decided?(game)

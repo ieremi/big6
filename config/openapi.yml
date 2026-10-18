@@ -85,7 +85,7 @@ paths:
     get:
       operationId: getStandings
       summary: シーズンの順位表
-      description: 順位順の各大学の勝・敗・分・勝ち点・試合数・勝率・得点・失点・総観衆・平均観衆。
+      description: 順位順の各大学の順位・勝・敗・分・勝ち点・試合数・勝率・得点・失点・総観衆・平均観衆。勝ち点と勝率がどちらも同じ大学は同じ順位。
       parameters:
         - $ref: "#/components/parameters/Year"
         - $ref: "#/components/parameters/Term"
@@ -480,6 +480,7 @@ components:
       type: object
       properties:
         university: { $ref: "#/components/schemas/University" }
+        rank: { type: integer, description: 順位。勝ち点と勝率がどちらも同じ大学は同じ順位（1, 2, 3, 3, 3, 6） }
         wins: { type: integer }
         losses: { type: integer }
         draws: { type: integer }

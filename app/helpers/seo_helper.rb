@@ -34,8 +34,8 @@ module SeoHelper
     end
     return "東京六大学野球 #{season.title}の順位表。このサイトにある試合は一部で、出典に勝敗表がないため順位表は載せていない。" if season.from_printed_sources?
 
-    table = standings.rows.each_with_index.map do |row, index|
-      "#{index + 1}位 #{row.university.short_name}（勝ち点#{row.points}、#{row.wins}勝#{row.losses}敗#{"#{row.draws}分" if row.draws.positive?}）"
+    table = standings.rows.map do |row|
+      "#{row.rank}位 #{row.university.short_name}（勝ち点#{row.points}、#{row.wins}勝#{row.losses}敗#{"#{row.draws}分" if row.draws.positive?}）"
     end
     "東京六大学野球 #{season.title}の順位表。#{table.join('、')}"
   end

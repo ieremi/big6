@@ -30,4 +30,22 @@ class StandingsTest < ActiveSupport::TestCase
 
     assert_equal [ 0, 0 ], [ row.runs_scored, row.runs_allowed ]
   end
+
+  test "teams level on both 勝ち点 and 勝率 share a place, and the next place skips ahead" do
+    gamma = University.create!(name: "Gamma University", short_name: "Gamma", slug: "gamma", position: 3)
+    game(1, 5, 2)
+    game(2, 2, 5) # alpha and beta 1勝1敗: level
+
+    standings = Standings.new(seasons(:one))
+
+    assert_equal [ 1, 1, 3 ], [ @alpha, @beta, gamma ].map { |university| standings.row_for(university).rank }
+  end
+
+  test "a team ahead on 勝率 alone is a place ahead" do
+    game(1, 5, 2)
+
+    standings = Standings.new(seasons(:one))
+
+    assert_equal [ 1, 2 ], [ standings.row_for(@alpha).rank, standings.row_for(@beta).rank ]
+  end
 end

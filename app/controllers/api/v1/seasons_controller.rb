@@ -31,6 +31,7 @@ module Api
         rows = standings.rows.map do |row|
           {
             university: university_json(row.university),
+            rank: row.rank,
             wins: row.wins,
             losses: row.losses,
             draws: row.draws,

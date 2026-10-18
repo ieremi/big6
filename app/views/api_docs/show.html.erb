@@ -78,7 +78,7 @@
 <%= render "sandbox", path: "/seasons/1997/autumn" %>
 
 <h3><code>/api/v1/seasons/:year/:term/standings</code></h3>
-<p>そのシーズンの順位表。各行に勝・敗・分・勝ち点・試合数・勝率、得点（<code>runs_scored</code>）・失点（<code>runs_allowed</code>）、観衆があります。</p>
+<p>そのシーズンの順位表。各行に順位（<code>rank</code>）、勝・敗・分・勝ち点・試合数・勝率、得点（<code>runs_scored</code>）・失点（<code>runs_allowed</code>）、観衆があります。勝ち点と勝率がどちらも同じ大学は同じ<code>rank</code>になり、次の順位はその分とびます（1, 2, 3, 3, 3, 6）。</p>
 <p>
   このサイトに立教の試合だけを部史から載せている季（1922年春季〜1928年春季の一部）は、部史の勝敗表をその並び順のまま返し、
   各行の<code>source</code>に出典が入ります。そうした季では得点・失点・観衆は<code>null</code>で、勝ち点の欄がない表では<code>points</code>も<code>null</code>です。

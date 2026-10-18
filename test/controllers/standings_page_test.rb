@@ -56,4 +56,15 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_select "td[data-sort-value='0.5']", text: ".500"
     assert_select "td[data-all='24,000'][data-sort-value='24000']", 2
   end
+
+  test "teams level on both 勝ち点 and 勝率 share a place on the page and in the API" do
+    # The setup's two games are one win each: alpha and beta are level.
+    get standings_season_url(2026, "spring")
+
+    assert_equal %w[1 1], css_select("table.standings-table tbody td.col-rank").map { |td| td.text.strip }
+
+    get "/api/v1/seasons/2026/spring/standings"
+
+    assert_equal [ 1, 1 ], response.parsed_body.map { |row| row["rank"] }
+  end
 end
