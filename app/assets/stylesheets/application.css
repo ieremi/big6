@@ -1521,10 +1521,19 @@ tr.bench-only td a {
   border: 1px solid var(--border);
 }
 
-/* The week buttons above the race (seasons/_title_race), a period-toolbar
-   close under the heading and the line naming the week picked. */
-.title-race-weeks {
-  margin: 0.5rem 0 0.5rem;
+/* The game buttons above the race (seasons/_title_race): a row of them for each
+   week, its number first, the rows close together. */
+.title-race-games {
+  margin: 0.5rem 0;
+}
+
+.title-race-games .period-toolbar {
+  margin-bottom: 0.4rem;
+}
+
+.title-race-week {
+  min-width: 3.5em;
+  font-size: 0.85rem;
 }
 
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */

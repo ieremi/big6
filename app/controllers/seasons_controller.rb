@@ -59,10 +59,10 @@ class SeasonsController < ApplicationController
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
-    # 優勝のゆくえ at the end of the week picked with its button (week), or as it stands now.
-    @title_race_weeks = TitleRaceWeeks.new(@season)
-    @title_race_point = @title_race_weeks.find(params[:week])
-    @title_race = @title_race_weeks.race(@title_race_point)
+    # 優勝のゆくえ once the game picked with its button had ended (after), or as it stands now.
+    @title_race_timeline = TitleRaceTimeline.new(@season)
+    @title_race_point = @title_race_timeline.find(params[:after])
+    @title_race = @title_race_timeline.race(@title_race_point)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).

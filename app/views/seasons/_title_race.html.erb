@@ -4,24 +4,30 @@
     university's chance with every game still to play an even chance. Only once the counting is small enough; a card
     that never changes the champion is left out.
 
-    As it stood at the end of a week (TitleRaceWeeks), picked with a button for each week: the buttons are links inside
-    the turbo frame, so one loads that week's race (and the buttons, the week picked marked) into the frame, down to
-    the last week, when the season is over and the champion named. %>
-<% race, weeks, point = local_assigns[:race], local_assigns[:weeks], local_assigns[:point] %>
+    As it stood once a game had ended (TitleRaceTimeline), picked with a button for each game, the buttons in a row
+    for each week: they are links inside the turbo frame, so one loads that moment's race (and the buttons, the game
+    picked marked) into the frame, down to the last game, when the season is over and the champion named. %>
+<% race, timeline, point = local_assigns[:race], local_assigns[:timeline], local_assigns[:point] %>
 <% if race&.applicable? %>
   <section class="title-race">
     <h2 class="card-heading">優勝のゆくえ</h2>
 
     <%= turbo_frame_tag "title-race", data: { turbo_action: "advance" } do %>
-    <% if point && weeks.points.size > 1 %>
+    <% if point && timeline.points.size > 1 %>
       <% season = race.season %>
-      <nav class="period-toolbar title-race-weeks" aria-label="週">
-        <% weeks.points.each do |each_point| %>
-          <%= link_to "第#{each_point.week}週#{"（途中）" if each_point.in_progress}", standings_season_path(season.year, season.term, week: each_point.week),
-                class: [ "period-btn", ("active" if each_point == point) ], aria: { current: ("true" if each_point == point) } %>
+      <nav class="title-race-games" aria-label="試合">
+        <% timeline.points_by_week.each do |week, points| %>
+          <div class="period-toolbar">
+            <span class="muted title-race-week">第<%= week %>週</span>
+            <% points.each do |each_point| %>
+              <%= link_to each_point.short_label, standings_season_path(season.year, season.term, after: each_point.key),
+                    class: [ "period-btn", ("active" if each_point == point) ], aria: { current: ("true" if each_point == point) },
+                    title: "#{each_point.label}のあと" %>
+            <% end %>
+          </div>
         <% end %>
       </nav>
-      <p class="muted title-race-as-of"><%= point.label %>の優勝のゆくえです。</p>
+      <p class="muted title-race-as-of"><%= point.label %>のあとの優勝のゆくえです。</p>
     <% end %>
 
     <% if (settled = race.settled) && race.over? %>

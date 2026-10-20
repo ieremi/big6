@@ -3,7 +3,7 @@
 # chart it — each open card's possible results (2-0, 2-1, 1-2, 0-2 from the
 # side of the university named first) along one side or the other, and the
 # champion in each cell. The standings page shows it under the table, as it
-# stood at the end of a week picked with its button (as_of, TitleRaceWeeks),
+# stood once a game picked with its button had ended (after, TitleRaceTimeline),
 # down to the end of the season, when every card is over (over?) and it names
 # the champion.
 #
@@ -33,7 +33,7 @@ class TitleRace
     end
   end
 
-  attr_reader :season, :as_of
+  attr_reader :season, :after
 
   # The games of the race: the season's held games counted in the standings
   # (no playoff), with their universities.
@@ -41,13 +41,19 @@ class TitleRace
     Game.held.where(season_id: season.id, counted_in_stats: true).includes(:team0, :team1).to_a
   end
 
-  # as_of: the race as it stood at the end of that day (TitleRaceWeeks, for the
-  # end of each week), the games played after it counted as still to play; nil
+  # after: the race as it stood once that game had ended (TitleRaceTimeline), the
+  # games played after it (in order_key's order) counted as still to play; nil
   # for the race as it stands now.
-  def initialize(season, games: nil, as_of: nil)
+  def initialize(season, games: nil, after: nil)
     @season = season
     @games = games || self.class.games_of(season)
-    @as_of = as_of
+    @after = after
+  end
+
+  # The order the games were played in: by day, then by their place in the day
+  # (第1試合, 第2試合), then as stored.
+  def self.order_key(game)
+    [ game.played_on, game.game_order.to_i, game.id ]
   end
 
   # Whether there is a race to show: the season is played in cards, and few
@@ -217,9 +223,9 @@ class TitleRace
     end
   end
 
-  # Whether the game has its result by the day the race is taken at (as_of).
+  # Whether the game had its result by the time the race is taken at (after).
   def decided?(game)
-    game.decided? && (as_of.nil? || game.played_on <= as_of)
+    game.decided? && (after.nil? || (self.class.order_key(game) <=> self.class.order_key(after)) <= 0)
   end
 
   def winner_id(game)

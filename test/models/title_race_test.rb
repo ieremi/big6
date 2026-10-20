@@ -89,16 +89,21 @@ class TitleRaceTest < ActiveSupport::TestCase
     assert_not TitleRace.new(Season.create!(year: 2020, term: "autumn")).applicable?
   end
 
-  test "as of a day, the games played after it are still to play" do
+  test "after a game, the games played after it are still to play, a later game of the same day included" do
     three_teams
     Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
       game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
     end
 
     assert_equal [ @alpha ], TitleRace.new(@season).settled # alpha has both its cards
-    as_of_week1 = TitleRace.new(@season, as_of: Date.new(2026, 5, 8))
-    assert_equal [ "②Alpha-Gamma", "③Beta-Gamma" ], as_of_week1.cards.map(&:label)
-    assert_not as_of_week1.over?
+    after_week1 = TitleRace.new(@season, after: Game.find_by!(played_on: Date.new(2026, 5, 3)))
+    assert_equal [ "②Alpha-Gamma", "③Beta-Gamma" ], after_week1.cards.map(&:label)
+    assert_not after_week1.over?
+
+    first_of_may9 = Game.find_by!(played_on: Date.new(2026, 5, 9))
+    first_of_may9.update!(game_order: 1)
+    Game.create!(season: @season, team0: @beta, team1: @gamma, played_on: Date.new(2026, 5, 9), game_number: 1, game_order: 2, team0_score: 1, team1_score: 0, game_status: "試合終了")
+    assert_equal [ @beta.id, 0 ], TitleRace.new(@season, after: first_of_may9).cards.last.then { |card| [ card.first.id, card.wins.first ] } # the second game of the day still to play
   end
 
   test "a season ended level at the top names the playoff's winner" do

@@ -55,24 +55,26 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     get standings_season_url(2026, "spring")
 
     assert_select "section.title-race strong", "Alphaが優勝しました。"
-    assert_select ".title-race-weeks", 0 # only one week
+    assert_select "nav.title-race-games a.period-btn", 2 # after each of the two games
   end
 
-  test "a button picks the week, and the race is the one at the end of that week" do
+  test "a button picks the game, and the race is the one once it had ended" do
     Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
       game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
     end
 
     get standings_season_url(2026, "spring")
-    assert_select "turbo-frame#title-race[data-turbo-action=advance] nav.title-race-weeks a.period-btn", 2
-    assert_select "nav.title-race-weeks a[href=?]", standings_season_path(2026, "spring", week: 1), text: "第1週"
-    assert_select "nav.title-race-weeks a.active[aria-current=true]", "第2週"
-    assert_select "turbo-frame#title-race p.title-race-as-of", "第2週終了時点（5月10日まで）の優勝のゆくえです。"
+    assert_select "turbo-frame#title-race[data-turbo-action=advance] nav.title-race-games .period-toolbar", 2 # weeks 1 and 2
+    assert_select "nav.title-race-games .period-toolbar:first-child .title-race-week", "第1週"
+    assert_select "nav.title-race-games a.period-btn", 4
+    assert_select "nav.title-race-games a[href=?]", standings_season_path(2026, "spring", after: "2026-05-03-beta-alpha"), text: "5/3 Beta-Alpha"
+    assert_select "nav.title-race-games a.active[aria-current=true]", "5/10 Gamma-Alpha"
+    assert_select "turbo-frame#title-race p.title-race-as-of", "5月10日のGamma 0-3 Alpha（2回戦）のあとの優勝のゆくえです。"
     assert_select "turbo-frame#title-race", text: /Alphaの優勝が決まりました/
 
-    get standings_season_url(2026, "spring", week: 1)
-    assert_select "nav.title-race-weeks a.active", "第1週"
-    assert_select "turbo-frame#title-race p.title-race-as-of", "第1週終了時点（5月3日まで）の優勝のゆくえです。"
+    get standings_season_url(2026, "spring", after: "2026-05-03-beta-alpha")
+    assert_select "nav.title-race-games a.active", "5/3 Beta-Alpha"
+    assert_select "turbo-frame#title-race p.title-race-as-of", "5月3日のBeta 0-2 Alpha（2回戦）のあとの優勝のゆくえです。"
     assert_select "turbo-frame#title-race .title-race-table td.title-race-cell", 16
   end
 end
