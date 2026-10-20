@@ -69,6 +69,18 @@ class SeasonTagsTest < ActiveSupport::TestCase
     assert_includes labels, SeasonTags::CLINCHED_IN_SOKEISEN
   end
 
+  test "a title the 早慶戦 decided for another university is tagged so" do
+    waseda = University.create!(name: "早稲田大学", short_name: "早大", slug: "waseda", position: 11)
+    keio = University.create!(name: "慶應義塾大学", short_name: "慶大", slug: "keio", position: 12)
+    card(@alpha, keio, Date.new(2012, 5, 5), [ 1, 0 ], [ 1, 0 ])
+    card(waseda, @beta, Date.new(2012, 5, 12), [ 1, 0 ], [ 1, 0 ])
+    card(@alpha, @beta, Date.new(2012, 5, 19), [ 0, 1 ], [ 1, 0 ], [ 0, 1 ]) # alpha (3-2) and waseda (2-0) 1 point each
+    card(keio, waseda, Date.new(2012, 5, 26), [ 1, 0 ], [ 1, 0 ]) # waseda loses it: all on 1 point, alpha ahead on 3-2
+
+    assert_includes labels, SeasonTags::CLINCHED_IN_SOKEISEN
+    assert_includes labels, SeasonTags::OTHER_WON_IN_SOKEISEN
+  end
+
   test "a title decided in another card isn't" do
     card(@alpha, @beta, Date.new(2012, 5, 5), [ 1, 0 ], [ 1, 0 ])
 

@@ -15,6 +15,7 @@ class SeasonTags
   # 「第7週で優勝」: the week of the game that decided the title (TitleRace.clinching_game).
   CLINCHED_WEEKS = (5..10).to_h { |week| [ week, "第#{week}週で優勝" ] }.freeze
   CLINCHED_IN_SOKEISEN = "早慶戦で優勝決定"
+  OTHER_WON_IN_SOKEISEN = "早慶戦で早慶以外が優勝"
 
   LABELS = [
     TOKYO_POINT,
@@ -29,7 +30,8 @@ class SeasonTags
     WASEDA_KEIO_B_CLASS,
     RIKKYO_A_CLASS,
     *CLINCHED_WEEKS.values,
-    CLINCHED_IN_SOKEISEN
+    CLINCHED_IN_SOKEISEN,
+    OTHER_WON_IN_SOKEISEN
   ].freeze
 
   # games/universities let a caller that already has these preloaded (e.g.
@@ -61,7 +63,8 @@ class SeasonTags
       waseda_keio_both_b_class,
       rikkyo_a_class,
       clinched_week,
-      clinched_in_sokeisen
+      clinched_in_sokeisen,
+      other_won_in_sokeisen
     ].compact
   end
 
@@ -145,11 +148,24 @@ class SeasonTags
 
   # The title decided in a game between 早大 and 慶大 (早慶戦), the season's last card as a rule.
   def clinched_in_sokeisen
-    game = clinching_game or return nil
-    Tag.new(label: CLINCHED_IN_SOKEISEN) if [ game.team0.slug, game.team1.slug ].sort == %w[keio waseda]
+    Tag.new(label: CLINCHED_IN_SOKEISEN) if clinched_in_sokeisen?
   end
 
-  # The game that decided the title (TitleRace.clinching_game), worked out once for both tags.
+  # The title decided in the 早慶戦, for a university other than the two: the
+  # result of their game settled it for one watching from outside.
+  def other_won_in_sokeisen
+    return nil unless clinched_in_sokeisen?
+
+    champion = TitleRace.new(@season, games: standings_games, after: clinching_game).settled.first
+    Tag.new(label: OTHER_WON_IN_SOKEISEN) if %w[waseda keio].exclude?(champion.slug)
+  end
+
+  def clinched_in_sokeisen?
+    game = clinching_game
+    game.present? && [ game.team0.slug, game.team1.slug ].sort == %w[keio waseda]
+  end
+
+  # The game that decided the title (TitleRace.clinching_game), worked out once for the tags about it.
   def clinching_game
     return @clinching_game if defined?(@clinching_game)
 
