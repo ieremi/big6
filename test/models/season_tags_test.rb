@@ -59,6 +59,22 @@ class SeasonTagsTest < ActiveSupport::TestCase
     assert_equal 1, labels.count { |label| label.end_with?("週で優勝") }
   end
 
+  test "a title decided in a game between 早大 and 慶大 is tagged as decided in the 早慶戦" do
+    waseda = University.create!(name: "早稲田大学", short_name: "早大", slug: "waseda", position: 11)
+    keio = University.create!(name: "慶應義塾大学", short_name: "慶大", slug: "keio", position: 12)
+    card(waseda, @beta, Date.new(2012, 5, 5), [ 1, 0 ], [ 1, 0 ])
+    card(keio, @beta, Date.new(2012, 5, 12), [ 1, 0 ], [ 1, 0 ])
+    card(keio, waseda, Date.new(2012, 5, 19), [ 1, 0 ], [ 2, 1 ]) # 1 point each before it: the card decides
+
+    assert_includes labels, SeasonTags::CLINCHED_IN_SOKEISEN
+  end
+
+  test "a title decided in another card isn't" do
+    card(@alpha, @beta, Date.new(2012, 5, 5), [ 1, 0 ], [ 1, 0 ])
+
+    assert_not_includes labels, SeasonTags::CLINCHED_IN_SOKEISEN
+  end
+
   test "a 3回戦 that was held still counts" do
     add_games(held: 4)
     Game.create!(season: @season, team0: @alpha, team1: @beta, played_on: "2012-07-01", game_number: 3, team0_score: 1, team1_score: 0, game_status: "試合終了")

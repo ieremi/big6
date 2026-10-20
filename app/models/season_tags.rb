@@ -14,6 +14,7 @@ class SeasonTags
   RIKKYO_A_CLASS = "立大がAクラス"
   # 「第7週で優勝」: the week of the game that decided the title (TitleRace.clinching_game).
   CLINCHED_WEEKS = (5..10).to_h { |week| [ week, "第#{week}週で優勝" ] }.freeze
+  CLINCHED_IN_SOKEISEN = "早慶戦で優勝決定"
 
   LABELS = [
     TOKYO_POINT,
@@ -27,7 +28,8 @@ class SeasonTags
     HAD_PLAYOFF,
     WASEDA_KEIO_B_CLASS,
     RIKKYO_A_CLASS,
-    *CLINCHED_WEEKS.values
+    *CLINCHED_WEEKS.values,
+    CLINCHED_IN_SOKEISEN
   ].freeze
 
   # games/universities let a caller that already has these preloaded (e.g.
@@ -58,7 +60,8 @@ class SeasonTags
       had_playoff,
       waseda_keio_both_b_class,
       rikkyo_a_class,
-      clinched_week
+      clinched_week,
+      clinched_in_sokeisen
     ].compact
   end
 
@@ -134,11 +137,28 @@ class SeasonTags
   # playoff), counting the weeks as SeasonWeeks does over the games of the
   # standings. Weeks outside CLINCHED_WEEKS (an old season's 4th or 11th) have no tag.
   def clinched_week
-    games = held_games.select(&:counted_in_stats)
-    game = TitleRace.clinching_game(@season, games: games) or return nil
-    week = SeasonWeeks.new(games).weeks.find { |each| each.games.include?(game) }
+    game = clinching_game or return nil
+    week = SeasonWeeks.new(standings_games).weeks.find { |each| each.games.include?(game) }
     label = CLINCHED_WEEKS[week&.number]
     Tag.new(label: label) if label
+  end
+
+  # The title decided in a game between 早大 and 慶大 (早慶戦), the season's last card as a rule.
+  def clinched_in_sokeisen
+    game = clinching_game or return nil
+    Tag.new(label: CLINCHED_IN_SOKEISEN) if [ game.team0.slug, game.team1.slug ].sort == %w[keio waseda]
+  end
+
+  # The game that decided the title (TitleRace.clinching_game), worked out once for both tags.
+  def clinching_game
+    return @clinching_game if defined?(@clinching_game)
+
+    @clinching_game = TitleRace.clinching_game(@season, games: standings_games)
+  end
+
+  # The games the standings count: held, and not a playoff.
+  def standings_games
+    @standings_games ||= held_games.select(&:counted_in_stats)
   end
 
   def row_for(slug)
