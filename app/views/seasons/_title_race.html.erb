@@ -4,31 +4,24 @@
     university's chance with every game still to play an even chance. Only once the counting is small enough; a card
     that never changes the champion is left out.
 
-    As it stood at the end of a week (TitleRaceWeeks), picked on a slider above it: moving it loads the race of that
-    week into the turbo frame below (week-slider), down to the last week, when the season is over and the champion
-    named. %>
+    As it stood at the end of a week (TitleRaceWeeks), picked with a button for each week: the buttons are links inside
+    the turbo frame, so one loads that week's race (and the buttons, the week picked marked) into the frame, down to
+    the last week, when the season is over and the champion named. %>
 <% race, weeks, point = local_assigns[:race], local_assigns[:weeks], local_assigns[:point] %>
 <% if race&.applicable? %>
   <section class="title-race">
     <h2 class="card-heading">優勝のゆくえ</h2>
 
-    <% if weeks && weeks.points.size > 1 %>
-      <% season = race.season %>
-      <%= form_with url: standings_season_path(season.year, season.term), method: :get, class: "title-race-weeks",
-            data: { controller: "week-slider", turbo_frame: "title-race", turbo_action: "advance",
-                    week_slider_labels_value: weeks.points.to_h { |p| [ p.week, p.label ] } } do |form| %>
-        <%= form.label :week, "週", for: "title-race-week" %>
-        <%= form.range_field :week, id: "title-race-week", min: weeks.points.first.week, max: weeks.points.last.week, step: 1, value: point.week,
-              aria: { valuetext: point.label },
-              data: { week_slider_target: "input", action: "input->week-slider#show change->week-slider#submit" } %>
-        <output for="title-race-week" data-week-slider-target="label"><%= point.label %></output>
-        <noscript><%= form.submit "表示", name: nil %></noscript>
-      <% end %>
-    <% end %>
-
-    <%= turbo_frame_tag "title-race" do %>
+    <%= turbo_frame_tag "title-race", data: { turbo_action: "advance" } do %>
     <% if point && weeks.points.size > 1 %>
-      <%= tag.p "#{point.label}の優勝のゆくえです。", class: "muted title-race-as-of", data: { week: point.week } %>
+      <% season = race.season %>
+      <nav class="period-toolbar title-race-weeks" aria-label="週">
+        <% weeks.points.each do |each_point| %>
+          <%= link_to "第#{each_point.week}週#{"（途中）" if each_point.in_progress}", standings_season_path(season.year, season.term, week: each_point.week),
+                class: [ "period-btn", ("active" if each_point == point) ], aria: { current: ("true" if each_point == point) } %>
+        <% end %>
+      </nav>
+      <p class="muted title-race-as-of"><%= point.label %>の優勝のゆくえです。</p>
     <% end %>
 
     <% if (settled = race.settled) && race.over? %>

@@ -3,8 +3,9 @@
 # chart it — each open card's possible results (2-0, 2-1, 1-2, 0-2 from the
 # side of the university named first) along one side or the other, and the
 # champion in each cell. The standings page shows it under the table, as it
-# stood at the end of a week picked on a slider (as_of, TitleRaceWeeks), down to
-# the end of the season, when every card is over (over?) and it names the champion.
+# stood at the end of a week picked with its button (as_of, TitleRaceWeeks),
+# down to the end of the season, when every card is over (over?) and it names
+# the champion.
 #
 # The season is ranked as ChampionshipOdds ranks it (and the league does): by
 # 勝ち点, then by 勝率 as an exact fraction, teams level on both meeting in a

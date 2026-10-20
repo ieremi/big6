@@ -59,7 +59,7 @@ class SeasonsController < ApplicationController
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
-    # 優勝のゆくえ at the end of the week picked on the slider (week), or as it stands now.
+    # 優勝のゆくえ at the end of the week picked with its button (week), or as it stands now.
     @title_race_weeks = TitleRaceWeeks.new(@season)
     @title_race_point = @title_race_weeks.find(params[:week])
     @title_race = @title_race_weeks.race(@title_race_point)

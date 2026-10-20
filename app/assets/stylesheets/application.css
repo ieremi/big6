@@ -1521,26 +1521,10 @@ tr.bench-only td a {
   border: 1px solid var(--border);
 }
 
-/* The week slider above the race (week_slider_controller.js): the label, the
-   slider as wide as there is room for, and the week picked, wrapping under it
-   on a phone. */
+/* The week buttons above the race (seasons/_title_race), a period-toolbar
+   close under the heading and the line naming the week picked. */
 .title-race-weeks {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin: 0.5rem 0 0.75rem;
-}
-
-.title-race-weeks input[type="range"] {
-  flex: 1 1 12rem;
-  max-width: 24rem;
-  accent-color: var(--accent);
-}
-
-.title-race-weeks output {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  margin: 0.5rem 0 0.5rem;
 }
 
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */

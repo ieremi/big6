@@ -1,16 +1,16 @@
 # The weeks a season's title race (TitleRace) can be looked at the end of, for
-# the slider on the standings page: how the race stood once each week's cards
-# were played, from the first week it can be counted (ChampionshipOdds::OPEN_CARDS
-# cards or fewer open) to the latest.
+# the week buttons on the standings page: how the race stood once each week's
+# cards were played, from the first week it can be counted
+# (ChampionshipOdds::OPEN_CARDS cards or fewer open) to the latest.
 #
 # The end of a week is the day before the next week's first game: a game called
 # off and played later counts in the week it was played, as it did then. The
 # latest week the season has reached is the race as it stands now (as_of nil):
 # over, or only partly played (in_progress) with the next games still to come.
 class TitleRaceWeeks
-  # A week on the slider: its number (SeasonWeeks), the last day counted
-  # (as_of: nil for now), the last day with a result by then (through), and
-  # whether the week is still being played.
+  # A week to pick: its number (SeasonWeeks), the last day counted (as_of: nil
+  # for now), the last day with a result by then (through), and whether the
+  # week is still being played.
   Point = Struct.new(:week, :as_of, :through, :in_progress, keyword_init: true) do
     # "第5週終了時点（10月12日まで）", or "第6週（途中、10月18日まで）".
     def label
