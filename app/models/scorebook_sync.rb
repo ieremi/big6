@@ -40,6 +40,9 @@ class ScorebookSync
 
   TERM_JA = { "spring" => "春", "autumn" => "秋" }.freeze
 
+  # Scorebook's status for a game under way.
+  IN_PLAY_STATUS = "試合中".freeze
+
   # members: false leaves the bench members alone, which is a whole season's
   # import: for refreshing a game's scoreboard while it is played.
   def self.call(season, members: true)
@@ -139,8 +142,18 @@ class ScorebookSync
       # blank) shouldn't erase a score the league site's box score already
       # provisionally filled in — only an actual value from Scorebook (once
       # it catches up) overwrites what's there.
-      game.team0_score = info["runsTotalTop"]&.to_i || game.team0_score
-      game.team1_score = info["runsTotalBottom"]&.to_i || game.team1_score
+      #
+      # Nor do the totals of a game Scorebook has as 試合中: they aren't the
+      # score, and can lag behind the innings: 2026-10-19's 慶大-明大 3回戦
+      # (0-5) showed 計 0 for both sides at 16:00, still 試合中, which only a
+      # stored score of 0-0 does. A game with a score also can't be marked
+      # finished from the league site's box score, which fills in only a game
+      # with none. A game's score stays empty until it is over, as the views
+      # and the API expect.
+      unless info["gameStatus"] == IN_PLAY_STATUS
+        game.team0_score = info["runsTotalTop"]&.to_i || game.team0_score
+        game.team1_score = info["runsTotalBottom"]&.to_i || game.team1_score
+      end
       game.scorebook_game_id = info["id"]
       game.game_order = info["gameOrder"]
       # Some other source (the league site's box score, most often — see
@@ -150,9 +163,13 @@ class ScorebookSync
       # same way it can lag behind one being called off. Don't let a stale
       # "試合前" from Scorebook undo whichever further-along status is
       # already recorded — only a game we still have as scheduled can be
-      # (re)assigned "試合前" here.
+      # (re)assigned "試合前" here. Likewise Scorebook can go on saying "試合中"
+      # well after the game ends (40 minutes and more after 2026-10-19's
+      # 慶大-明大 3回戦), and a game the league's site has already shown
+      # finished stays finished.
       status = Game.status_for(info["gameStatus"], team0_score: game.team0_score, team1_score: game.team1_score, played_on: game.played_on)
-      game.game_status = status unless status == Game::PENDING_STATUS && !game.scheduled?
+      stale = (status == Game::PENDING_STATUS && !game.scheduled?) || (status == IN_PLAY_STATUS && game.finished?)
+      game.game_status = status unless stale
       game.counted_in_stats = info["isCounted"] != false
       game.duration_minutes = GameScoreboard.parse_duration_minutes(info["gameTimeNet"])
       game.attendance = attendance.to_i if attendance.match?(/\A\d+\z/)

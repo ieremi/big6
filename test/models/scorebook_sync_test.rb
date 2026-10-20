@@ -192,6 +192,30 @@ class ScorebookSyncTest < ActiveSupport::TestCase
     assert_equal [ "試合終了", "試合中", "試合前" ], games.map(&:status_label)  # by date: 5/1, yesterday, in three days
   end
 
+  test "a game Scorebook has as 試合中 gets no score from it, so the scoreboard's running total shows" do
+    game = create_game(Date.current, 3, game_status: "試合前")
+
+    import(entry(1, Date.current.to_s, "3回戦", "試合中", top_runs: "0", bottom_runs: "0"))
+
+    assert_equal [ "in_progress", nil, nil ], [ game.reload.game_status, game.team0_score, game.team1_score ]
+  end
+
+  test "Scorebook still saying 試合中 does not undo the finish the league's site has recorded" do
+    game = create_game(Date.current, 3, game_status: "試合終了", team0_score: 0, team1_score: 5)
+
+    import(entry(1, Date.current.to_s, "3回戦", "試合中", top_runs: "0", bottom_runs: "0"))
+
+    assert_equal [ "finished", 0, 5 ], [ game.reload.game_status, game.team0_score, game.team1_score ]
+  end
+
+  test "once Scorebook has the game over, its score is the one kept" do
+    game = create_game(Date.current, 3, game_status: "試合終了", team0_score: 0, team1_score: 4)
+
+    import(entry(1, Date.current.to_s, "3回戦", "試合終了", top_runs: "0", bottom_runs: "5"))
+
+    assert_equal [ "finished", 0, 5 ], [ game.reload.game_status, game.team0_score, game.team1_score ]
+  end
+
   # ---- record_stored_cancellations
 
   def record_stored(*entries)
