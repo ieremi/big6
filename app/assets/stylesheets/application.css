@@ -1524,31 +1524,11 @@ tr.bench-only td a {
 /* The chart of each university's chance of the title, game by game
    (seasons/_title_race_chances, chance_chart_controller.js). The lines are in
    the universities' own colours, as in the grid under it. 早大's, 慶大's and
-   明大's are dark, and sink into the dark surface (contrast 1.1-1.5), so there
-   each line, end dot and legend key has a faint light halo under it. In either
-   mode 早大's and 慶大's are close for red-green colour-blind readers: the line
-   ends are labelled and the figures are in the table under the chart. */
+   明大's are dark, and faint on the dark surface (contrast 1.1-1.5), and 早大's
+   and 慶大's are close for red-green colour-blind readers: the line ends are
+   labelled, and the figures are in the tooltip and the table under the chart. */
 .chance-chart {
-  --chance-halo: transparent;
   margin: 0.5rem 0 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .chance-chart {
-    --chance-halo: rgb(226 232 240 / 55%);
-  }
-
-  .chance-chart .chance-end {
-    stroke: var(--chance-halo);
-  }
-}
-
-.chance-halo {
-  fill: none;
-  stroke: var(--chance-halo);
-  stroke-width: 4;
-  stroke-linejoin: round;
-  stroke-linecap: round;
 }
 
 .chance-chart figcaption {
@@ -1645,7 +1625,6 @@ tr.bench-only td a {
   width: 14px;
   height: 2px;
   border-radius: 1px;
-  box-shadow: 0 0 0 1px var(--chance-halo);
 }
 
 .chance-legend {

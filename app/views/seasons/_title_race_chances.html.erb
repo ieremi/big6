@@ -2,9 +2,8 @@
     games along the bottom in the order played (each week's first named), the chance up the side, a line for each
     university that had a chance at some point. Pointing at the chart (or moving along it with the arrow keys once it
     has focus) shows the game and every university's chance there (chance-chart); a table under it has the same
-    figures. The lines are in the universities' own colours (University#color), as in the grid below, each with a
-    faint halo under it on the dark surface, where the darker ones would sink (see .chance-chart in the stylesheet);
-    the end of each line still above 0 is labelled. %>
+    figures. The lines are in the universities' own colours (University#color), as in the grid below (see .chance-chart
+    in the stylesheet); the end of each line still above 0 is labelled. %>
 <% chances = timeline.chances %>
 <% if chances.size > 1 %>
   <%
@@ -69,7 +68,6 @@
 
         <% universities.each do |university| %>
           <% line = chances.each_with_index.map { |(_, by_university), index| "#{x_for.(index)},#{y_for.(by_university.fetch(university, 0))}" }.join(" ") %>
-          <polyline points="<%= line %>" class="chance-halo" />
           <polyline points="<%= line %>" class="chance-line" style="stroke: <%= university.color %>" />
         <% end %>
         <% ends.each do |university, chance| %>
