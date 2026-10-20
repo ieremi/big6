@@ -1522,33 +1522,33 @@ tr.bench-only td a {
 }
 
 /* The chart of each university's chance of the title, game by game
-   (seasons/_title_race_chances, chance_chart_controller.js). The lines take the
-   universities' own hues, stepped into a band the six can be told apart in, by
-   colour-blind readers too, on each surface (University::COLORS are too dark and
-   too close: 明大's purple and 慶大's navy can't be told apart even with full
-   colour vision). Checked as a set with the dataviz palette validator, in the
-   legend's order (早 慶 法 東 明 立): light and dark both pass; on the light
-   surface 東大's and 立大's lines are below 3:1, so the line ends are labelled
-   and the figures are in the table under the chart. */
+   (seasons/_title_race_chances, chance_chart_controller.js). The lines are in
+   the universities' own colours, as in the grid under it. 早大's, 慶大's and
+   明大's are dark, and sink into the dark surface (contrast 1.1-1.5), so there
+   each line, end dot and legend key has a faint light halo under it. In either
+   mode 早大's and 慶大's are close for red-green colour-blind readers: the line
+   ends are labelled and the figures are in the table under the chart. */
 .chance-chart {
-  --chance-waseda: #e34948;
-  --chance-keio: #2a78d6;
-  --chance-hosei: #eb6834;
-  --chance-tokyo: #1baf7a;
-  --chance-meiji: #6250d6;
-  --chance-rikkio: #e87ba4;
+  --chance-halo: transparent;
   margin: 0.5rem 0 1rem;
 }
 
 @media (prefers-color-scheme: dark) {
   .chance-chart {
-    --chance-waseda: #e66767;
-    --chance-keio: #3987e5;
-    --chance-hosei: #d95926;
-    --chance-tokyo: #199e70;
-    --chance-meiji: #9085e9;
-    --chance-rikkio: #d55181;
+    --chance-halo: rgb(226 232 240 / 55%);
   }
+
+  .chance-chart .chance-end {
+    stroke: var(--chance-halo);
+  }
+}
+
+.chance-halo {
+  fill: none;
+  stroke: var(--chance-halo);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .chance-chart figcaption {
@@ -1645,6 +1645,7 @@ tr.bench-only td a {
   width: 14px;
   height: 2px;
   border-radius: 1px;
+  box-shadow: 0 0 0 1px var(--chance-halo);
 }
 
 .chance-legend {

@@ -67,7 +67,7 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
 
     assert_select "section.title-race figure.chance-chart[data-controller=chance-chart]" do
       assert_select "svg[role=img][tabindex='0'] polyline.chance-line", 3 # each university with a chance at some point
-      assert_select "svg polyline.chance-line[style=?]", "stroke: var(--chance-alpha)"
+      assert_select "svg polyline.chance-line[style=?]", "stroke: #{@alpha.color}" # as in the grid
       assert_select "svg text.chance-end-label", "Alpha 100%"
       assert_select "svg text.chance-axis-label", text: "第1週"
       assert_select ".chance-legend li", 3

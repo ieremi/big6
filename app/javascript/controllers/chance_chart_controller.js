@@ -76,7 +76,7 @@ export default class extends Controller {
         row.className = "chance-tooltip-row"
         const key = document.createElement("span")
         key.className = "chance-key"
-        key.style.background = `var(--chance-${university.slug})`
+        key.style.background = university.color
         const value = document.createElement("strong")
         value.textContent = `${Number((university.chance * 100).toFixed(1))}%`
         const name = document.createElement("span")

@@ -2,12 +2,13 @@
     games along the bottom in the order played (each week's first named), the chance up the side, a line for each
     university that had a chance at some point. Pointing at the chart (or moving along it with the arrow keys once it
     has focus) shows the game and every university's chance there (chance-chart); a table under it has the same
-    figures. The lines' colours are the universities' own hues, stepped and ordered to stay apart (see .chance-chart
-    in the stylesheet), and the end of each line still above 0 is labelled. %>
+    figures. The lines are in the universities' own colours (University#color), as in the grid below, each with a
+    faint halo under it on the dark surface, where the darker ones would sink (see .chance-chart in the stylesheet);
+    the end of each line still above 0 is labelled. %>
 <% chances = timeline.chances %>
 <% if chances.size > 1 %>
   <%
-    # The order of the legend, the one the colours were validated in (adjacent pairs apart in hue and lightness).
+    # The order of the legend: 明大's purple and 慶大's navy, the closest pair, apart.
     order = %w[waseda keio hosei tokyo meiji rikkio]
     universities = chances.flat_map { |_, by_university| by_university.keys }.uniq.sort_by { |university| order.index(university.slug) || order.size }
     percent = ->(chance) { "#{number_with_precision(chance.to_f * 100, precision: 1, strip_insignificant_zeros: true)}%" }
@@ -41,7 +42,7 @@
     end
 
     data = {
-      universities: universities.map { |university| { slug: university.slug, name: university.short_name } },
+      universities: universities.map { |university| { slug: university.slug, name: university.short_name, color: university.color } },
       points: chances.each_with_index.map do |(point, by_university), index|
         { label: "#{point.label}のあと", x: x_for.(index), values: universities.to_h { |university| [ university.slug, by_university.fetch(university, 0) ] } }
       end
@@ -68,10 +69,11 @@
 
         <% universities.each do |university| %>
           <% line = chances.each_with_index.map { |(_, by_university), index| "#{x_for.(index)},#{y_for.(by_university.fetch(university, 0))}" }.join(" ") %>
-          <polyline points="<%= line %>" class="chance-line" style="stroke: var(--chance-<%= university.slug %>)" />
+          <polyline points="<%= line %>" class="chance-halo" />
+          <polyline points="<%= line %>" class="chance-line" style="stroke: <%= university.color %>" />
         <% end %>
         <% ends.each do |university, chance| %>
-          <circle cx="<%= x_for.(last) %>" cy="<%= y_for.(chance) %>" r="4" class="chance-end" style="fill: var(--chance-<%= university.slug %>)" />
+          <circle cx="<%= x_for.(last) %>" cy="<%= y_for.(chance) %>" r="4" class="chance-end" style="fill: <%= university.color %>" />
         <% end %>
         <% end_groups.each do |group| %>
           <text x="<%= x_for.(last) + 9 %>" y="<%= y_for.(group.first.last) + 4 %>" class="chance-end-label"><%= end_label.(group) %></text>
@@ -79,7 +81,7 @@
 
         <line class="chance-crosshair" y1="<%= pad_t %>" y2="<%= pad_t + plot_h %>" data-chance-chart-target="crosshair" visibility="hidden" />
         <% universities.each do |university| %>
-          <circle r="4" class="chance-end" style="fill: var(--chance-<%= university.slug %>)" data-chance-chart-target="dot" data-slug="<%= university.slug %>" visibility="hidden" />
+          <circle r="4" class="chance-end" style="fill: <%= university.color %>" data-chance-chart-target="dot" data-slug="<%= university.slug %>" visibility="hidden" />
         <% end %>
       </svg>
       <div class="chance-tooltip" data-chance-chart-target="tooltip" hidden></div>
@@ -87,7 +89,7 @@
 
     <ul class="chance-legend">
       <% universities.each do |university| %>
-        <li><span class="chance-key" style="background: var(--chance-<%= university.slug %>)"></span><%= university.short_name %></li>
+        <li><span class="chance-key" style="background: <%= university.color %>"></span><%= university.short_name %></li>
       <% end %>
     </ul>
     <% if universities.size < University.count %>
