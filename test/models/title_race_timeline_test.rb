@@ -57,11 +57,23 @@ class TitleRaceTimelineTest < ActiveSupport::TestCase
     play(2, [ 3, 1 ])
     play(3, [ 0, 2 ])
     line = timeline
-    too_many = Struct.new(:applicable?, :too_many_cards?).new(true, true)
+    too_many = Struct.new(:applicable?, :too_many_cards?, :chances).new(true, true, {})
 
     stub_method(line, :race_after, ->(game) { game.played_on.day == 2 ? too_many : TitleRace.new(@season, after: game) }) do
       assert_equal [ "2026-05-03-beta-alpha" ], line.points.map(&:key)
     end
+  end
+
+  test "each university's chance once each game had ended, for the chart" do
+    play(2, [ 3, 1 ])
+    play(3, [ 0, 2 ])
+    play(9, [ 3, 0 ])
+    play(10, [ 0, 3 ])
+
+    chances = timeline.chances
+    assert_equal [ "2026-05-02-alpha-beta", "2026-05-03-beta-alpha", "2026-05-09-alpha-gamma", "2026-05-10-gamma-alpha" ], chances.map { |point, _| point.key }
+    assert_in_delta 0.646, chances[1].last.fetch(@alpha), 0.001 # as the race said after week 1
+    assert_equal({ @alpha => 1.0 }, chances.last.last) # alpha has both cards
   end
 
   test "none before any result, and none for a season with no race" do

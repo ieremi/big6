@@ -12,6 +12,8 @@
   <section class="title-race">
     <h2 class="card-heading">優勝のゆくえ</h2>
 
+    <%= render "seasons/title_race_chances", timeline: timeline if timeline %>
+
     <%= turbo_frame_tag "title-race", data: { turbo_action: "advance" } do %>
     <% if point && timeline.points.size > 1 %>
       <% season = race.season %>

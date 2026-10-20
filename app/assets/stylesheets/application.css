@@ -1521,6 +1521,164 @@ tr.bench-only td a {
   border: 1px solid var(--border);
 }
 
+/* The chart of each university's chance of the title, game by game
+   (seasons/_title_race_chances, chance_chart_controller.js). The lines take the
+   universities' own hues, stepped into a band the six can be told apart in, by
+   colour-blind readers too, on each surface (University::COLORS are too dark and
+   too close: 明大's purple and 慶大's navy can't be told apart even with full
+   colour vision). Checked as a set with the dataviz palette validator, in the
+   legend's order (早 慶 法 東 明 立): light and dark both pass; on the light
+   surface 東大's and 立大's lines are below 3:1, so the line ends are labelled
+   and the figures are in the table under the chart. */
+.chance-chart {
+  --chance-waseda: #e34948;
+  --chance-keio: #2a78d6;
+  --chance-hosei: #eb6834;
+  --chance-tokyo: #1baf7a;
+  --chance-meiji: #6250d6;
+  --chance-rikkio: #e87ba4;
+  margin: 0.5rem 0 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chance-chart {
+    --chance-waseda: #e66767;
+    --chance-keio: #3987e5;
+    --chance-hosei: #d95926;
+    --chance-tokyo: #199e70;
+    --chance-meiji: #9085e9;
+    --chance-rikkio: #d55181;
+  }
+}
+
+.chance-chart figcaption {
+  margin-bottom: 0.25rem;
+}
+
+.chance-chart-plot {
+  position: relative;
+}
+
+.chance-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.chance-chart svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chance-gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chance-axis-label,
+.chance-end-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chance-end-label {
+  fill: var(--text);
+}
+
+.chance-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* End markers and the hover dots: a ring in the surface colour keeps them clear of the lines they sit on. */
+.chance-end {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chance-crosshair {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.chance-tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+}
+
+.chance-tooltip-heading {
+  margin-bottom: 0.2rem;
+  color: var(--text-muted);
+}
+
+.chance-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chance-tooltip-row strong {
+  min-width: 3.2em;
+  text-align: right;
+}
+
+/* A short stroke of the line's colour, as the key in the legend and the tooltip. */
+.chance-key {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.chance-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.chance-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chance-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+}
+
+.chance-table {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.chance-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The game buttons above the race (seasons/_title_race): a row of them for each
    week, its number first, the rows close together. */
 .title-race-games {

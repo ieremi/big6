@@ -5,9 +5,13 @@
 # champion) to show: none while more than ChampionshipOdds::OPEN_CARDS cards
 # are open, nor while more than TitleRace::MAX_CARDS of them still matter.
 #
-# Which games those are is cached with the games' results, as working out the
-# race after each of some thirty games takes a while on the server; each race
-# itself is cached by TitleRace.
+# Also each university's chance of the title once each game had ended, from the
+# first game after which it can be counted (chances), for the chart of how the
+# chances moved over the season.
+#
+# Which games those are, and the chances, are cached with the games' results,
+# as working out the race after each of some thirty games takes a while on the
+# server; each race itself is cached by TitleRace.
 class TitleRaceTimeline
   # A game to pick: the race as it stood once it had ended, the week it was
   # played in, and its key for the URL (after=2024-10-12-meiji-hosei: the day
@@ -38,9 +42,23 @@ class TitleRaceTimeline
   # The games to choose from, in the order played. None when the season has no race to show.
   def points
     @points ||= begin
-      ids = Rails.cache.fetch(cache_key, expires_in: 1.week) { eligible_game_ids }.to_set
-      weeks = week_numbers
-      decided_in_order.select { |game| ids.include?(game.id) }.map { |game| Point.new(game: game, week: weeks[game.id]) }
+      ids = timeline[:eligible].to_set
+      all_points.select { |point| ids.include?(point.game.id) }
+    end
+  end
+
+  # Each university's chance of the title (TitleRace#chances) once each game had
+  # ended, from the first game after which it can be counted, for the chart:
+  # [[Point, { University => chance }], ...], in the order played. A university
+  # without a chance is left out of a game's hash.
+  def chances
+    @chances ||= begin
+      by_game = timeline[:chances]
+      universities = University.where(id: by_game.values.flat_map(&:keys).uniq).index_by(&:id)
+      all_points.filter_map do |point|
+        game_chances = by_game[point.game.id] or next
+        [ point, game_chances.to_h { |id, chance| [ universities.fetch(id), chance ] } ]
+      end
     end
   end
 
@@ -67,24 +85,45 @@ class TitleRaceTimeline
     @races[game&.id] ||= TitleRace.new(@season, games: @games, after: game)
   end
 
+  # A Point for every game ended, in the order played.
+  def all_points
+    @all_points ||= begin
+      weeks = week_numbers
+      decided_in_order.map { |game| Point.new(game: game, week: weeks[game.id]) }
+    end
+  end
+
+  # What is cached: { eligible: the ids of the games to pick, chances: { game id => { university id => chance } } }.
+  def timeline
+    @timeline ||= Rails.cache.fetch(cache_key, expires_in: 1.week) { compute }
+  end
+
   def decided_in_order
     @games.select(&:decided?).sort_by { |game| TitleRace.order_key(game) }
   end
 
-  # The games after which the race has something to show (see the class comment).
-  def eligible_game_ids
-    decided_in_order.select do |game|
-      next false if open_cards_after(game) > ChampionshipOdds::OPEN_CARDS
+  # The games after which the race has something to show (see the class comment),
+  # and the chances after every game it can be counted after (a grid too big to
+  # draw still has them).
+  def compute
+    eligible = []
+    chances = {}
+    decided_in_order.each do |game|
+      next if open_cards_after(game) > ChampionshipOdds::OPEN_CARDS
 
       race = race_after(game)
-      race.applicable? && !race.too_many_cards?
-    end.map(&:id)
+      next unless race.applicable?
+
+      chances[game.id] = race.chances.to_h { |university, chance| [ university.id, chance ] }
+      eligible << game.id unless race.too_many_cards?
+    end
+    { eligible: eligible, chances: chances }
   end
 
   # Varies with every result and every game still to play, as TitleRace's key does.
   def cache_key
     games = @games.map { |game| [ game.id, game.team0_id, game.team1_id, game.team0_score, game.team1_score, game.played_on, game.game_order, game.game_number ].join(":") }.sort
-    [ "title_race_timeline/v1", @season.id, Digest::MD5.hexdigest(games.join(",")) ].join("/")
+    [ "title_race_timeline/v2", @season.id, Digest::MD5.hexdigest(games.join(",")) ].join("/")
   end
 
   # { game id => the number of the week it was played in }.

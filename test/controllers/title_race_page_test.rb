@@ -58,6 +58,24 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     assert_select "nav.title-race-games a.period-btn", 2 # after each of the two games
   end
 
+  test "a chart shows each university's chance game by game, with its figures in a table" do
+    Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
+      game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
+    end
+
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.title-race figure.chance-chart[data-controller=chance-chart]" do
+      assert_select "svg[role=img][tabindex='0'] polyline.chance-line", 3 # each university with a chance at some point
+      assert_select "svg polyline.chance-line[style=?]", "stroke: var(--chance-alpha)"
+      assert_select "svg text.chance-end-label", "Alpha 100%"
+      assert_select "svg text.chance-axis-label", text: "第1週"
+      assert_select ".chance-legend li", 3
+      assert_select ".chance-table tbody tr", 4 # after each of the four games
+      assert_select ".chance-table tbody tr:last-child td", text: "5月10日のGamma 0-3 Alpha（2回戦）"
+    end
+  end
+
   test "a button picks the game, and the race is the one once it had ended" do
     Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
       game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
