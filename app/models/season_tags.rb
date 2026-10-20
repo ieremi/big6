@@ -12,6 +12,8 @@ class SeasonTags
   HAD_PLAYOFF = "優勝決定戦があった"
   WASEDA_KEIO_B_CLASS = "早慶ともにBクラス"
   RIKKYO_A_CLASS = "立大がAクラス"
+  # 「第7週で優勝」: the week of the game that decided the title (TitleRace.clinching_game).
+  CLINCHED_WEEKS = (5..10).to_h { |week| [ week, "第#{week}週で優勝" ] }.freeze
 
   LABELS = [
     TOKYO_POINT,
@@ -24,7 +26,8 @@ class SeasonTags
     NO_ROUND_3,
     HAD_PLAYOFF,
     WASEDA_KEIO_B_CLASS,
-    RIKKYO_A_CLASS
+    RIKKYO_A_CLASS,
+    *CLINCHED_WEEKS.values
   ].freeze
 
   # games/universities let a caller that already has these preloaded (e.g.
@@ -54,7 +57,8 @@ class SeasonTags
       no_round_3,
       had_playoff,
       waseda_keio_both_b_class,
-      rikkyo_a_class
+      rikkyo_a_class,
+      clinched_week
     ].compact
   end
 
@@ -124,6 +128,17 @@ class SeasonTags
 
   def rikkyo_a_class
     Tag.new(label: RIKKYO_A_CLASS) if a_class?("rikkio")
+  end
+
+  # The week the title was decided in, for a season won outright (not in a
+  # playoff), counting the weeks as SeasonWeeks does over the games of the
+  # standings. Weeks outside CLINCHED_WEEKS (an old season's 4th or 11th) have no tag.
+  def clinched_week
+    games = held_games.select(&:counted_in_stats)
+    game = TitleRace.clinching_game(@season, games: games) or return nil
+    week = SeasonWeeks.new(games).weeks.find { |each| each.games.include?(game) }
+    label = CLINCHED_WEEKS[week&.number]
+    Tag.new(label: label) if label
   end
 
   def row_for(slug)

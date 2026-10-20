@@ -101,7 +101,7 @@ class SeasonsController < ApplicationController
     latest_update_by_season = Game.group(:season_id).maximum(:updated_at)
     season_id_by_key = seasons.filter_map do |season|
       updated_at = latest_update_by_season[season.id]
-      [ "season_tags/v4/#{season.id}/#{updated_at.to_i}", season.id ] if updated_at
+      [ "season_tags/v5/#{season.id}/#{updated_at.to_i}", season.id ] if updated_at
     end.to_h
 
     universities = nil

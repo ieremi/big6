@@ -50,6 +50,16 @@ class TitleRace
     @after = after
   end
 
+  # The game that decided the title: the first after which one university was
+  # the champion whatever happened next (settled, alone). Found by walking back
+  # from the last game while that still held, the counting small near the end;
+  # nil for a season that ended in a playoff (優勝決定戦), or with no race.
+  def self.clinching_game(season, games: games_of(season))
+    games.select(&:decided?).sort_by { |game| order_key(game) }.reverse.take_while do |game|
+      new(season, games: games, after: game).settled&.size == 1
+    end.last
+  end
+
   # The order the games were played in: by day, then by their place in the day
   # (第1試合, 第2試合), then as stored.
   def self.order_key(game)
