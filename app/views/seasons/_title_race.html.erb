@@ -1,14 +1,46 @@
 <%# 優勝のゆくえ (TitleRace): who wins the season for every way the cards still open can end, as a grid —
     the earlier cards' results down the left, the later ones' along the top (each from the side of the university named
     first), and the champion in each cell, in its colours and by its initial (K, W, ...); two or more are a playoff (優勝決定戦). Under it, each
-    university's chance with every game still to play an even chance. Only while the season is open and the counting
-    small enough; a card that never changes the champion is left out. %>
-<% race = local_assigns[:race] %>
+    university's chance with every game still to play an even chance. Only once the counting is small enough; a card
+    that never changes the champion is left out.
+
+    As it stood at the end of a week (TitleRaceWeeks), picked on a slider above it: moving it loads the race of that
+    week into the turbo frame below (week-slider), down to the last week, when the season is over and the champion
+    named. %>
+<% race, weeks, point = local_assigns[:race], local_assigns[:weeks], local_assigns[:point] %>
 <% if race&.applicable? %>
   <section class="title-race">
     <h2 class="card-heading">優勝のゆくえ</h2>
 
-    <% if (settled = race.settled) %>
+    <% if weeks && weeks.points.size > 1 %>
+      <% season = race.season %>
+      <%= form_with url: standings_season_path(season.year, season.term), method: :get, class: "title-race-weeks",
+            data: { controller: "week-slider", turbo_frame: "title-race", turbo_action: "advance",
+                    week_slider_labels_value: weeks.points.to_h { |p| [ p.week, p.label ] } } do |form| %>
+        <%= form.label :week, "週", for: "title-race-week" %>
+        <%= form.range_field :week, id: "title-race-week", min: weeks.points.first.week, max: weeks.points.last.week, step: 1, value: point.week,
+              aria: { valuetext: point.label },
+              data: { week_slider_target: "input", action: "input->week-slider#show change->week-slider#submit" } %>
+        <output for="title-race-week" data-week-slider-target="label"><%= point.label %></output>
+        <noscript><%= form.submit "表示", name: nil %></noscript>
+      <% end %>
+    <% end %>
+
+    <%= turbo_frame_tag "title-race" do %>
+    <% if point && weeks.points.size > 1 %>
+      <%= tag.p "#{point.label}の優勝のゆくえです。", class: "muted title-race-as-of", data: { week: point.week } %>
+    <% end %>
+
+    <% if (settled = race.settled) && race.over? %>
+      <p>
+        <% if settled.size == 1 %>
+          <strong><%= settled.first.short_name %>が優勝しました。</strong>
+        <% else %>
+          <strong><%= settled.map(&:short_name).join("・") %>が勝ち点と勝率で並び、優勝決定戦になりました。</strong>
+          <% if (winner = race.playoff_winner) %><strong>決定戦で<%= winner.short_name %>が優勝しました。</strong><% end %>
+        <% end %>
+      </p>
+    <% elsif settled %>
       <p>
         <% if settled.size == 1 %>
           <strong><%= settled.first.short_name %>の優勝が決まりました。</strong>残りの試合の結果にかかわらず、ほかの大学は届きません。
@@ -84,6 +116,7 @@
       <p class="muted">
         優勝の可能性（残りの試合をすべて五分五分とした場合）：<%= race.chances.map { |team, chance| "#{team.short_name} #{number_to_percentage(chance * 100, precision: 1)}" }.join("、") %>
       </p>
+    <% end %>
     <% end %>
   </section>
 <% end %>

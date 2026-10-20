@@ -78,11 +78,42 @@ class TitleRaceTest < ActiveSupport::TestCase
     assert_equal({ @alpha => 1.0 }, race.chances)
   end
 
-  test "isn't for a season over, nor for the 2020 formats" do
+  test "a season over names its champion, and the 2020 formats have no race" do
     three_teams
     Game.where(played_on: Date.new(2026, 5, 9)..).delete_all
 
-    assert_not TitleRace.new(@season).applicable?
+    race = TitleRace.new(@season)
+    assert race.over?
+    assert_equal [ @alpha ], race.settled
+    assert_nil race.playoff_winner
     assert_not TitleRace.new(Season.create!(year: 2020, term: "autumn")).applicable?
+  end
+
+  test "as of a day, the games played after it are still to play" do
+    three_teams
+    Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
+      game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
+    end
+
+    assert_equal [ @alpha ], TitleRace.new(@season).settled # alpha has both its cards
+    as_of_week1 = TitleRace.new(@season, as_of: Date.new(2026, 5, 8))
+    assert_equal [ "②Alpha-Gamma", "③Beta-Gamma" ], as_of_week1.cards.map(&:label)
+    assert_not as_of_week1.over?
+  end
+
+  test "a season ended level at the top names the playoff's winner" do
+    three_teams
+    Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).update_all(team0_score: 0, team1_score: 0, game_status: "試合終了")
+    Game.where(team0: @alpha, team1: @gamma).update_all(team1_score: 2) # gamma takes alpha's card 2-0
+    Game.where(team0: @gamma, team1: @alpha).update_all(team0_score: 2)
+    Game.where(team0: @beta, team1: @gamma).update_all(team0_score: 2, team1_score: 0, game_status: "試合終了") # beta takes gamma's 2-0
+    Game.where(team0: @gamma, team1: @beta).update_all(team0_score: 0, team1_score: 2, game_status: "試合終了")
+    race = TitleRace.new(@season)
+    assert_equal [ @alpha, @beta, @gamma ], race.settled # 1 point each, 2-2
+    assert_nil race.playoff_winner # no playoff yet
+
+    Game.create!(season: @season, team0: @alpha, team1: @gamma, played_on: Date.new(2026, 5, 20), game_number: 1,
+      team0_score: 1, team1_score: 4, game_status: "試合終了", counted_in_stats: false)
+    assert_equal @gamma, TitleRace.new(@season).playoff_winner
   end
 end

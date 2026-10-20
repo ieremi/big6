@@ -2,7 +2,9 @@
 # season for every way the cards still open can end, as a grid, the way fans
 # chart it — each open card's possible results (2-0, 2-1, 1-2, 0-2 from the
 # side of the university named first) along one side or the other, and the
-# champion in each cell. The standings page shows it under the table.
+# champion in each cell. The standings page shows it under the table, as it
+# stood at the end of a week picked on a slider (as_of, TitleRaceWeeks), down to
+# the end of the season, when every card is over (over?) and it names the champion.
 #
 # The season is ranked as ChampionshipOdds ranks it (and the league does): by
 # 勝ち点, then by 勝率 as an exact fraction, teams level on both meeting in a
@@ -30,16 +32,33 @@ class TitleRace
     end
   end
 
-  attr_reader :season
+  attr_reader :season, :as_of
 
-  def initialize(season, games: nil)
-    @season = season
-    @games = games || Game.held.where(season_id: season.id, counted_in_stats: true).includes(:team0, :team1).to_a
+  # The games of the race: the season's held games counted in the standings
+  # (no playoff), with their universities.
+  def self.games_of(season)
+    Game.held.where(season_id: season.id, counted_in_stats: true).includes(:team0, :team1).to_a
   end
 
-  # Whether there is a race to show: the season is played in cards, some are still open, and few enough to count.
+  # as_of: the race as it stood at the end of that day (TitleRaceWeeks, for the
+  # end of each week), the games played after it counted as still to play; nil
+  # for the race as it stands now.
+  def initialize(season, games: nil, as_of: nil)
+    @season = season
+    @games = games || self.class.games_of(season)
+    @as_of = as_of
+  end
+
+  # Whether there is a race to show: the season is played in cards, and few
+  # enough are open to count (none, once they are all over).
   def applicable?
     computed.present?
+  end
+
+  # Whether every card is over: the champion (or a playoff's universities) is
+  # settled, and won rather than still to be won.
+  def over?
+    computed.present? && computed[:over]
   end
 
   # The cards on the grid (the ones that matter), in the order they are played.
@@ -76,6 +95,15 @@ class TitleRace
     computed.fetch(:champions).values.first
   end
 
+  # The winner of the playoff (優勝決定戦) the season ended in (SeasonChampion),
+  # once it is over with universities level at the top; nil otherwise, or before
+  # the playoff is played.
+  def playoff_winner
+    return nil unless over? && settled.size > 1
+
+    SeasonChampion.of(season)
+  end
+
   # Too many cards matter to draw the grid yet (the race is applicable, but the grid would be too big).
   def too_many_cards?
     computed.present? && computed[:too_many]
@@ -107,9 +135,9 @@ class TitleRace
   end
 
   def cache_key
-    decided = @games.select(&:decided?).map { |game| [ game.id, game.team0_id, game.team1_id, game.team0_score, game.team1_score ].join(":") }.sort
-    still_to_play = @games.reject(&:decided?).map { |game| [ game.id, game.team0_id, game.team1_id, game.played_on, game.game_number ].join(":") }.sort
-    [ "title_race/v1", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
+    decided = @games.select { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.team0_score, game.team1_score ].join(":") }.sort
+    still_to_play = @games.reject { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.played_on, game.game_number ].join(":") }.sort
+    [ "title_race/v2", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
   end
 
   # The cached data with its ids turned back into universities and cards.
@@ -123,7 +151,7 @@ class TitleRace
       cards: cards,
       champions: data[:champions].transform_values { |ids| ids.map { |id| universities.fetch(id) } },
       chances: data[:chances].to_h { |id, chance| [ universities.fetch(id), chance ] },
-      too_many: data[:too_many]
+      too_many: data[:too_many], over: data[:over]
     }
   end
 
@@ -142,7 +170,7 @@ class TitleRace
       ordered = games.sort_by { |game| [ game.played_on, game.game_number.to_i ] }
       first, second = ordered.first.team0, ordered.first.team1
       won = { first.id => 0, second.id => 0 }
-      ordered.select(&:decided?).each do |game|
+      ordered.select { |game| decided?(game) }.each do |game|
         return nil if won.values.max >= 2 # more games after a card was won: not played in cards
 
         winner = winner_id(game) or next
@@ -161,7 +189,7 @@ class TitleRace
           wins: [ won[first.id], won[second.id] ], results: paths.keys.sort_by { |x, y| [ -x, y ] }, paths: paths }
       end
     end
-    return nil if open.empty? || open.size > ChampionshipOdds::OPEN_CARDS
+    return nil if open.size > ChampionshipOdds::OPEN_CARDS
 
     open.sort_by! { |card| [ card[:week].to_i, card[:position] ] }
     # Every combination of results as one number: card i's result (its place in
@@ -177,7 +205,7 @@ class TitleRace
     {
       team_ids: teams.map(&:id),
       cards: open.values_at(*mattering).map { |card| card.slice(:first, :second, :week, :wins, :results, :paths) },
-      champions: grid, chances: chances, too_many: mattering.size > MAX_CARDS
+      champions: grid, chances: chances, too_many: mattering.size > MAX_CARDS, over: open.empty?
     }
   end
 
@@ -186,6 +214,11 @@ class TitleRace
     SeasonWeeks.new(@games).weeks.each_with_object({}) do |week, numbers|
       week.series.each { |series| numbers[[ series.team0.id, series.team1.id ].sort] = week.number }
     end
+  end
+
+  # Whether the game has its result by the day the race is taken at (as_of).
+  def decided?(game)
+    game.decided? && (as_of.nil? || game.played_on <= as_of)
   end
 
   def winner_id(game)
