@@ -26,13 +26,13 @@ class TitleRaceWeeks
     @games = games || TitleRace.games_of(season)
   end
 
-  # The weeks to choose from, in order, or none when the season has no race to
-  # show (TitleRace isn't applicable to it at all).
+  # The weeks to choose from, in order: those whose race has its grid to show
+  # (or its champion), not a week when more than TitleRace::MAX_CARDS cards still
+  # matter and the race only says so. None when the season has no race to show.
   def points
-    @points ||= begin
-      points = all_points.select { |point| open_cards(point.as_of) <= ChampionshipOdds::OPEN_CARDS }
-      points.any? && race(points.last).applicable? ? points : []
-    end
+    @points ||= all_points
+      .select { |point| open_cards(point.as_of) <= ChampionshipOdds::OPEN_CARDS }
+      .select { |point| race(point).applicable? && !race(point).too_many_cards? }
   end
 
   # The point for the week asked for (the week param), or the latest one.
@@ -40,9 +40,10 @@ class TitleRaceWeeks
     points.find { |point| point.week.to_s == week.to_s } || points.last
   end
 
-  # The title race at the point (as it stands now for nil).
+  # The title race at the point (as it stands now for nil), worked out once for each.
   def race(point)
-    TitleRace.new(@season, games: @games, as_of: point&.as_of)
+    @races ||= {}
+    @races[point&.week] ||= TitleRace.new(@season, games: @games, as_of: point&.as_of)
   end
 
   private

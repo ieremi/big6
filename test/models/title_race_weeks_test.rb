@@ -53,6 +53,19 @@ class TitleRaceWeeksTest < ActiveSupport::TestCase
     assert weeks.race(weeks.points.last).over?
   end
 
+  test "a week whose race has too many cards mattering to draw is left out" do
+    play(2, [ 3, 1 ])
+    play(3, [ 0, 2 ])
+    play(9, [ 1, 0 ])
+    weeks = TitleRaceWeeks.new(@season)
+    races = { 1 => Struct.new(:applicable?, :too_many_cards?).new(true, true), 2 => TitleRace.new(@season) }
+
+    stub_method(weeks, :race, ->(point) { races.fetch(point.week) }) do
+      assert_equal [ 2 ], weeks.points.map(&:week)
+      assert_equal 2, weeks.find("1").week
+    end
+  end
+
   test "no week before any result, and none for a season with no race" do
     assert_empty points
     assert_empty TitleRaceWeeks.new(Season.create!(year: 2020, term: "autumn")).points
