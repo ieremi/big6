@@ -85,6 +85,35 @@ class Admin::SuggestionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, Announcement.count
   end
 
+  test "a game's winning and losing pitchers on the wrong sides are shown as they are and as they would be, and applied with a notice" do
+    admin = sign_in
+    loser = Player.create!(scorebook_id: 20231001, university: universities(:one), name: "負け 投手", enter_year: 2023)
+    PitchingLine.create!(game: @game, player: @player, university: @hosei, wins: 1) # 法大 lost 10-15
+    PitchingLine.create!(game: @game, player: loser, university: universities(:one), losses: 1)
+    FixSuggestion.record_pitcher_decisions!
+    suggestion = FixSuggestion.find_by!(kind: "pitcher_decisions")
+
+    get admin_suggestions_path
+    assert_select "tbody td", "勝利投手・敗戦投手が逆"
+
+    get admin_suggestion_path(suggestion)
+    assert_select "h1", /勝利投手・敗戦投手/
+    assert_select "tbody tr", 2
+    assert_equal [ "藤森 康淳", "法大", "勝", "敗" ], css_select("tbody tr:first-child td").map { |td| td.text.strip }
+    assert_select "form[action=?]", apply_admin_suggestion_path(suggestion), 0 # not approved yet
+
+    suggestion.decide!("approved", user: admin)
+    get admin_suggestion_path(suggestion)
+    assert_select "input[name=announcement_title][value*=?]", "の勝利投手・敗戦投手を直しました"
+
+    post apply_admin_suggestion_path(suggestion), params: { announcement_title: "", announcement_body: "" }
+    follow_redirect!
+    assert_select ".flash-notice", "勝利投手・敗戦投手を直し（2人分）、おしらせを掲載しました。"
+    assert_equal [ 0, 1 ], PitchingLine.find_by!(player: @player).values_at(:wins, :losses)
+    assert_match "勝利投手・敗戦投手を直しました", suggestion.reload.announcement.title
+    assert_select "form[action=?] button", unapply_admin_suggestion_path(suggestion), text: "反映を取り消す"
+  end
+
   test "a suggestion with nothing to add says so, and shows how each imported line compares" do
     other = Player.create!(scorebook_id: 20234026, university: @hosei, name: "中村 騎士", enter_year: 2024)
     @suggestion.lines.create!(player: other, scorebook_line_id: 11985, position: "[二]", values: { "pa" => 4, "hits" => 1 })

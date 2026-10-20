@@ -1,7 +1,7 @@
 module Admin
   # The fixes the nightly Scorebook check suggests (FixSuggestion), for an admin
-  # to approve or discard, and to apply an approved one to our batting lines
-  # (or take it out again).
+  # to approve or discard, and to apply an approved one to our batting lines,
+  # or to the winning and losing pitchers (or take it out again).
   class SuggestionsController < BaseController
     LIMIT = 200
 
@@ -39,15 +39,19 @@ module Admin
     # body from the form.
     def apply
       had_notice = @suggestion.announcement.present?
-      added = @suggestion.apply!(user: current_user, title: params[:announcement_title], body: params[:announcement_body])
-      redirect_to admin_suggestion_path(@suggestion), notice: "#{added}人分の打撃成績を反映し、おしらせを#{had_notice ? "更新" : "掲載"}しました。"
+      changed = @suggestion.apply!(user: current_user, title: params[:announcement_title], body: params[:announcement_body])
+      what = @suggestion.kind == "pitcher_decisions" ? "勝利投手・敗戦投手を直し（#{changed}人分）" : "#{changed}人分の打撃成績を反映し"
+      redirect_to admin_suggestion_path(@suggestion), notice: "#{what}、おしらせを#{had_notice ? "更新" : "掲載"}しました。"
     rescue FixSuggestion::NotAllowed => e
       redirect_to admin_suggestion_path(@suggestion), alert: e.message
     end
 
     def unapply
       removed = @suggestion.unapply!
-      redirect_to admin_suggestion_path(@suggestion), notice: "反映を取り消しました（#{removed}人分の打撃成績とおしらせを削除）。"
+      what = @suggestion.kind == "pitcher_decisions" ? "Scorebook から取り込み直し、おしらせを削除" : "#{removed}人分の打撃成績とおしらせを削除"
+      redirect_to admin_suggestion_path(@suggestion), notice: "反映を取り消しました（#{what}）。"
+    rescue FixSuggestion::NotAllowed => e
+      redirect_to admin_suggestion_path(@suggestion), alert: e.message
     end
 
     private

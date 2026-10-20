@@ -15,12 +15,18 @@
 #   same_team_game   the game's two sides are the same university: Scorebook's
 #                    game itself is wrong (its opponent). Only listed, for review.
 #
+# And one found among our own pitching lines (record_pitcher_decisions!):
+#
+#   pitcher_decisions  the game's win or loss is on the wrong side's pitcher, as
+#                      Scorebook has it (PitcherDecisions). Applying moves each
+#                      decision to its side; unapplying imports the game again.
+#
 # confidence is "likely" when the guess is the only game it can be, and
 # "needs_review" otherwise (several games that day, none, or the second kind).
 # The evidence for a guess is worked out when shown (hits_check,
 # roster_check, ...), so it grows with the lines gathered.
 class FixSuggestion < ApplicationRecord
-  KINDS = %w[misfiled_lines same_team_game].freeze
+  KINDS = %w[misfiled_lines same_team_game pitcher_decisions].freeze
   SCOREBOOK_GAME_URL = "https://big6scorebook.jp/game/%d".freeze
   # not_needed: undecided, but nothing to fix here (every line is already in our
   # batting lines, with the same values: only Scorebook's member page files it
@@ -86,6 +92,23 @@ class FixSuggestion < ApplicationRecord
     touched.uniq.each(&:classify!)
   end
 
+  # Makes a pitcher_decisions suggestion for each game whose stored win or loss
+  # is on the wrong side (PitcherDecisions.misplaced_game_ids), from our
+  # pitching lines only, with no network access. As with the others, one already
+  # made (discarded included) is never made again. Returns those made.
+  def self.record_pitcher_decisions!
+    Game.where(id: PitcherDecisions.misplaced_game_ids).where.not(scorebook_game_id: nil).order(:played_on, :id).filter_map do |game|
+      suggestion = find_or_create_by!(key: "pitcher_decisions #{game.scorebook_game_id}") do |created|
+        created.kind = "pitcher_decisions"
+        created.game = game
+        created.scorebook_game_id = game.scorebook_game_id
+        created.played_on = game.played_on
+        created.confidence = "likely"
+      end
+      suggestion if suggestion.previously_new_record?
+    end
+  end
+
   # The player's line of the same day filed under a game of the player's own
   # university, when a line filed under the wrong game has one: then the
   # wrong game's line isn't the player's missing line of that day, but some
@@ -121,9 +144,19 @@ class FixSuggestion < ApplicationRecord
 
   # Whether there is nothing to fix: a misfiled_lines suggestion whose every
   # line is already among our batting lines of the guessed game, imported from
-  # Scorebook with the same values.
+  # Scorebook with the same values; or a pitcher_decisions one whose game has its
+  # decisions on their sides again, as imported (Scorebook has put them right).
   def not_needed?
-    kind == "misfiled_lines" && game.present? && lines.any? && line_states.all? { |state| state.state == :imported_match }
+    case kind
+    when "misfiled_lines" then game.present? && lines.any? && line_states.all? { |state| state.state == :imported_match }
+    when "pitcher_decisions" then game.present? && !applied? && pitcher_decisions.on_their_sides?
+    else false
+    end
+  end
+
+  # The game's decisions, as stored and as they would be moved (pitcher_decisions).
+  def pitcher_decisions
+    @pitcher_decisions ||= PitcherDecisions.new(game)
   end
 
   # Each line's LineState: whether the guessed game already has the player's
@@ -203,15 +236,22 @@ class FixSuggestion < ApplicationRecord
     classify!
   end
 
-  # Whether any of our batting lines came from applying this suggestion.
+  # Whether any of our batting lines came from applying this suggestion, or for
+  # pitcher_decisions, whether its decisions were moved.
   def applied?
-    applied_batting_lines.exists?
+    kind == "pitcher_decisions" ? applied_at.present? : applied_batting_lines.exists?
   end
 
   # Whether it can be applied: approved, a misfiled_lines one with its game
-  # guessed (the only kind that says where the lines go).
+  # guessed (the kind that says where the lines go), or a pitcher_decisions one.
   def applicable?
-    status == "approved" && kind == "misfiled_lines" && game.present? && university.present?
+    return false unless status == "approved" && game.present?
+
+    case kind
+    when "misfiled_lines" then university.present?
+    when "pitcher_decisions" then true
+    else false
+    end
   end
 
   # The lines applying would add: those whose player has no batting line in the
@@ -232,24 +272,38 @@ class FixSuggestion < ApplicationRecord
   # Also publishes the notice about it (Announcement), or updates it when
   # applied again: with the title and body given, or else the default ones
   # (default_announcement). An existing notice keeps when it was published.
+  #
+  # A pitcher_decisions one moves the game's decisions to their sides instead,
+  # and returns how many pitching lines changed.
   def apply!(user:, title: nil, body: nil, now: Time.current)
     raise NotAllowed, "承認済みで、試合が1つに絞れている提案だけ反映できます。" unless applicable?
 
     transaction do
-      rows = lines_to_apply.map { |line| batting_attributes(line, now) }
-      BattingLine.insert_all!(rows) if rows.any?
+      # Worked out before the lines change, from Scorebook's decisions.
+      default_title, default_body = default_announcement
+      changed = if kind == "pitcher_decisions"
+        pitcher_decisions.move!
+      else
+        rows = lines_to_apply.map { |line| batting_attributes(line, now) }
+        BattingLine.insert_all!(rows) if rows.any?
+        rows.size
+      end
       update!(applied_at: now, applied_by: user)
 
-      default_title, default_body = default_announcement
       notice = Announcement.find_or_initialize_by(fix_suggestion_id: id) { |created| created.published_at = now }
       notice.update!(title: title.presence || default_title, body: body.presence || default_body)
       association(:announcement).reset
-      rows.size
+      changed
     end
   end
 
   # Takes the lines applying added out of our batting lines again, and the
   # notice about them off the site. Returns how many lines were removed.
+  #
+  # A pitcher_decisions one has nothing of its own to take out: the game is
+  # imported again from Scorebook instead, which puts its decisions back as
+  # Scorebook has them (one request, made here). If that fails, nothing is
+  # undone.
   def unapply!
     transaction do
       # Not applied_batting_lines.delete_all: through the association that would
@@ -258,6 +312,9 @@ class FixSuggestion < ApplicationRecord
       Announcement.where(fix_suggestion_id: id).destroy_all
       association(:announcement).reset
       update!(applied_at: nil, applied_by: nil)
+      if kind == "pitcher_decisions" && GameStatsImport.call([ game ], sleep_seconds: 0)[:games].zero?
+        raise NotAllowed, "Scorebook から試合の成績を取り込み直せなかったため、取り消していません。時間をおいてやり直してください。"
+      end
       removed
     end
   end
@@ -275,7 +332,12 @@ class FixSuggestion < ApplicationRecord
   #
   # The Scorebook pages of both games are given as URLs, which the notice's
   # page shows as links (NewsHelper#linked_text).
+  #
+  # A pitcher_decisions one's is PitcherDecisions#notice, from the decisions as
+  # stored now (Scorebook's, until applied).
   def default_announcement
+    return pitcher_decisions.notice if kind == "pitcher_decisions"
+
     applied_ids = applied_batting_lines.pluck(:player_id)
     added = (lines.includes(:player).select { |line| applied_ids.include?(line.player_id) } + lines_to_apply).sort_by(&:id)
     match = "#{game.team0.short_name} vs #{game.team1.short_name} #{game.game_number}回戦"

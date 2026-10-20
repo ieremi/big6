@@ -2,7 +2,8 @@ module Admin
   module SuggestionsHelper
     KIND_LABELS = {
       "misfiled_lines" => "別の試合に登録された成績",
-      "same_team_game" => "両チームが同じ大学の試合"
+      "same_team_game" => "両チームが同じ大学の試合",
+      "pitcher_decisions" => "勝利投手・敗戦投手が逆"
     }.freeze
 
     STATUS_LABELS = { "pending" => "未決定", "not_needed" => "対応不要", "approved" => "承認", "discarded" => "却下" }.freeze
@@ -50,8 +51,13 @@ module Admin
       CONFIDENCE_LABELS.fetch(confidence, confidence)
     end
 
-    # "2025-10-05 法大の成績（東大 vs 慶大 に登録）"
+    # "2025-10-05 法大の成績（東大 vs 慶大 に登録）", or for the winning and losing
+    # pitchers "2026-10-19 慶大 vs 明大 3回戦の勝利投手・敗戦投手".
     def fix_suggestion_title(suggestion)
+      if suggestion.kind == "pitcher_decisions" && (game = suggestion.game)
+        return "#{suggestion.played_on} #{game.team0.short_name} vs #{game.team1.short_name} #{round_label(game)}の勝利投手・敗戦投手"
+      end
+
       filed = suggestion.filed_under_game
       where = filed ? "#{filed.team0.short_name} vs #{filed.team1.short_name}" : "試合ID #{suggestion.scorebook_game_id}"
       "#{suggestion.played_on} #{suggestion.university&.short_name}の成績（#{where} に登録）"

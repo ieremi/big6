@@ -82,6 +82,9 @@
   <p class="muted">Scorebook の試合情報で両チームが同じ大学になっています。試合情報そのものの誤りなので、対戦相手を日程から確かめる必要があります。</p>
 <% end %>
 
+<% if @suggestion.kind == "pitcher_decisions" %>
+  <%= render "pitcher_decisions", suggestion: @suggestion %>
+<% else %>
 <h2 class="card-heading">行（<%= @lines.size %>人）</h2>
 <div class="table-scroll">
   <table>
@@ -151,6 +154,7 @@
       <%= button_to "反映を取り消す", unapply_admin_suggestion_path(@suggestion), class: "period-btn", form: { data: { turbo_confirm: "反映した打撃成績と、そのおしらせを削除します。よろしいですか？" } } %>
     </div>
   <% end %>
+<% end %>
 <% end %>
 
 <h2 class="card-heading">決定</h2>

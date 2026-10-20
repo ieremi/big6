@@ -9,6 +9,10 @@
 # take hours on the machine the web server runs on (Render), and a script that
 # long tends not to reach the end there.
 #
+# Each run also looks through our pitching lines for games whose win or loss is
+# on the wrong side (FixSuggestion.record_pitcher_decisions!), for an admin to
+# review on the admin pages.
+#
 # script/big6/check_scorebook_stats.rb reports what has been found.
 class CheckScorebookStatsJob < ApplicationJob
   queue_as :default
@@ -51,6 +55,10 @@ class CheckScorebookStatsJob < ApplicationJob
   end
 
   def perform(batch_size: BATCH_SIZE, sleep_seconds: SLEEP_SECONDS)
+    # Games whose winning and losing pitchers Scorebook has the wrong way round,
+    # from our own pitching lines (a query, no request).
+    FixSuggestion.record_pitcher_decisions!
+
     # Our batting lines change as games are imported, and with them whether a
     # suggestion has anything left to fix.
     FixSuggestion.classify_undecided!

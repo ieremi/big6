@@ -14,7 +14,8 @@ require "json"
 # page lost both teams' batting rows in 2026-10, after they had strayed to the
 # other game of the day), and a page that has less than before shouldn't take
 # lines away from what we have. Batting lines added by applying a FixSuggestion
-# are kept too, unless the page has the player's line itself. A game whose page
+# are kept too, unless the page has the player's line itself, and the winning
+# and losing pitchers an applied FixSuggestion moved stay moved. A game whose page
 # can't be fetched, or carries no player stats, keeps whatever rows it had.
 # stats_checked_at records a successful fetch (even one with no stats) so a
 # backfill can skip games it has already tried.
@@ -63,6 +64,7 @@ class GameStatsImport
 
       batting = rows_for(game, stats.values_at("batterTop", "batterBottom").flatten.compact, player_ids, university_ids, totals) { |row| batting_attributes(row) }
       pitching = rows_for(game, stats.values_at("pitcherTop", "pitcherBottom").flatten.compact, player_ids, university_ids, totals) { |row| pitching_attributes(row) }
+      pitching = PitcherDecisions.on_their_sides(Game.find(game.id), pitching) if pitcher_decisions_fixed.include?(game.id)
 
       if batting.empty? && pitching.empty?
         totals[:without_stats] += 1
@@ -90,6 +92,15 @@ class GameStatsImport
   end
 
   private
+
+  # The games whose winning and losing pitchers an admin has moved to their
+  # sides (an applied FixSuggestion of kind pitcher_decisions, see
+  # PitcherDecisions): importing them again keeps the decisions moved, as long
+  # as Scorebook still has them the wrong way round. (The game is read again
+  # for its score: script/big6/import_game_stats.rb loads only a few columns.)
+  def pitcher_decisions_fixed
+    @pitcher_decisions_fixed ||= FixSuggestion.where(kind: "pitcher_decisions").where.not(applied_at: nil).pluck(:game_id).to_set
+  end
 
   def university_ids_by_scorebook_team_id
     ids_by_slug = University.where(slug: ScorebookSync::SCOREBOOK_TEAM_SLUGS.values).pluck(:slug, :id).to_h

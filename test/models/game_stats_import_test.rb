@@ -89,6 +89,34 @@ class GameStatsImportTest < ActiveSupport::TestCase
     end
   end
 
+  # ---- the winning and losing pitchers (PitcherDecisions)
+
+  # Scorebook's page with the win on 立大's pitcher, although 慶大 won 3-2.
+  def swapped_decisions
+    { "pitcherTop" => [ pitcher(20231007, 2, "win" => 0, "lose" => 1) ], "pitcherBottom" => [ pitcher(20236010, 6, "win" => 1, "lose" => 0) ] }
+  end
+
+  # [wins, losses] of 今津's line and 落合's.
+  def decisions
+    [ @imazu, @ochiai ].map { |player| PitchingLine.find_by!(player: player).values_at(:wins, :losses) }
+  end
+
+  test "decisions on the wrong sides are stored as Scorebook has them, for the nightly check to find" do
+    import(swapped_decisions)
+
+    assert_equal [ [ 0, 1 ], [ 1, 0 ] ], decisions
+    assert_empty Announcement.all
+  end
+
+  test "once an admin has moved them, importing again keeps them moved, the game loaded with only a few columns too" do
+    FixSuggestion.create!(kind: "pitcher_decisions", key: "pitcher_decisions 2026052401", confidence: "likely", status: "approved",
+      game: @game, applied_at: Time.current)
+
+    import(swapped_decisions, game: Game.select(:id, :scorebook_game_id, :played_on).find(@game.id))
+
+    assert_equal [ [ 1, 0 ], [ 0, 1 ] ], decisions
+  end
+
   test "skips people who were not imported as players" do
     result = import({ "batterTop" => [ batter(20231007, 2), batter(99999999, 2) ], "pitcherTop" => [ pitcher(88888888, 2) ] })
 

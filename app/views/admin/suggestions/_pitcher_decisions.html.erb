@@ -1,0 +1,76 @@
+<%# A pitcher_decisions suggestion: the game's decisions as stored and as they would be moved (PitcherDecisions), and applying it. %>
+<%
+  game = suggestion.game
+  decisions = suggestion.pitcher_decisions
+  label = ->(decision) { [ ("勝" if decision[:wins].positive?), ("敗" if decision[:losses].positive?) ].compact.join.presence || "—" }
+%>
+
+<h2 class="card-heading">勝利投手・敗戦投手</h2>
+<p class="muted">
+  スコア：<%= game.team0.short_name %> <%= game.team0_score %>-<%= game.team1_score %> <%= game.team1.short_name %>。
+  勝利投手は勝ったチームの、敗戦投手は負けたチームの投手のはずです。Scorebook では逆になっているため、投手はそのままで、勝ちと負けを入れ替えます。
+  連盟公式サイトの試合ページ（勝利投手に「●」が付きます）でも確かめてください。
+</p>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>投手</th>
+        <th>大学</th>
+        <th><%= suggestion.applied? ? "反映後（当サイト）" : "Scorebook（当サイト）" %></th>
+        <th>直すと</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% decisions.changes.each do |line, moved| %>
+        <tr>
+          <td><%= link_to line.player.name, player_path(line.player) %></td>
+          <td><%= (line.university_id == game.team0_id ? game.team0 : game.team1).short_name %></td>
+          <td><%= label.(wins: line.wins, losses: line.losses) %></td>
+          <td><%= label.(moved) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% if suggestion.applicable? || suggestion.applied? %>
+  <h2 class="card-heading">成績への反映</h2>
+  <% if suggestion.applied_at %>
+    <p class="muted"><%= suggestion.applied_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> に <%= suggestion.applied_by&.email %> が反映。</p>
+  <% end %>
+  <p class="muted">当サイトの投手成績の勝ち・負けを入れ替えます。反映した後は、Scorebook から取り込み直しても入れ替えたままです。取り消すと、この試合を Scorebook から取り込み直して元に戻します。</p>
+  <% if (published = suggestion.announcement) %>
+    <p class="muted">掲載中のおしらせ（<%= published.published_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M") %> 掲載<%= "、#{published.updated_at.in_time_zone("Asia/Tokyo").strftime("%Y-%m-%d %H:%M")} 更新" if published.revised? %>）：</p>
+    <blockquote class="admin-notice">
+      <strong><%= link_to published.title, news_item_path(published) %></strong>
+      <p><%= linked_text(published.body) %></p>
+    </blockquote>
+  <% end %>
+
+  <% if suggestion.applicable? && !suggestion.applied? && !decisions.on_their_sides? %>
+    <% default_title, default_body = suggestion.default_announcement %>
+    <%= form_with url: apply_admin_suggestion_path(suggestion), method: :post, class: "admin-decision",
+          data: { turbo_confirm: "この試合の勝利投手・敗戦投手を入れ替え、おしらせを掲載します。よろしいですか？" } do |form| %>
+      <p class="muted">おしらせ（反映と同時に掲載します）：</p>
+      <%= form.label :announcement_title, "タイトル" %>
+      <%= form.text_field :announcement_title, value: default_title %>
+      <%= form.label :announcement_body, "本文" %>
+      <%= form.text_area :announcement_body, value: default_body, rows: 8 %>
+      <div class="period-toolbar">
+        <%= form.button "成績に反映", class: "period-btn" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if suggestion.applicable? && !suggestion.applied? && decisions.on_their_sides? %>
+    <p class="muted">入れ替えるものはありません。勝利投手・敗戦投手は、Scorebook から取り込んだ時点ですでに正しい側にいます。</p>
+  <% end %>
+
+  <% if suggestion.applied? %>
+    <div class="period-toolbar">
+      <%= button_to "反映を取り消す", unapply_admin_suggestion_path(suggestion), class: "period-btn",
+            form: { data: { turbo_confirm: "この試合を Scorebook から取り込み直して勝ち・負けを元に戻し、おしらせを削除します。よろしいですか？" } } %>
+    </div>
+  <% end %>
+<% end %>

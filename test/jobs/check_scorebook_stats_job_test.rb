@@ -57,6 +57,16 @@ class CheckScorebookStatsJobTest < ActiveJob::TestCase
     assert classified
   end
 
+  test "each run also suggests the games whose winning and losing pitchers are on the wrong sides" do
+    game = games(:one)
+    game.update!(team0_score: 1, team1_score: 0, game_status: "試合終了", scorebook_game_id: 2026081001)
+    PitchingLine.create!(game: game, player: @players[0], university: game.team0, losses: 1)
+
+    checked_ids { CheckScorebookStatsJob.perform_now(batch_size: 1, sleep_seconds: 0) }
+
+    assert_equal [ "pitcher_decisions", game ], FixSuggestion.sole.values_at(:kind, :game_id).then { |kind, id| [ kind, Game.find(id) ] }
+  end
+
   test "one player's failure doesn't stop the others" do
     failing = ->(id) { raise "boom" if id == @players[0].scorebook_id; [] }
 
