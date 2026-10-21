@@ -1675,6 +1675,28 @@ tr.bench-only td a {
   font-size: 0.85rem;
 }
 
+/* 強さとは (seasons/strength): a formula set apart on a line of its own, and the
+   small tables of figures, kept to their content's width. */
+.formula {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.9rem;
+  border-left: 3px solid var(--border);
+  background: var(--surface);
+  line-height: 1.9;
+}
+
+.formula-table {
+  width: auto;
+  margin: 0.5rem 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.formula-table th,
+.formula-table td {
+  padding: 0.3rem 0.6rem;
+  text-align: center;
+}
+
 /* What changed from the team's previous game, above its roster (games/_roster_diff). */
 .roster-diff {
   margin: 0.5rem 0;

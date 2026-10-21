@@ -1,0 +1,164 @@
+<%# 強さとは: how the standings page's 強さの推移 (TeamStrength) is worked out, for readers with high-school mathematics.
+    Every figure comes from TeamStrength's constants and its own arithmetic (rate, score, chance), so the page follows
+    the model when its weights are fitted again. %>
+<%
+  content_for :title, site_title("強さとは")
+  content_for :description, "順位表の「強さの推移」で使っている、東京六大学野球の各大学の強さの計算のしかた。勝率をもとにしたロジスティック回帰で、平均的な相手に勝つ確率を見積もっています。"
+  content_for :image_url, seasons_index_og_image_url
+
+  past_seasons = TeamStrength::PAST_SEASONS
+  past_weight = TeamStrength::PAST_WEIGHT
+  current_weight = TeamStrength::CURRENT_WEIGHT
+  past_prior = TeamStrength::PAST_PRIOR
+  current_prior = TeamStrength::CURRENT_PRIOR
+  check = TeamStrength::CHECK
+  percent = ->(value) { "#{number_with_precision(value * 100, precision: 1)}%" }
+  decimal = ->(value, digits = 3) { number_with_precision(value, precision: digits) }
+
+  # The worked example: two made-up universities, A strong for years and B weak.
+  example = {
+    "A" => { past: [ 60, 40 ], current: [ 7, 3 ] },
+    "B" => { past: [ 30, 70 ], current: [ 2, 8 ] }
+  }.transform_values do |records|
+    past = TeamStrength.rate(records[:past], past_prior)
+    current = TeamStrength.rate(records[:current], current_prior)
+    records.merge(past_rate: past, current_rate: current, score: TeamStrength.score(past, current))
+  end
+  difference = example["A"][:score] - example["B"][:score]
+%>
+
+<h1>強さとは</h1>
+
+<p>
+  順位表のページの「強さの推移」は、各大学が<strong>平均的な強さの相手に勝つ確率</strong>を、開幕前と、試合が1つ終わるごとに見積もったものです。
+  このページでは、その確率をどう計算しているかを、高校数学の範囲で説明します。
+</p>
+
+<h2>1. 材料は2つの勝率</h2>
+<p>使うのは、各大学の次の2つの勝率だけです。</p>
+<ul class="list">
+  <li><strong>直近<%= past_seasons %>シーズンの勝率</strong>：その大学の長い目で見た実力です。</li>
+  <li><strong>このシーズンの、その時点までの勝率</strong>：今季の調子です。</li>
+</ul>
+<p>
+  勝率は「勝ち ÷（勝ち＋負け）」で、引き分けは数えません。点差や安打、投手などは使っていないので、強さは試合の勝ち負けでしか動きません。
+</p>
+
+<h2>2. 勝率を五分に少し寄せる</h2>
+<p>
+  今季まだ2試合しかしていない大学が2勝0敗なら、勝率は100%です。しかし、それで「どの相手にも必ず勝つ」とは考えられません。
+  試合数が少ないうちの勝率は、たまたまの結果に大きく左右されるからです。
+</p>
+<p>そこで、実際の成績に<strong>架空の五分の成績</strong>を足してから勝率を計算します。</p>
+<p class="formula">
+  直近<%= past_seasons %>シーズンの勝率 ＝（勝ち ＋ <%= past_prior %>）÷（勝ち ＋ 負け ＋ <%= past_prior * 2 %>）<br>
+  今季の勝率 ＝（勝ち ＋ <%= current_prior %>）÷（勝ち ＋ 負け ＋ <%= current_prior * 2 %>）
+</p>
+<p>
+  たとえば今季2勝0敗なら（2 ＋ <%= current_prior %>）÷（2 ＋ <%= current_prior * 2 %>）＝ <%= percent.(TeamStrength.rate([ 2, 0 ], current_prior)) %> です。
+  試合数が増えるほど足した分の影響は小さくなり、20勝0敗なら <%= percent.(TeamStrength.rate([ 20, 0 ], current_prior)) %> になります。
+</p>
+
+<h2>3. 強さの点数</h2>
+<p>2つの勝率に重みを掛けて足したものを、その大学の<strong>強さの点数</strong>とします。</p>
+<p class="formula">
+  強さの点数 ＝ <%= past_weight %> ×（直近<%= past_seasons %>シーズンの勝率）＋ <%= current_weight %> ×（今季の勝率）
+</p>
+<p>
+  勝率は0から1の小数で計算します。重み <%= past_weight %> と <%= current_weight %> の決め方は、<a href="#fitting">6.</a> で説明します。
+  データから求めた結果、直近<%= past_seasons %>シーズンの勝率の重みのほうが大きくなりました。長い目で見た実力のほうが、今季の少ない試合の勝率よりも、次の試合の結果をよく表すということです。
+</p>
+
+<h2>4. 点数の差から、勝つ確率へ</h2>
+<p>大学Xと大学Yが対戦するとき、Xが勝つ確率を、2校の点数の差 <var>d</var>（Xの点数 − Yの点数）から次の式で求めます。</p>
+<p class="formula">
+  Xが勝つ確率 ＝ 1 ÷（1 ＋ <var>e</var><sup>−<var>d</var></sup>）
+</p>
+<p>
+  <var>e</var> は自然対数の底（約2.718）です。この式の形の関数を<strong>ロジスティック関数</strong>といいます。次のような性質があります。
+</p>
+<ul class="list">
+  <li>点数が同じ（<var>d</var> ＝ 0）なら、<var>e</var><sup>0</sup> ＝ 1 なので、確率は 1 ÷ 2 ＝ 50% です。</li>
+  <li>差が大きくなるほど100%に近づき、逆の向きに大きくなるほど0%に近づきます。ただし、100%や0%ちょうどにはなりません。</li>
+  <li>Xが勝つ確率とYが勝つ確率を足すと、ちょうど1になります（1 ÷（1 ＋ <var>e</var><sup>−<var>d</var></sup>）＋ 1 ÷（1 ＋ <var>e</var><sup><var>d</var></sup>）＝ 1）。</li>
+</ul>
+<table class="formula-table">
+  <thead>
+    <tr><th>点数の差 <var>d</var></th><% [ 0, 0.5, 1, 2, 3 ].each do |d| %><td><%= d %></td><% end %></tr>
+  </thead>
+  <tbody>
+    <tr><th>勝つ確率</th><% [ 0, 0.5, 1, 2, 3 ].each do |d| %><td><%= percent.(TeamStrength.chance(d)) %></td><% end %></tr>
+  </tbody>
+</table>
+
+<h2>5. 平均的な相手</h2>
+<p>
+  グラフに描いているのは、特定の相手に勝つ確率ではなく、<strong>6校の点数の平均と同じ点数の、架空の相手</strong>に勝つ確率です。
+  つまり、<var>d</var> を「その大学の点数 − 6校の点数の平均」として、4. の式で計算しています。
+  50%より上なら平均より強く、下なら平均より弱いということです。
+</p>
+
+<h3 class="card-heading">計算の例</h3>
+<p>長年強い架空の大学Aと、長年弱い架空の大学Bが対戦するとします。</p>
+<div class="table-scroll">
+  <table class="formula-table">
+    <thead>
+      <tr><th></th><th>直近<%= past_seasons %>シーズン</th><th>今季</th><th>強さの点数</th></tr>
+    </thead>
+    <tbody>
+      <% example.each do |name, records| %>
+        <tr>
+          <th>大学<%= name %></th>
+          <td><%= records[:past].join("勝") %>敗 → <%= decimal.(records[:past_rate]) %></td>
+          <td><%= records[:current].join("勝") %>敗 → <%= decimal.(records[:current_rate]) %></td>
+          <td><%= past_weight %> × <%= decimal.(records[:past_rate]) %> ＋ <%= current_weight %> × <%= decimal.(records[:current_rate]) %> ＝ <%= decimal.(records[:score]) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+<p>
+  点数の差は <%= decimal.(example["A"][:score]) %> − <%= decimal.(example["B"][:score]) %> ＝ <%= decimal.(difference) %> なので、
+  Aが勝つ確率は 1 ÷（1 ＋ <var>e</var><sup>−<%= decimal.(difference) %></sup>）＝ <strong><%= percent.(TeamStrength.chance(difference)) %></strong>、Bが勝つ確率は <%= percent.(1 - TeamStrength.chance(difference)) %> です。
+</p>
+
+<h2 id="fitting">6. 重みの決め方（ロジスティック回帰）</h2>
+<p>
+  重み <%= past_weight %> と <%= current_weight %> は、過去の試合の結果から決めています。<%= check[:fitted_before] - 1 %>年までの試合（引き分けを除く）で、
+  各試合の前の時点の2つの勝率から、4. の式で「先攻の大学が勝つ確率」を計算します。そして、<strong>実際に起きた結果に、式ができるだけ高い確率を与えるような重み</strong>を探します。
+</p>
+<p>
+  たとえば、ある試合でXが勝ったなら、式がXの勝つ確率を0.7と見積もっていればその試合については0.7、0.4と見積もっていれば0.4です。
+  これを全試合について掛け合わせた値（<strong>尤度</strong>）がいちばん大きくなる重みを選びます。掛け算のままだと数が小さくなりすぎるので、実際には対数をとって足し合わせ、その和を最大にします（log は掛け算を足し算に変えるからです）。
+  この方法を<strong>最尤法</strong>といい、確率をロジスティック関数で表してこの方法で重みを決めることを<strong>ロジスティック回帰</strong>といいます。
+</p>
+<p>
+  過去を何シーズン見るかは、2・5・10シーズンを試して、次に説明する当たり具合がいちばんよかった<%= past_seasons %>シーズンにしました。
+  勝率に足す架空の試合（<%= past_prior %>勝<%= past_prior %>敗と<%= current_prior %>勝<%= current_prior %>敗）は、試合数が少ないうちの勝率が極端にならない程度に決めたもので、重みのようにデータから求めたものではありません。
+</p>
+
+<h2>7. どのくらい当たるか</h2>
+<p>
+  重みを決めるのに使っていない<%= check[:fitted_before] %>年以降の<%= number_with_delimiter(check[:games]) %>試合で、当たり具合を確かめました。
+</p>
+<ul class="list">
+  <li><strong>的中率</strong>：勝つ確率が50%以上と見積もった側が実際に勝った割合は <%= percent.(check[:called_right]) %> でした。</li>
+  <li>
+    <strong>対数損失</strong>：各試合で、実際に勝った側に式が与えた確率を <var>p</var> として、−log <var>p</var>（自然対数）の平均です。
+    確信をもって当てるほど0に近づき、外れるほど大きくなります。どの試合も五分五分（<var>p</var> ＝ 0.5）と見積もると log 2 ＝ <%= decimal.(Math.log(2)) %> です。
+    この式では <%= decimal.(check[:log_loss]) %> でした。
+  </li>
+</ul>
+<p>
+  ただし、この改善のほとんどは東大の試合によるものです。東大の試合を除いた<%= number_with_delimiter(check[:games_without_tokyo]) %>試合では、的中率 <%= percent.(check[:called_right_without_tokyo]) %>、対数損失 <%= decimal.(check[:log_loss_without_tokyo]) %> で、
+  五分五分（<%= decimal.(Math.log(2)) %>）よりわずかによいだけです。東大以外の5校どうしは、勝率だけではほとんど差がつかないということです。
+</p>
+
+<h2>8. わからないこと</h2>
+<ul class="list">
+  <li>勝ち負けしか見ていないので、点差、安打、先発投手、けが人などは考えに入っていません。</li>
+  <li>東大以外の5校どうしで、強さが数ポイント違っても、それは誤差の範囲です。</li>
+  <li>シーズン序盤は、今季の勝率を五分に寄せているので、開幕前の値からあまり動きません。今季の調子が表れてくるのは後半です。</li>
+</ul>
+
+<p class="muted"><%= link_to "シーズン一覧へ", seasons_path %></p>

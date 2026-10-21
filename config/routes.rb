@@ -84,6 +84,7 @@ Rails.application.routes.draw do
   get "seasons/card_orders", to: "seasons#card_orders", as: :card_orders_seasons
   get "seasons/standings_orders", to: "seasons#standings_orders", as: :standings_orders_seasons
   get "seasons/conventions", to: "seasons#conventions", as: :conventions_seasons
+  get "seasons/strength", to: "seasons#strength", as: :strength_seasons
   get "seasons/:year/:term/og.png", to: "seasons#og_image", as: :season_og_image, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term", to: "seasons#show", as: :season, constraints: { year: /\d{4}/, term: /spring|autumn/ }
   get "seasons/:year/:term/standings", to: "seasons#standings", as: :standings_season, constraints: { year: /\d{4}/, term: /spring|autumn/ }

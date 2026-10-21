@@ -87,6 +87,19 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the strength chart links to the page explaining it, whose figures come from the model" do
+    get standings_season_url(2026, "spring")
+    assert_select "section.team-strength a[href=?]", strength_seasons_path
+
+    get strength_seasons_url
+
+    assert_response :success
+    assert_select "h1", "強さとは"
+    assert_select ".formula", text: /#{TeamStrength::PAST_WEIGHT} ×（直近10シーズンの勝率）＋ #{TeamStrength::CURRENT_WEIGHT} ×（今季の勝率）/
+    assert_select ".formula-table td", "50.0%" # level sides
+    assert_select "p", text: /対数損失 #{TeamStrength::CHECK[:log_loss_without_tokyo]}/
+  end
+
   test "a button picks the game, and the race is the one once it had ended" do
     Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
       game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)

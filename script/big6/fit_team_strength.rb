@@ -4,7 +4,8 @@
 # season's so far), fitted on the games of the seasons before FIT_UNTIL and
 # checked on those from it, against an even chance in every game. Draws are
 # left out. No network; prints the weights to put in TeamStrength, which this
-# changes nothing of.
+# changes nothing of. It also gives the check without 東大's games, where most of
+# the gain over an even chance comes from.
 #
 # Run with: bin/rails runner script/big6/fit_team_strength.rb
 #           FIT_UNTIL=2015 bin/rails runner script/big6/fit_team_strength.rb
@@ -17,7 +18,7 @@ rows = Season.order(:year, :term).flat_map do |season|
   strength.each_game_features.filter_map do |game, team0, team1|
     next if game.team0_score == game.team1_score
 
-    [ season.year, [ 1.0, team0[0] - team1[0], team0[1] - team1[1] ], game.team0_score > game.team1_score ? 1 : 0 ]
+    [ season.year, [ 1.0, team0[0] - team1[0], team0[1] - team1[1] ], game.team0_score > game.team1_score ? 1 : 0, [ game.team0.slug, game.team1.slug ].include?("tokyo") ]
   end
 end
 train, test = rows.partition { |year, _, _| year < fit_until }
@@ -47,3 +48,6 @@ puts format("weights: intercept %.3f, past %.3f, this season %.3f", *weights)
 puts format("in TeamStrength:     past %.2f, this season %.2f", TeamStrength::PAST_WEIGHT, TeamStrength::CURRENT_WEIGHT)
 puts format("log loss %.4f (an even chance: %.4f), %.1f%% of games called right",
   log_loss.(test) { |x| predict.(weights, x) }, Math.log(2), hit_rate.(test) { |x| predict.(weights, x) } * 100)
+others = test.reject(&:last)
+puts format("without 東大's games (%d): log loss %.4f, %.1f%% called right",
+  others.size, log_loss.(others) { |x| predict.(weights, x) }, hit_rate.(others) { |x| predict.(weights, x) } * 100)

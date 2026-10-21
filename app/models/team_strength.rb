@@ -11,10 +11,11 @@
 # of the side's score less the mean.
 #
 # The weights were fitted on the games up to 2009 and checked on those from
-# 2010 (script/big6/fit_team_strength.rb, 2026-10-21): log loss 0.554 against
-# 0.693 for an even chance in every game, 69% of games called right. Most of
-# that is 東大: among the other five the model is only a little better than an
-# even chance (0.681), so a few points between two of them is within error.
+# 2010 (script/big6/fit_team_strength.rb, 2026-10-21; CHECK, which the page
+# explaining it shows): log loss 0.554 against 0.693 for an even chance in
+# every game, 69% of games called right. Most of that is 東大: without its
+# games the model is only a little better than an even chance (0.686), so a
+# few points between two of the other five is within error.
 # Only wins and losses move it: runs, hits and pitchers don't come into it.
 class TeamStrength
   PAST_SEASONS = 10
@@ -23,10 +24,30 @@ class TeamStrength
   PAST_PRIOR = 2
   CURRENT_PRIOR = 3
 
+  # How the weights did on the games they weren't fitted on, as
+  # script/big6/fit_team_strength.rb reported it (2026-10-21): the games, the
+  # log loss (an even chance in every game: ln 2 = 0.693) and the share called
+  # right, all of them and without 東大's. Run it again when the weights change.
+  CHECK = {
+    fitted_before: 2010, games: 1118, log_loss: 0.554, called_right: 0.686,
+    games_without_tokyo: 779, log_loss_without_tokyo: 0.686, called_right_without_tokyo: 0.575
+  }.freeze
+
   # A win rate eased towards .500 by prior games' worth of one.
   def self.rate(record, prior)
     wins, losses = record
     (wins + prior) / (wins + losses + 2.0 * prior)
+  end
+
+  # A side's strength score from its two eased win rates.
+  def self.score(past_rate, current_rate)
+    PAST_WEIGHT * past_rate + CURRENT_WEIGHT * current_rate
+  end
+
+  # The chance of beating a side whose score is difference lower: the logistic
+  # function, 0.5 for sides level, and for two sides the two chances add up to 1.
+  def self.chance(difference)
+    1 / (1 + Math.exp(-difference))
   end
 
   def initialize(season)
@@ -82,15 +103,14 @@ class TeamStrength
   end
 
   def score(university_id, so_far)
-    past, current = features(university_id, so_far)
-    PAST_WEIGHT * past + CURRENT_WEIGHT * current
+    self.class.score(*features(university_id, so_far))
   end
 
   # Each university's chance of beating a side of the six's mean strength.
   def chances(so_far)
     scores = universities.to_h { |university| [ university, score(university.id, so_far) ] }
     mean = scores.values.sum / scores.size
-    scores.transform_values { |value| 1 / (1 + Math.exp(-(value - mean))) }
+    scores.transform_values { |value| self.class.chance(value - mean) }
   end
 
   # Adds the game's win and loss (a draw adds nothing).

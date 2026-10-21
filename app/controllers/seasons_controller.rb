@@ -82,6 +82,11 @@ class SeasonsController < ApplicationController
     @results = ScheduleConventions.all
   end
 
+  # 強さとは: how TeamStrength (the standings page's 強さの推移) is worked out,
+  # for readers with high-school mathematics. All in the view, from its constants.
+  def strength
+  end
+
   def index_og_image
     send_data SiteOgImage.new(title: "Seasons").to_png, type: "image/png", disposition: "inline"
   end
