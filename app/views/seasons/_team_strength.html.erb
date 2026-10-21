@@ -1,0 +1,18 @@
+<%# 強さの推移 (TeamStrength): each university's chance of beating an average side, before the opening day and once
+    each game had ended, as a line chart (seasons/_university_line_chart), with what it is worked out from. %>
+<% points = strength.points %>
+<% if points.size > 1 %>
+  <section class="team-strength">
+    <h2 class="card-heading">強さの推移</h2>
+    <%= render "seasons/university_line_chart",
+          rows: points.map { |point, chances|
+            point ? { label: point.label, tooltip: "#{point.label}のあと", week: point.week, values: chances } : { label: "開幕前", tooltip: "開幕前", week: nil, values: chances }
+          },
+          caption: "平均的な相手に勝つ確率（直近#{TeamStrength::PAST_SEASONS}シーズンとこのシーズンのそれまでの勝率から）",
+          aria_label: "試合ごとの強さの推移" %>
+    <p class="muted">
+      各大学の直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率と、このシーズンのその時点までの勝率から、平均的な強さの相手に勝つ確率を見積もったものです。
+      試合の勝ち負けだけで動き、得点や投手は考えに入れていません。2010年以降の試合で確かめると、勝敗の予想は約7割当たりますが、東大の試合を除くと五分五分よりわずかに良い程度です。数ポイントの差は誤差の範囲です。
+    </p>
+  </section>
+<% end %>

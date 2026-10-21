@@ -1,11 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The hover layer of the chart of each university's chance of the title, game
-// by game (seasons/_title_race_chances): a vertical line follows the pointer,
-// snapping to the nearest game, with a dot on each line and one tooltip giving
-// the game and every university's chance there. With the chart focused, the
-// arrow keys move from game to game. The figures come from the data value
-// (built by the server); names go in with textContent.
+// The hover layer of the charts of a line for each university, game by game
+// (seasons/_university_line_chart: the title chances and the strengths): a
+// vertical line follows the pointer, snapping to the nearest game, with a dot
+// on each line and one tooltip giving the game and every university's value.
+// With the chart focused, the arrow keys move from game to game. The figures
+// come from the data value (built by the server); names go in with textContent.
 export default class extends Controller {
   static targets = ["svg", "crosshair", "dot", "tooltip"]
   static values = { data: Object, width: Number, top: Number, height: Number }
@@ -65,7 +65,7 @@ export default class extends Controller {
   // strong, the name after it, keyed by a short stroke of the university's colour.
   renderTooltip(point) {
     const heading = document.createElement("div")
-    heading.className = "chance-tooltip-heading"
+    heading.className = "line-chart-tooltip-heading"
     heading.textContent = point.label
 
     const rows = this.dataValue.universities
@@ -73,9 +73,9 @@ export default class extends Controller {
       .sort((a, b) => b.chance - a.chance)
       .map((university) => {
         const row = document.createElement("div")
-        row.className = "chance-tooltip-row"
+        row.className = "line-chart-tooltip-row"
         const key = document.createElement("span")
-        key.className = "chance-key"
+        key.className = "line-chart-key"
         key.style.background = university.color
         const value = document.createElement("strong")
         value.textContent = `${Number((university.chance * 100).toFixed(1))}%`

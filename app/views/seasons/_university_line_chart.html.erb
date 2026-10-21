@@ -1,0 +1,119 @@
+<%# A line for each university over a season's games, a share from 0 to 100% up the side: the title chances
+    (seasons/_title_race_chances) and the strengths (seasons/_team_strength). The rows run along the bottom in order,
+    each week's first named (a row with no week, such as the opening day, has no tick); each row is
+    { label:, tooltip:, week:, values: { University => 0..1 } }, a university missing from a row being at 0. Pointing
+    at the chart (or moving along it with the arrow keys once it has focus) shows the row and every university's value
+    there (line-chart); a table under it has the same figures. The lines are in the universities' own colours
+    (University#color), as in the title race grid (see .line-chart in the stylesheet); the end of each line above 0 is
+    labelled.
+
+    Locals: rows, caption, aria_label, and note (a line under the legend, optional). %>
+<%
+  note = local_assigns[:note]
+  # The order of the legend: 明大's purple and 慶大's navy, the closest pair, apart.
+  order = %w[waseda keio hosei tokyo meiji rikkio]
+  universities = rows.flat_map { |row| row[:values].keys }.uniq.sort_by { |university| order.index(university.slug) || order.size }
+  percent = ->(value) { "#{number_with_precision(value.to_f * 100, precision: 1, strip_insignificant_zeros: true)}%" }
+
+  chart_w = 640
+  chart_h = 240
+  pad_l = 40
+  pad_r = 96
+  pad_t = 12
+  pad_b = 28
+  plot_w = chart_w - pad_l - pad_r
+  plot_h = chart_h - pad_t - pad_b
+  last = rows.size - 1
+  x_for = ->(index) { (pad_l + index.to_f / last * plot_w).round(1) }
+  y_for = ->(value) { (pad_t + plot_h - value.to_f * plot_h).round(1) }
+  week_starts = rows.each_index.select { |i| rows[i][:week] && (i.zero? || rows[i - 1][:week] != rows[i][:week]) }
+  # Each week's first row has a tick; its name only when far enough from the last name to fit (a week of one game
+  # would put two on top of each other).
+  week_names = week_starts.each_with_object([]) { |i, named| named << i if named.empty? || x_for.(i) - x_for.(named.last) >= 44 }
+
+  # The end of each line above 0 has a dot, and a label; of the universities whose ends are too close to be read apart,
+  # only the highest is labelled (the legend, the tooltip and the table have the rest), or all of them in one label
+  # when they are level ("明大・早大 50%", a playoff's even split).
+  ends = rows.last[:values].select { |_, value| value.positive? }.sort_by { |_, value| -value }
+  end_groups = ends.slice_when { |(_, above), (_, below)| above - below >= 0.08 }.to_a
+  end_label = lambda do |group|
+    level = group.take_while { |_, value| value == group.first.last }
+    "#{level.map { |university, _| university.short_name }.join("・")} #{percent.(group.first.last)}"
+  end
+
+  data = {
+    universities: universities.map { |university| { slug: university.slug, name: university.short_name, color: university.color } },
+    points: rows.each_with_index.map do |row, index|
+      { label: row[:tooltip], x: x_for.(index), values: universities.to_h { |university| [ university.slug, row[:values].fetch(university, 0) ] } }
+    end
+  }
+%>
+<figure class="line-chart" data-controller="line-chart" data-line-chart-data-value="<%= data.to_json %>"
+        data-line-chart-width-value="<%= chart_w %>" data-line-chart-top-value="<%= pad_t %>" data-line-chart-height-value="<%= plot_h %>">
+  <figcaption class="muted"><%= caption %></figcaption>
+  <div class="line-chart-plot">
+    <svg viewBox="0 0 <%= chart_w %> <%= chart_h %>" preserveAspectRatio="xMidYMid meet" role="img" tabindex="0"
+         aria-label="<%= aria_label %>。矢印キーで試合を移れます。数値は下の表にもあります。"
+         data-line-chart-target="svg"
+         data-action="pointermove->line-chart#point pointerleave->line-chart#hide focus->line-chart#focus blur->line-chart#hide keydown->line-chart#key">
+      <% [ 0, 0.25, 0.5, 0.75, 1 ].each do |value| %>
+        <line x1="<%= pad_l %>" y1="<%= y_for.(value) %>" x2="<%= pad_l + plot_w %>" y2="<%= y_for.(value) %>" class="line-chart-gridline" />
+        <text x="<%= pad_l - 6 %>" y="<%= y_for.(value) + 4 %>" text-anchor="end" class="line-chart-axis-label"><%= (value * 100).round %>%</text>
+      <% end %>
+      <% week_starts.each do |index| %>
+        <line x1="<%= x_for.(index) %>" y1="<%= pad_t + plot_h %>" x2="<%= x_for.(index) %>" y2="<%= pad_t + plot_h + 4 %>" class="line-chart-gridline" />
+      <% end %>
+      <% week_names.each do |index| %>
+        <text x="<%= x_for.(index) %>" y="<%= chart_h - 8 %>" text-anchor="<%= index.zero? ? "start" : "middle" %>" class="line-chart-axis-label">第<%= rows[index][:week] %>週</text>
+      <% end %>
+
+      <% universities.each do |university| %>
+        <% line = rows.each_with_index.map { |row, index| "#{x_for.(index)},#{y_for.(row[:values].fetch(university, 0))}" }.join(" ") %>
+        <polyline points="<%= line %>" class="line-chart-line" style="stroke: <%= university.color %>" />
+      <% end %>
+      <% ends.each do |university, value| %>
+        <circle cx="<%= x_for.(last) %>" cy="<%= y_for.(value) %>" r="4" class="line-chart-end" style="fill: <%= university.color %>" />
+      <% end %>
+      <% end_groups.each do |group| %>
+        <text x="<%= x_for.(last) + 9 %>" y="<%= y_for.(group.first.last) + 4 %>" class="line-chart-end-label"><%= end_label.(group) %></text>
+      <% end %>
+
+      <line class="line-chart-crosshair" y1="<%= pad_t %>" y2="<%= pad_t + plot_h %>" data-line-chart-target="crosshair" visibility="hidden" />
+      <% universities.each do |university| %>
+        <circle r="4" class="line-chart-end" style="fill: <%= university.color %>" data-line-chart-target="dot" data-slug="<%= university.slug %>" visibility="hidden" />
+      <% end %>
+    </svg>
+    <div class="line-chart-tooltip" data-line-chart-target="tooltip" hidden></div>
+  </div>
+
+  <ul class="line-chart-legend">
+    <% universities.each do |university| %>
+      <li><span class="line-chart-key" style="background: <%= university.color %>"></span><%= university.short_name %></li>
+    <% end %>
+  </ul>
+  <% if note %>
+    <p class="muted line-chart-note"><%= note %></p>
+  <% end %>
+
+  <details class="line-chart-table">
+    <summary>数値を表で見る</summary>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>試合</th>
+            <% universities.each do |university| %><th><%= university.short_name %></th><% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.each do |row| %>
+            <tr>
+              <td><%= row[:label] %></td>
+              <% universities.each do |university| %><td class="num"><%= percent.(row[:values].fetch(university, 0)) %></td><% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</figure>

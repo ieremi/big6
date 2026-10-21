@@ -63,6 +63,8 @@ class SeasonsController < ApplicationController
     @title_race_timeline = TitleRaceTimeline.new(@season)
     @title_race_point = @title_race_timeline.find(params[:after])
     @title_race = @title_race_timeline.race(@title_race_point)
+    # 強さの推移: each university's chance of beating an average side, game by game.
+    @team_strength = TeamStrength.new(@season)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).

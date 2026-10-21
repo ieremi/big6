@@ -65,14 +65,25 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
 
     get standings_season_url(2026, "spring")
 
-    assert_select "section.title-race figure.chance-chart[data-controller=chance-chart]" do
-      assert_select "svg[role=img][tabindex='0'] polyline.chance-line", 3 # each university with a chance at some point
-      assert_select "svg polyline.chance-line[style=?]", "stroke: #{@alpha.color}" # as in the grid
-      assert_select "svg text.chance-end-label", "Alpha 100%"
-      assert_select "svg text.chance-axis-label", text: "第1週"
-      assert_select ".chance-legend li", 3
-      assert_select ".chance-table tbody tr", 4 # after each of the four games
-      assert_select ".chance-table tbody tr:last-child td", text: "5月10日のGamma 0-3 Alpha（2回戦）"
+    assert_select "section.title-race figure.line-chart[data-controller=line-chart]" do
+      assert_select "svg[role=img][tabindex='0'] polyline.line-chart-line", 3 # each university with a chance at some point
+      assert_select "svg polyline.line-chart-line[style=?]", "stroke: #{@alpha.color}" # as in the grid
+      assert_select "svg text.line-chart-end-label", "Alpha 100%"
+      assert_select "svg text.line-chart-axis-label", text: "第1週"
+      assert_select ".line-chart-legend li", 3
+      assert_select ".line-chart-table tbody tr", 4 # after each of the four games
+      assert_select ".line-chart-table tbody tr:last-child td", text: "5月10日のGamma 0-3 Alpha（2回戦）"
+    end
+  end
+
+  test "a chart shows each university's strength from the opening day on, game by game" do
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.team-strength h2", "強さの推移"
+    assert_select "section.team-strength figure.line-chart[data-controller=line-chart]" do
+      assert_select "svg polyline.line-chart-line", 3 # every university of the season
+      assert_select ".line-chart-table tbody tr", 3 # the opening day and the two games ended
+      assert_select ".line-chart-table tbody tr:first-child td", text: "開幕前"
     end
   end
 

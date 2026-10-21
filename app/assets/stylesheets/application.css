@@ -1521,25 +1521,26 @@ tr.bench-only td a {
   border: 1px solid var(--border);
 }
 
-/* The chart of each university's chance of the title, game by game
-   (seasons/_title_race_chances, chance_chart_controller.js). The lines are in
-   the universities' own colours, as in the grid under it. 早大's, 慶大's and
-   明大's are dark, and faint on the dark surface (contrast 1.1-1.5), and 早大's
-   and 慶大's are close for red-green colour-blind readers: the line ends are
-   labelled, and the figures are in the tooltip and the table under the chart. */
-.chance-chart {
+/* The charts of a line for each university, game by game: the title chances
+   and the strengths (seasons/_university_line_chart, line_chart_controller.js).
+   The lines are in the universities' own colours, as in the title race grid.
+   早大's, 慶大's and 明大's are dark, and faint on the dark surface (contrast
+   1.1-1.5), and 早大's and 慶大's are close for red-green colour-blind readers:
+   the line ends are labelled, and the figures are in the tooltip and the table
+   under the chart. */
+.line-chart {
   margin: 0.5rem 0 1rem;
 }
 
-.chance-chart figcaption {
+.line-chart figcaption {
   margin-bottom: 0.25rem;
 }
 
-.chance-chart-plot {
+.line-chart-plot {
   position: relative;
 }
 
-.chance-chart svg {
+.line-chart svg {
   display: block;
   width: 100%;
   height: auto;
@@ -1547,28 +1548,28 @@ tr.bench-only td a {
   touch-action: pan-y;
 }
 
-.chance-chart svg:focus-visible {
+.line-chart svg:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.chance-gridline {
+.line-chart-gridline {
   stroke: var(--border);
   stroke-width: 1;
 }
 
-.chance-axis-label,
-.chance-end-label {
+.line-chart-axis-label,
+.line-chart-end-label {
   fill: var(--text-muted);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
-.chance-end-label {
+.line-chart-end-label {
   fill: var(--text);
 }
 
-.chance-line {
+.line-chart-line {
   fill: none;
   stroke-width: 2;
   stroke-linejoin: round;
@@ -1576,17 +1577,17 @@ tr.bench-only td a {
 }
 
 /* End markers and the hover dots: a ring in the surface colour keeps them clear of the lines they sit on. */
-.chance-end {
+.line-chart-end {
   stroke: var(--surface);
   stroke-width: 2;
 }
 
-.chance-crosshair {
+.line-chart-crosshair {
   stroke: var(--text-muted);
   stroke-width: 1;
 }
 
-.chance-tooltip {
+.line-chart-tooltip {
   position: absolute;
   top: 0;
   z-index: 10;
@@ -1602,32 +1603,32 @@ tr.bench-only td a {
   box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
 }
 
-.chance-tooltip-heading {
+.line-chart-tooltip-heading {
   margin-bottom: 0.2rem;
   color: var(--text-muted);
 }
 
-.chance-tooltip-row {
+.line-chart-tooltip-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   font-variant-numeric: tabular-nums;
 }
 
-.chance-tooltip-row strong {
+.line-chart-tooltip-row strong {
   min-width: 3.2em;
   text-align: right;
 }
 
 /* A short stroke of the line's colour, as the key in the legend and the tooltip. */
-.chance-key {
+.line-chart-key {
   display: inline-block;
   width: 14px;
   height: 2px;
   border-radius: 1px;
 }
 
-.chance-legend {
+.line-chart-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
@@ -1638,23 +1639,23 @@ tr.bench-only td a {
   color: var(--text-muted);
 }
 
-.chance-legend li {
+.line-chart-legend li {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-.chance-note {
+.line-chart-note {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
 }
 
-.chance-table {
+.line-chart-table {
   margin-top: 0.5rem;
   font-size: 0.85rem;
 }
 
-.chance-table td.num {
+.line-chart-table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }

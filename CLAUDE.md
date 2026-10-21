@@ -40,7 +40,7 @@ In the devcontainer, `DB_HOST=postgres` points `config/database.yml` at the comp
 - **GameMember** (roster per game, 2021 onward), **BattingLine**, **PitchingLine** (per-game box score; innings are stored as `outs`).
 - **PrimeMinisterTerm** and **GdpPerCapitaYear**: reference data shown on season pages (from Wikidata and the World Bank).
 
-Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and importers, view-model calculators (`Standings`, `ChampionshipOdds`, `TitleRace`, `SeasonChampion`, `CardOrders`, `StandingsOrders`, `ScheduleConventions`, `Matchup`, `TeamRecord`, `PlayerStats`, `PlayerRanking`, `PlayerSearch`, `SeasonWeeks`, `GameScoreboard`, ...) and OG image renderers (`OgImage` subclasses; `OgImages` is the shared entry point for both the site and the API). Every class opens with a comment explaining why it exists. Read that comment before changing the class.
+Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and importers, view-model calculators (`Standings`, `ChampionshipOdds`, `TitleRace`, `TeamStrength`, `SeasonChampion`, `CardOrders`, `StandingsOrders`, `ScheduleConventions`, `Matchup`, `TeamRecord`, `PlayerStats`, `PlayerRanking`, `PlayerSearch`, `SeasonWeeks`, `GameScoreboard`, ...) and OG image renderers (`OgImage` subclasses; `OgImages` is the shared entry point for both the site and the API). Every class opens with a comment explaining why it exists. Read that comment before changing the class.
 
 ## Data sources and syncing
 
