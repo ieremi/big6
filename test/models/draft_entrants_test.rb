@@ -47,6 +47,23 @@ class DraftEntrantsTest < ActiveSupport::TestCase
     assert_equal [ beta_autumn ], second.titles
   end
 
+  test "each player's league career at the plate and on the mound, the playoffs left out" do
+    season = won(2025, "spring", @alpha, @beta)
+    league, other = Game.where(season: season).order(:played_on).to_a
+    playoff = Game.create!(season: season, team0: @alpha, team1: @beta, played_on: Date.new(2025, 6, 1), game_number: 1,
+      team0_score: 1, team1_score: 0, game_status: "試合終了", counted_in_stats: false)
+    BattingLine.create!(game: league, player: @star, university: @alpha, ab: 4, hits: 2)
+    BattingLine.create!(game: other, player: @star, university: @alpha, ab: 4, hits: 1)
+    BattingLine.create!(game: playoff, player: @star, university: @alpha, ab: 4, hits: 4)
+    PitchingLine.create!(game: league, player: @star, university: @alpha, outs: 27, earned_runs: 3)
+    PitchingLine.create!(game: playoff, player: @star, university: @alpha, outs: 27, earned_runs: 0)
+
+    star, prospect, = draft.entrants
+    assert_equal [ 8, 3, 0.375 ], [ star.batting.ab, star.batting.hits, star.batting.average ]
+    assert_equal [ 27, 3, 3.0 ], [ star.pitching.outs, star.pitching.earned_runs, star.pitching.era ]
+    assert_equal [ nil, nil ], [ prospect.batting.average, prospect.pitching.era ] # none: "---" on the page
+  end
+
   test "a player in the file the site doesn't have is an error, not a row left out" do
     @second.destroy!
 

@@ -18,8 +18,11 @@ class DraftEntrants
   end
 
   # One player who filed: the player, the day his league received it, his pick
-  # (nil when not picked), and the seasons his university won while he was there.
-  Entrant = Struct.new(:player, :university, :filed_on, :pick, :titles, :seasons_counted, keyword_init: true) do
+  # (nil when not picked), the seasons his university won while he was there,
+  # and his league career at the plate and on the mound (a BattingLine::Totals
+  # with at-bats and hits, a PitchingLine::Totals with outs and earned runs; 0
+  # for none), the playoffs left out as on his page (PlayerStats).
+  Entrant = Struct.new(:player, :university, :filed_on, :pick, :titles, :seasons_counted, :batting, :pitching, keyword_init: true) do
     def picked?
       pick.present?
     end
@@ -50,13 +53,17 @@ class DraftEntrants
   def entrants
     @entrants ||= begin
       players = Player.where(scorebook_id: rows.map { |row| row.fetch("scorebook_id") }).includes(:university).index_by(&:scorebook_id)
+      batting = career_sums(BattingLine, players.values, :ab, :hits)
+      pitching = career_sums(PitchingLine, players.values, :outs, :earned_runs)
       rows.map do |row|
         player = players.fetch(row.fetch("scorebook_id")) { raise KeyError, "no player #{row["scorebook_id"]} (#{row["name"]}) in #{self.class.path(year)}" }
         seasons = seasons_while_there(player)
         Entrant.new(
           player: player, university: player.university, filed_on: row.fetch("filed_on"),
           pick: row["pick"] && Pick.new(**row["pick"].symbolize_keys.slice(:team, :round, :position, :development)),
-          titles: seasons.select { |season| champions[season.id] == player.university }, seasons_counted: seasons
+          titles: seasons.select { |season| champions[season.id] == player.university }, seasons_counted: seasons,
+          batting: BattingLine::Totals.new(**batting.fetch(player.id, { ab: 0, hits: 0 })),
+          pitching: PitchingLine::Totals.new(**pitching.fetch(player.id, { outs: 0, earned_runs: 0 }))
         )
       end.sort_by { |entrant| [ entrant.university.position, entrant.picked? ? 0 : 1, entrant.pick&.development ? 1 : 0, entrant.pick&.round.to_i, entrant.filed_on, entrant.player.scorebook_id ] }
     end
@@ -81,6 +88,15 @@ class DraftEntrants
 
   def rows
     @data.fetch("players")
+  end
+
+  # { player id => { column => sum } } of the players' lines in the games counted
+  # in stats (no playoff), in one query for them all.
+  def career_sums(line_class, players, *columns)
+    table = line_class.table_name
+    line_class.joins(:game).where(player_id: players.map(&:id), games: { counted_in_stats: true }).group(:player_id)
+      .pluck(:player_id, *columns.map { |column| Arel.sql("SUM(#{table}.#{column})") })
+      .to_h { |player_id, *sums| [ player_id, columns.zip(sums.map(&:to_i)).to_h ] }
   end
 
   # The seasons over among the four years from the player's entry year.

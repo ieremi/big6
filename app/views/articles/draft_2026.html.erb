@@ -13,6 +13,16 @@
   development = picked.select { |entrant| entrant.pick.development }
   none = University.order(:position).reject { |university| draft.by_university.any? { |filed, _, _| filed == university } }
   most_titles = entrants.map { |entrant| entrant.titles.size }.max.to_i
+  # 打率 and 防御率, league career with the playoffs left out, each with what it is over (at-bats, innings) in small
+  # type: a figure over a handful of at-bats says little. "---" for none, sorting last.
+  average_cell = lambda do |entrant|
+    average, at_bats = entrant.batting.average, entrant.batting.ab
+    tag.td(safe_join([ batting_average_label(average), (tag.span("（#{at_bats}打数）", class: "muted") if at_bats.positive?) ].compact), data: { sort_value: average || "" })
+  end
+  era_cell = lambda do |entrant|
+    era, outs = entrant.pitching.era, entrant.pitching.outs
+    tag.td(safe_join([ era_label(era), (tag.span("（#{innings_label(outs)}回）", class: "muted") if outs.positive?) ].compact), data: { sort_value: era || "" })
+  end
 %>
 
 <p><%= link_to "← 読み物", articles_path %></p>
@@ -50,7 +60,7 @@
   <h2 class="card-heading">指名された選手</h2>
   <div class="table-scroll">
     <table>
-      <thead><tr><th>選手</th><th>大学</th><th>守備</th><th>球団</th><th>順位</th></tr></thead>
+      <thead><tr><th>選手</th><th>大学</th><th>守備</th><th>球団</th><th>順位</th><th>打率</th><th>防御率</th></tr></thead>
       <tbody>
         <% picked.each do |entrant| %>
           <tr>
@@ -59,6 +69,8 @@
             <td><%= entrant.pick.position %></td>
             <td><%= entrant.pick.team %></td>
             <td><%= entrant.pick.label %></td>
+            <%= average_cell.(entrant) %>
+            <%= era_cell.(entrant) %>
           </tr>
         <% end %>
       </tbody>
@@ -68,6 +80,7 @@
   <h2 class="card-heading">プロ野球志望届を出した選手（<%= entrants.size %>人）</h2>
   <p>
     「在学中の優勝」は、入学した年の春季からの4年間に、その大学がリーグ戦で優勝したシーズンの数です（選手が出場したかどうかは問いません）。
+    打率と防御率はリーグ戦の通算で（優勝決定戦を除く）、かっこの中はその打数と投球回です。打席や登板のない選手は「---」です。
     <% if in_progress %>
       <%= in_progress.title %>は開催中のため、まだ数えていません。優勝が決まると、このページにも反映されます。
     <% end %>
@@ -84,6 +97,8 @@
           <%= sortable_column_header("志望届の受付", "D") %>
           <%= sortable_column_header("指名", "R") %>
           <%= sortable_column_header("在学中の優勝", "T", first: "desc") %>
+          <%= sortable_column_header("打率", "A", first: "desc") %>
+          <%= sortable_column_header("防御率", "E") %>
         </tr>
       </thead>
       <tbody>
@@ -101,6 +116,8 @@
                 <span class="muted">（<%= entrant.titles.map { |season| link_to season.title.delete_suffix("季"), season_path(season.year, season.term) }.then { |links| safe_join(links, "、") } %>）</span>
               <% end %>
             </td>
+            <%= average_cell.(entrant) %>
+            <%= era_cell.(entrant) %>
           </tr>
         <% end %>
       </tbody>
