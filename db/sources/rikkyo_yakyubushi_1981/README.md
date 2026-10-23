@@ -56,4 +56,4 @@ FILE='db/sources/rikkyo_yakyubushi_1981/*.yml' bin/rails runner script/big6/impo
 FILE=db/sources/rikkyo_yakyubushi_1981/1924_autumn.yml DATE=1924-09-24 bin/rails runner script/big6/import_source_game.rb
 ```
 
-取り込んでいないもの: 1928年春季の明治・法政の5試合（回ごとの得点がない）。1928年春季は勝敗表も書き起こしていないので、順位表は載せていない。
+1922年春季から1928年春季までの、本にある立教の試合をすべて取り込んでいる（1928年春季の明治・法政の5試合の回ごとの得点と勝敗表は pp.56–57）。

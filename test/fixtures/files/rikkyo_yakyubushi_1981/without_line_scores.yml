@@ -1,0 +1,29 @@
+# A printed source's season with one game whose line score it gives and one
+# whose it doesn't, and no 勝敗表, for SourceGameImportTest (the real files
+# have no such game left since 1928 spring's were completed from pp.56–57).
+# In a directory named for the book, as the importer cites by it.
+source:
+  pages: "54-55"
+  ndl_url: https://dl.ndl.go.jp/pid/12172714/1/50
+  transcribed_on: 2026-10-12
+
+season:
+  year: 1928
+  term: spring
+
+games:
+  - date: 1928-04-21
+    venue: 戸塚
+    round: 1
+    top: waseda
+    bottom: rikkio
+    score: { waseda: 7, rikkio: 2 }
+    line_score:
+      waseda: "000 013 201"
+      rikkio: "000 100 010"
+
+  - date: 1928-05-05
+    venue: 神宮
+    round: 1
+    round_inferred: true
+    score: { meiji: 5, rikkio: 1 }

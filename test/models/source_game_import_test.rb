@@ -72,10 +72,10 @@ class SourceGameImportTest < ActiveSupport::TestCase
     season = Season.create!(year: 1928, term: "spring")
     %w[waseda tokyo meiji].each.with_index(20) { |slug, position| University.create!(name: slug, short_name: slug, slug: slug, position: position) }
 
-    games, skipped = SourceGameImport.season(Rails.root.join("db/sources/rikkyo_yakyubushi_1981/1928_spring.yml"))
+    games, skipped = SourceGameImport.season(file_fixture("rikkyo_yakyubushi_1981/without_line_scores.yml"))
 
-    assert_equal 4, games.size
-    assert_equal [ Date.new(1928, 5, 5), Date.new(1928, 5, 6), Date.new(1928, 5, 14), Date.new(1928, 5, 15), Date.new(1928, 5, 16) ], skipped
+    assert_equal 1, games.size
+    assert_equal [ Date.new(1928, 5, 5) ], skipped
     assert_nil season.reload.source_standings
   end
 end
