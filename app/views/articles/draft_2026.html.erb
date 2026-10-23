@@ -46,15 +46,15 @@
   <h2 class="card-heading">指名された選手</h2>
   <div class="table-scroll">
     <table>
-      <thead><tr><th>順位</th><th>球団</th><th>選手</th><th>大学</th><th>守備</th></tr></thead>
+      <thead><tr><th>選手</th><th>大学</th><th>守備</th><th>球団</th><th>順位</th></tr></thead>
       <tbody>
         <% picked.each do |entrant| %>
           <tr>
-            <td><%= entrant.pick.label %></td>
-            <td><%= entrant.pick.team %></td>
             <td><%= link_to entrant.player.name, player_path(entrant.player.scorebook_id) %></td>
             <td><%= entrant.university.short_name %></td>
             <td><%= entrant.pick.position %></td>
+            <td><%= entrant.pick.team %></td>
+            <td><%= entrant.pick.label %></td>
           </tr>
         <% end %>
       </tbody>
@@ -68,20 +68,30 @@
       <%= in_progress.title %>は開催中のため、まだ数えていません。優勝が決まると、このページにも反映されます。
     <% end %>
   </p>
+  <%# Sorted in the browser (sortable-table): the universities in their order, the players by their names' reading,
+      the picks by round (the 育成 draft after, players not picked last), the titles as numbers. %>
   <div class="table-scroll">
-    <table>
+    <table data-controller="sortable-table">
       <thead>
-        <tr><th>大学</th><th>選手</th><th>守備</th><th>志望届の受付</th><th>指名</th><th>在学中の優勝</th></tr>
+        <tr>
+          <%= sortable_column_header("大学", "U") %>
+          <%= sortable_column_header("選手", "N") %>
+          <%= sortable_column_header("守備", "P") %>
+          <%= sortable_column_header("志望届の受付", "D") %>
+          <%= sortable_column_header("指名", "R") %>
+          <%= sortable_column_header("在学中の優勝", "T", first: "desc") %>
+        </tr>
       </thead>
       <tbody>
         <% entrants.each do |entrant| %>
           <tr>
-            <td><%= entrant.university.short_name %></td>
-            <td><%= link_to entrant.player.name, player_path(entrant.player.scorebook_id) %></td>
+            <%= sort_cell(entrant.university.short_name, entrant.university.position) %>
+            <td data-sort-value="<%= entrant.player.name_kana.presence || entrant.player.name %>"><%= link_to entrant.player.name, player_path(entrant.player.scorebook_id) %></td>
             <td><%= entrant.pick&.position || entrant.player.position %></td>
-            <td><%= date.(entrant.filed_on) %></td>
-            <td><%= entrant.picked? ? "#{entrant.pick.team} #{entrant.pick.label}" : "—" %></td>
-            <td>
+            <td><%= entrant.filed_on.strftime("%Y-%m-%d") %></td>
+            <%= sort_cell(entrant.picked? ? "#{entrant.pick.team} #{entrant.pick.label}" : "—",
+                  entrant.picked? ? (entrant.pick.development ? 100 : 0) + entrant.pick.round : "") %>
+            <td data-sort-value="<%= entrant.titles.size %>">
               <%= entrant.titles.size %>回
               <% if entrant.titles.any? %>
                 <span class="muted">（<%= entrant.titles.map { |season| link_to season.title.delete_suffix("季"), season_path(season.year, season.term) }.then { |links| safe_join(links, "、") } %>）</span>
