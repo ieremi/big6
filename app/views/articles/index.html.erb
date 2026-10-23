@@ -1,0 +1,17 @@
+<%# The articles (読み物), newest first. %>
+<%
+  content_for :title, site_title("読み物")
+  content_for :description, "東京六大学野球のデータをもとにした読み物の一覧。"
+%>
+
+<h1>読み物</h1>
+
+<ul class="news-list">
+  <% @articles.each do |article| %>
+    <li>
+      <span class="muted"><%= article.published_on.strftime("%Y-%m-%d") %></span>
+      <h3><%= link_to article.title, article_path(article.slug) %></h3>
+      <p><%= article.description %></p>
+    </li>
+  <% end %>
+</ul>

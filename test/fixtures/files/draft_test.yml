@@ -1,0 +1,18 @@
+# A small draft for DraftEntrantsTest and ArticlesControllerTest: two players of
+# Alpha (one picked in the first round, one in the 育成 draft), one of Beta.
+held_on: 2026-10-22
+sources:
+  - name: NPB.jp
+    url: https://npb.jp/draft/2026/
+players:
+  - { scorebook_id: 20236001, name: 二番 手, university: beta, filed_on: 2026-09-08 }
+  - scorebook_id: 20231001
+    name: 一番 星
+    university: alpha
+    filed_on: 2026-10-02
+    pick: { team: 阪神タイガース, round: 1, position: 投手 }
+  - scorebook_id: 20231002
+    name: 育成 枠
+    university: alpha
+    filed_on: 2026-09-05
+    pick: { team: 読売ジャイアンツ, round: 2, position: 捕手, development: true }

@@ -32,7 +32,7 @@ class SitemapsController < ApplicationController
   # What a part's cache depends on: it is rebuilt when any of it changes.
   def version_of(part)
     case part
-    when "pages" then [ Season.maximum(:updated_at)&.to_i, Season.count, Announcement.maximum(:updated_at)&.to_i, Announcement.count ].join("-")
+    when "pages" then [ Season.maximum(:updated_at)&.to_i, Season.count, Announcement.maximum(:updated_at)&.to_i, Announcement.count, Article.all.map(&:slug).join(",") ].join("-")
     when "games" then [ Game.maximum(:updated_at)&.to_i, Game.count ].join("-")
     when "players" then [ Player.maximum(:updated_at)&.to_i, Player.count ].join("-")
     end
@@ -63,6 +63,8 @@ class SitemapsController < ApplicationController
       Entry.new(loc: rankings_url, changefreq: "weekly", priority: "0.5"),
       Entry.new(loc: ranking_url("pitching"), changefreq: "weekly", priority: "0.4"),
       Entry.new(loc: news_url, lastmod: Announcement.maximum(:updated_at), changefreq: "weekly", priority: "0.4"),
+      Entry.new(loc: articles_url, changefreq: "monthly", priority: "0.4"),
+      *Article.all.map { |article| Entry.new(loc: article_url(article.slug), lastmod: article.published_on, changefreq: "monthly", priority: "0.5") },
       Entry.new(loc: api_docs_url, changefreq: "monthly", priority: "0.3"),
       *DeveloperDoc.all.map { |doc| Entry.new(loc: "#{root_url.chomp("/")}#{doc.site_path}", lastmod: doc.updated_at, changefreq: "monthly", priority: "0.2") }
     ]

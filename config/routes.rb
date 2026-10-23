@@ -31,6 +31,8 @@ Rails.application.routes.draw do
   mount ->(env) { Big6Mcp.call(env) }, at: "/mcp"
 
   get "news", to: "news#index", as: :news
+  get "articles", to: "articles#index", as: :articles
+  get "articles/:slug", to: "articles#show", as: :article, constraints: { slug: /[a-z0-9][a-z0-9-]*/ }
   get "developers", to: "developers#show", as: :developers
   get "developers/:page", to: "developers#show", as: :developer_page, constraints: { page: /[a-z0-9][a-z0-9-]*/ }
   get "news/:id", to: "news#show", as: :news_item, constraints: { id: /\d+/ }

@@ -1,0 +1,111 @@
+<%# 2026年ドラフト会議と東京六大学: the players who filed プロ野球志望届, who was picked, and the titles their universities
+    won while they were there (DraftEntrants, from db/articles/draft_2026.yml). The figures in the text are worked out
+    from the data, so they follow it when it is corrected, and when the autumn season's title is decided. %>
+<%
+  draft = DraftEntrants.new(2026)
+  entrants = draft.entrants
+  picked = draft.picked
+  in_progress = draft.season_in_progress
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  date = ->(day) { day.strftime("%-m月%-d日") }
+  first_round = picked.select { |entrant| !entrant.pick.development && entrant.pick.round == 1 }
+  none = University.order(:position).reject { |university| draft.by_university.any? { |filed, _, _| filed == university } }
+  most_titles = entrants.map { |entrant| entrant.titles.size }.max.to_i
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <p>
+    <%= draft.held_on.year %>年<%= date.(draft.held_on) %>のプロ野球ドラフト会議で、東京六大学からは<strong><%= picked.size %>人</strong>が指名されました。
+    プロ野球志望届を出したのは<%= draft.by_university.size %>大学の<%= entrants.size %>人で、そのうち<%= picked.size %>人です。
+    <% if first_round.any? %>
+      1位指名は<%= safe_join(first_round.map { |entrant| "#{entrant.university.short_name}の#{entrant.player.name}（#{entrant.pick.team}）" }, "、") %>でした。
+    <% end %>
+  </p>
+
+  <h2 class="card-heading">大学ごとの人数</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead><tr><th>大学</th><th>志望届</th><th>指名</th></tr></thead>
+      <tbody>
+        <% draft.by_university.each do |university, filed, chosen| %>
+          <tr><th><%= link_to university.short_name, university_path(university.slug) %></th><td><%= filed %>人</td><td><%= chosen %>人</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if none.any? %>
+    <p class="muted"><%= none.map(&:short_name).join("・") %>からは、志望届を出した選手はいませんでした。</p>
+  <% end %>
+
+  <h2 class="card-heading">指名された選手</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>順位</th><th>球団</th><th>選手</th><th>大学</th><th>守備</th></tr></thead>
+      <tbody>
+        <% picked.each do |entrant| %>
+          <tr>
+            <td><%= entrant.pick.label %></td>
+            <td><%= entrant.pick.team %></td>
+            <td><%= link_to entrant.player.name, player_path(entrant.player.scorebook_id) %></td>
+            <td><%= entrant.university.short_name %></td>
+            <td><%= entrant.pick.position %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="card-heading">プロ野球志望届を出した選手（<%= entrants.size %>人）</h2>
+  <p>
+    「在学中の優勝」は、入学した年の春季からの4年間に、その大学がリーグ戦で優勝したシーズンの数です（選手が出場したかどうかは問いません）。
+    <% if in_progress %>
+      <%= in_progress.title %>は開催中のため、まだ数えていません。優勝が決まると、このページにも反映されます。
+    <% end %>
+  </p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>大学</th><th>選手</th><th>守備</th><th>志望届の受付</th><th>指名</th><th>在学中の優勝</th></tr>
+      </thead>
+      <tbody>
+        <% entrants.each do |entrant| %>
+          <tr>
+            <td><%= entrant.university.short_name %></td>
+            <td><%= link_to entrant.player.name, player_path(entrant.player.scorebook_id) %></td>
+            <td><%= entrant.pick&.position || entrant.player.position %></td>
+            <td><%= date.(entrant.filed_on) %></td>
+            <td><%= entrant.picked? ? "#{entrant.pick.team} #{entrant.pick.label}" : "—" %></td>
+            <td>
+              <%= entrant.titles.size %>回
+              <% if entrant.titles.any? %>
+                <span class="muted">（<%= entrant.titles.map { |season| link_to season.title.delete_suffix("季"), season_path(season.year, season.term) }.then { |links| safe_join(links, "、") } %>）</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if most_titles.positive? %>
+    <p class="muted">
+      在学中の優勝がいちばん多いのは<%= most_titles %>回で、<%= entrants.select { |entrant| entrant.titles.size == most_titles }.map { |entrant| entrant.university.short_name }.uniq.join("・") %>の選手です。
+    </p>
+  <% end %>
+
+  <h2 class="card-heading">出典</h2>
+  <ul class="list">
+    <% draft.sources.each do |source| %>
+      <li><%= link_to source["name"], source["url"], target: "_blank", rel: "noopener noreferrer" %></li>
+    <% end %>
+  </ul>
+  <p class="muted">
+    大学生のプロ野球志望届の提出者は、公式の一覧が公開されていないため、報道の一覧によっています（2つの一覧で同じ<%= entrants.size %>人でした）。
+    「志望届の受付」は所属連盟が受け付けた日です。指名の結果はNPBの発表によります。
+  </p>
+</article>

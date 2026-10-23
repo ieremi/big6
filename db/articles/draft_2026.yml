@@ -1,0 +1,69 @@
+# The 東京六大学 players who filed プロ野球志望届 for the 2026 draft, and who was
+# picked, for the article at /articles/draft-2026 (DraftEntrants). Players are
+# keyed by their Scorebook id (Player#scorebook_id); name and university are
+# here only to read the file by. Checked 2026-10-23.
+#
+# filed_on: the day the league received it (所属連盟受付日), as listed by
+#   ベースボールチャンネル (no official list of college filers is published).
+#   ベースボールキング's list of 2026-10-21 has the same 22 players.
+# pick: the team and round from NPB's results; nil for a player not picked.
+#   development: true for a pick in the 育成 draft (none this year).
+held_on: 2026-10-22
+sources:
+  - name: NPB.jp「2026年 プロ野球ドラフト会議 選択選手一覧」
+    url: https://npb.jp/draft/2026/
+  - name: ベースボールチャンネル「プロ野球志望届 提出者一覧｜2026年大学生」
+    url: https://www.baseballchannel.jp/npb/287011/
+  - name: ベースボールキング「2026年度『プロ野球志望届』提出者リスト＜大学生＞」（Yahoo!ニュース、2026年10月21日）
+    url: https://news.yahoo.co.jp/articles/c8827efd2d3fc4e4b7c32f7edc2b3b5396f348e2
+players:
+  - { scorebook_id: 20231014, name: 宮城 誇南, university: waseda, filed_on: 2026-09-24 }
+  - { scorebook_id: 20231043, name: 寺尾 拳聖, university: waseda, filed_on: 2026-09-24 }
+  - { scorebook_id: 20231007, name: 香西 一希, university: waseda, filed_on: 2026-10-02 }
+  - { scorebook_id: 20231009, name: 越井 颯一郎, university: waseda, filed_on: 2026-10-03 }
+  - { scorebook_id: 20231034, name: 壽田 悠毅, university: waseda, filed_on: 2026-10-03 }
+  - { scorebook_id: 20232004, name: 沖村 要, university: keio, filed_on: 2026-09-05 }
+  - { scorebook_id: 20232010, name: 広池 浩成, university: keio, filed_on: 2026-09-05 }
+  - scorebook_id: 20232016
+    name: 渡辺 和大
+    university: keio
+    filed_on: 2026-09-05
+    pick: { team: 福岡ソフトバンクホークス, round: 3, position: 投手 }
+  - { scorebook_id: 20232020, name: 吉開 鉄朗, university: keio, filed_on: 2026-09-05 }
+  - { scorebook_id: 20232023, name: 小原 大和, university: keio, filed_on: 2026-09-05 }
+  - { scorebook_id: 20232015, name: 吉野 太陽, university: keio, filed_on: 2026-09-05 }
+  - scorebook_id: 20232028
+    name: 今津 慶介
+    university: keio
+    filed_on: 2026-09-24
+    pick: { team: 北海道日本ハムファイターズ, round: 5, position: 内野手 }
+  - { scorebook_id: 20233017, name: 松本 直, university: meiji, filed_on: 2026-10-02 }
+  - scorebook_id: 20233004
+    name: 福原 聖矢
+    university: meiji
+    filed_on: 2026-10-02
+    pick: { team: 東京ヤクルトスワローズ, round: 3, position: 捕手 }
+  - { scorebook_id: 20233005, name: 内海 優太, university: meiji, filed_on: 2026-10-02 }
+  - scorebook_id: 20233010
+    name: 岡田 啓吾
+    university: meiji
+    filed_on: 2026-10-02
+    pick: { team: 東北楽天ゴールデンイーグルス, round: 2, position: 内野手 }
+  - scorebook_id: 20233011
+    name: 光弘 帆高
+    university: meiji
+    filed_on: 2026-10-02
+    pick: { team: 広島東洋カープ, round: 5, position: 内野手 }
+  - scorebook_id: 20233013
+    name: 榊原 七斗
+    university: meiji
+    filed_on: 2026-10-02
+    pick: { team: 阪神タイガース, round: 1, position: 外野手 }
+  - scorebook_id: 20234025
+    name: 藤森 康淳
+    university: hosei
+    filed_on: 2026-09-10
+    pick: { team: 福岡ソフトバンクホークス, round: 4, position: 外野手 }
+  - { scorebook_id: 20236003, name: 斎藤 蓉, university: rikkio, filed_on: 2026-09-08 }
+  - { scorebook_id: 20236010, name: 落合 智哉, university: rikkio, filed_on: 2026-09-08 }
+  - { scorebook_id: 20236008, name: 森本 光紀, university: rikkio, filed_on: 2026-09-14 }
