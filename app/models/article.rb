@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "strength-spread", title: "強さの差がいちばん小さかったシーズン、大きかったシーズン", published_on: Date.new(2026, 10, 23),
+      description: "シーズンの終わりの6大学の強さの散らばり（分散）が、いちばん小さかったシーズンと大きかったシーズン。東大を除いた5大学でも。"
+    ),
+    Entry.new(
       slug: "draft-2026", title: "2026年ドラフト会議と東京六大学", published_on: Date.new(2026, 10, 23),
       description: "2026年のプロ野球ドラフト会議で、東京六大学からプロ野球志望届を出した選手と指名の結果、在学中の優勝回数。"
     )

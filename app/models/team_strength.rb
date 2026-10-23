@@ -59,6 +59,14 @@ class TeamStrength
     games.any? && games.none?(&:source_citation)
   end
 
+  # Whether every one of the last PAST_SEASONS seasons has games of the league's
+  # own (not only a printed source's): early on, or after the war's gap, the
+  # past level comes from fewer seasons, and the six all look closer to .500
+  # than they were.
+  def full_history?
+    Game.where(season_id: past_season_ids, counted_in_stats: true, source_citation: nil).distinct.count(:season_id) == PAST_SEASONS
+  end
+
   # [[point, { University => chance of beating an average side }], ...]: first
   # the opening day (point nil), then each game ended (a TitleRaceTimeline::Point),
   # in the order played. A drawn game changes nothing, but is a point all the same.
@@ -139,8 +147,10 @@ class TeamStrength
   end
 
   def past_season_ids
+    return @past_season_ids if @past_season_ids
+
     order = ->(year, term) { [ year, term == "spring" ? 0 : 1 ] }
-    Season.pluck(:id, :year, :term)
+    @past_season_ids = Season.pluck(:id, :year, :term)
       .select { |_, year, term| (order.(year, term) <=> order.(@season.year, @season.term)).negative? }
       .max_by(PAST_SEASONS) { |_, year, term| order.(year, term) }.map(&:first)
   end

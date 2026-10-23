@@ -1,0 +1,98 @@
+<%# 強さの差がいちばん小さかったシーズン、大きかったシーズン: the spread of the six universities' strengths at the end of
+    each season (StrengthSpread), the five largest and smallest, with and without 東大, and every season in a sortable
+    table. The figures in the text are worked out from the data, so they follow it as seasons end. %>
+<%
+  rows = StrengthSpread.rows
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  past = TeamStrength::PAST_SEASONS
+  spread = ->(value) { number_with_precision(value, precision: 3) }
+  # The universities at the season's end, strongest first: 「明大78 早大62 …」, each its chance of beating an average side.
+  standing = ->(row) { row.chances.sort_by { |_, chance| -chance }.map { |university, chance| "#{university.short_name}#{(chance * 100).round}" }.join(" ") }
+  largest, smallest = rows.max_by(5, &:variance), rows.min_by(5, &:variance)
+  largest_others, smallest_others = rows.max_by(5, &:variance_without_tokyo), rows.min_by(5, &:variance_without_tokyo)
+  table = lambda do |list, value|
+    tag.div(class: "table-scroll") do
+      tag.table do
+        tag.thead { tag.tr { safe_join([ tag.th("シーズン"), tag.th("分散"), tag.th("シーズンの終わりの強さ") ]) } } +
+          tag.tbody do
+            safe_join(list.map do |row|
+              tag.tr do
+                safe_join([ tag.td(link_to(row.season.title, standings_season_path(row.season.year, row.season.term))), tag.td(spread.(row.public_send(value)), class: "num"), tag.td(standing.(row)) ])
+              end
+            end)
+          end
+      end
+    end
+  end
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if rows.any? %>
+    <p>
+      6大学の強さがいちばん離れていたのは<strong><%= largest.first.season.title %></strong>、いちばん近かったのは<strong><%= smallest.first.season.title %></strong>でした
+      （<%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンのうち）。
+      ただし差の大きさは、たいてい東大がどれだけ離れていたかで決まります。東大を除いた5大学でいちばん近かったのは<strong><%= smallest_others.first.season.title %></strong>、
+      いちばん離れていたのは<strong><%= largest_others.first.season.title %></strong>です。
+    </p>
+
+    <h2 class="card-heading">強さと、その散らばり</h2>
+    <p>
+      ここでいう強さは、順位表のページの「強さの推移」と同じもので、各大学の直近<%= past %>シーズンの勝率と、そのシーズンの勝率から計算した点数です
+      （<%= link_to "強さとは", strength_seasons_path %>）。表の数字は、シーズンの終わりの時点で、6大学の平均と同じ強さの相手に勝つ確率（%）です。
+    </p>
+    <p>
+      散らばりは、シーズンの最後の試合のあとの6大学の点数の<strong>分散</strong>で測りました。分散は、各大学の点数が6大学の平均からどれだけ離れているかを2乗して、平均したものです。
+      6大学の強さがそろっているほど小さく、離れているほど大きくなります。
+    </p>
+    <p class="muted">
+      強さは直近<%= past %>シーズンの勝率に重きを置いているので、この分散はそのシーズン1季だけでなく、それまでの数年間の差をよく表します。
+      直近<%= past %>シーズンの試合がそろっていないシーズン（戦争による中断のあとの数年と、それより前）は、強さがどの大学も五分に寄って見えるため、数えていません。
+    </p>
+
+    <h2 class="card-heading">差がいちばん大きかったシーズン</h2>
+    <%= table.(largest, :variance) %>
+
+    <h2 class="card-heading">差がいちばん小さかったシーズン</h2>
+    <%= table.(smallest, :variance) %>
+
+    <h2 class="card-heading">東大を除いた5大学では</h2>
+    <p>東大を除いた5大学の点数の分散です（表の強さは6大学のまま）。</p>
+    <h3 class="card-heading">差がいちばん小さかったシーズン</h3>
+    <%= table.(smallest_others, :variance_without_tokyo) %>
+    <h3 class="card-heading">差がいちばん大きかったシーズン</h3>
+    <%= table.(largest_others, :variance_without_tokyo) %>
+
+    <h2 class="card-heading">すべてのシーズン</h2>
+    <p class="muted">見出しを押すと並べ替えられます。</p>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr>
+            <%= sortable_column_header("シーズン", "Y", first: "desc") %>
+            <%= sortable_column_header("分散", "V", first: "desc") %>
+            <%= sortable_column_header("東大を除く分散", "O", first: "desc") %>
+            <th>シーズンの終わりの強さ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.each_with_index do |row, index| %>
+            <tr>
+              <td data-sort-value="<%= index %>"><%= link_to row.season.title, standings_season_path(row.season.year, row.season.term) %></td>
+              <%= sort_cell(spread.(row.variance), row.variance) %>
+              <%= sort_cell(spread.(row.variance_without_tokyo), row.variance_without_tokyo) %>
+              <td><%= standing.(row) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="muted">まだ数えられるシーズンがありません。</p>
+  <% end %>
+</article>

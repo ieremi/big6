@@ -35,6 +35,24 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table[data-controller=sortable-table] tbody td[data-sort-value=?]", "", text: "—" # not picked: last whichever way
   end
 
+  test "the strength spread article names the seasons furthest and closest apart, and lists them all" do
+    alpha, beta = universities(:one), universities(:two)
+    row = ->(year, variance, without) do
+      StrengthSpread::Row.new(season: Season.find_or_create_by!(year: year, term: "spring"), variance: variance, variance_without_tokyo: without,
+        chances: { alpha => 0.7, beta => 0.3 })
+    end
+    rows = [ row.(2001, 0.9, 0.2), row.(2002, 0.4, 0.01), row.(2003, 0.6, 0.5) ]
+
+    stub_method(StrengthSpread, :rows, -> { rows }) { get article_path("strength-spread") }
+
+    assert_response :success
+    assert_select "article p", text: /いちばん離れていたのは\s*2001年春季\s*、いちばん近かったのは\s*2002年春季\s*でした/
+    assert_select "article p", text: /東大を除いた5大学でいちばん近かったのは\s*2002年春季\s*、\s*いちばん離れていたのは\s*2003年春季/
+    assert_select "table[data-controller=sortable-table] tbody tr", 3
+    assert_select "table tbody td", text: "Alpha70 Beta30", minimum: 1
+    assert_select "a[href=?]", strength_seasons_path
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 
