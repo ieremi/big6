@@ -7,7 +7,8 @@
 #   ベースボールチャンネル (no official list of college filers is published).
 #   ベースボールキング's list of 2026-10-21 has the same 22 players.
 # pick: the team and round from NPB's results; nil for a player not picked.
-#   development: true for a pick in the 育成 draft (none this year).
+#   development: true for a pick in the 育成 draft (育成選手選択会議), which
+#   NPB lists in a table of its own on each team's page.
 held_on: 2026-10-22
 sources:
   - name: NPB.jp「2026年 プロ野球ドラフト会議 選択選手一覧」
@@ -36,7 +37,7 @@ players:
     name: 今津 慶介
     university: keio
     filed_on: 2026-09-24
-    pick: { team: 北海道日本ハムファイターズ, round: 5, position: 内野手 }
+    pick: { team: 北海道日本ハムファイターズ, round: 5, position: 内野手, development: true }
   - { scorebook_id: 20233017, name: 松本 直, university: meiji, filed_on: 2026-10-02 }
   - scorebook_id: 20233004
     name: 福原 聖矢

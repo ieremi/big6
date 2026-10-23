@@ -19,7 +19,8 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "2026年ドラフト会議と東京六大学"
-    assert_select "article p", text: /東京六大学からは2人が指名されました。\s*プロ野球志望届を出したのは2大学の3人/
+    assert_select "article p", text: /東京六大学からは2人が指名されました（本指名1人、育成1人）。\s*プロ野球志望届を出したのは2大学の3人/
+    assert_select "article p", text: /育成選手選択会議では、Alphaの育成 枠（読売ジャイアンツ・育成2位）が指名されました/
     assert_select "article p", text: /1位指名はAlphaの一番 星（阪神タイガース）/
     assert_select "table tbody tr td a[href=?]", player_path(star.scorebook_id), text: "一番 星"
     picked_table = css_select("table").find { |table| table.css("th").map(&:text) == %w[選手 大学 守備 球団 順位] }

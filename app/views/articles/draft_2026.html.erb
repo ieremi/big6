@@ -10,6 +10,7 @@
   content_for :description, @article.description
   date = ->(day) { day.strftime("%-m月%-d日") }
   first_round = picked.select { |entrant| !entrant.pick.development && entrant.pick.round == 1 }
+  development = picked.select { |entrant| entrant.pick.development }
   none = University.order(:position).reject { |university| draft.by_university.any? { |filed, _, _| filed == university } }
   most_titles = entrants.map { |entrant| entrant.titles.size }.max.to_i
 %>
@@ -21,17 +22,20 @@
   <h1><%= @article.title %></h1>
 
   <p>
-    <%= draft.held_on.year %>年<%= date.(draft.held_on) %>のプロ野球ドラフト会議で、東京六大学からは<strong><%= picked.size %>人</strong>が指名されました。
+    <%= draft.held_on.year %>年<%= date.(draft.held_on) %>のプロ野球ドラフト会議で、東京六大学からは<strong><%= picked.size %>人</strong>が指名されました<%= "（本指名#{picked.size - development.size}人、育成#{development.size}人）" if development.any? %>。
     プロ野球志望届を出したのは<%= draft.by_university.size %>大学の<%= entrants.size %>人で、そのうち<%= picked.size %>人です。
     <% if first_round.any? %>
       1位指名は<%= safe_join(first_round.map { |entrant| "#{entrant.university.short_name}の#{entrant.player.name}（#{entrant.pick.team}）" }, "、") %>でした。
+    <% end %>
+    <% if development.any? %>
+      育成選手選択会議では、<%= safe_join(development.map { |entrant| "#{entrant.university.short_name}の#{entrant.player.name}（#{entrant.pick.team}・#{entrant.pick.label}）" }, "、") %>が指名されました。
     <% end %>
   </p>
 
   <h2 class="card-heading">大学ごとの人数</h2>
   <div class="table-scroll">
     <table class="formula-table">
-      <thead><tr><th>大学</th><th>志望届</th><th>指名</th></tr></thead>
+      <thead><tr><th>大学</th><th>志望届</th><th>指名（育成を含む）</th></tr></thead>
       <tbody>
         <% draft.by_university.each do |university, filed, chosen| %>
           <tr><th><%= link_to university.short_name, university_path(university.slug) %></th><td><%= filed %>人</td><td><%= chosen %>人</td></tr>
