@@ -63,6 +63,21 @@ class LeagueOfficialScheduleScraperTest < ActiveSupport::TestCase
       Game.where(season: @season).order(:played_on).map { |game| [ game.played_on.to_s, game.game_number, game.game_status ] }
   end
 
+  test "after a rainout, the pair's later games are numbered in the order played, the replay too (2026-10-24's 法大-東大)" do
+    rained_off = create_game("2026-10-24", 1, game_status: "試合前")
+    next_day = create_game("2026-10-25", 2, game_status: "試合前", team0: @rikkio, team1: @hosei) # still Scorebook's 「2回戦」
+
+    created = scrape(schedule(
+      [ "10/24", [ "法大", "-", "立大", true ] ],
+      [ "10/25", [ "立大", "-", "法大" ] ],
+      [ "10/26", [ "法大", "-", "立大" ] ]
+    ))
+
+    assert_nil rained_off.reload.game_number
+    assert_equal 1, next_day.reload.game_number
+    assert_equal [ [ "2026-10-26", 2 ] ], created.map { |game| [ game.played_on.to_s, game.reload.game_number ] }
+  end
+
   test "games with no 中止 are created as before" do
     created = scrape(schedule([ "9/26", [ "法大", "-", "立大" ] ]))
 

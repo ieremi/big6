@@ -162,6 +162,16 @@ class ScorebookSyncTest < ActiveSupport::TestCase
     assert_equal [ "cancelled", nil, 2026092001 ], [ game.reload.game_status, game.game_number, game.scorebook_game_id ]
   end
 
+  test "a rainout recorded from the league's site still renumbers the pair's later games while Scorebook has it as 試合前" do
+    create_game("2026-10-24", nil, game_status: "中止")
+    next_day = create_game("2026-10-25", 2, game_status: "試合前") # Scorebook's label, as we had it
+
+    import(entry(2026102401, "2026-10-24", "1回戦", "試合前"), entry(2026102501, "2026-10-25", "2回戦", "試合前"))
+
+    assert_equal 1, next_day.reload.game_number # the league's numbering, not Scorebook's label
+    assert_equal [ "cancelled", nil ], Game.find_by!(played_on: "2026-10-24").then { |game| [ game.game_status, game.game_number ] }
+  end
+
   test "but a game Scorebook reports played is no longer cancelled, and has its round again" do
     game = create_game("2026-09-20", nil, game_status: "中止")
 

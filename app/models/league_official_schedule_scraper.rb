@@ -47,10 +47,38 @@ class LeagueOfficialScheduleScraper
     doc = fetch_doc
     return [] unless doc
 
-    parse(doc).filter_map { |entry| import(entry) }
+    created = parse(doc).filter_map { |entry| import(entry) }
+    number_in_order_after_cancellations
+    created
   end
 
   private
+
+  # Once a pair has had a game cancelled, its later games are numbered in the
+  # order it plays them, the next number after those already played, as the
+  # league numbers them and as ScorebookSync does once Scorebook has the
+  # cancellation too. Until then Scorebook keeps the labels of the schedule as
+  # first drawn up: after 2026-10-24's 法大-東大 1回戦 was rained off, the next
+  # day's game was still its 「2回戦」, and the replay added here two days on
+  # became another 2回戦. Under the wrong round the live box score (found on
+  # the league's site by round, LeagueOfficialGameScraper) isn't found, and two
+  # games share a page. The playoffs (not counted in stats) are a series of
+  # their own and are left as they are.
+  def number_in_order_after_cancellations
+    games = Game.where(season: @season, counted_in_stats: true).order(:played_on, :game_order, :id).to_a
+    games.group_by { |game| [ game.team0_id, game.team1_id ].sort }.each_value do |pair_games|
+      cancelled = false
+      used = []
+      pair_games.each do |game|
+        next cancelled = true if game.not_held?
+
+        if cancelled && game.game_number != used.max.to_i + 1
+          game.update!(game_number: used.max.to_i + 1)
+        end
+        used << game.game_number if game.game_number
+      end
+    end
+  end
 
   def fetch_doc
     return nil if @season.year < 2005

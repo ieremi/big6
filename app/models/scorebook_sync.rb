@@ -106,6 +106,13 @@ class ScorebookSync
     pair_round_counts = Hash.new(0)
     numbers_used = Hash.new { |hash, key| hash[key] = [] }
     pairs_with_cancellation = Set.new
+    # Games we already have as not held (from the league's site, which reports a
+    # rainout before Scorebook does): a stale 「試合前」 for one of them still
+    # counts as a cancellation here, so the pair's later games keep the numbers
+    # the league gives them (LeagueOfficialScheduleScraper) rather than going
+    # back to the schedule's labels until Scorebook catches up.
+    cancelled_here = Game.where(season: @season).not_held.pluck(:team0_id, :team1_id, :played_on)
+      .to_set { |team0_id, team1_id, played_on| [ [ team0_id, team1_id ].sort, played_on ] }
 
     scorebook_games.sort_by { |info| [ info["gameDay"].to_s, info["gameOrder"].to_i ] }.each do |info|
       next if info["topTeamId"].nil? || info["bottomTeamId"].nil?
@@ -122,10 +129,13 @@ class ScorebookSync
         next
       end
 
+      stale_cancellation = counted && info["gameStatus"] == Game::PENDING_STATUS && cancelled_here.include?([ pair_key, Date.parse(info.fetch("gameDay")) ])
+      pairs_with_cancellation << pair_key if stale_cancellation
+
       match = info["round"].to_s.match(/(\d+)回戦/)
       game_number = match ? match[1].to_i : pair_round_counts[pair_key] + 1
       game_number = numbers_used[pair_key].max.to_i + 1 if counted && pairs_with_cancellation.include?(pair_key)
-      numbers_used[pair_key] << game_number if counted
+      numbers_used[pair_key] << game_number if counted && !stale_cancellation
       pair_round_counts[pair_key] = game_number
 
       game = Game.find_or_initialize_by(
