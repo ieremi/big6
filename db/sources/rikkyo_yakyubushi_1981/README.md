@@ -57,6 +57,6 @@ FILE='db/sources/rikkyo_yakyubushi_1981/*.yml' bin/rails runner script/big6/impo
 FILE=db/sources/rikkyo_yakyubushi_1981/1924_autumn.yml DATE=1924-09-24 bin/rails runner script/big6/import_source_game.rb
 ```
 
-1922年春季から1929年春季までの、本にある立教の試合をすべて取り込んでいる（1928年春季の明治・法政の5試合の回ごとの得点と勝敗表は pp.56–57）。
+1922年春季から1929年秋季までの、本にある立教の試合をすべて取り込んでいる（1928年春季の明治・法政の5試合の回ごとの得点と勝敗表は pp.56–57）。
 `playoff` の試合（1928年秋季の3位決定戦）は、成績に数えない試合として取り込む。回戦の番号はその組の次の番号（試合ページの URL のため）で、
 試合ページなどには回戦の代わりにその名前（「3位決定戦」）が出る。
