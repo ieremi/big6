@@ -1,6 +1,6 @@
 <%# この50年の強さの推移: each university's strength (TeamStrength, the chance of beating an average side) at the end of
-    every season of the last fifty years, as a line chart (seasons/_university_line_chart), then the averages by decade
-    and each university's strongest and weakest season. The season-end figures come from StrengthSpread (cached season
+    every season of the last fifty years, as a chart with buttons for a chance, odds or log odds
+    (seasons/_strength_views), then the averages by decade and each university's strongest and weakest season. The season-end figures come from StrengthSpread (cached season
     by season); the seasons are those over, so the one being played is added once it ends. All worked out from the data. %>
 <%
   first_year = Date.current.year - 49
@@ -28,13 +28,17 @@
       直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率に重きを置いているので、1シーズンの好不調より、数年単位の地力の移り変わりがよく表れます。
     </p>
 
-    <%= render "seasons/university_line_chart",
+    <%= render "seasons/strength_views",
           rows: rows.map { |row|
             { label: row.season.title, tooltip: "#{row.season.title}の終わり", week: nil,
               axis: (row.season.year.to_s if row.season.term == "spring" && (row.season.year % 10).zero?), values: row.chances }
           },
-          caption: "シーズンの終わりの、平均的な相手に勝つ確率",
+          lead: "シーズンの終わりの、",
           aria_label: "この50年のシーズンごとの強さの推移" %>
+    <p class="muted">
+      ボタンで、確率・オッズ・対数オッズを切り替えられます。オッズは勝つ確率と負ける確率の比（平均的な大学が1）で、2校のオッズを割るとその2校の対戦のオッズになります。
+      対数オッズはオッズの自然対数（平均的な大学が0）で、2校の差がその2校の対戦の対数オッズです。
+    </p>
 
     <h2 class="card-heading">年代ごとの平均</h2>
     <p class="muted">その年代のシーズンの終わりの強さの平均です。いちばん高い大学を太字にしています。</p>

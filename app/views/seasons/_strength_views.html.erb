@@ -1,0 +1,47 @@
+<%# The universities' strengths (TeamStrength) as a line chart (seasons/_university_line_chart), with buttons that pick
+    how they are shown (view-switch), the same figures each way: the standings page's 強さの推移 and the articles.
+
+    - 確率: the chance of beating an average side (0 to 100%), the plainest to read.
+    - オッズ: that chance against losing, p ÷ (1 − p) (1 for an average side). Two universities' odds divided give the
+      odds of their game against each other.
+    - 対数オッズ: the natural log of the odds, the strength score less the six's mean (0 for an average side). Two
+      universities' log odds subtracted give their game's, the model's own scale.
+
+    Locals: rows (as the chart takes them, each row's values the chances), aria_label, lead (words before each
+    caption, optional: 「シーズンの終わりの、」) and chance_note (words after the chance's caption, optional). %>
+<%
+  lead = local_assigns[:lead].to_s
+  odds = ->(chance) { chance / (1 - chance) }
+  all_odds = rows.flat_map { |row| row[:values].values.map(&odds) }
+  # Odds from 0 to the next whole number above the highest (a tick at each, 1 being an average side); log odds
+  # symmetric about 0 out to the next half above the furthest.
+  odds_max = [ all_odds.max.ceil, 2 ].max
+  logit_max = [ (all_odds.map { |value| Math.log(value).abs }.max * 2).ceil / 2.0, 1 ].max
+  logit_step = logit_max > 2 ? 1 : 0.5
+  with_values = ->(&convert) { rows.map { |row| row.merge(values: row[:values].transform_values(&convert)) } }
+  views = [
+    { key: "chance", label: "確率", rows: rows,
+      caption: "#{lead}平均的な相手に勝つ確率#{local_assigns[:chance_note]}",
+      scale: { kind: "percent", min: 0, max: 1, ticks: [ 0, 0.25, 0.5, 0.75, 1 ] } },
+    { key: "odds", label: "オッズ", rows: with_values.call(&odds),
+      caption: "#{lead}平均的な相手に対するオッズ（勝つ確率 ÷ 負ける確率。平均的な大学が1）",
+      scale: { kind: "odds", min: 0, max: odds_max, ticks: (0..odds_max).to_a } },
+    { key: "logit", label: "対数オッズ", rows: with_values.call { |chance| Math.log(odds.(chance)) },
+      caption: "#{lead}平均的な相手に対する対数オッズ（オッズの自然対数。平均的な大学が0）",
+      scale: { kind: "logit", min: -logit_max, max: logit_max, ticks: (-logit_max).step(logit_max, logit_step).to_a } }
+  ]
+%>
+<div class="strength-views" data-controller="view-switch">
+  <div class="period-toolbar" role="group" aria-label="強さの表し方">
+    <% views.each_with_index do |view, index| %>
+      <%= tag.button view[:label], type: "button", class: [ "period-btn", ("active" if index.zero?) ], aria: { pressed: index.zero? },
+            data: { view_switch_target: "button", view: view[:key], action: "view-switch#select" } %>
+    <% end %>
+  </div>
+  <% views.each_with_index do |view, index| %>
+    <%= tag.div hidden: !index.zero?, data: { view_switch_target: "panel", view: view[:key] } do %>
+      <%= render "seasons/university_line_chart", rows: view[:rows], caption: view[:caption], scale: view[:scale],
+            aria_label: "#{aria_label}（#{view[:label]}）" %>
+    <% end %>
+  <% end %>
+</div>

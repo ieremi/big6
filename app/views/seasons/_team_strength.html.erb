@@ -1,51 +1,15 @@
 <%# 強さの推移 (TeamStrength): each university's strength before the opening day and once each game had ended, as a
-    line chart (seasons/_university_line_chart), with what it is worked out from. Buttons pick how it is shown
-    (view-switch), the same figures each way:
-
-    - 確率: the chance of beating an average side (0 to 100%), the plainest to read.
-    - オッズ: that chance against losing, p ÷ (1 − p) (1 for an average side). Two universities' odds divided give the
-      odds of their game against each other.
-    - 対数オッズ: the natural log of the odds, the strength score less the six's mean (0 for an average side). Two
-      universities' log odds subtracted give their game's, the model's own scale. %>
+    chart with buttons for a chance, odds or log odds (seasons/_strength_views), with what it is worked out from. %>
 <% points = strength.points %>
 <% if points.size > 1 %>
-  <%
-    row_of = lambda do |point, values|
-      point ? { label: point.label, tooltip: "#{point.label}のあと", week: point.week, values: values } : { label: "開幕前", tooltip: "開幕前", week: nil, values: values }
-    end
-    odds = ->(chance) { chance / (1 - chance) }
-    all_odds = points.flat_map { |_, chances| chances.values.map(&odds) }
-    # Odds from 0 to the next whole number above the highest (a tick at each, 1 being an average side); log odds
-    # symmetric about 0 out to the next half above the furthest.
-    odds_max = [ all_odds.max.ceil, 2 ].max
-    logit_max = [ (all_odds.map { |value| Math.log(value).abs }.max * 2).ceil / 2.0, 1 ].max
-    logit_step = logit_max > 2 ? 1 : 0.5
-    views = [
-      { key: "chance", label: "確率", rows: points.map { |point, chances| row_of.(point, chances) },
-        caption: "平均的な相手に勝つ確率（直近#{TeamStrength::PAST_SEASONS}シーズンとこのシーズンのそれまでの勝率から）",
-        scale: { kind: "percent", min: 0, max: 1, ticks: [ 0, 0.25, 0.5, 0.75, 1 ] } },
-      { key: "odds", label: "オッズ", rows: points.map { |point, chances| row_of.(point, chances.transform_values(&odds)) },
-        caption: "平均的な相手に対するオッズ（勝つ確率 ÷ 負ける確率。平均的な大学が1）",
-        scale: { kind: "odds", min: 0, max: odds_max, ticks: (0..odds_max).to_a } },
-      { key: "logit", label: "対数オッズ", rows: points.map { |point, chances| row_of.(point, chances.transform_values { |chance| Math.log(odds.(chance)) }) },
-        caption: "平均的な相手に対する対数オッズ（オッズの自然対数。平均的な大学が0）",
-        scale: { kind: "logit", min: -logit_max, max: logit_max, ticks: (-logit_max).step(logit_max, logit_step).to_a } }
-    ]
-  %>
-  <section class="team-strength" data-controller="view-switch">
+  <section class="team-strength">
     <h2 class="card-heading">強さの推移</h2>
-    <div class="period-toolbar" role="group" aria-label="強さの表し方">
-      <% views.each_with_index do |view, index| %>
-        <%= tag.button view[:label], type: "button", class: [ "period-btn", ("active" if index.zero?) ], aria: { pressed: index.zero? },
-              data: { view_switch_target: "button", view: view[:key], action: "view-switch#select" } %>
-      <% end %>
-    </div>
-    <% views.each_with_index do |view, index| %>
-      <%= tag.div hidden: !index.zero?, data: { view_switch_target: "panel", view: view[:key] } do %>
-        <%= render "seasons/university_line_chart", rows: view[:rows], caption: view[:caption], scale: view[:scale],
-              aria_label: "試合ごとの強さの推移（#{view[:label]}）" %>
-      <% end %>
-    <% end %>
+    <%= render "seasons/strength_views",
+          rows: points.map { |point, chances|
+            point ? { label: point.label, tooltip: "#{point.label}のあと", week: point.week, values: chances } : { label: "開幕前", tooltip: "開幕前", week: nil, values: chances }
+          },
+          chance_note: "（直近#{TeamStrength::PAST_SEASONS}シーズンとこのシーズンのそれまでの勝率から）",
+          aria_label: "試合ごとの強さの推移" %>
     <p class="muted">
       各大学の直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率と、このシーズンのその時点までの勝率から、平均的な強さの相手に勝つ確率を見積もったものです。
       オッズは勝つ確率と負ける確率の比で、2校のオッズを割ると、その2校の対戦のオッズになります（明大2.0・東大0.25なら8、勝つ確率は8÷9で約89%）。

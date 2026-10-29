@@ -64,9 +64,11 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     stub_method(StrengthSpread, :rows, -> { rows }) { get article_path("strength-50-years") }
 
     assert_response :success
-    assert_select "figure.line-chart svg polyline.line-chart-line", 2
-    assert_select ".line-chart-table tbody tr", 3 # 1975 is more than fifty years ago
-    assert_select "svg text.line-chart-axis-label", text: "2010"
+    assert_select "[data-view=chance]:not([hidden]) figure.line-chart svg polyline.line-chart-line", 2
+    assert_select "[data-controller=view-switch] button.period-btn", %w[確率 オッズ 対数オッズ].size
+    assert_select "[data-view=odds][hidden] figure[data-line-chart-kind-value=odds]"
+    assert_select "[data-view=chance] .line-chart-table tbody tr", 3 # 1975 is more than fifty years ago
+    assert_select "[data-view=chance] svg text.line-chart-axis-label", text: "2010"
     assert_select "table.formula-table tbody th", %w[2010年代 2020年代].size
     assert_select "table tbody tr td", text: /2021年春季（80%）/ # alpha's best
     assert_select "table tbody tr td", text: /2010年秋季（30%）/ # alpha's worst
