@@ -80,10 +80,28 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     get standings_season_url(2026, "spring")
 
     assert_select "section.team-strength h2", "強さの推移"
-    assert_select "section.team-strength figure.line-chart[data-controller=line-chart]" do
+    assert_select "section.team-strength [data-view=chance]:not([hidden]) figure.line-chart[data-controller=line-chart]" do
       assert_select "svg polyline.line-chart-line", 3 # every university of the season
       assert_select ".line-chart-table tbody tr", 3 # the opening day and the two games ended
       assert_select ".line-chart-table tbody tr:first-child td", text: "開幕前"
+    end
+  end
+
+  test "buttons show the strengths as a chance, odds or log odds, the same figures each way" do
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.team-strength[data-controller=view-switch] button.period-btn", %w[確率 オッズ 対数オッズ].size
+    assert_select "section.team-strength button.active[aria-pressed=true][data-view=chance]", "確率"
+    assert_select "section.team-strength div[data-view=odds][hidden] figure[data-line-chart-kind-value=odds]"
+    assert_select "section.team-strength div[data-view=logit][hidden] figure[data-line-chart-kind-value=logit]"
+
+    # The same university's last value, each way: a chance p, its odds p / (1 - p), and their log.
+    chances = css_select("[data-view=chance] .line-chart-table tbody tr:last-child td.num").map { |td| td.text.delete("%").to_f / 100 }
+    odds = css_select("[data-view=odds] .line-chart-table tbody tr:last-child td.num").map { |td| td.text.to_f }
+    logits = css_select("[data-view=logit] .line-chart-table tbody tr:last-child td.num").map { |td| td.text.to_f }
+    chances.zip(odds, logits).each do |chance, odd, logit|
+      assert_in_delta chance / (1 - chance), odd, 0.02
+      assert_in_delta Math.log(odd), logit, 0.02
     end
   end
 

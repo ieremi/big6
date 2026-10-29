@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 // come from the data value (built by the server); names go in with textContent.
 export default class extends Controller {
   static targets = ["svg", "crosshair", "dot", "tooltip"]
-  static values = { data: Object, width: Number, top: Number, height: Number }
+  static values = { data: Object, width: Number, top: Number, height: Number, min: { type: Number, default: 0 }, max: { type: Number, default: 1 }, kind: { type: String, default: "percent" } }
 
   point(event) {
     const rect = this.svgTarget.getBoundingClientRect()
@@ -43,7 +43,7 @@ export default class extends Controller {
   show(index) {
     this.index = index
     const point = this.dataValue.points[index]
-    const y = (chance) => this.topValue + this.heightValue - chance * this.heightValue
+    const y = (value) => this.topValue + this.heightValue - (value - this.minValue) / (this.maxValue - this.minValue) * this.heightValue
 
     this.crosshairTarget.setAttribute("x1", point.x)
     this.crosshairTarget.setAttribute("x2", point.x)
@@ -59,6 +59,13 @@ export default class extends Controller {
     this.tooltipTarget.style.left = `${share * 100}%`
     this.tooltipTarget.style.transform = share > 0.6 ? "translateX(calc(-100% - 12px))" : "translateX(12px)"
     this.tooltipTarget.hidden = false
+  }
+
+  // A value as the chart's kind writes it, as the server does: 「62.5%」, 「1.67」, 「+0.51」.
+  written(value) {
+    if (this.kindValue === "odds") return value.toFixed(2)
+    if (this.kindValue === "logit") return value === 0 ? "0.00" : `${value > 0 ? "+" : ""}${value.toFixed(2)}`
+    return `${Number((value * 100).toFixed(1))}%`
   }
 
   // The game, then a row for each university, highest chance first: the value
@@ -78,7 +85,7 @@ export default class extends Controller {
         key.className = "line-chart-key"
         key.style.background = university.color
         const value = document.createElement("strong")
-        value.textContent = `${Number((university.chance * 100).toFixed(1))}%`
+        value.textContent = this.written(university.chance)
         const name = document.createElement("span")
         name.textContent = university.name
         row.append(key, value, name)

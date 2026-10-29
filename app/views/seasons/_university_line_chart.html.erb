@@ -7,13 +7,30 @@
     (University#color), as in the title race grid (see .line-chart in the stylesheet); the end of each line above 0 is
     labelled.
 
-    Locals: rows, caption, aria_label, and note (a line under the legend, optional). %>
+    Locals: rows, caption, aria_label, note (a line under the legend, optional), and scale (optional): the values'
+    kind, "percent" (0 to 1, the default), "odds" or "logit", with the axis's min, max and ticks. A share leaves out the
+    ends at 0 (a university out of the race); the others label every end. %>
 <%
   note = local_assigns[:note]
+  scale = local_assigns[:scale] || { kind: "percent", min: 0, max: 1, ticks: [ 0, 0.25, 0.5, 0.75, 1 ] }
   # The order of the legend: 明大's purple and 慶大's navy, the closest pair, apart.
   order = %w[waseda keio hosei tokyo meiji rikkio]
   universities = rows.flat_map { |row| row[:values].keys }.uniq.sort_by { |university| order.index(university.slug) || order.size }
-  percent = ->(value) { "#{number_with_precision(value.to_f * 100, precision: 1, strip_insignificant_zeros: true)}%" }
+  # A value as the kind writes it: 「62.5%」, 「1.67」 (odds), 「+0.51」 (log odds); the axis's ticks more briefly.
+  written = lambda do |value|
+    case scale[:kind]
+    when "odds" then number_with_precision(value, precision: 2)
+    when "logit" then format("%+.2f", value).sub("+0.00", "0.00")
+    else "#{number_with_precision(value.to_f * 100, precision: 1, strip_insignificant_zeros: true)}%"
+    end
+  end
+  tick_label = lambda do |value|
+    case scale[:kind]
+    when "odds" then number_with_precision(value, precision: 1, strip_insignificant_zeros: true)
+    when "logit" then value.zero? ? "0" : format("%+g", value)
+    else "#{(value * 100).round}%"
+    end
+  end
 
   chart_w = 640
   chart_h = 240
@@ -25,7 +42,8 @@
   plot_h = chart_h - pad_t - pad_b
   last = rows.size - 1
   x_for = ->(index) { (pad_l + index.to_f / last * plot_w).round(1) }
-  y_for = ->(value) { (pad_t + plot_h - value.to_f * plot_h).round(1) }
+  span = scale[:max] - scale[:min]
+  y_for = ->(value) { (pad_t + plot_h - (value.to_f - scale[:min]) / span * plot_h).round(1) }
   week_starts = rows.each_index.select { |i| rows[i][:week] && (i.zero? || rows[i - 1][:week] != rows[i][:week]) }
   # Each week's first row has a tick; its name only when far enough from the last name to fit (a week of one game
   # would put two on top of each other).
@@ -34,11 +52,11 @@
   # The end of each line above 0 has a dot, and a label; of the universities whose ends are too close to be read apart,
   # only the highest is labelled (the legend, the tooltip and the table have the rest), or all of them in one label
   # when they are level ("明大・早大 50%", a playoff's even split).
-  ends = rows.last[:values].select { |_, value| value.positive? }.sort_by { |_, value| -value }
-  end_groups = ends.slice_when { |(_, above), (_, below)| above - below >= 0.08 }.to_a
+  ends = rows.last[:values].select { |_, value| scale[:kind] != "percent" || value.positive? }.sort_by { |_, value| -value }
+  end_groups = ends.slice_when { |(_, above), (_, below)| (above - below) / span >= 0.08 }.to_a
   end_label = lambda do |group|
     level = group.take_while { |_, value| value == group.first.last }
-    "#{level.map { |university, _| university.short_name }.join("・")} #{percent.(group.first.last)}"
+    "#{level.map { |university, _| university.short_name }.join("・")} #{written.(group.first.last)}"
   end
 
   data = {
@@ -49,16 +67,17 @@
   }
 %>
 <figure class="line-chart" data-controller="line-chart" data-line-chart-data-value="<%= data.to_json %>"
-        data-line-chart-width-value="<%= chart_w %>" data-line-chart-top-value="<%= pad_t %>" data-line-chart-height-value="<%= plot_h %>">
+        data-line-chart-width-value="<%= chart_w %>" data-line-chart-top-value="<%= pad_t %>" data-line-chart-height-value="<%= plot_h %>"
+        data-line-chart-min-value="<%= scale[:min] %>" data-line-chart-max-value="<%= scale[:max] %>" data-line-chart-kind-value="<%= scale[:kind] %>">
   <figcaption class="muted"><%= caption %></figcaption>
   <div class="line-chart-plot">
     <svg viewBox="0 0 <%= chart_w %> <%= chart_h %>" preserveAspectRatio="xMidYMid meet" role="img" tabindex="0"
          aria-label="<%= aria_label %>。矢印キーで試合を移れます。数値は下の表にもあります。"
          data-line-chart-target="svg"
          data-action="pointermove->line-chart#point pointerleave->line-chart#hide focus->line-chart#focus blur->line-chart#hide keydown->line-chart#key">
-      <% [ 0, 0.25, 0.5, 0.75, 1 ].each do |value| %>
+      <% scale[:ticks].each do |value| %>
         <line x1="<%= pad_l %>" y1="<%= y_for.(value) %>" x2="<%= pad_l + plot_w %>" y2="<%= y_for.(value) %>" class="line-chart-gridline" />
-        <text x="<%= pad_l - 6 %>" y="<%= y_for.(value) + 4 %>" text-anchor="end" class="line-chart-axis-label"><%= (value * 100).round %>%</text>
+        <text x="<%= pad_l - 6 %>" y="<%= y_for.(value) + 4 %>" text-anchor="end" class="line-chart-axis-label"><%= tick_label.(value) %></text>
       <% end %>
       <% week_starts.each do |index| %>
         <line x1="<%= x_for.(index) %>" y1="<%= pad_t + plot_h %>" x2="<%= x_for.(index) %>" y2="<%= pad_t + plot_h + 4 %>" class="line-chart-gridline" />
@@ -109,7 +128,7 @@
           <% rows.each do |row| %>
             <tr>
               <td><%= row[:label] %></td>
-              <% universities.each do |university| %><td class="num"><%= percent.(row[:values].fetch(university, 0)) %></td><% end %>
+              <% universities.each do |university| %><td class="num"><%= written.(row[:values].fetch(university, 0)) %></td><% end %>
             </tr>
           <% end %>
         </tbody>
