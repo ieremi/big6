@@ -1685,6 +1685,11 @@ tr.bench-only td a {
   line-height: 1.9;
 }
 
+.university-summaries p {
+  margin: 0.6rem 0;
+  line-height: 1.8;
+}
+
 .formula-table {
   width: auto;
   margin: 0.5rem 0 1rem;

@@ -9,7 +9,6 @@
   rows = StrengthSpread.rows.select { |row| row.season.year >= 1946 }
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
-  percent = ->(chance) { "#{(chance * 100).round}%" }
   universities = rows.flat_map { |row| row.chances.keys }.uniq.sort_by(&:position)
   # The decades, the first one partial (「1950年代（1951年〜）」).
   decades = rows.group_by { |row| row.season.year / 10 * 10 }
@@ -19,7 +18,8 @@
 
 <p><%= link_to "← 読み物", articles_path %></p>
 
-<article class="article">
+<%# One view-switch over the whole article: the chart's buttons switch the figures in the tables and text too. %>
+<article class="article" data-controller="view-switch">
   <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
   <h1><%= @article.title %></h1>
 
@@ -37,9 +37,10 @@
               axis: (row.season.year.to_s if row.season.term == "spring" && (row.season.year % 10).zero?), values: row.chances }
           },
           lead: "シーズンの終わりの、",
-          aria_label: "戦後のシーズンごとの強さの推移" %>
+          aria_label: "戦後のシーズンごとの強さの推移",
+          switch: false %>
     <p class="muted">
-      ボタンで、確率・オッズ・対数オッズを切り替えられます。オッズは勝つ確率と負ける確率の比（平均的な大学が1）で、2校のオッズを割るとその2校の対戦のオッズになります。
+      ボタンで、確率・オッズ・対数オッズを切り替えられます。下の表や文中の数値も切り替わります。オッズは勝つ確率と負ける確率の比（平均的な大学が1）で、2校のオッズを割るとその2校の対戦のオッズになります。
       対数オッズはオッズの自然対数（平均的な大学が0）で、2校の差がその2校の対戦の対数オッズです。
     </p>
 
@@ -56,7 +57,7 @@
             <tr>
               <th><%= decade_label.(decade, list) %></th>
               <% universities.each do |university| %>
-                <td><%= university == best ? tag.strong(percent.(average.(list, university))) : percent.(average.(list, university)) %></td>
+                <td><%= university == best ? tag.strong(strength_figure(average.(list, university))) : strength_figure(average.(list, university)) %></td>
               <% end %>
             </tr>
           <% end %>
@@ -76,13 +77,33 @@
             <% weakest = rows.min_by { |row| row.chances.fetch(university, 0) } %>
             <tr>
               <td><%= link_to university.short_name, university_path(university.slug) %></td>
-              <td><%= link_to strongest.season.title, standings_season_path(strongest.season.year, strongest.season.term) %>（<%= percent.(strongest.chances.fetch(university)) %>）</td>
-              <td><%= link_to weakest.season.title, standings_season_path(weakest.season.year, weakest.season.term) %>（<%= percent.(weakest.chances.fetch(university)) %>）</td>
-              <td><%= percent.(average.(rows, university)) %></td>
+              <td><%= link_to strongest.season.title, standings_season_path(strongest.season.year, strongest.season.term) %>（<%= strength_figure(strongest.chances.fetch(university)) %>）</td>
+              <td><%= link_to weakest.season.title, standings_season_path(weakest.season.year, weakest.season.term) %>（<%= strength_figure(weakest.chances.fetch(university)) %>）</td>
+              <td><%= strength_figure(average.(rows, university)) %></td>
             </tr>
           <% end %>
         </tbody>
       </table>
+    </div>
+
+    <%# Written by hand from the figures above as of 2026 autumn, unlike the rest of the page: they don't follow the data. %>
+    <h2 class="card-heading">大学ごとの強さの推移</h2>
+    <p class="muted">2026年秋季時点の数値から、各大学の戦後の強さの移り変わりをまとめました。</p>
+    <%# Strengths in them are written {58.62} (a chance in percent, to the hundredth so the odds match the tables'), so
+         they switch with the buttons. A bound (平均{62.77}以上) is the lowest value it bounds. %>
+    <% summaries = {
+         "keio" => "戦後は平均{58.62}と、平均より上を保ってきました。1980年代は平均{53.42}まで下がり、1982年春季には最低の{42.32}となりましたが、1990年代に持ち直します。2020年代は平均{66.88}と戦後で最も高く、2023年秋季には最高の{73.14}に達しました。波が小さく、安定した強さです。",
+         "meiji" => "1950〜60年代は平均{50}前後で、1960年秋季には最低の{38.45}まで落ちました。1970年代から上向き、1980年代以降はどの年代も平均{62.77}以上を保っています。2020年代は平均{67.81}で、2025年秋季の{79.04}が戦後の最高です。戦後の前半と後半で姿を変えた大学です。",
+         "waseda" => "戦後の平均は{62.74}で、6大学で最も高い水準です。1950年代、1970年代、2000年代に平均{65.97}以上の山があり、2007年春季には最高の{78.19}に達しました。一方、1980年代は平均{55.52}の谷で、1988年春季の{48.17}が最低です。山と谷を繰り返しながら、長く上位にいます。",
+         "hosei" => "1950年代は平均{41.33}で、1955年秋季には最低の{35.46}でしたが、1960年代に急上昇しました。1970〜80年代は平均{70.00}以上で、1985年春季の{79.67}は戦後の6大学で最も高い値です。1990年代以降は下がり、2020年代は平均{50.14}と、平均的な強さに戻っています。",
+         "rikkio" => "1950年代は平均{60.67}で、1958年春季には最高の{76.72}に達しました。1970年代は平均{40}を切り、1997年秋季は最低の{26.70}です。2000年代から持ち直し、2010年代には平均{50.35}に戻りました。最高と最低の開きは6大学で最も大きく、浮き沈みの激しい大学です。",
+         "tokyo" => "戦後の平均は{16.73}で、最も強かった1951年春季でも{25.23}でした。その後は下がり、2014年春季に最低の{11.27}となります。年代では2010年代の平均{12.93}が最も低く、2020年代は{13.82}です。ほかの5大学との差は大きく、6大学の強さの散らばりの多くは東大によるものです。"
+       } %>
+    <div class="university-summaries">
+      <% universities.each do |university| %>
+        <% next unless (summary = summaries[university.slug]) %>
+        <p><strong><%= link_to university.short_name, university_path(university.slug) %>：</strong><%= with_strength_figures(summary) %></p>
+      <% end %>
     </div>
 
     <p class="muted">

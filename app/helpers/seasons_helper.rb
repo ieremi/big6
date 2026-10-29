@@ -28,4 +28,24 @@ module SeasonsHelper
   def conventions_mark(outcome)
     CONVENTION_MARKS.fetch(outcome)
   end
+
+  # A strength (TeamStrength's chance of beating an average side) in each of the
+  # three ways the strength charts show it (seasons/_strength_views), for text and
+  # tables inside the same view-switch: 「59%」, odds 「1.44」, log odds 「+0.36」,
+  # the chance's shown and the others hidden until their button is pressed.
+  def strength_figure(chance)
+    odds = chance / (1 - chance)
+    logit = Math.log(odds)
+    safe_join([
+      tag.span("#{(chance * 100).round}%", data: { view_switch_target: "panel", view: "chance" }),
+      tag.span(format("%.2f", odds), hidden: true, data: { view_switch_target: "panel", view: "odds" }),
+      tag.span(logit.round(2).zero? ? "0.00" : format("%+.2f", logit), hidden: true, data: { view_switch_target: "panel", view: "logit" })
+    ])
+  end
+
+  # Text with strengths written in it as {59} (a chance in percent): each one
+  # shown as strength_figure, so the text follows the buttons too.
+  def with_strength_figures(text)
+    safe_join(text.split(/\{(\d+(?:\.\d+)?)\}/).each_with_index.map { |part, index| index.odd? ? strength_figure(part.to_f / 100) : part })
+  end
 end

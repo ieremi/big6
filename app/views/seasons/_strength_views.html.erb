@@ -8,7 +8,9 @@
       universities' log odds subtracted give their game's, the model's own scale.
 
     Locals: rows (as the chart takes them, each row's values the chances), aria_label, lead (words before each
-    caption, optional: 「シーズンの終わりの、」) and chance_note (words after the chance's caption, optional). %>
+    caption, optional: 「シーズンの終わりの、」), chance_note (words after the chance's caption, optional), and switch
+    (optional, true by default): false when a view-switch around it (a whole article) also switches figures
+    elsewhere (strength_figure), so its buttons drive them all. %>
 <%
   lead = local_assigns[:lead].to_s
   odds = ->(chance) { chance / (1 - chance) }
@@ -31,7 +33,7 @@
       scale: { kind: "logit", min: -logit_max, max: logit_max, ticks: (-logit_max).step(logit_max, logit_step).to_a } }
   ]
 %>
-<div class="strength-views" data-controller="view-switch">
+<%= tag.div class: "strength-views", data: { controller: ("view-switch" unless local_assigns[:switch] == false) } do %>
   <div class="period-toolbar" role="group" aria-label="強さの表し方">
     <% views.each_with_index do |view, index| %>
       <%= tag.button view[:label], type: "button", class: [ "period-btn", ("active" if index.zero?) ], aria: { pressed: index.zero? },
@@ -44,4 +46,4 @@
             aria_label: "#{aria_label}（#{view[:label]}）" %>
     <% end %>
   <% end %>
-</div>
+<% end %>
