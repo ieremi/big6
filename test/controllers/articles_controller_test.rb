@@ -46,8 +46,8 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     stub_method(StrengthSpread, :rows, -> { rows }) { get article_path("strength-spread") }
 
     assert_response :success
-    assert_select "article p", text: /いちばん離れていたのは\s*2001年春季\s*、いちばん近かったのは\s*2002年春季\s*でした/
-    assert_select "article p", text: /東大を除いた5大学でいちばん近かったのは\s*2002年春季\s*、\s*いちばん離れていたのは\s*2003年春季/
+    assert_select "article p", text: /もっとも離れていたのは\s*2001年春季\s*、もっとも近かったのは\s*2002年春季\s*でした/
+    assert_select "article p", text: /東大を除いた5大学でもっとも近かったのは\s*2002年春季\s*、\s*もっとも離れていたのは\s*2003年春季/
     assert_select "table[data-controller=sortable-table] tbody tr", 3
     assert_select "table tbody td", text: "Alpha70 Beta30", minimum: 1
     assert_select "a[href=?]", strength_seasons_path

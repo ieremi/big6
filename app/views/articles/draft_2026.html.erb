@@ -125,7 +125,7 @@
   </div>
   <% if most_titles.positive? %>
     <p class="muted">
-      在学中の優勝がいちばん多いのは<%= most_titles %>回で、<%= entrants.select { |entrant| entrant.titles.size == most_titles }.map { |entrant| entrant.university.short_name }.uniq.join("・") %>の選手です。
+      在学中の優勝がもっとも多いのは<%= most_titles %>回で、<%= entrants.select { |entrant| entrant.titles.size == most_titles }.map { |entrant| entrant.university.short_name }.uniq.join("・") %>の選手です。
     </p>
   <% end %>
 

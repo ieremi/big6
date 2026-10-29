@@ -1,4 +1,4 @@
-<%# 強さの差がいちばん小さかったシーズン、大きかったシーズン: the spread of the six universities' strengths at the end of
+<%# 強さの差がもっとも小さかったシーズン、大きかったシーズン: the spread of the six universities' strengths at the end of
     each season (StrengthSpread), the five largest and smallest, with and without 東大, and every season in a sortable
     table. The figures in the text are worked out from the data, so they follow it as seasons end. %>
 <%
@@ -35,10 +35,10 @@
 
   <% if rows.any? %>
     <p>
-      6大学の強さがいちばん離れていたのは<strong><%= largest.first.season.title %></strong>、いちばん近かったのは<strong><%= smallest.first.season.title %></strong>でした
+      6大学の強さがもっとも離れていたのは<strong><%= largest.first.season.title %></strong>、もっとも近かったのは<strong><%= smallest.first.season.title %></strong>でした
       （<%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンのうち）。
-      ただし差の大きさは、たいてい東大がどれだけ離れていたかで決まります。東大を除いた5大学でいちばん近かったのは<strong><%= smallest_others.first.season.title %></strong>、
-      いちばん離れていたのは<strong><%= largest_others.first.season.title %></strong>です。
+      ただし差の大きさは、たいてい東大がどれだけ離れていたかで決まります。東大を除いた5大学でもっとも近かったのは<strong><%= smallest_others.first.season.title %></strong>、
+      もっとも離れていたのは<strong><%= largest_others.first.season.title %></strong>です。
     </p>
 
     <h2 class="card-heading">強さと、その散らばり</h2>
@@ -55,17 +55,17 @@
       直近<%= past %>シーズンの試合がそろっていないシーズン（戦争による中断のあとの数年と、それより前）は、強さがどの大学も五分に寄って見えるため、数えていません。
     </p>
 
-    <h2 class="card-heading">差がいちばん大きかったシーズン</h2>
+    <h2 class="card-heading">差がもっとも大きかったシーズン</h2>
     <%= table.(largest, :variance) %>
 
-    <h2 class="card-heading">差がいちばん小さかったシーズン</h2>
+    <h2 class="card-heading">差がもっとも小さかったシーズン</h2>
     <%= table.(smallest, :variance) %>
 
     <h2 class="card-heading">東大を除いた5大学では</h2>
     <p>東大を除いた5大学の点数の分散です（表の強さは6大学のまま）。</p>
-    <h3 class="card-heading">差がいちばん小さかったシーズン</h3>
+    <h3 class="card-heading">差がもっとも小さかったシーズン</h3>
     <%= table.(smallest_others, :variance_without_tokyo) %>
-    <h3 class="card-heading">差がいちばん大きかったシーズン</h3>
+    <h3 class="card-heading">差がもっとも大きかったシーズン</h3>
     <%= table.(largest_others, :variance_without_tokyo) %>
 
     <h2 class="card-heading">すべてのシーズン</h2>

@@ -12,11 +12,11 @@ class Article
   ALL = [
     Entry.new(
       slug: "strength-50-years", title: "この50年の強さの推移", published_on: Date.new(2026, 10, 29),
-      description: "1977年から、シーズンの終わりの6大学の強さ（平均的な相手に勝つ確率）の移り変わり。年代ごとの平均と、各大学がいちばん強かった・弱かったシーズン。"
+      description: "1977年から、シーズンの終わりの6大学の強さ（平均的な相手に勝つ確率）の移り変わり。年代ごとの平均と、各大学がもっとも強かった・弱かったシーズン。"
     ),
     Entry.new(
-      slug: "strength-spread", title: "強さの差がいちばん小さかったシーズン、大きかったシーズン", published_on: Date.new(2026, 10, 23),
-      description: "シーズンの終わりの6大学の強さの散らばり（分散）が、いちばん小さかったシーズンと大きかったシーズン。東大を除いた5大学でも。"
+      slug: "strength-spread", title: "強さの差がもっとも小さかったシーズン、大きかったシーズン", published_on: Date.new(2026, 10, 23),
+      description: "シーズンの終わりの6大学の強さの散らばり（分散）が、もっとも小さかったシーズンと大きかったシーズン。東大を除いた5大学でも。"
     ),
     Entry.new(
       slug: "draft-2026", title: "2026年ドラフト会議と東京六大学", published_on: Date.new(2026, 10, 23),
