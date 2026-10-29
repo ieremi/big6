@@ -1,7 +1,8 @@
 <%# A line for each university over a season's games, a share from 0 to 100% up the side: the title chances
     (seasons/_title_race_chances) and the strengths (seasons/_team_strength). The rows run along the bottom in order,
-    each week's first named (a row with no week, such as the opening day, has no tick); each row is
-    { label:, tooltip:, week:, values: { University => 0..1 } }, a university missing from a row being at 0. Pointing
+    each week's first named (a row with no week, such as the opening day, has no tick), or a row with an axis label
+    of its own named by it (a year); each row is { label:, tooltip:, week:, axis: (optional),
+    values: { University => 0..1 } }, a university missing from a row being at 0. Pointing
     at the chart (or moving along it with the arrow keys once it has focus) shows the row and every university's value
     there (line-chart); a table under it has the same figures. The lines are in the universities' own colours
     (University#color), as in the title race grid (see .line-chart in the stylesheet); the end of each line above 0 is
@@ -44,7 +45,8 @@
   x_for = ->(index) { (pad_l + index.to_f / last * plot_w).round(1) }
   span = scale[:max] - scale[:min]
   y_for = ->(value) { (pad_t + plot_h - (value.to_f - scale[:min]) / span * plot_h).round(1) }
-  week_starts = rows.each_index.select { |i| rows[i][:week] && (i.zero? || rows[i - 1][:week] != rows[i][:week]) }
+  # A tick at each week's first row, or at a row with an axis label of its own (a year, on a chart of seasons).
+  week_starts = rows.each_index.select { |i| rows[i][:axis] || (rows[i][:week] && (i.zero? || rows[i - 1][:week] != rows[i][:week])) }
   # Each week's first row has a tick; its name only when far enough from the last name to fit (a week of one game
   # would put two on top of each other).
   week_names = week_starts.each_with_object([]) { |i, named| named << i if named.empty? || x_for.(i) - x_for.(named.last) >= 44 }
@@ -83,7 +85,7 @@
         <line x1="<%= x_for.(index) %>" y1="<%= pad_t + plot_h %>" x2="<%= x_for.(index) %>" y2="<%= pad_t + plot_h + 4 %>" class="line-chart-gridline" />
       <% end %>
       <% week_names.each do |index| %>
-        <text x="<%= x_for.(index) %>" y="<%= chart_h - 8 %>" text-anchor="<%= index.zero? ? "start" : "middle" %>" class="line-chart-axis-label">第<%= rows[index][:week] %>週</text>
+        <text x="<%= x_for.(index) %>" y="<%= chart_h - 8 %>" text-anchor="<%= index.zero? ? "start" : "middle" %>" class="line-chart-axis-label"><%= rows[index][:axis] || "第#{rows[index][:week]}週" %></text>
       <% end %>
 
       <% universities.each do |university| %>

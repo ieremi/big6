@@ -1,0 +1,88 @@
+<%# この50年の強さの推移: each university's strength (TeamStrength, the chance of beating an average side) at the end of
+    every season of the last fifty years, as a line chart (seasons/_university_line_chart), then the averages by decade
+    and each university's strongest and weakest season. The season-end figures come from StrengthSpread (cached season
+    by season); the seasons are those over, so the one being played is added once it ends. All worked out from the data. %>
+<%
+  first_year = Date.current.year - 49
+  rows = StrengthSpread.rows.select { |row| row.season.year >= first_year }
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  percent = ->(chance) { "#{(chance * 100).round}%" }
+  universities = rows.flat_map { |row| row.chances.keys }.uniq.sort_by(&:position)
+  # The decades, the first one partial (「1970年代（1977年〜）」).
+  decades = rows.group_by { |row| row.season.year / 10 * 10 }
+  decade_label = ->(decade, list) { "#{decade}年代#{"（#{list.first.season.year}年〜）" if list.first.season.year > decade}" }
+  average = ->(list, university) { list.sum { |row| row.chances.fetch(university, 0) } / list.size }
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if rows.size > 1 %>
+    <p>
+      <%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンについて、シーズンの終わりの時点での6大学の強さを並べました。
+      強さは順位表のページの「強さの推移」と同じもので、平均的な強さの相手に勝つ確率です（<%= link_to "強さとは", strength_seasons_path %>）。
+      直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率に重きを置いているので、1シーズンの好不調より、数年単位の地力の移り変わりがよく表れます。
+    </p>
+
+    <%= render "seasons/university_line_chart",
+          rows: rows.map { |row|
+            { label: row.season.title, tooltip: "#{row.season.title}の終わり", week: nil,
+              axis: (row.season.year.to_s if row.season.term == "spring" && (row.season.year % 10).zero?), values: row.chances }
+          },
+          caption: "シーズンの終わりの、平均的な相手に勝つ確率",
+          aria_label: "この50年のシーズンごとの強さの推移" %>
+
+    <h2 class="card-heading">年代ごとの平均</h2>
+    <p class="muted">その年代のシーズンの終わりの強さの平均です。いちばん高い大学を太字にしています。</p>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead>
+          <tr><th>年代</th><% universities.each do |university| %><th><%= university.short_name %></th><% end %></tr>
+        </thead>
+        <tbody>
+          <% decades.each do |decade, list| %>
+            <% best = universities.max_by { |university| average.(list, university) } %>
+            <tr>
+              <th><%= decade_label.(decade, list) %></th>
+              <% universities.each do |university| %>
+                <td><%= university == best ? tag.strong(percent.(average.(list, university))) : percent.(average.(list, university)) %></td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="card-heading">各大学のいちばん強かったシーズン、弱かったシーズン</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>大学</th><th>いちばん強かった</th><th>いちばん弱かった</th><th>50年の平均</th></tr>
+        </thead>
+        <tbody>
+          <% universities.each do |university| %>
+            <% strongest = rows.max_by { |row| row.chances.fetch(university, 0) } %>
+            <% weakest = rows.min_by { |row| row.chances.fetch(university, 0) } %>
+            <tr>
+              <td><%= link_to university.short_name, university_path(university.slug) %></td>
+              <td><%= link_to strongest.season.title, standings_season_path(strongest.season.year, strongest.season.term) %>（<%= percent.(strongest.chances.fetch(university)) %>）</td>
+              <td><%= link_to weakest.season.title, standings_season_path(weakest.season.year, weakest.season.term) %>（<%= percent.(weakest.chances.fetch(university)) %>）</td>
+              <td><%= percent.(average.(rows, university)) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      強さは試合の勝ち負けだけから計算していて、点差や投手は考えに入れていません。東大以外の5大学どうしでは、数ポイントの差は誤差の範囲です。
+      開催中のシーズンは、終わってから加わります。
+    </p>
+  <% else %>
+    <p class="muted">まだ数えられるシーズンがありません。</p>
+  <% end %>
+</article>

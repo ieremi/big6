@@ -53,6 +53,25 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", strength_seasons_path
   end
 
+  test "the fifty years article charts the strengths season by season, with the averages by decade and each one's best and worst" do
+    alpha, beta = universities(:one), universities(:two)
+    row = ->(year, term, chance) do
+      StrengthSpread::Row.new(season: Season.find_or_create_by!(year: year, term: term), variance: 0.5, variance_without_tokyo: 0.1,
+        chances: { alpha => chance, beta => 1 - chance })
+    end
+    rows = [ row.(1975, "autumn", 0.9), row.(2010, "spring", 0.6), row.(2010, "autumn", 0.3), row.(2021, "spring", 0.8) ]
+
+    stub_method(StrengthSpread, :rows, -> { rows }) { get article_path("strength-50-years") }
+
+    assert_response :success
+    assert_select "figure.line-chart svg polyline.line-chart-line", 2
+    assert_select ".line-chart-table tbody tr", 3 # 1975 is more than fifty years ago
+    assert_select "svg text.line-chart-axis-label", text: "2010"
+    assert_select "table.formula-table tbody th", %w[2010年代 2020年代].size
+    assert_select "table tbody tr td", text: /2021年春季（80%）/ # alpha's best
+    assert_select "table tbody tr td", text: /2010年秋季（30%）/ # alpha's worst
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 
