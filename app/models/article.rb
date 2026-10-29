@@ -11,8 +11,8 @@ class Article
 
   ALL = [
     Entry.new(
-      slug: "strength-50-years", title: "この50年の強さの推移", published_on: Date.new(2026, 10, 29),
-      description: "1977年から、シーズンの終わりの6大学の強さ（平均的な相手に勝つ確率）の移り変わり。年代ごとの平均と、各大学がもっとも強かった・弱かったシーズン。"
+      slug: "strength-postwar", title: "戦後の強さの推移", published_on: Date.new(2026, 10, 29),
+      description: "戦後、シーズンの終わりの6大学の強さ（平均的な相手に勝つ確率）の移り変わり。年代ごとの平均と、各大学がもっとも強かった・弱かったシーズン。"
     ),
     Entry.new(
       slug: "strength-spread", title: "強さの差がもっとも小さかったシーズン、大きかったシーズン", published_on: Date.new(2026, 10, 23),
@@ -23,6 +23,9 @@ class Article
       description: "2026年のプロ野球ドラフト会議で、東京六大学からプロ野球志望届を出した選手と指名の結果、在学中の優勝回数。"
     )
   ].freeze
+
+  # Articles that have moved, by their old slug: the old URL is sent on to the new one.
+  MOVED = { "strength-50-years" => "strength-postwar" }.freeze
 
   def self.all
     ALL.sort_by { |entry| [ entry.published_on, entry.slug ] }.reverse

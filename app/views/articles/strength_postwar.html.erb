@@ -1,15 +1,17 @@
-<%# この50年の強さの推移: each university's strength (TeamStrength, the chance of beating an average side) at the end of
-    every season of the last fifty years, as a chart with buttons for a chance, odds or log odds
-    (seasons/_strength_views), then the averages by decade and each university's strongest and weakest season. The season-end figures come from StrengthSpread (cached season
-    by season); the seasons are those over, so the one being played is added once it ends. All worked out from the data. %>
+<%# 戦後の強さの推移: each university's strength (TeamStrength, the chance of beating an average side) at the end of
+    every season since the war (1946 on), as a chart with buttons for a chance, odds or log odds
+    (seasons/_strength_views), then the averages by decade and each university's strongest and weakest season.
+    The season-end figures come from StrengthSpread (cached season by season); the seasons are those over, so the
+    one being played is added once it ends. All worked out from the data. %>
 <%
-  first_year = Date.current.year - 49
-  rows = StrengthSpread.rows.select { |row| row.season.year >= first_year }
+  # The league took up again in 1946 spring. StrengthSpread has a season only once its last ten seasons were all
+  # played, so after the war's gap (and Scorebook's games starting in 1938) the first is 1951 spring.
+  rows = StrengthSpread.rows.select { |row| row.season.year >= 1946 }
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
   percent = ->(chance) { "#{(chance * 100).round}%" }
   universities = rows.flat_map { |row| row.chances.keys }.uniq.sort_by(&:position)
-  # The decades, the first one partial (「1970年代（1977年〜）」).
+  # The decades, the first one partial (「1950年代（1951年〜）」).
   decades = rows.group_by { |row| row.season.year / 10 * 10 }
   decade_label = ->(decade, list) { "#{decade}年代#{"（#{list.first.season.year}年〜）" if list.first.season.year > decade}" }
   average = ->(list, university) { list.sum { |row| row.chances.fetch(university, 0) } / list.size }
@@ -23,9 +25,10 @@
 
   <% if rows.size > 1 %>
     <p>
-      <%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンについて、シーズンの終わりの時点での6大学の強さを並べました。
+      戦後、<%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンについて、シーズンの終わりの時点での6大学の強さを並べました。
       強さは順位表のページの「強さの推移」と同じもので、平均的な強さの相手に勝つ確率です（<%= link_to "強さとは", strength_seasons_path %>）。
       直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率に重きを置いているので、1シーズンの好不調より、数年単位の地力の移り変わりがよく表れます。
+      リーグ戦は1946年春季に再開しましたが、強さは直近<%= TeamStrength::PAST_SEASONS %>シーズンの試合がそろうシーズンからしか計算できないため、<%= rows.first.season.title %>からです。
     </p>
 
     <%= render "seasons/strength_views",
@@ -34,7 +37,7 @@
               axis: (row.season.year.to_s if row.season.term == "spring" && (row.season.year % 10).zero?), values: row.chances }
           },
           lead: "シーズンの終わりの、",
-          aria_label: "この50年のシーズンごとの強さの推移" %>
+          aria_label: "戦後のシーズンごとの強さの推移" %>
     <p class="muted">
       ボタンで、確率・オッズ・対数オッズを切り替えられます。オッズは勝つ確率と負ける確率の比（平均的な大学が1）で、2校のオッズを割るとその2校の対戦のオッズになります。
       対数オッズはオッズの自然対数（平均的な大学が0）で、2校の差がその2校の対戦の対数オッズです。
@@ -65,7 +68,7 @@
     <div class="table-scroll">
       <table>
         <thead>
-          <tr><th>大学</th><th>もっとも強かった</th><th>もっとも弱かった</th><th>50年の平均</th></tr>
+          <tr><th>大学</th><th>もっとも強かった</th><th>もっとも弱かった</th><th>平均</th></tr>
         </thead>
         <tbody>
           <% universities.each do |university| %>
