@@ -26,7 +26,7 @@ BIG6 Scorebook の試合データは1938年春季からで、それより前の�
 - `year_batting`: その年のチーム打撃成績と、立教の個人打撃成績。
 - `season_batting`: その季のチーム攻撃成績と立教の個人打撃成績。列は `columns` に書く（本によって列が違う）。
   個人の表の列が違うときは `player_columns`、個人の表が一部の選手だけのときは `rikkio_players_partial: true`。
-- `batting_leaders`: その季のリーグ全体の個人打撃成績（上位）。打率だけの表は `batting_best5`。
+- `batting_leaders`: その季のリーグ全体の個人打撃成績（上位）。打率だけの表は `batting_best5`（「ベスト10」の表は `batting_best10`）。
 - `best_members`: ベストメンバー（印刷のまま）。
 - `standings`: 勝敗表。対戦の欄は印刷のままの文字列（勝った試合数。引分を △ で示す本もある）。
   対戦の欄のあとの列（勝・分・勝点・率）は `columns` に、率が勝数÷試合数か勝数÷（勝数＋敗数）かは `average` に書く。
@@ -57,6 +57,6 @@ FILE='db/sources/rikkyo_yakyubushi_1981/*.yml' bin/rails runner script/big6/impo
 FILE=db/sources/rikkyo_yakyubushi_1981/1924_autumn.yml DATE=1924-09-24 bin/rails runner script/big6/import_source_game.rb
 ```
 
-1922年春季から1928年秋季までの、本にある立教の試合をすべて取り込んでいる（1928年春季の明治・法政の5試合の回ごとの得点と勝敗表は pp.56–57）。
+1922年春季から1929年春季までの、本にある立教の試合をすべて取り込んでいる（1928年春季の明治・法政の5試合の回ごとの得点と勝敗表は pp.56–57）。
 `playoff` の試合（1928年秋季の3位決定戦）は、成績に数えない試合として取り込む。回戦の番号はその組の次の番号（試合ページの URL のため）で、
 試合ページなどには回戦の代わりにその名前（「3位決定戦」）が出る。
