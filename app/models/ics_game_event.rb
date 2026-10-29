@@ -17,7 +17,7 @@ module IcsGameEvent
       end_time: end_time,
       all_day_date: start_time ? nil : game.played_on,
       location: StadiumLocation.for(scoreboard.stadium),
-      description: [ game.season.title, (game.game_number && "第#{game.game_number}回戦") ].compact.join(" "),
+      description: [ game.season.title, game.round_title ].compact.join(" "),
       cancelled: game.not_held?
     )
   end

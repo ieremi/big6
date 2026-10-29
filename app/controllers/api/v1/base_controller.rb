@@ -46,6 +46,8 @@ module Api
           season: season_json(game.season),
           played_on: game.played_on,
           round: game.game_number,
+          # A game outside the league's table by name (「3位決定戦」), else null.
+          playoff: game.playoff.presence,
           team0: { slug: game.team0.slug, score: game.team0_score },
           team1: { slug: game.team1.slug, score: game.team1_score },
           attendance: game.attendance,

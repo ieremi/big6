@@ -88,7 +88,7 @@ module SeoHelper
   # schema.org having no status for a game being or having been played.
   def game_structured_data(game, description:, stadium: nil)
     {
-      "@type" => "SportsEvent", "name" => "#{game.team0.short_name} vs #{game.team1.short_name}（#{game.season.title}第#{game.game_number}回戦）",
+      "@type" => "SportsEvent", "name" => "#{game.team0.short_name} vs #{game.team1.short_name}（#{game.season.title}#{game.round_title}）",
       "description" => description, "sport" => "Baseball", "startDate" => game.played_on.iso8601, "url" => request.original_url.split("?").first,
       "eventStatus" => "https://schema.org/#{game.not_held? ? "EventCancelled" : "EventScheduled"}",
       "awayTeam" => university_structured_data(game.team0).except("memberOf"),

@@ -33,7 +33,7 @@ class SeasonSummary
 
   # 「明大が勝ち点5（10勝0敗）で完全優勝した。」, or the playoff's winner.
   def champion
-    playoff = @games.find { |game| !game.counted_in_stats && game.decided? && game.team0_score != game.team1_score }
+    playoff = @games.find { |game| game.title_playoff? && game.decided? && game.team0_score != game.team1_score }
     if playoff
       winner, loser = playoff.team0_score > playoff.team1_score ? [ playoff.team0, playoff.team1 ] : [ playoff.team1, playoff.team0 ]
       tied = @standings.rows.first.points

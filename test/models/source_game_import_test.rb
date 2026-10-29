@@ -68,6 +68,25 @@ class SourceGameImportTest < ActiveSupport::TestCase
     assert @season.from_printed_sources?
   end
 
+  test "imports both games printed on one day and a playoff, and refuses to pick one of the day's two by date" do
+    Season.create!(year: 1928, term: "autumn")
+    %w[waseda tokyo].each.with_index(20) { |slug, position| University.create!(name: slug, short_name: slug, slug: slug, position: position) }
+    path = file_fixture("rikkyo_yakyubushi_1981/playoff_and_same_day.yml")
+
+    games, skipped = SourceGameImport.season(path)
+
+    assert_equal [ %w[hosei rikkio], %w[tokyo rikkio], %w[rikkio waseda] ], games.map { |game| [ game.team0.slug, game.team1.slug ] }
+    assert_empty skipped
+    playoff = games.last
+    # Not counted, named in place of a round, numbered after the pair's games (none here) for its page's URL.
+    assert_equal [ "3位決定戦", false, 1, "3位決定戦" ], [ playoff.playoff, playoff.counted_in_stats, playoff.game_number, playoff.round_name ]
+    assert_not playoff.title_playoff?
+    assert_raises(ArgumentError) { SourceGameImport.call(path, played_on: Date.new(1928, 10, 17)) }
+
+    SourceGameImport.call(path, played_on: Date.new(1928, 11, 6)) # again: the same game, the same number
+    assert_equal [ 1, 1 ], [ Game.where(playoff: "3位決定戦").count, playoff.reload.game_number ]
+  end
+
   test "skips the games of a file with no line score" do
     season = Season.create!(year: 1928, term: "spring")
     %w[waseda tokyo meiji].each.with_index(20) { |slug, position| University.create!(name: slug, short_name: slug, slug: slug, position: position) }

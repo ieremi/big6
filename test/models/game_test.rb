@@ -29,6 +29,17 @@ class GameTest < ActiveSupport::TestCase
     assert_equal [ pending.id ], Game.needing_stats.where(id: [ imported.id, pending.id ]).pluck(:id)
   end
 
+  test "a round reads as its number, or as a playoff's name; only a game not counted and not named otherwise is the title playoff" do
+    regular = game(1)
+    scorebook_playoff = game(2, counted_in_stats: false)
+    third_place = game(3, counted_in_stats: false, playoff: "3位決定戦")
+
+    assert_equal [ "1回戦", "第1回戦", false ], [ regular.round_name, regular.round_title, regular.title_playoff? ]
+    assert_equal [ "2回戦", true ], [ scorebook_playoff.round_name, scorebook_playoff.title_playoff? ]
+    assert_equal [ "3位決定戦", "3位決定戦", false ], [ third_place.round_name, third_place.round_title, third_place.title_playoff? ]
+    assert_nil Game.new(game_status: "中止").round_name
+  end
+
   test "games count toward stats by default" do
     assert game(1).counted_in_stats
   end

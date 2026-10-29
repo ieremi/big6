@@ -78,6 +78,29 @@ class Game < ApplicationRecord
     played_on.saturday? || played_on.sunday?
   end
 
+  # The title playoff (優勝決定戦) is a game not counted in stats. Another game
+  # outside the league's table, such as 1928 autumn's 3位決定戦 from the club's
+  # history, isn't counted either, and has its name in playoff, Scorebook's own
+  # playoffs having none.
+  TITLE_PLAYOFF = "優勝決定戦".freeze
+
+  # Whether the game is a playoff for the title: its winner is the champion.
+  def title_playoff?
+    !counted_in_stats && (playoff.blank? || playoff == TITLE_PLAYOFF)
+  end
+
+  # The game's round as it is written: 「2回戦」, or a playoff's name
+  # (「3位決定戦」) for a game that has one; nil for a game with neither (one
+  # not held).
+  def round_name
+    playoff.presence || (game_number && "#{game_number}回戦")
+  end
+
+  # The same in titles, where a round reads 「第2回戦」.
+  def round_title
+    playoff.presence || (game_number && "第#{game_number}回戦")
+  end
+
   # Over, with a result: what wins, losses and draws are counted from. A game under
   # way has a score too, but not a final one.
   def decided?

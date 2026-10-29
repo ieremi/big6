@@ -34,7 +34,7 @@ module MatchupsHelper
   def streak_game_label(streak, game)
     opponent = game.team0 == streak.team ? game.team1 : game.team0
     week_number = week_number_for(game)
-    "#{game.season.title} 第#{week_number}週 vs #{opponent.short_name} 第#{game.game_number}回戦"
+    "#{game.season.title} 第#{week_number}週 vs #{opponent.short_name} #{game.round_title}"
   end
 
   def week_number_for(game)

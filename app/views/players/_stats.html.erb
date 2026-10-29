@@ -75,7 +75,7 @@
               <tr>
                 <td><%= line.game.played_on %></td>
                 <td>
-                  <%= link_to "#{opponent_name(line)}（#{line.game.game_number}回戦）", player_game_path(line.game) %>
+                  <%= link_to "#{opponent_name(line)}（#{line.game.round_name}）", player_game_path(line.game) %>
                   <% unless line.game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
                 </td>
                 <%= sort_cell pitching_result_label(line), pitching_result_sort_value(line) %>

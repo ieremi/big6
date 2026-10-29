@@ -28,7 +28,7 @@ class TitleRaceTimeline
 
     # "10月12日の明大 3-2 法大（2回戦）".
     def label
-      "#{game.played_on.strftime("%-m月%-d日")}の#{game.team0.short_name} #{game.team0_score}-#{game.team1_score} #{game.team1.short_name}（#{game.game_number}回戦）"
+      "#{game.played_on.strftime("%-m月%-d日")}の#{game.team0.short_name} #{game.team0_score}-#{game.team1_score} #{game.team1.short_name}（#{game.round_name}）"
     end
   end
 

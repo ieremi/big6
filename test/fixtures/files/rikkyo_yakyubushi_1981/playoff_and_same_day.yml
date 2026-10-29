@@ -1,0 +1,42 @@
+# Two games printed on the same day and a 3位決定戦 (playoff), as in 1928
+# autumn, for SourceGameImportTest. In a directory named for the book, as the
+# importer cites by it.
+source:
+  pages: "57-61"
+  ndl_url: https://dl.ndl.go.jp/pid/12172714/1/51
+  transcribed_on: 2026-10-29
+
+season:
+  year: 1928
+  term: autumn
+
+games:
+  - date: 1928-10-17
+    venue: 神宮
+    round: 1
+    top: hosei
+    bottom: rikkio
+    score: { rikkio: 4, hosei: 2 }
+    line_score:
+      hosei: "001 001 000"
+      rikkio: "020 200 00x"
+
+  - date: 1928-10-17
+    venue: 神宮
+    round: 1
+    top: tokyo
+    bottom: rikkio
+    score: { rikkio: 3, tokyo: 0 }
+    line_score:
+      tokyo: "000 000 000"
+      rikkio: "001 000 20x"
+
+  - date: 1928-11-06
+    venue: 神宮
+    playoff: 3位決定戦
+    top: rikkio
+    bottom: waseda
+    score: { waseda: 2, rikkio: 0 }
+    line_score:
+      rikkio: "000 000 000"
+      waseda: "200 000 00x"

@@ -22,6 +22,15 @@ class SeasonChampionTest < ActiveSupport::TestCase
     assert_equal @beta, SeasonChampion.of(spring)
   end
 
+  test "a playoff for another place (3位決定戦) doesn't decide the champion" do
+    spring = seasons(:one)
+    play(spring, @alpha, @beta, 2, 0, "2026-04-11", 1)
+    play(spring, @beta, @alpha, 0, 1, "2026-04-12", 2)
+    play(spring, @beta, @alpha, 3, 1, "2026-06-01", 3, counted_in_stats: false, playoff: "3位決定戦")
+
+    assert_equal @alpha, SeasonChampion.of(spring)
+  end
+
   test "is none for a season not ranked by 勝ち点" do
     season = Season.create!(year: 1949, term: "spring")
     play(season, @alpha, @beta, 2, 0, "1949-04-11", 1)

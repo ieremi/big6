@@ -70,7 +70,7 @@ module GamesHelper
 
   # "2回戦", or "—" for a game with no round number (one that wasn't held).
   def round_label(game)
-    game.game_number ? "#{game.game_number}回戦" : "—"
+    game.round_name || "—"
   end
 
   # A game's teams and score as a link to its page. A cancelled game is plain

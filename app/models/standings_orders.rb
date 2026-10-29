@@ -59,7 +59,7 @@ class StandingsOrders
     universities = University.order(:position).to_a
     seasons = (seasons || Season.select(:id, :year, :term).newest_first).select { |season| season.ranked? || points_season?(season) }
     games = Game.where(season_id: seasons.map(&:id))
-      .select(:id, :season_id, :team0_id, :team1_id, :team0_score, :team1_score, :game_status, :counted_in_stats, :played_on, :attendance)
+      .select(:id, :season_id, :team0_id, :team1_id, :team0_score, :team1_score, :game_status, :counted_in_stats, :playoff, :played_on, :attendance)
       .group_by(&:season_id)
 
     seasons.filter_map do |season|
@@ -121,7 +121,7 @@ class StandingsOrders
   end
 
   def playoff_winner(games)
-    playoff = games.reverse.find { |game| !game.counted_in_stats && game.decided? && game.team0_score != game.team1_score }
+    playoff = games.reverse.find { |game| game.title_playoff? && game.decided? && game.team0_score != game.team1_score }
     playoff && (playoff.team0_score > playoff.team1_score ? playoff.team0 : playoff.team1)
   end
 end

@@ -26,8 +26,10 @@ class SourceGameImport
 
   # Every game of the file that has a line score, and the season's standings
   # (勝敗表) as printed (Season#source_standings). A game with no line score is
-  # skipped: which side batted first isn't known. Returns the games added and
-  # the dates skipped.
+  # skipped: which side batted first isn't known. A game outside the league's
+  # table (playoff, such as 1928 autumn's 3位決定戦) is added too, not counted
+  # in stats and named by its playoff (Game#playoff). Returns the games added
+  # and the dates skipped.
   def self.season(path)
     new(path).season
   end
@@ -39,14 +41,25 @@ class SourceGameImport
 
   def season
     added, skipped = @data["games"].partition { |entry| entry["top"] && entry["bottom"] }
-    games = added.map { |entry| call(played_on: entry["date"]) }
+    games = added.map { |entry| import(entry) }
     find_season.update!(source_standings: standings) if @data["standings"]
     [ games, skipped.map { |entry| entry["date"] } ]
   end
 
+  # The game on played_on. A day with two games in the file (a misprinted date,
+  # as 1928 autumn's 帝大1回戦) is refused: import the whole file instead.
   def call(played_on:)
-    entry = @data["games"].find { |game| game["date"] == played_on }
-    raise ArgumentError, "#{@path}: no game on #{played_on}" unless entry
+    entries = @data["games"].select { |game| game["date"] == played_on }
+    raise ArgumentError, "#{@path}: no game on #{played_on}" if entries.empty?
+    raise ArgumentError, "#{@path}: #{entries.size} games on #{played_on}; import the whole file" if entries.size > 1
+
+    import(entries.first)
+  end
+
+  private
+
+  def import(entry)
+    played_on = entry["date"]
     raise ArgumentError, "#{@path}: the game on #{played_on} has no line score, so its home and away sides aren't known" unless entry["top"] && entry["bottom"]
 
     season = find_season
@@ -55,7 +68,9 @@ class SourceGameImport
 
     game = Game.find_or_initialize_by(season: season, played_on: played_on, team0: top, team1: bottom)
     game.update!(
-      game_number: entry["round"],
+      game_number: entry["round"] || next_round(game, top, bottom),
+      playoff: entry["playoff"],
+      counted_in_stats: !entry["playoff"],
       team0_score: entry.dig("score", entry["top"]),
       team1_score: entry.dig("score", entry["bottom"]),
       game_status: "試合終了",
@@ -66,7 +81,13 @@ class SourceGameImport
     game
   end
 
-  private
+  # A playoff's number: the pair's next in the season after its games (the
+  # URL of a game page names its round), as Scorebook numbers its 優勝決定戦
+  # after the pair's three games (2024 autumn's 明大-早大 is a 4回戦).
+  def next_round(game, top, bottom)
+    others = Game.where(season: game.season, team0_id: [ top.id, bottom.id ], team1_id: [ top.id, bottom.id ]).where.not(id: game.id)
+    others.maximum(:game_number).to_i + 1
+  end
 
   def find_season
     Season.find_by!(year: @data.dig("season", "year"), term: @data.dig("season", "term"))

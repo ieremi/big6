@@ -15,7 +15,7 @@ class SeasonChampion
     return nil unless season.ranked?
 
     games = Game.where(season_id: season.id).includes(:team0, :team1).order(:played_on, :game_number).to_a
-    playoff = games.reverse.find { |game| !game.counted_in_stats && game.decided? && game.team0_score != game.team1_score }
+    playoff = games.reverse.find { |game| game.title_playoff? && game.decided? && game.team0_score != game.team1_score }
     return (playoff.team0_score > playoff.team1_score ? playoff.team0 : playoff.team1) if playoff
 
     rows = Standings.new(season, games: games.select(&:counted_in_stats)).rows

@@ -4,7 +4,7 @@
   detail = @scoreboard.innings.any? ? @scoreboard : @official_scoreboard
   provisional = detail.innings.any? && !@scoreboard.innings.any?
   game_score = "#{@game.team0.short_name} #{in_progress ? "vs" : "#{@game.team0_score}-#{@game.team1_score}"} #{@game.team1.short_name}"
-  content_for :title, site_title("#{game_score}（#{@game.season.title}第#{@game.game_number}回戦）")
+  content_for :title, site_title("#{game_score}（#{@game.season.title}#{@game.round_title}）")
   summary = GameSummary.new(@game, scoreboard: detail)
   description = summary.to_s
   content_for :description, description
@@ -18,7 +18,7 @@
 </h1>
 
 <p class="muted">
-  <%= @game.played_on %>　<%= @game.game_number %>回戦
+  <%= @game.played_on %>　<%= @game.round_name %>
   <% if detail.stadium.present? %>　<%= detail.stadium %><% end %>
   <% if detail.attendance.present? %>　観衆<%= detail.attendance %>人<% end %>
   <% if @game.weather_summary.present? %>　<%= @game.weather_summary %><% end %>

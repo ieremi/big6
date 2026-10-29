@@ -307,7 +307,7 @@ paths:
                         round: { type: integer, nullable: true }
                         played_on: { type: string, format: date }
                     opponent: { $ref: "#/components/schemas/Slug" }
-                    counted_in_stats: { type: boolean, description: "false は優勝決定戦（成績に含めない）" }
+                    counted_in_stats: { type: boolean, description: "false は優勝決定戦など（成績に含めない）" }
                     roster: { type: object, nullable: true }
                     batting: { type: object, nullable: true }
                     pitching: { type: object, nullable: true }
@@ -458,7 +458,8 @@ components:
       properties:
         season: { $ref: "#/components/schemas/Season" }
         played_on: { type: string, format: date }
-        round: { type: integer, nullable: true, description: "回戦。中止・ノーゲームは null" }
+        round: { type: integer, nullable: true, description: "回戦。中止・ノーゲームは null。リーグ戦の表に入らない試合（playoff）は、その組の次の番号" }
+        playoff: { type: string, nullable: true, description: "リーグ戦の勝敗表に入らない試合の名前（3位決定戦など。刊行物から入れた試合だけ）。ふつうの試合と Scorebook の優勝決定戦は null" }
         team0: { $ref: "#/components/schemas/GameSide" }
         team1: { $ref: "#/components/schemas/GameSide" }
         attendance: { type: integer, nullable: true }

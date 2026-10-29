@@ -46,8 +46,8 @@ class GameSummary
   private
 
   def event_name
-    playoff = @game.counted_in_stats ? "" : "優勝決定戦"
-    "東京六大学野球 #{@game.season.title}リーグ戦 #{playoff.presence || "第#{@game.game_number}回戦"}"
+    name = @game.title_playoff? ? Game::TITLE_PLAYOFF : @game.playoff.presence || "第#{@game.game_number}回戦"
+    "東京六大学野球 #{@game.season.title}リーグ戦 #{name}"
   end
 
   def teams_label
@@ -180,7 +180,7 @@ class GameSummary
   # Left out when they aren't worked out (the first half of a season), when the
   # title was already decided, and when the game moved neither side's chance.
   def title_race
-    return title_decided(sides.first) if !@game.counted_in_stats && sides.first
+    return title_decided(sides.first) if @game.title_playoff? && sides.first
 
     odds = ChampionshipOdds.around(@game) or return nil
     before, after = odds.values_at(:before, :after)

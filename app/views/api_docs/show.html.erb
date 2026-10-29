@@ -116,6 +116,8 @@
   <code>total</code>と件数の数え方は、中止の試合も1件に含みます。
   BIG6 Scorebook にない試合を部史などの刊行物から入れたものは、<code>source</code>に出典の書誌（<code>citation</code>）と所在（<code>url</code>）が入ります。
   Scorebook の試合では<code>source</code>は<code>null</code>です。
+  刊行物から入れた試合のうち、リーグ戦の勝敗表に入らない試合（1928年秋季の3位決定戦）は、<code>playoff</code>にその名前が入ります。<code>round</code>はその組の次の番号で、成績には含めません。
+  それ以外の試合（Scorebook の優勝決定戦を含む）では<code>playoff</code>は<code>null</code>です。
 </p>
 <div class="table-scroll">
   <table>

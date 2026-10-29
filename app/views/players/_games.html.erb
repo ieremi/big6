@@ -30,7 +30,7 @@
               </td>
               <td><%= game.played_on %></td>
               <td>
-                <%= link_to "#{game.season.title} #{game.team0.short_name} vs #{game.team1.short_name}（#{game.game_number}回戦）", player_game_path(game) %>
+                <%= link_to "#{game.season.title} #{game.team0.short_name} vs #{game.team1.short_name}（#{game.round_name}）", player_game_path(game) %>
                 <% unless game.counted_in_stats %><span class="season-tag">通算に含まず</span><% end %>
               </td>
               <td><%= member&.uniform_number %></td>
