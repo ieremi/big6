@@ -67,8 +67,10 @@ class LeagueOfficialScoreboard
     @detail["startTime"]
   end
 
+  # Only once the page shows the game as over (LeagueOfficialGameScraper.over?): it
+  # has been seen to give a finish time three minutes into a game.
   def finished_at
-    @detail["finishTime"]
+    @detail["finishTime"] if LeagueOfficialGameScraper.over?(@detail)
   end
 
   def duration

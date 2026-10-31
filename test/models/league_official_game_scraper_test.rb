@@ -60,6 +60,25 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
 
     assert game.in_progress?
   end
+
+  test "a finish time while the game is in its early innings doesn't end it, as on 2026-10-31" do
+    game = game("2026-10-31", 1, 1)
+
+    scrape(game, page([ "0", "0", "0" ] + [ "" ] * 6, [ "1", "0" ] + [ "" ] * 7, heading: "10月31日(土)　第1試合　試合開始13:00　終了13:03　"))
+
+    assert game.in_progress?
+    assert_nil game.team0_score
+    assert_equal "13:03", game.league_official_data["finishTime"] # kept as the page has it
+  end
+
+  test "a game is over, with its score, once the page shows a finish time after a whole game" do
+    game = game("2026-09-30", 2, 2)
+
+    scrape(game, page(%w[0 1 0 0 2 0 0 0 0], %w[0 0 0 3 0 0 1 0 x], heading: "9月30日(水)　第2試合　試合開始13:30　終了16:02　"))
+
+    assert game.finished?
+    assert_equal [ 3, 4 ], [ game.team0_score, game.team1_score ]
+  end
   # ---- the pitchers, from the page's smartphone layout
 
   # A player's name, linked to their page on the league's site when there's an ID.

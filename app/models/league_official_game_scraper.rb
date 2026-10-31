@@ -64,7 +64,7 @@ class LeagueOfficialGameScraper
   end
 
   # Only fills in the game's actual score once the official site shows it as
-  # finished (finishTime present), and only if we don't already have a score
+  # finished (finishTime present, see over?), and only if we don't already have a score
   # from Scorebook — Scorebook stays the source of truth once it catches up.
   # Without this, pages that read Game#team0_score/team1_score directly (the
   # season schedule, standings, etc.) keep showing the game as not-yet-played
@@ -85,7 +85,7 @@ class LeagueOfficialGameScraper
   def attrs_from(data)
     attrs = { league_official_data: data }
 
-    if data["finishTime"].present? && @game.team0_score.nil? && @game.team1_score.nil?
+    if self.class.over?(data) && @game.team0_score.nil? && @game.team1_score.nil?
       attrs[:team0_score] = data["runsTop"].compact.sum
       attrs[:team1_score] = data["runsBottom"].compact.sum
       attrs[:game_status] = "finished"
@@ -129,6 +129,25 @@ class LeagueOfficialGameScraper
 
   # Before this season the league's game pages have no box scores.
   MIN_YEAR = 2005
+
+  # A game called before 5 innings isn't a game (ノーゲーム), and none of 5 innings
+  # or more is over within the hour.
+  MIN_INNINGS = 5
+  MIN_MINUTES = 60
+
+  # Whether the page shows the game as over: a finish time, and a scoreboard and
+  # a length a finished game can have. The finish time alone isn't enough: on
+  # 2026-10-31 the page said 「試合開始13:00　終了13:03」 while the game was in
+  # its third inning, and taking that for the end recorded the game as over at
+  # 0-0, after which nothing polled it again. LeagueOfficialScoreboard shows the
+  # finish time only then too.
+  def self.over?(data)
+    return false if data["finishTime"].blank? || data["startTime"].blank?
+    return false if Array(data["runsTop"]).compact.size < MIN_INNINGS
+
+    minutes = ->(time) { hours, mins = time.split(":").map(&:to_i); hours * 60 + mins }
+    minutes.(data["finishTime"]) - minutes.(data["startTime"]) >= MIN_MINUTES
+  end
 
   def parse(doc)
     score_rows = doc.css(".gamescore-score-run").first(2)
