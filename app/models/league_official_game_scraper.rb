@@ -64,7 +64,7 @@ class LeagueOfficialGameScraper
   end
 
   # Only fills in the game's actual score once the official site shows it as
-  # finished (finishTime present, see over?), and only if we don't already have a score
+  # finished (see over?), and only if we don't already have a score
   # from Scorebook — Scorebook stays the source of truth once it catches up.
   # Without this, pages that read Game#team0_score/team1_score directly (the
   # season schedule, standings, etc.) keep showing the game as not-yet-played
@@ -141,9 +141,14 @@ class LeagueOfficialGameScraper
   # its third inning, and taking that for the end recorded the game as over at
   # 0-0, after which nothing polled it again. LeagueOfficialScoreboard shows the
   # finish time only then too.
+  #
+  # An 「x」 on the home side's scoreboard (「1x」 for a サヨナラ, or 「x」 when it
+  # doesn't bat in the last inning) ends the game by itself: later that day the
+  # page had moved 13:03 to 試合開始 and left 終了 blank, with the game over at 3-4x.
   def self.over?(data)
-    return false if data["finishTime"].blank? || data["startTime"].blank?
     return false if Array(data["runsTop"]).compact.size < MIN_INNINGS
+    return true if data["endMarked"]
+    return false if data["finishTime"].blank? || data["startTime"].blank?
 
     minutes = ->(time) { hours, mins = time.split(":").map(&:to_i); hours * 60 + mins }
     minutes.(data["finishTime"]) - minutes.(data["startTime"]) >= MIN_MINUTES
@@ -153,10 +158,12 @@ class LeagueOfficialGameScraper
     score_rows = doc.css(".gamescore-score-run").first(2)
     return nil if score_rows.size < 2
 
+    marked_by_letter = {}
     runs_by_letter = score_rows.each_with_object({}) do |row, h|
       cells = row.css("td")
       letter = cells[0].text.strip
       h[letter] = cells[1..-2].map { |c| c.text.strip.presence&.to_i }
+      marked_by_letter[letter] = cells[1..-2].any? { |c| c.text.strip.end_with?("x") }
     end
 
     runs_top = runs_by_letter[TEAM_LETTERS.fetch(@game.team0.slug)]
@@ -173,6 +180,7 @@ class LeagueOfficialGameScraper
       "hitsBottom" => hits[1],
       "startTime" => info_text[/試合開始(\d{1,2}:\d{2})/, 1],
       "finishTime" => info_text[/終了(\d{1,2}:\d{2})/, 1],
+      "endMarked" => marked_by_letter[TEAM_LETTERS.fetch(@game.team1.slug)],
       "attendance" => info_text[/観衆\s*([\d,]+)人/, 1]&.delete(","),
       "umpires" => umpires(doc),
       "stadium" => "神宮球場",

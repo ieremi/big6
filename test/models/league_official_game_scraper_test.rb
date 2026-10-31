@@ -79,6 +79,23 @@ class LeagueOfficialGameScraperTest < ActiveSupport::TestCase
     assert game.finished?
     assert_equal [ 3, 4 ], [ game.team0_score, game.team1_score ]
   end
+
+  test "a サヨナラ's 「x」 ends the game with no finish time, as later on 2026-10-31" do
+    game = game("2026-10-31", 1, 1)
+
+    scrape(game, page(%w[0 0 0 1 0 0 0 2 0], %w[1 0 0 0 1 0 0 1 1x], heading: "10月31日(土)　第1試合　試合開始13:03　終了　"))
+
+    assert game.finished?
+    assert_equal [ 3, 4 ], [ game.team0_score, game.team1_score ]
+  end
+
+  test "a game tied after nine with no finish time is still on" do
+    game = game("2026-10-31", 1, 1)
+
+    scrape(game, page(%w[0 0 0 1 0 0 0 2 0], %w[1 0 0 0 1 0 0 1 0], heading: "10月31日(土)　第1試合　試合開始13:03　終了　"))
+
+    assert game.in_progress?
+  end
   # ---- the pitchers, from the page's smartphone layout
 
   # A player's name, linked to their page on the league's site when there's an ID.
