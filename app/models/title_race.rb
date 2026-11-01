@@ -147,6 +147,13 @@ class TitleRace
     computed&.dig(:margins, university.id)
   end
 
+  # Whether the university ends the season at the bottom (alone or level with
+  # others there) whatever the cards still open do, and whether it can, as
+  # [always, ever]; nil when not counted.
+  def last_place(university)
+    computed&.dig(:lasts, university.id)
+  end
+
   def self.circled(number)
     number.between?(1, 20) ? (0x2460 + number - 1).chr(Encoding::UTF_8) : "(#{number})"
   end
@@ -168,7 +175,7 @@ class TitleRace
   def cache_key
     decided = @games.select { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.team0_score, game.team1_score ].join(":") }.sort
     still_to_play = @games.reject { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.played_on, game.game_number ].join(":") }.sort
-    [ "title_race/v3", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
+    [ "title_race/v4", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
   end
 
   # The cached data with its ids turned back into universities and cards.
@@ -182,7 +189,7 @@ class TitleRace
       cards: cards,
       champions: data[:champions].transform_values { |ids| ids.map { |id| universities.fetch(id) } },
       chances: data[:chances].to_h { |id, chance| [ universities.fetch(id), chance ] },
-      too_many: data[:too_many], over: data[:over], places: data[:places], margins: data[:margins]
+      too_many: data[:too_many], over: data[:over], places: data[:places], margins: data[:margins], lasts: data[:lasts]
     }
   end
 
@@ -229,15 +236,19 @@ class TitleRace
     champions = {}
     places = Array.new(teams.size) { [ teams.size, 1 ] } # [best, worst]
     margins = Array.new(teams.size) { [ Float::INFINITY, -Float::INFINITY ] } # [lowest, highest]
+    lasts = Array.new(teams.size) { [ true, false ] } # [always last, ever last]
     codes.each do |code|
       totals = totals_of(points, wins, losses, open, code)
       champions[code] = champions_of(*totals)
       playoff = champions[code].size > 1 ? champions[code] : []
-      ranks_of(*totals).each_with_index do |rank, i|
+      ranks = ranks_of(*totals)
+      ranks.each_with_index do |rank, i|
         worst = playoff.include?(i) ? 2 : rank # the loser of a playoff (優勝決定戦) is second
         places[i] = [ [ places[i][0], rank ].min, [ places[i][1], worst ].max ]
         margin = totals[1][i] - totals[2][i]
         margins[i] = [ [ margins[i][0], margin ].min, [ margins[i][1], margin ].max ]
+        last = rank == ranks.max # level with others at the bottom too (2017 autumn's 早大 and 東大)
+        lasts[i] = [ lasts[i][0] && last, lasts[i][1] || last ]
       end
     end
     chances = chances_of(open, codes, champions, teams)
@@ -251,7 +262,8 @@ class TitleRace
       cards: open.values_at(*mattering).map { |card| card.slice(:first, :second, :week, :wins, :results, :paths) },
       champions: grid, chances: chances, too_many: mattering.size > MAX_CARDS, over: open.empty?,
       places: teams.each_index.to_h { |i| [ teams[i].id, places[i] ] },
-      margins: teams.each_index.to_h { |i| [ teams[i].id, margins[i] ] }
+      margins: teams.each_index.to_h { |i| [ teams[i].id, margins[i] ] },
+      lasts: teams.each_index.to_h { |i| [ teams[i].id, lasts[i] ] }
     }
   end
 

@@ -56,6 +56,8 @@ class TitleRaceTest < ActiveSupport::TestCase
     assert_equal [ 0, 4 ], race.margin_range(@alpha) # 2-0 now, then 0-2 to 2-0 against gamma
     assert_equal [ 1, 3 ], race.place_range(@beta)
     assert_equal [ -4, 0 ], race.margin_range(@beta)
+    assert_equal [ false, true ], race.last_place(@alpha) # at the bottom only with all three level
+    assert_equal [ false, true ], race.last_place(@beta) # level at the bottom in the three-way tie, alone below otherwise
   end
 
   test "each university's chance, every game an even chance and a playoff an even split" do

@@ -146,6 +146,23 @@ class StreakRecordsTest < ActiveSupport::TestCase
     assert_includes summary(third), "これでAlphaのBetaからの連続勝ち点は6季で途切れた。"
   end
 
+  test "two level at the bottom are both last, and the run of last places goes on (2017 autumn)" do
+    seasons(6, order) # tokyo last, 2001 spring to 2003 autumn
+    target = Season.create!(year: 2004, term: "spring")
+    order.combination(2).each_with_index do |(winner, loser), i|
+      # epsilon and tokyo split their card 1-1, each 1勝4敗 with no 勝ち点: level at 5th
+      scores = [ winner, loser ] == [ @epsilon, @tokyo ] ? [ [ 3, 1 ], [ 1, 3 ] ] : [ [ 3, 1 ], [ 3, 1 ] ]
+      scores.each_with_index do |(a, b), n|
+        Game.create!(season: target, team0: winner, team1: loser, played_on: Date.new(2004, 4, 1) + i * 2 + n, game_number: n + 1,
+          team0_score: a, team1_score: b, game_status: "試合終了")
+      end
+    end
+
+    record = find(target, @tokyo, "最下位")
+
+    assert_equal [ :decided, 7 ], [ record.status, record.count ]
+  end
+
   test "a run shorter than five seasons isn't shown" do
     seasons(3, order)
     target = season(2002, "autumn", order)

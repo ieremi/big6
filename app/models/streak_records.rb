@@ -141,7 +141,7 @@ class StreakRecords
     when :top_two then facts[:ranks][university_id] <= 2
     when :a_class then facts[:ranks][university_id] <= 3
     when :winning then facts[:margins][university_id].positive?
-    when :last then facts[:ranks][university_id] == 6 # 6位: two level 5th have no 最下位 (2017 autumn)
+    when :last then facts[:ranks][university_id] == facts[:ranks].values.max # level at the bottom too: 2017 autumn's 早大 and 東大, 5th
     when :card then facts[:cards][[ university_id, opponent_id ].sort] == university_id
     end
   end
@@ -252,7 +252,7 @@ class StreakRecords
     when :top_two then decide(worst <= 2, best > 2)
     when :a_class then decide(worst <= 3, best > 3)
     when :winning then decide(low.positive?, high <= 0)
-    when :last then decide(best == 6, worst < 6)
+    when :last then race.last_place(university).then { |always, ever| decide(always, !ever) }
     end
   end
 
