@@ -27,6 +27,7 @@ module Api
         return render(json: []) if season.from_printed_sources?
 
         standings = Standings.new(season)
+        team_stats = TeamStats.new(season).rows.index_by(&:university)
 
         rows = standings.rows.map do |row|
           {
@@ -41,7 +42,8 @@ module Api
             runs_scored: row.runs_scored,
             runs_allowed: row.runs_allowed,
             attendance_total: row.total_attendance(weekends_only: weekends_only_from_params),
-            average_attendance: row.average_attendance(weekends_only: weekends_only_from_params)
+            average_attendance: row.average_attendance(weekends_only: weekends_only_from_params),
+            team_stats: team_stats_json(team_stats[row.university])
           }
         end
 
@@ -49,6 +51,14 @@ module Api
       end
 
       private
+
+      # A university's チーム成績 (TeamStats) from the box scores, or nil with none.
+      def team_stats_json(row)
+        return nil unless row
+
+        { games: row.games, batting_average: row.batting.average, home_runs: row.batting.home_runs,
+          stolen_bases: row.batting.stolen_bases, era: row.pitching.era, fielding_errors: row.batting.fielding_errors }
+      end
 
       # A season taken from a club's history has only that club's games, so its
       # rows are the printed 勝敗表 (Season#source_standings), in the printed

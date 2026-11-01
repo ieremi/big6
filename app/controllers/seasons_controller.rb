@@ -59,6 +59,8 @@ class SeasonsController < ApplicationController
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
+    # チーム成績: each university's batting average, ERA and so on, from the box scores.
+    @team_stats = TeamStats.new(@season)
     # 優勝のゆくえ once the game picked with its button had ended (after), or as it stands now.
     @title_race_timeline = TitleRaceTimeline.new(@season)
     @title_race_point = @title_race_timeline.find(params[:after])

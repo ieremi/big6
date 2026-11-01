@@ -85,7 +85,7 @@ paths:
     get:
       operationId: getStandings
       summary: シーズンの順位表
-      description: 順位順の各大学の順位・勝・敗・分・勝ち点・試合数・勝率・得点・失点・総観衆・平均観衆。勝ち点と勝率がどちらも同じ大学は同じ順位。
+      description: 順位順の各大学の順位・勝・敗・分・勝ち点・試合数・勝率・得点・失点・総観衆・平均観衆と、チーム成績（打率・本塁打・盗塁・防御率・失策）。勝ち点と勝率がどちらも同じ大学は同じ順位。
       parameters:
         - $ref: "#/components/parameters/Year"
         - $ref: "#/components/parameters/Term"
@@ -492,6 +492,17 @@ components:
         runs_allowed: { type: integer, nullable: true, description: 失点。source のある季は null }
         attendance_total: { type: integer, nullable: true }
         average_attendance: { type: integer, nullable: true }
+        team_stats:
+          type: object
+          nullable: true
+          description: "チーム成績。各試合のボックススコア（BIG6 Scorebook）の合計で、優勝決定戦はのぞく。ボックススコアのない大学・季（1945年以前の多く、source のある季）は null。Scorebook の成績は試合の数日後に入るので、games が順位表の games より少ないことがある"
+          properties:
+            games: { type: integer, description: ボックススコアのある試合の数 }
+            batting_average: { type: number, nullable: true, description: チーム打率（安打÷打数）。打数0なら null }
+            home_runs: { type: integer, description: 本塁打 }
+            stolen_bases: { type: integer, description: 盗塁 }
+            era: { type: number, nullable: true, description: チーム防御率（自責点×9÷投球回）。投球回0なら null }
+            fielding_errors: { type: integer, description: 失策 }
         source:
           type: object
           nullable: true

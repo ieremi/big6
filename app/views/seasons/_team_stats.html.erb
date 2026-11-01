@@ -1,0 +1,39 @@
+<%# チーム成績 (TeamStats): each university's batting average, home runs, stolen bases, ERA and errors over the season's
+    box scores, in standings order, sortable in the browser by any figure. Under it, how many games the box scores cover
+    when Scorebook hasn't published them all yet. %>
+<% if stats.any? %>
+  <section class="team-stats">
+    <h2 class="card-heading">チーム成績</h2>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr>
+            <th></th>
+            <%= safe_join(SeasonsHelper::TEAM_STATS_COLUMNS.map { |label, (shortcut, first)| sortable_column_header(label, shortcut, first: first) }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows = stats.rows.sort_by { |row| standings.rows.index(standings.row_for(row.university)) || 99 } %>
+          <% rows.each do |row| %>
+            <tr>
+              <td><span class="team-chip" style="background: <%= row.university.color %>"><%= row.university.initial %></span></td>
+              <td><%= row.games %></td>
+              <%= sort_cell batting_average_label(row.batting.average), row.batting.average.to_f %>
+              <td><%= row.batting.home_runs %></td>
+              <td><%= row.batting.stolen_bases %></td>
+              <%= sort_cell(row.pitching.era ? number_with_precision(row.pitching.era, precision: 2) : "—", row.pitching.era || 99) %>
+              <td><%= row.batting.fielding_errors %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% behind = rows.select { |row| row.games < standings.row_for(row.university).games } %>
+    <p class="muted">
+      各試合のボックススコア（BIG6 Scorebook）の合計で、優勝決定戦はのぞいています。防御率は自責点×9÷投球回です。
+      <% if behind.any? %>
+        Scorebook の成績が入っていない試合があり、<%= behind.map { |row| "#{row.university.short_name}は#{standings.row_for(row.university).games}試合のうち#{row.games}試合" }.join("、") %>の成績です。
+      <% end %>
+    </p>
+  </section>
+<% end %>

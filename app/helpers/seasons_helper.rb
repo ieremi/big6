@@ -19,6 +19,13 @@ module SeasonsHelper
     end)
   end
 
+  # The チーム成績 table's columns (TeamStats): [shortcut, first direction]. The
+  # shortcuts are other letters than the standings table's on the same page.
+  TEAM_STATS_COLUMNS = {
+    "試合" => [ "N", "desc" ], "打率" => [ "B", "desc" ], "本塁打" => [ "H", "desc" ], "盗塁" => [ "R", "desc" ],
+    "防御率" => [ "Q", "asc" ], "失策" => [ "F", "asc" ]
+  }.freeze
+
   # The mark of a convention's result (ScheduleConventions) and what it means.
   CONVENTION_MARKS = {
     followed: [ "○", "したがっている" ], broken: [ "×", "したがっていない" ],

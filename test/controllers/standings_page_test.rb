@@ -34,6 +34,34 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_select "p.muted", text: /勝ち1点・引分0.5点/, count: 0
   end
 
+  test "the standings page has each team's batting average and ERA, and says when box scores are missing" do
+    player = Player.create!(scorebook_id: 1, university: universities(:one), name: "打者", enter_year: 2023, role: "選手")
+    game = Game.where(season: seasons(:one)).order(:played_on).first
+    BattingLine.create!(game:, player:, university: universities(:one), ab: 4, hits: 1)
+    PitchingLine.create!(game:, player:, university: universities(:one), outs: 27, earned_runs: 3)
+
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.team-stats tbody tr", 1
+    assert_select "section.team-stats tbody td", text: ".250"
+    assert_select "section.team-stats tbody td", text: "3.00"
+    assert_select "section.team-stats p.muted", text: /Alphaは2試合のうち1試合の成績です/
+  end
+
+  test "the standings API gives each team's stats from the box scores, and null with none" do
+    player = Player.create!(scorebook_id: 1, university: universities(:one), name: "打者", enter_year: 2023, role: "選手")
+    game = Game.where(season: seasons(:one)).order(:played_on).first
+    BattingLine.create!(game:, player:, university: universities(:one), ab: 4, hits: 1, home_runs: 1)
+    PitchingLine.create!(game:, player:, university: universities(:one), outs: 27, earned_runs: 3)
+
+    get "/api/v1/seasons/2026/spring/standings"
+
+    rows = response.parsed_body.index_by { |row| row["university"]["slug"] }
+    assert_equal({ "games" => 1, "batting_average" => 0.25, "home_runs" => 1, "stolen_bases" => 0, "era" => 3.0, "fielding_errors" => 0 },
+      rows["alpha"]["team_stats"])
+    assert_nil rows["beta"]["team_stats"]
+  end
+
   test "the standings API gives each team's runs scored and allowed" do
     get "/api/v1/seasons/2026/spring/standings"
 
