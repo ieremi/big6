@@ -57,6 +57,14 @@ class SeasonHomeRuns
     Game.where(counted_in_stats: true).where.not(game_status: Game::NOT_HELD_STATUSES).distinct.count(:season_id) - all.size
   end
 
+  # { decade => how many seasons of it were played and are over }, to set the
+  # seasons counted against: 1960 for the 1960s.
+  def self.seasons_by_decade
+    games = Game.where(counted_in_stats: true).where.not(game_status: Game::NOT_HELD_STATUSES)
+    open = games.where(game_status: %w[試合前 試合中]).distinct.pluck(:season_id)
+    Season.where(id: games.select(:season_id)).where.not(id: open).pluck(:year).map { |year| year / 10 * 10 }.tally.sort.to_h
+  end
+
   def self.summary(rows, &value)
     return nil if rows.empty?
 

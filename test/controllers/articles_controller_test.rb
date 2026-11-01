@@ -94,6 +94,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article p", text: /平均\s*4.0本\s*（標準偏差1.0本）/
     assert_select "article p", text: /2002年春季の5本/
     assert_select "table[data-controller=sortable-table] tbody tr", 2
+    assert_select "tr:not(.muted) td", text: "2／2" # the 2000s: both seasons counted
   end
 
   test "the fifty years article's old URL is sent on to the postwar one" do

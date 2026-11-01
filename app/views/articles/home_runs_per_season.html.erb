@@ -10,6 +10,7 @@
   seasons_of = ->(list) { list.map { |row| row.season.title }.join("、") }
   total, per_game = SeasonHomeRuns.summary(rows, &:home_runs), SeasonHomeRuns.summary(rows, &:per_game)
   decades = rows.group_by { |row| row.season.year / 10 * 10 }
+  played = SeasonHomeRuns.seasons_by_decade
   no_record = SeasonHomeRuns.no_record
 %>
 
@@ -53,25 +54,34 @@
     <div class="table-scroll">
       <table>
         <thead>
-          <tr><th>年代</th><th>シーズン</th><th>最少</th><th>最多</th><th>平均</th><th>標準偏差</th><th>1試合あたりの平均</th></tr>
+          <tr><th>年代</th><th>数えた季／行われた季</th><th>最少</th><th>最多</th><th>平均</th><th>標準偏差</th><th>1試合あたりの平均</th></tr>
         </thead>
         <tbody>
-          <% decades.each do |decade, list| %>
+          <% played.each do |decade, held| %>
+            <% list = decades.fetch(decade, []) %>
             <% stats = SeasonHomeRuns.summary(list, &:home_runs) %>
-            <tr>
+            <%# Fewer than half the decade's seasons counted: its figures may not stand for it. %>
+            <%= tag.tr class: ("muted" if list.size * 2 < held) do %>
               <td><%= decade %>年代</td>
-              <td class="num"><%= stats.count %></td>
-              <td class="num"><%= stats.min %></td>
-              <td class="num"><%= stats.max %></td>
-              <td class="num"><%= one.(stats.mean) %></td>
-              <td class="num"><%= one.(stats.sd) %></td>
-              <td class="num"><%= two.(SeasonHomeRuns.summary(list, &:per_game).mean) %></td>
-            </tr>
+              <td class="num"><%= list.size %>／<%= held %></td>
+              <% if stats %>
+                <td class="num"><%= stats.min %></td>
+                <td class="num"><%= stats.max %></td>
+                <td class="num"><%= one.(stats.mean) %></td>
+                <td class="num"><%= one.(stats.sd) %></td>
+                <td class="num"><%= two.(SeasonHomeRuns.summary(list, &:per_game).mean) %></td>
+              <% else %>
+                <% 5.times do %><td class="num">—</td><% end %>
+              <% end %>
+            <% end %>
           <% end %>
         </tbody>
       </table>
     </div>
-    <p class="muted">年代によって数えたシーズンの数が違います。数の少ない年代の数字は、その年代全体を表しているとは限りません。</p>
+    <p class="muted">
+      行われたシーズンのうち、すべての試合のボックススコアがそろっていて、本塁打が記録されているシーズンだけを数えています。
+      数えたシーズンが半分に満たない年代（薄い色の行）の数字は、その年代全体を表しているとは限りません。
+    </p>
 
     <h2 class="card-heading">シーズンごと</h2>
     <div class="table-scroll">
@@ -106,7 +116,6 @@
         また、<%= seasons_of.(no_record) %>は、ボックススコアはあっても本塁打が1本も記録されていないため、のぞきました
         （2012年と2013年は、二塁打・三塁打は記録されていて本塁打だけがない、Scorebook のデータの欠けです）。
       <% end %>
-      標準偏差は、各シーズンの値と平均との差を2乗して平均し、その平方根をとったものです。
     </p>
   <% else %>
     <p>まだ数えられるシーズンがありません。</p>
