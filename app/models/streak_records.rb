@@ -6,8 +6,8 @@
 #
 # Counted from 1950 (Season::FIRST_YEAR_RANKED), when the standings came to be
 # ranked by 勝ち点, over the seasons with every card played. The 2020 and 2021
-# seasons count for the places as Standings ranks them, but had no 勝ち点 to win:
-# a run of cards won from one opponent stops there.
+# seasons count for the places as Standings ranks them, and had no 勝ち点 to win:
+# a card counts as won from the opponent when won more of its one or two games (勝ち越し).
 #
 # For a season under way, a run is decided only once no result left can change
 # it, as TitleRace counts the cards still open (place_range, margin_range,
@@ -103,7 +103,7 @@ class StreakRecords
 
   # A season's facts: each university's place (the winner of a playoff first,
   # the others level with it second), the champion, wins less losses, and each
-  # card's winner by pair (none in a points season); nil without all 15 cards.
+  # card's winner by pair (in a points season, its 勝ち越し); nil without all 15 cards.
   def self.facts_of(season, games, universities)
     league = games.select(&:counted_in_stats)
     return nil if league.any?(&:source_citation)
@@ -116,11 +116,8 @@ class StreakRecords
     champion = playoff ? (playoff.team0_score > playoff.team1_score ? playoff.team0_id : playoff.team1_id) : (top.first if top.one?)
     (top - [ champion ]).each { |id| ranks[id] = 2 } if champion && top.size > 1
 
-    cards = {}
-    unless season.points_season?
-      league.select(&:decided?).group_by { |game| [ game.team0_id, game.team1_id ].sort }.each do |pair, pair_games|
-        cards[pair] = card_winner(pair_games)
-      end
+    cards = league.select(&:decided?).group_by { |game| [ game.team0_id, game.team1_id ].sort }.transform_values do |pair_games|
+      season.points_season? ? card_majority(pair_games) : card_winner(pair_games)
     end
 
     { ranks: ranks, champion: champion, margins: rows.to_h { |row| [ row.university.id, row.wins - row.losses ] }, cards: cards }
@@ -131,6 +128,16 @@ class StreakRecords
     games.select(&:decided?).reject { |game| game.team0_score == game.team1_score }
       .map { |game| game.team0_score > game.team1_score ? game.team0_id : game.team1_id }
       .tally.find { |_, count| count >= 2 }&.first
+  end
+
+  # The university id that won more of the games than the other (勝ち越し), or
+  # nil when level: a card of a points season, of one or two games, stands for
+  # 勝ち点 there.
+  def self.card_majority(games)
+    wins = games.select(&:decided?).reject { |game| game.team0_score == game.team1_score }
+      .map { |game| game.team0_score > game.team1_score ? game.team0_id : game.team1_id }.tally
+    best = wins.max_by(&:last)
+    best&.first if best && wins.values.count(best.last) == 1
   end
 
   # Whether a season's facts count towards the kind for the university (and
@@ -215,13 +222,15 @@ class StreakRecords
 
     others = runs - [ going ]
     longer = others.count { |run| run.count > count }
-    since = others.select { |run| run.count >= count }.max_by(&:to)
+    # 「以来」 is the last run as long that had ended: one still going alongside this one isn't.
+    since = others.select { |run| run.count >= count && run.to != last_key }.max_by(&:to)
     own = others.select { |run| run.university_id == university_id && run.opponent_id == opponent_id }.map(&:count).max.to_i
     longest = others.max_by { |run| [ run.count, run.to ] }
+    # A run with its university and, for a card, its opponent.
+    held = ->(run) { [ run, universities[run.university_id], universities[run.opponent_id] ] }
     Record.new(university: universities[university_id], kind:, opponent: universities[opponent_id], count:,
       from: going&.from || season_key, to: season_key, status:, rank: longer + 1, tied: others.any? { |run| run.count == count },
-      since: since && [ since, universities[since.university_id] ], own_best: count > own,
-      longest: longest && longest.count > count ? [ longest, universities[longest.university_id] ] : nil)
+      since: since && held.(since), own_best: count > own, longest: longest && longest.count > count ? held.(longest) : nil)
   end
 
   # :decided, :at_stake or :ended for this season: from its facts once it is over,

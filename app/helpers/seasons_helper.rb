@@ -73,13 +73,13 @@ module SeasonsHelper
     return "" if record.status == :ended
 
     who = record.opponent ? "#{record.university.short_name}の対#{record.opponent.short_name}" : record.university.short_name
-    since, holder = record.since
-    longest, longest_holder = record.longest
+    since, holder, since_opponent = record.since
+    longest, longest_holder, longest_opponent = record.longest
     [
       "1950年以降で歴代#{record.rank}位#{"タイ" if record.tied}",
-      ("#{streak_season_label(since.to)}の#{holder.short_name}（#{since.count}季）以来" if since),
+      ("#{streak_season_label(since.to)}の#{holder.short_name}（#{"対#{since_opponent.short_name}" if since_opponent}#{since.count}季）以来" if since),
       ("#{who}で最長" if record.own_best),
-      ("最長は#{longest_holder.short_name}の#{longest.count}季（#{streak_season_label(longest.from)}〜#{streak_season_label(longest.to)}）" if longest)
+      ("最長は#{longest_holder.short_name}の#{"対#{longest_opponent.short_name}" if longest_opponent}#{longest.count}季（#{streak_season_label(longest.from)}〜#{streak_season_label(longest.to)}）" if longest)
     ].compact.join("。") + "。"
   end
 

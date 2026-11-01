@@ -255,9 +255,9 @@ class GameSummary
       return "これで#{university}の#{run}は#{record.count}季で途切れた。"
     end
 
-    since, holder = record.since
+    since, holder, opponent = record.since
     note = if since
-      "（#{since.to[0]}年#{since.to[1] == 1 ? "春" : "秋"}の#{holder.short_name}以来）"
+      "（#{since.to[0]}年#{since.to[1] == 1 ? "春" : "秋"}の#{holder.short_name}#{"の対#{opponent.short_name}" if opponent}以来）"
     elsif record.rank == 1
       "（1950年以降で最長）"
     end

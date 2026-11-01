@@ -75,6 +75,16 @@ class StreakRecordsTest < ActiveSupport::TestCase
     assert_equal 8, longest.count
   end
 
+  test "a run still going alongside isn't what one is 「以来」" do
+    seasons(6, order) # alpha takes its cards from beta and from gamma alike, 2001 spring on
+    target = season(2004, "spring", order)
+
+    beta = find(target, @alpha, "Betaから勝ち点")
+
+    assert_nil beta.since # alpha's run from gamma, as long, is still going
+    assert_equal [ 7, @alpha ], [ beta.count, beta.university ]
+  end
+
   test "cards won from 東大 aren't shown, as everyone takes them" do
     seasons(6, order)
     target = season(2004, "spring", order)
@@ -85,12 +95,17 @@ class StreakRecordsTest < ActiveSupport::TestCase
     assert_not_includes labels, "東大から勝ち点"
   end
 
-  test "a 2020 season counts for the places, but ends a run of cards, having no 勝ち点" do
+  test "a 2020 or 2021 season, with no 勝ち点, counts a card won more of than lost (勝ち越し), and a split one ends the run" do
     (0...6).each { |i| season(2017 + i / 2, i.even? ? "spring" : "autumn", order) } # to 2019 autumn
-    target = season(2020, "spring", order)
+    target = season(2020, "spring", order) # alpha takes both games from each
 
     assert_equal [ :decided, 7 ], find(target, @alpha, "優勝").then { |record| [ record.status, record.count ] }
-    assert_equal [ :ended, 6 ], find(target, @alpha, "Betaから勝ち点").then { |record| [ record.status, record.count ] }
+    assert_equal [ :decided, 7 ], find(target, @alpha, "Betaから勝ち点").then { |record| [ record.status, record.count ] }
+
+    split = season(2020, "autumn", order)
+    Game.where(season: split, team0: @alpha, team1: @beta, game_number: 2).update_all(team0_score: 1, team1_score: 3)
+
+    assert_equal [ :ended, 7 ], find(split, @alpha, "Betaから勝ち点").then { |record| [ record.status, record.count ] }
   end
 
   test "while a season is on, a run is decided once no card left can change it, and at stake till then" do
