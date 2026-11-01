@@ -231,6 +231,18 @@ body.nav-open {
   color: var(--accent);
 }
 
+/* 今日の試合 (home/_next_game_day): a game a block, its pitchers and runs at stake under it. */
+.next-game-day ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.next-game-day li {
+  margin: 0.75rem 0;
+  line-height: 1.6;
+}
+
 main {
   padding: 2rem 1.5rem 4rem;
 }

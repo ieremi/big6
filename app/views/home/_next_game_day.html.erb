@@ -1,0 +1,37 @@
+<%# 今日の試合 (NextGameDay): the next day's games within a week, each with its start, its score or status, the
+    starting pitchers and the new starters (as the lineup stands: Scorebook's, or the league site's provisional one), and
+    the card's runs at stake. Nothing when no game is in the week ahead. %>
+<% if day.entries.any? %>
+  <section class="next-game-day">
+    <h2 class="card-heading"><%= day.today? ? "今日の試合" : "次の試合" %>（<%= day.date.month %>月<%= day.date.day %>日・<%= GameSummary::WEEKDAYS[day.date.wday] %>）</h2>
+    <ul>
+      <% day.entries.each do |entry| %>
+        <% game = entry.game %>
+        <li>
+          <div>
+            <% if entry.start_time %><span class="muted"><%= clock_time_12h(entry.start_time) %></span><% end %>
+            <% label = safe_join([ game.team0.short_name, " ", score_span(game.team0_score, game.team1_score, played_on: game.played_on, status: game.status_label), " ", game.team1.short_name ]) %>
+            <strong><%= game.not_held? ? label : link_to(label, game_path(game)) %></strong>
+            <span class="muted"><%= game.round_name %></span>
+          </div>
+          <% [ game.team0, game.team1 ].each do |team| %>
+            <% pitcher = entry.starting_pitchers[team.id] %>
+            <% starters = entry.new_starters[team.id] || [] %>
+            <% next unless pitcher || starters.any? %>
+            <div class="muted">
+              <%= team.short_name %>：
+              <% if pitcher %>先発 <%= pitcher.player ? link_to(pitcher.player.name, player_path(pitcher.player)) : "#{pitcher.name}※" %><% end %>
+              <% if starters.any? %><%= "、" if pitcher %>スタメンに入った <%= safe_join(starters.map { |player| link_to(player.name, player_path(player)) }, "、") %><% end %>
+            </div>
+          <% end %>
+          <% entry.streaks.each do |record| %>
+            <div class="muted">
+              <%= record.university.short_name %>が勝ち点を取れば、<%= record.opponent.short_name %>から<%= record.count %>季連続<%= "（#{record.university.short_name}の対#{record.opponent.short_name}で最長）" if record.own_best %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="muted">先発とスタメンは、Scorebook の確定データがないうちは連盟公式サイトの暫定データです（試合開始の30分ほど前に出ます）。※は選手名鑑の選手を特定できなかった選手です。</p>
+  </section>
+<% end %>

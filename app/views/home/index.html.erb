@@ -22,6 +22,8 @@
   <%= link_to api_docs_path, class: "home-link" do %>Web API <kbd>9</kbd><% end %>
 </nav>
 
+<%= render "home/next_game_day", day: @next_game_day %>
+
 <% if @announcements.any? %>
   <h2 class="card-heading">おしらせ</h2>
   <%= render "news/list", announcements: @announcements %>
