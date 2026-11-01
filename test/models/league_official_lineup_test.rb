@@ -13,7 +13,7 @@ class LeagueOfficialLineupTest < ActiveSupport::TestCase
 
   def lineup_of(*entries)
     @game.update!(league_official_data: { "lineup" => entries.map { |entry| { "side" => "top", "grade" => 4 }.merge(entry) } })
-    LeagueOfficialLineup.new(@game).by_university.fetch(@alpha.id, []).map { |entry| entry.player.name }
+    LeagueOfficialLineup.new(@game).by_university.fetch(@alpha.id, []).map { |entry| entry.player&.name || "(#{entry.name})" }
   end
 
   test "matches a player by the short form of the name and the high school" do
@@ -28,12 +28,16 @@ class LeagueOfficialLineupTest < ActiveSupport::TestCase
     assert_equal [ "上田 太陽" ], lineup_of({ "name" => "上田", "high_school" => "國學院久我", "order" => 9 })
   end
 
-  test "leaves out a player of another high school, or one it can't tell apart" do
+  test "keeps a player of another high school, or one it can't tell apart, by the box score's name and with no player" do
     add_player(1, "上田 太陽", "國學院久我山")
     add_player(2, "林 純司", "報徳学園", enter_year: 2024)
     add_player(3, "林 純平", "報徳学園", enter_year: 2024)
 
-    assert_empty lineup_of({ "name" => "上田", "high_school" => "慶應" }, { "name" => "林純", "high_school" => "報徳学園", "grade" => nil })
+    assert_equal [ "(上田)", "(林純)" ], lineup_of({ "name" => "上田", "high_school" => "慶應" }, { "name" => "林純", "high_school" => "報徳学園", "grade" => nil })
+  end
+
+  test "an unmatched pitcher who also bats is listed once too" do
+    assert_equal [ "(新人)" ], lineup_of({ "name" => "新人", "order" => 9, "position" => "投" }, { "name" => "新人", "position" => "投" })
   end
   test "a pitcher who also bats is listed once, as the batter" do
     add_player(1, "広池 浩成", "慶應")

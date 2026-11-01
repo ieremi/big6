@@ -109,6 +109,17 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "p.muted", text: /試合開始前のスタメンと先発投手/
     assert_select "details.decade summary", text: /#{Regexp.escape(@alpha.short_name)}（1人）/
+    assert_select "p.muted", text: /※は/, count: 0
+  end
+
+  test "game page shows a lineup entry it can't match to a player by the league site's name, unlinked and marked" do
+    @game.update!(game_status: "試合前", team0_score: nil, team1_score: nil,
+      league_official_data: { "lineup" => [ { "side" => "top", "order" => 1, "position" => "二", "name" => "新人", "grade" => 1 } ] })
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "details.decade td span[title]", text: "新人※"
+    assert_select "p.muted", text: /※は、選手名鑑のどの選手か特定できなかった選手です/
   end
 
   test "game page has no bench section or fold buttons when no roster is stored" do

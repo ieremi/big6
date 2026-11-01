@@ -15,14 +15,17 @@
 # high school, not a Scorebook id. Matched against currently-enrolled
 # players of the right university/high school whose real name starts
 # with that short form, and of the year of entry the ID gives; anyone not
-# uniquely matched this way is left out rather than risk showing the wrong
-# person.
+# uniquely matched this way is kept with no player, by the name the box score
+# gives, rather than risk showing the wrong person: before a game this is the
+# starting lineup, and a gap in its nine would read as a hole in the order (a
+# freshman not yet in Scorebook's 名鑑, say).
 class LeagueOfficialLineup
   # role is always nil — the box score has no equivalent (it only shows
   # players who batted or pitched, not each one's general roster role) —
   # kept as a field anyway so GameMember.roster_order can sort these the
   # same way it sorts real GameMember rows.
-  Entry = Struct.new(:university, :player, :grade, :role, :batting_order, :fielding_position, :uniform_number, keyword_init: true)
+  # name is the box score's own short name (「小林隼」), what is shown when player is nil.
+  Entry = Struct.new(:university, :player, :name, :grade, :role, :batting_order, :fielding_position, :uniform_number, keyword_init: true)
 
   def initialize(game)
     @game = game
@@ -37,17 +40,20 @@ class LeagueOfficialLineup
   # (batters in batting order, then pitchers). A pitcher who also bats (a game
   # without a designated hitter) is listed once, as the batter.
   def by_university
-    @by_university ||= @raw_entries.filter_map { |raw| resolve(raw) }.uniq(&:player).group_by { |entry| entry.university.id }
+    @by_university ||= @raw_entries.filter_map { |raw| resolve(raw) }
+      .uniq { |entry| entry.player || [ entry.university.id, entry.name ] }
+      .group_by { |entry| entry.university.id }
   end
 
   private
 
   def resolve(raw)
+    name = raw["name"].to_s.delete(" 　")
+    return nil if name.blank?
+
     university = raw["side"] == "top" ? @game.team0 : @game.team1
     player = players_by_league_id[raw["id"]] || match_player(university, raw)
-    return nil unless player
-
-    Entry.new(university: university, player: player, grade: raw["grade"], batting_order: raw["order"], fielding_position: raw["position"])
+    Entry.new(university: university, player: player, name: name, grade: raw["grade"], batting_order: raw["order"], fielding_position: raw["position"])
   end
 
   # university + high school + name-prefix first; grade only breaks a tie,

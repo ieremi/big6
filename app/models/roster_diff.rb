@@ -63,6 +63,9 @@ class RosterDiff
   def initialize(previous_game, previous_members, members, compare_bench:)
     @previous_game = previous_game
     @compare_bench = compare_bench
+    # A provisional entry not matched to a player (LeagueOfficialLineup) can't be told
+    # the same as anyone in the other game, so it is left out of the comparison.
+    previous_members, members = [ previous_members, members ].map { |list| list.select(&:player) }
 
     now = starters(members)
     before = starters(previous_members)

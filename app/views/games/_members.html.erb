@@ -22,6 +22,9 @@
     <% else %>
       <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち。出場した選手のみ）</p>
     <% end %>
+    <% if rosters.any? { |_, members| members.any? { |member| member.player.nil? } } %>
+      <p class="muted">※は、選手名鑑のどの選手か特定できなかった選手です。連盟公式サイトの表記のまま載せています。</p>
+    <% end %>
   <% end %>
 
   <div data-controller="decade-fold">
@@ -49,9 +52,14 @@
                 <% did_play = played&.include?(member.player_id) %>
                 <%= tag.tr class: ("bench-only" if played && !staff && !did_play) do %>
                   <td><%= member.uniform_number %></td>
-                  <%= sort_cell link_to(member.player.name, player_path(member.player)), member.player.name_kana.presence || member.player.name %>
+                  <% if member.player %>
+                    <%= sort_cell link_to(member.player.name, player_path(member.player)), member.player.name_kana.presence || member.player.name %>
+                  <% else %>
+                    <%# A provisional entry not matched to a player: the box score's short name, unlinked. %>
+                    <%= sort_cell tag.span("#{member.name}※", title: "選手名鑑の選手を特定できませんでした（連盟公式サイトの表記）"), member.name %>
+                  <% end %>
                   <td><%= member.grade %></td>
-                  <td><%= player_filter_link(member.player.faculty, "faculty") %></td>
+                  <td><%= player_filter_link(member.player&.faculty, "faculty") %></td>
                   <%= sort_cell member.role, bench_role_sort_value(member.role) %>
                   <td><%= member.batting_order %></td>
                   <%= sort_cell member.fielding_position, fielding_position_sort_value(member.fielding_position) %>
