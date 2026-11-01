@@ -5,7 +5,8 @@
 # 勝ち点 it won), a season's only win or loss, and in the second half of a
 # season how the game moved each side's chance of the title (ChampionshipOdds),
 # or that it decided the title, with how many seasons in a row
-# (SeasonChampion).
+# (SeasonChampion), and the other runs of seasons in a row it decided or ended
+# (StreakRecords: 「これで明大の10季連続の2位以上が決まった」).
 #
 # Written for people and for search engines and AI search alike, which quote
 # a sentence more readily than a scoreboard. Every fact comes from the data the
@@ -29,7 +30,7 @@ class GameSummary
 
   def sentences
     @sentences ||= if @game.decided?
-      [ result, pitchers, home_runs, crowd_and_time, card_standing, only_win_or_loss, title_race ].compact
+      [ result, pitchers, home_runs, crowd_and_time, card_standing, only_win_or_loss, title_race, streaks ].compact
     elsif @game.in_progress?
       [ "#{event_name}、#{teams_label}は#{date_label}#{" #{stadium}で" if stadium}試合中。" ]
     elsif @game.scheduled?
@@ -215,6 +216,56 @@ class GameSummary
   def title_decided(champion)
     streak = SeasonChampion.streak(@game.season, champion)
     "これで#{champion.short_name}の#{"#{streak}シーズン連続の" if streak > 1}優勝が決まった。"
+  end
+
+  # The runs of seasons in a row (StreakRecords) this game settled: at stake
+  # after the game before it, decided or ended after this one. 「これで明大の10季
+  # 連続の2位以上が決まった（1989年春の法大以来）。」, 「これで明大は立大から10季連続で
+  # 勝ち点を取った。」, 「これで早大の連続Aクラスは5季で途切れた。」 A title decided is
+  # told by title_race, with its run.
+  def streaks
+    return nil unless @game.counted_in_stats
+
+    games = TitleRace.games_of(@game.season).select(&:decided?).sort_by { |game| TitleRace.order_key(game) }
+    index = games.index { |game| game.id == @game.id }
+    return nil if index.nil? || index.zero?
+
+    key = ->(record) { [ record.university.id, record.kind.key, record.opponent&.id ] }
+    before = StreakRecords.new(@game.season, after: games[index - 1])
+    return nil unless before.applicable?
+
+    # Before the places were counted, a run only looked at stake: it may have been
+    # settled games ago. Only a card's run is then told, its card won or lost here.
+    counted = before.counted?
+    at_stake = before.records.select { |record| record.status == :at_stake && (counted || record.kind.key == :card) }.map(&key).to_set
+    return nil if at_stake.empty?
+
+    settled = StreakRecords.new(@game.season, after: @game).records.select do |record|
+      record.status != :at_stake && at_stake.include?(key.(record)) && !(record.kind.key == :champion && record.status == :decided)
+    end
+    settled.map { |record| streak_sentence(record) }.join.presence
+  end
+
+  STREAK_NAMES = { champion: "優勝", top_two: "2位以上", a_class: "Aクラス", winning: "勝ち越し", last: "最下位" }.freeze
+
+  def streak_sentence(record)
+    university = record.university.short_name
+    if record.status == :ended
+      run = record.kind.key == :card ? "#{record.opponent.short_name}からの連続勝ち点" : "連続#{STREAK_NAMES.fetch(record.kind.key)}"
+      return "これで#{university}の#{run}は#{record.count}季で途切れた。"
+    end
+
+    since, holder = record.since
+    note = if since
+      "（#{since.to[0]}年#{since.to[1] == 1 ? "春" : "秋"}の#{holder.short_name}以来）"
+    elsif record.rank == 1
+      "（1950年以降で最長）"
+    end
+    if record.kind.key == :card
+      "これで#{university}は#{record.opponent.short_name}から#{record.count}季連続で勝ち点を取った#{note}。"
+    else
+      "これで#{university}の#{record.count}季連続の#{STREAK_NAMES.fetch(record.kind.key)}が決まった#{note}。"
+    end
   end
 
   def percent_label(chance)

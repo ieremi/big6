@@ -39,13 +39,25 @@ class StreakRecords
   # others take all but every season.
   MIN_COUNT = 5
 
-  def initialize(season)
+  # after: the runs as they stood once that game of the season had ended
+  # (as TitleRace takes it), the games after it counted as still to play;
+  # nil for now. GameSummary compares the game's with the one's before it.
+  def initialize(season, after: nil)
     @season = season
+    @after = after
   end
 
   # Whether the season is one the runs are counted over.
   def applicable?
     (@season.ranked? || @season.points_season?) && !@season.from_printed_sources?
+  end
+
+  # Whether the places and wins less losses are counted: the season over, or
+  # few enough cards open for TitleRace to count every way they can end. Until
+  # then those runs are all at stake, whatever they are (the cards' aren't).
+  def counted?
+    now = (@current_facts ||= current_facts)
+    now[:over] || now[:race].applicable?
   end
 
   # The records, most notable first: decided, at stake, then ended, each the longest first.
@@ -138,7 +150,7 @@ class StreakRecords
 
   def compute
     history = self.class.history.select { |key, _| (key <=> season_key) == -1 }
-    now = current_facts
+    now = (@current_facts ||= current_facts)
     return [] if now[:over] && now[:facts].nil? # over, but not with every card played
 
     runs = KINDS.to_h { |kind| [ kind.key, runs_of(kind, history) ] }
@@ -255,14 +267,20 @@ class StreakRecords
   def current_facts
     universities = University.order(:position).to_a
     games = Game.where(season_id: @season.id).includes(:team0, :team1).to_a
-    over = self.class.over?(games)
-    return { over: true, facts: self.class.facts_of(@season, games, universities) } if over
+    decided = games.select { |game| decided_by_after?(game) }
+    over = @after ? games.reject(&:not_held?).select(&:counted_in_stats).all? { |game| decided_by_after?(game) } : self.class.over?(games)
+    return { over: true, facts: self.class.facts_of(@season, @after ? decided : games, universities) } if over
 
     cards = {}
     unless @season.points_season?
-      games.select(&:counted_in_stats).group_by { |game| [ game.team0_id, game.team1_id ].sort }
+      decided.select(&:counted_in_stats).group_by { |game| [ game.team0_id, game.team1_id ].sort }
         .each { |pair, pair_games| cards[pair] = self.class.card_winner(pair_games) }
     end
-    { race: TitleRace.new(@season), cards: cards }
+    { race: TitleRace.new(@season, games: TitleRace.games_of(@season), after: @after), cards: cards }
+  end
+
+  # Whether the game had its result by the time the runs are taken at (after).
+  def decided_by_after?(game)
+    game.decided? && (@after.nil? || (TitleRace.order_key(game) <=> TitleRace.order_key(@after)) <= 0)
   end
 end

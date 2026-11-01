@@ -110,6 +110,42 @@ class StreakRecordsTest < ActiveSupport::TestCase
     assert_equal :at_stake, find(target, @alpha, "Betaから勝ち点").status
   end
 
+  # The 2004 spring season with every card over but alpha v beta, whose games
+  # are given as [alpha's score, beta's] (nil for still to play).
+  def season_with_alpha_beta(*scores)
+    seasons(6, order)
+    target = Season.create!(year: 2004, term: "spring")
+    order.combination(2).each_with_index do |(winner, loser), i|
+      next if [ winner, loser ] == [ @alpha, @beta ]
+
+      2.times do |n|
+        Game.create!(season: target, team0: winner, team1: loser, played_on: Date.new(2004, 4, 1) + i * 2 + n, game_number: n + 1,
+          team0_score: 3, team1_score: 1, game_status: "試合終了")
+      end
+    end
+    scores.each_with_index.map do |score, n|
+      Game.create!(season: target, team0: @alpha, team1: @beta, played_on: Date.new(2004, 5, 20) + n, game_number: n + 1, game_order: 1,
+        team0_score: score&.first, team1_score: score&.last, game_status: score ? "試合終了" : "試合前")
+    end
+  end
+
+  def summary(game)
+    GameSummary.new(game, scoreboard: GameScoreboard.new(game)).to_s
+  end
+
+  test "a game's summary says the runs it decided" do
+    _first, second = season_with_alpha_beta([ 3, 1 ], [ 2, 0 ])
+
+    assert_includes summary(second), "これでAlphaはBetaから7季連続で勝ち点を取った（1950年以降で最長）。"
+  end
+
+  test "and the runs it ended" do
+    _first, second, third = season_with_alpha_beta([ 3, 1 ], [ 0, 2 ], [ 1, 4 ])
+
+    assert_not_includes summary(second), "途切れた"
+    assert_includes summary(third), "これでAlphaのBetaからの連続勝ち点は6季で途切れた。"
+  end
+
   test "a run shorter than five seasons isn't shown" do
     seasons(3, order)
     target = season(2002, "autumn", order)
