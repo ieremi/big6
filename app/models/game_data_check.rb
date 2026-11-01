@@ -3,7 +3,9 @@
 # sides are the same university, a run of games days apart against different
 # opponents, and each pair's series in a season (round numbers repeated or
 # missing, games after one side already has 2 wins, a series over with no one
-# at 2 wins), and the pairs of each season. Nothing is changed; the admin pages
+# at 2 wins), and the pairs of each season; and the games whose status or
+# provisional data from the league's site look wrong (a past game still 試合前,
+# one ended on a page that doesn't show it over). Nothing is changed; the admin pages
 # list the findings (Admin::GameChecksController), and a finding looked at and
 # found fine is marked so (GameCheckReview) and left out after.
 #
@@ -23,7 +25,10 @@ class GameDataCheck
     "round_gap" => "カードの中で回戦番号が抜けている",
     "after_decided" => "2勝した大学が出たあとも試合がある",
     "undecided" => "どちらも2勝せずにカードが終わっている",
-    "pair_count" => "シーズンのカード数が合わない"
+    "pair_count" => "シーズンのカード数が合わない",
+    "stale_status" => "過去の試合が試合前・試合中のまま",
+    "provisional_unfinished" => "連盟サイトのデータで終了にしたが、そのデータでは終わっていない",
+    "provisional_mismatch" => "連盟サイトのスコアと試合のスコアが合わない"
   }.freeze
 
   # Seasons not played as best-of-three series: a single round robin in the
@@ -36,7 +41,7 @@ class GameDataCheck
 
   def findings
     @findings ||= [
-      *same_day, *same_team, *opponent_changes, *series_findings, *pair_counts
+      *same_day, *same_team, *opponent_changes, *series_findings, *pair_counts, *stale_statuses, *provisional_findings
     ].sort_by { |finding| [ KINDS.keys.index(finding.kind), finding.games.map(&:played_on).min || Date.new(1900), finding.key ] }
   end
 
@@ -179,6 +184,43 @@ class GameDataCheck
 
       Finding.new(kind: "pair_count", key: "pair_count #{season.id}", season: season,
         message: "#{teams.size}校でカード #{pairs.size}（本来 #{expected}）", games: [])
+    end
+  end
+
+  # A game of a day before today (Tokyo's) still 試合前 or 試合中: its result or
+  # its cancellation never reached the data (2022 spring had two, played and
+  # left 試合前 for four years). script/big6/update_cancelled_games.rb reads
+  # the season again.
+  def stale_statuses
+    today = ActiveSupport::TimeZone["Asia/Tokyo"].today
+    games.select { |game| (game.scheduled? || game.in_progress?) && game.played_on < today }.map do |game|
+      Finding.new(kind: "stale_status", key: "stale_status #{game.id}", season: game.season,
+        message: "#{label(game)}：#{game.status_label}のまま", games: [ game ])
+    end
+  end
+
+  # The league site's provisional box score (LeagueOfficialGameScraper) against
+  # the game: a game finished with the page's score though the page doesn't show
+  # it over as the scraper now tells it (5 innings, an hour, or a サヨナラ's x:
+  # 2026-10-31's was ended 0-0 in its third inning), and a game over on both
+  # whose score isn't the page's runs (the page of another game, or Scorebook
+  # wrong). The JSON is read only for the games that have it.
+  def provisional_findings
+    by_id = games.index_by(&:id)
+    Game.where.not(league_official_data: nil).where(game_status: Game.game_statuses[:finished]).pluck(:id, :league_official_data).filter_map do |id, data|
+      game = by_id[id] or next
+      runs = [ data["runsTop"], data["runsBottom"] ].map { |innings| Array(innings).compact.sum }
+      next if Array(data["runsTop"]).compact.empty?
+
+      over = LeagueOfficialGameScraper.over?(data)
+      score = [ game.team0_score, game.team1_score ]
+      if !over && score == runs
+        Finding.new(kind: "provisional_unfinished", key: "provisional_unfinished #{id}", season: game.season,
+          message: "#{label(game)}：#{score.join("-")}（連盟サイトは#{Array(data["runsTop"]).compact.size}回まで、#{data["startTime"]}〜#{data["finishTime"]}）", games: [ game ])
+      elsif over && score != runs
+        Finding.new(kind: "provisional_mismatch", key: "provisional_mismatch #{id}", season: game.season,
+          message: "#{label(game)}：#{score.join("-")}、連盟サイトは#{runs.join("-")}", games: [ game ])
+      end
     end
   end
 end

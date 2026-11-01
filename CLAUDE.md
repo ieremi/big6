@@ -102,6 +102,9 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
   - a series with games after one side already has 2 wins
   - a series that ended with neither side at 2 wins
   - a season whose number of pairings is wrong
+  - a past game still 試合前 or 試合中
+  - a game finished with the league site's score though its page doesn't show it over (`LeagueOfficialGameScraper.over?`)
+  - a game over on both whose score isn't the league page's runs
 
   Many findings are legitimate exceptions (the schedules of the 1940s, playoffs, replays). An admin marks those as reviewed (`GameCheckReview`, keyed like the finding), and reviewed findings are hidden from the list. The 2020 seasons (`SPECIAL_FORMATS`) are excluded from the series and opponent checks.
 - **Fix suggestions** (`FixSuggestion` / `FixSuggestionLine`, `/admin/suggestions`):

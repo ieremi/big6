@@ -95,4 +95,30 @@ class GameDataCheckTest < ActiveSupport::TestCase
     assert_equal [ "3校でカード 2（本来 3）" ], findings["pair_count"].map(&:message)
     assert_equal GameDataCheck.new.findings.map(&:key), GameDataCheck.new.findings.map(&:key)
   end
+  # ---- status and the league site's provisional data
+
+  test "a past game still 試合前 or 試合中 is a finding, but not one of today" do
+    today = ActiveSupport::TimeZone["Asia/Tokyo"].today
+    left = game(@alpha, @beta, today - 1, 1, team0_score: nil, team1_score: nil, game_status: "試合前")
+    game(@alpha, @gamma, today, 1, team0_score: nil, team1_score: nil, game_status: "試合中")
+
+    assert_equal [ [ left ] ], findings["stale_status"].map(&:games)
+  end
+
+  test "a game ended with the league page's score, though the page doesn't show it over, is a finding" do
+    data = { "runsTop" => [ 0, 0, 0 ] + [ nil ] * 6, "runsBottom" => [ 0, 0 ] + [ nil ] * 7, "startTime" => "13:00", "finishTime" => "13:03" }
+    ended = game(@alpha, @beta, "1984-09-15", 1, team0_score: 0, team1_score: 0, league_official_data: data)
+
+    assert_equal [ [ ended ] ], findings["provisional_unfinished"].map(&:games)
+    assert_match "連盟サイトは3回まで、13:00〜13:03", findings["provisional_unfinished"].first.message
+  end
+
+  test "a game over on the league page with another score is a finding, and one with the same score isn't" do
+    data = { "runsTop" => %w[0 1 0 0 2 0 0 0 0].map(&:to_i), "runsBottom" => %w[0 0 0 3 0 0 1 0 0].map(&:to_i), "startTime" => "13:30", "finishTime" => "16:02" }
+    other = game(@alpha, @beta, "1984-09-15", 1, team0_score: 5, team1_score: 4, league_official_data: data)
+    game(@alpha, @gamma, "1984-09-22", 1, team0_score: 3, team1_score: 4, league_official_data: data)
+
+    assert_equal [ [ other ] ], findings["provisional_mismatch"].map(&:games)
+    assert_nil findings["provisional_unfinished"]
+  end
 end
