@@ -133,6 +133,20 @@ class TitleRace
     computed&.fetch(:chances) || {}
   end
 
+  # The best and the worst place the university can end the season in, as [best,
+  # worst], whatever the cards still open do (the loser of a playoff second); nil
+  # when the race isn't counted. StreakRecords tells from it whether a run of
+  # places (2位以上, Aクラス) is decided.
+  def place_range(university)
+    computed&.dig(:places, university.id)
+  end
+
+  # The lowest and the highest wins less losses (勝ち越し when above 0) the
+  # university can end the season with, as [lowest, highest]; nil when not counted.
+  def margin_range(university)
+    computed&.dig(:margins, university.id)
+  end
+
   def self.circled(number)
     number.between?(1, 20) ? (0x2460 + number - 1).chr(Encoding::UTF_8) : "(#{number})"
   end
@@ -154,7 +168,7 @@ class TitleRace
   def cache_key
     decided = @games.select { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.team0_score, game.team1_score ].join(":") }.sort
     still_to_play = @games.reject { |game| decided?(game) }.map { |game| [ game.id, game.team0_id, game.team1_id, game.played_on, game.game_number ].join(":") }.sort
-    [ "title_race/v2", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
+    [ "title_race/v3", season.id, Digest::MD5.hexdigest((decided + [ "|" ] + still_to_play).join(",")) ].join("/")
   end
 
   # The cached data with its ids turned back into universities and cards.
@@ -168,7 +182,7 @@ class TitleRace
       cards: cards,
       champions: data[:champions].transform_values { |ids| ids.map { |id| universities.fetch(id) } },
       chances: data[:chances].to_h { |id, chance| [ universities.fetch(id), chance ] },
-      too_many: data[:too_many], over: data[:over]
+      too_many: data[:too_many], over: data[:over], places: data[:places], margins: data[:margins]
     }
   end
 
@@ -212,7 +226,20 @@ class TitleRace
     # Every combination of results as one number: card i's result (its place in
     # its results) is a digit in base RADIX, so the counting needs no nested arrays.
     codes = (0...(RADIX**open.size)).select { |code| open.each_with_index.all? { |card, i| digit(code, i) < card[:results].size } }
-    champions = codes.to_h { |code| [ code, champions_of(points, wins, losses, open, code) ] }
+    champions = {}
+    places = Array.new(teams.size) { [ teams.size, 1 ] } # [best, worst]
+    margins = Array.new(teams.size) { [ Float::INFINITY, -Float::INFINITY ] } # [lowest, highest]
+    codes.each do |code|
+      totals = totals_of(points, wins, losses, open, code)
+      champions[code] = champions_of(*totals)
+      playoff = champions[code].size > 1 ? champions[code] : []
+      ranks_of(*totals).each_with_index do |rank, i|
+        worst = playoff.include?(i) ? 2 : rank # the loser of a playoff (優勝決定戦) is second
+        places[i] = [ [ places[i][0], rank ].min, [ places[i][1], worst ].max ]
+        margin = totals[1][i] - totals[2][i]
+        margins[i] = [ [ margins[i][0], margin ].min, [ margins[i][1], margin ].max ]
+      end
+    end
     chances = chances_of(open, codes, champions, teams)
 
     mattering = open.each_index.select { |i| matters?(i, champions) }
@@ -222,7 +249,9 @@ class TitleRace
     {
       team_ids: teams.map(&:id),
       cards: open.values_at(*mattering).map { |card| card.slice(:first, :second, :week, :wins, :results, :paths) },
-      champions: grid, chances: chances, too_many: mattering.size > MAX_CARDS, over: open.empty?
+      champions: grid, chances: chances, too_many: mattering.size > MAX_CARDS, over: open.empty?,
+      places: teams.each_index.to_h { |i| [ teams[i].id, places[i] ] },
+      margins: teams.each_index.to_h { |i| [ teams[i].id, margins[i] ] }
     }
   end
 
@@ -258,10 +287,9 @@ class TitleRace
     (code / (RADIX**index)) % RADIX
   end
 
-  # The teams on top (their places in teams order) with this combination of the
-  # open cards' results: on most points and, among them, the best 勝率 (compared
-  # exactly, as fractions, by cross-multiplying).
-  def champions_of(points, wins, losses, open, code)
+  # Each team's points, wins and losses (in teams order) once the open cards
+  # end with this combination of results.
+  def totals_of(points, wins, losses, open, code)
     points, wins, losses = points.dup, wins.dup, losses.dup
     open.each_with_index do |card, index|
       x, y = card[:results][digit(code, index)]
@@ -272,12 +300,30 @@ class TitleRace
       losses[card[:b]] += more_a
       points[x >= 2 ? card[:a] : card[:b]] += 1
     end
+    [ points, wins, losses ]
+  end
+
+  # The teams on top (their places in teams order) with these totals: on most
+  # points and, among them, the best 勝率 (compared exactly, as fractions, by
+  # cross-multiplying).
+  def champions_of(points, wins, losses)
     top = points.max
     leaders = points.each_index.select { |i| points[i] == top }
-    # wins / (wins + losses), with no decisions counted as 0 / 1.
-    better = ->(i, j) { (wins[i] * [ wins[j] + losses[j], 1 ].max) <=> (wins[j] * [ wins[i] + losses[i], 1 ].max) }
-    best = leaders.max { |i, j| better.(i, j) }
-    leaders.select { |i| better.(i, best).zero? }
+    best = leaders.max { |i, j| better(wins, losses, i, j) }
+    leaders.select { |i| better(wins, losses, i, best).zero? }
+  end
+
+  # Each team's place with these totals, as Standings ranks: one more than the
+  # teams ahead of it on points, or level on points with a better 勝率.
+  def ranks_of(points, wins, losses)
+    points.each_index.map do |i|
+      1 + points.each_index.count { |j| points[j] > points[i] || (points[j] == points[i] && better(wins, losses, j, i).positive?) }
+    end
+  end
+
+  # wins / (wins + losses) of team i against team j's, with no decisions counted as 0 / 1.
+  def better(wins, losses, i, j)
+    (wins[i] * [ wins[j] + losses[j], 1 ].max) <=> (wins[j] * [ wins[i] + losses[i], 1 ].max)
   end
 
   # [[university id, its chance]], highest first: every game still to play an even

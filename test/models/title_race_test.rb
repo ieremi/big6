@@ -47,6 +47,17 @@ class TitleRaceTest < ActiveSupport::TestCase
     assert_equal %w[alpha beta gamma], names(race, [ [ 0, 2 ], [ 2, 0 ] ]) # all 1 point and 2-2: a playoff
   end
 
+  test "each university's best and worst place and wins less losses, whatever the open cards do" do
+    three_teams
+
+    race = TitleRace.new(@season)
+
+    assert_equal [ 1, 2 ], race.place_range(@alpha) # at worst it loses a three-way playoff, or gamma takes both cards
+    assert_equal [ 0, 4 ], race.margin_range(@alpha) # 2-0 now, then 0-2 to 2-0 against gamma
+    assert_equal [ 1, 3 ], race.place_range(@beta)
+    assert_equal [ -4, 0 ], race.margin_range(@beta)
+  end
+
   test "each university's chance, every game an even chance and a playoff an even split" do
     three_teams
 

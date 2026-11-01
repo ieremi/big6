@@ -45,6 +45,37 @@ module SeasonsHelper
 
   # Text with strengths written in it as {59} (a chance in percent): each one
   # shown as strength_figure, so the text follows the buttons too.
+  # 「2022年春」 for a StreakRecords season key ([2022, 1]).
+  def streak_season_label(key)
+    "#{key[0]}年#{key[1] == 1 ? "春" : "秋"}"
+  end
+
+  # What a StreakRecords record says, after the university's name: 「2位以上　10季連続
+  # （2022年春〜）」, 「今季も続けば10季連続」, or 「9季連続で途切れた（2022年春〜2026年春）」.
+  def streak_record_text(record)
+    span = "#{streak_season_label(record.from)}〜#{streak_season_label(record.to) if record.status == :ended}"
+    case record.status
+    when :decided then "#{record.label}　#{record.count}季連続（#{span}）"
+    when :at_stake then "#{record.label}　今季も続けば#{record.count}季連続（#{span}）"
+    when :ended then "#{record.label}　#{record.count}季連続で途切れた（#{span}）"
+    end
+  end
+
+  # How a decided or at-stake run stands: 「歴代2位タイ。1989年春の法大（18季）以来。明大で最長」.
+  def streak_record_notes(record)
+    return "" if record.status == :ended
+
+    who = record.opponent ? "#{record.university.short_name}の対#{record.opponent.short_name}" : record.university.short_name
+    since, holder = record.since
+    longest, longest_holder = record.longest
+    [
+      "1950年以降で歴代#{record.rank}位#{"タイ" if record.tied}",
+      ("#{streak_season_label(since.to)}の#{holder.short_name}（#{since.count}季）以来" if since),
+      ("#{who}で最長" if record.own_best),
+      ("最長は#{longest_holder.short_name}の#{longest.count}季（#{streak_season_label(longest.from)}〜#{streak_season_label(longest.to)}）" if longest)
+    ].compact.join("。") + "。"
+  end
+
   def with_strength_figures(text)
     safe_join(text.split(/\{(\d+(?:\.\d+)?)\}/).each_with_index.map { |part, index| index.odd? ? strength_figure(part.to_f / 100) : part })
   end

@@ -65,6 +65,8 @@ class SeasonsController < ApplicationController
     @title_race = @title_race_timeline.race(@title_race_point)
     # 強さの推移: each university's chance of beating an average side, game by game.
     @team_strength = TeamStrength.new(@season)
+    # 連続記録: the runs of seasons in a row this one adds to, has at stake or ends.
+    @streak_records = StreakRecords.new(@season)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).

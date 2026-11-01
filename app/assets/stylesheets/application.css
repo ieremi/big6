@@ -1486,6 +1486,18 @@ tr.bench-only td a {
   line-height: 1.7;
 }
 
+/* 連続記録 (seasons/_streak_records): one run a line, its notes under it. */
+.streak-records ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.streak-records li {
+  margin: 0.6rem 0;
+  line-height: 1.6;
+}
+
 /* 優勝のゆくえ (seasons/_title_race): a compact grid, each cell the champion in its
    colours (white text, as on the team chips), a playoff's on a plain background. */
 .title-race-table {

@@ -1,0 +1,27 @@
+<%# 連続記録 (StreakRecords): the runs of seasons in a row this season adds to (決定), would add to (かかる) or ended
+    (途切れた), each with how it stands among all the runs of its kind since 1950. Only runs of StreakRecords::MIN_COUNT
+    seasons or more. %>
+<% records = streaks.records %>
+<% if records.any? %>
+  <section class="streak-records">
+    <h2 class="card-heading">連続記録</h2>
+    <ul>
+      <% records.each do |record| %>
+        <li>
+          <span class="season-tag"><%= { decided: "決定", at_stake: "かかる", ended: "途切れた" }.fetch(record.status) %></span>
+          <span class="team-chip" style="background: <%= record.university.color %>"><%= record.university.initial %></span>
+          <strong><%= record.university.short_name %></strong>
+          <%= streak_record_text(record) %>
+          <% if (notes = streak_record_notes(record)).present? %>
+            <br><span class="muted"><%= notes %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="muted">
+      1950年以降、全15カードを終えた季で数えています。<%= StreakRecords::MIN_COUNT %>季以上続いたものだけで、東大からの勝ち点はのぞいています。
+      2020年・2021年の季は、順位は連盟の方式（勝ち1点・引分0.5点）で数え、勝ち点のない季なので「勝ち点」の連続はそこで途切れたとしています。
+      最下位は6位のことで、2校が同率5位の季（2017年秋）には最下位はいません。
+    </p>
+  </section>
+<% end %>
