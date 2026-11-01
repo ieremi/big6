@@ -16,6 +16,12 @@
 # deal with those. A game still marked 試合前 is asked about for START_WINDOW from
 # its scheduled start, and no longer: if it hasn't begun by then, or was called
 # off, the hourly job will find that out.
+#
+# A game about to start (LINEUP_LEAD before its scheduled start) has its page on
+# the league's site read too, for the starting lineup (スタメン), which appears
+# there some half an hour before the game: on 2026-11-01 it was up 23 minutes
+# before a 13:00 start. That is the league site alone: Scorebook has nothing
+# new before the first pitch.
 class RefreshLiveScoreboardsJob < ApplicationJob
   queue_as :default
 
@@ -26,19 +32,23 @@ class RefreshLiveScoreboardsJob < ApplicationJob
   # next one's window begins as this one's ends.
   START_WINDOW = 3.hours
 
+  # How long before its scheduled start a game's page is read for the starting lineup.
+  LINEUP_LEAD = 45.minutes
+
   # A run that is still going when the next is due makes that one wait for nothing.
   limits_concurrency to: 1, key: ->(*) { "refresh_live_scoreboards" }, on_conflict: :discard
 
   def perform
     live = live_games
-    return if live.empty?
+    starting = starting_games
+    return if live.empty? && starting.empty?
 
     live.map(&:season).uniq.each do |season|
       attempt("Scorebook #{season.title}") { ScorebookSync.call(season, members: false) }
     end
 
     # Some of them may be over (or called off) now, and need no provisional data.
-    live_games.each { |game| attempt("league site #{game.season.title} #{game.played_on}") { LeagueOfficialGameScraper.call(game) } }
+    (live_games + starting).uniq.each { |game| attempt("league site #{game.season.title} #{game.played_on}") { LeagueOfficialGameScraper.call(game) } }
   end
 
   private
@@ -53,14 +63,27 @@ class RefreshLiveScoreboardsJob < ApplicationJob
     (under_way.includes(:season, :team0, :team1).to_a + not_yet_marked).uniq
   end
 
+  # Today's games still 試合前 whose scheduled start is less than LINEUP_LEAD away.
+  def starting_games(now = TOKYO.now)
+    Game.scheduled.where(played_on: now.to_date).includes(:season, :team0, :team1).select do |game|
+      starts_at = starts_at(game)
+      starts_at && now >= starts_at - LINEUP_LEAD && now < starts_at
+    end
+  end
+
   # Whether the game's scheduled start (Tokyo time) has passed, but not by START_WINDOW yet.
   def started?(game, now)
+    starts_at = starts_at(game)
+    starts_at.present? && now >= starts_at && now < starts_at + START_WINDOW
+  end
+
+  # The game's scheduled start, in Tokyo, or nil when it isn't known.
+  def starts_at(game)
     start = EstimatedGameSchedule.new(game).scheduled_start_time
-    return false if start.blank?
+    return nil if start.blank?
 
     hour, minute = start.split(":").map(&:to_i)
-    starts_at = TOKYO.local(game.played_on.year, game.played_on.month, game.played_on.day, hour, minute)
-    now >= starts_at && now < starts_at + START_WINDOW
+    TOKYO.local(game.played_on.year, game.played_on.month, game.played_on.day, hour, minute)
   end
 
   # One source being down shouldn't stop the others, or fail the job: the next run is five minutes away.

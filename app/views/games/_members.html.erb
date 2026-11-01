@@ -17,7 +17,11 @@
 <% if rosters.any? %>
   <h2 class="card-heading">ベンチ入りメンバー</h2>
   <% if provisional %>
-    <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち。出場した選手のみ）</p>
+    <% if game.scheduled? %>
+      <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。試合開始前のスタメンと先発投手）</p>
+    <% else %>
+      <p class="muted">暫定データ（東京六大学野球連盟公式サイトより。Scorebookの確定データ待ち。出場した選手のみ）</p>
+    <% end %>
   <% end %>
 
   <div data-controller="decade-fold">

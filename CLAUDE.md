@@ -54,7 +54,7 @@ Most of `app/models/` is plain Ruby rather than ActiveRecord: scrapers and impor
 
 Recurring jobs (`config/recurring.yml`, production only):
 - `SyncRecentGamesJob` runs hourly. It covers games from the last 3 days: schedule, videos, weather, Scorebook, provisional data and player box scores.
-- `RefreshLiveScoreboardsJob` runs every 5 minutes. It does nothing unless a game is under way or due to have started.
+- `RefreshLiveScoreboardsJob` runs every 5 minutes. It does nothing unless a game is under way or due to have started. From 45 minutes before a game's start it also reads the game's page on the league site (not Scorebook), for the starting lineup.
 - `CheckScorebookStatsJob` runs every 20 minutes from 1:00 to 4:40 Tokyo time. Each run checks 40 players' batting lines against their Scorebook player pages, oldest check first. It records the results in `scorebook_stats_player_checks` and `scorebook_stats_differences` and changes nothing else.
 
 Production runs the Solid Queue supervisor inside Puma (`SOLID_QUEUE_IN_PUMA`).

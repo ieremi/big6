@@ -100,6 +100,17 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "details.decade", 1
   end
 
+  test "game page shows the league site's starting lineup before the game, said to be one" do
+    Player.create!(scorebook_id: 1, university: @alpha, name: "落合 智哉", enter_year: 2023, role: "選手", enrollment_status: 1)
+    @game.update!(game_status: "試合前", team0_score: nil, team1_score: nil,
+      league_official_data: { "runsTop" => [ nil ] * 9, "runsBottom" => [ nil ] * 9, "lineup" => [ { "side" => "top", "order" => 1, "position" => "捕", "name" => "落合" } ] })
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "p.muted", text: /試合開始前のスタメンと先発投手/
+    assert_select "details.decade summary", text: /#{Regexp.escape(@alpha.short_name)}（1人）/
+  end
+
   test "game page has no bench section or fold buttons when no roster is stored" do
     get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 

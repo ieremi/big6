@@ -121,6 +121,23 @@ class RefreshLiveScoreboardsJobTest < ActiveJob::TestCase
     end
   end
 
+  test "a game about to start has its league page read for the starting lineup, but Scorebook isn't asked" do
+    game = scheduled_game(1, "13:00")
+
+    at_tokyo(12, 20) do
+      calls = run_job
+
+      assert_empty calls[:synced]
+      assert_equal [ game ], calls[:pages]
+    end
+  end
+
+  test "but not before the forty-five minutes ahead of its start" do
+    scheduled_game(1, "13:00")
+
+    at_tokyo(12, 10) { assert_empty run_job[:pages] }
+  end
+
   test "and not for ever: only for the three hours after it" do
     scheduled_game(1, "11:00")
 
