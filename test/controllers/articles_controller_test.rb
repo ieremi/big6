@@ -78,6 +78,24 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table tbody tr td span[data-view=odds][hidden]", text: "4.00" # alpha's best as odds
   end
 
+  test "the home runs article gives the fewest, the most, the mean and the spread, and every season" do
+    Game.delete_all
+    player = Player.create!(scorebook_id: 1, university: universities(:one), name: "打者", enter_year: 2023, role: "選手")
+    { 2001 => 3, 2002 => 5 }.each do |year, count|
+      season = Season.create!(year: year, term: "spring")
+      game = Game.create!(season:, team0: universities(:one), team1: universities(:two), played_on: Date.new(year, 4, 1), game_number: 1,
+        team0_score: 3, team1_score: 1, game_status: "試合終了")
+      BattingLine.create!(game:, player:, university: universities(:one), ab: 4, hits: count, home_runs: count)
+    end
+
+    get article_path("home-runs-per-season")
+
+    assert_response :success
+    assert_select "article p", text: /平均\s*4.0本\s*（標準偏差1.0本）/
+    assert_select "article p", text: /2002年春季の5本/
+    assert_select "table[data-controller=sortable-table] tbody tr", 2
+  end
+
   test "the fifty years article's old URL is sent on to the postwar one" do
     get article_path("strength-50-years")
 

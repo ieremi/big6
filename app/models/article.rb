@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "home-runs-per-season", title: "シーズンの本塁打数", published_on: Date.new(2026, 11, 1),
+      description: "1シーズンの本塁打の本数（6大学の合計）の最少・最多・平均・標準偏差。1試合あたりの本数と、年代ごとの移り変わりも。"
+    ),
+    Entry.new(
       slug: "strength-postwar", title: "戦後の強さの推移", published_on: Date.new(2026, 10, 29),
       description: "戦後、シーズンの終わりの6大学の強さ（平均的な相手に勝つ確率）の移り変わり。年代ごとの平均と、各大学がもっとも強かった・弱かったシーズン。"
     ),

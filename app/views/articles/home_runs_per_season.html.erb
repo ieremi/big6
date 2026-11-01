@@ -1,0 +1,114 @@
+<%# シーズンの本塁打数: the league's home runs in each season (SeasonHomeRuns), the fewest, the most, the mean and the
+    standard deviation of the total and of the total per game, over every season counted and by decade, and every
+    season in a sortable table. The figures are worked out from the data, so they follow it as seasons end. %>
+<%
+  rows = SeasonHomeRuns.rows
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  one = ->(value) { number_with_precision(value, precision: 1) }
+  two = ->(value) { number_with_precision(value, precision: 2) }
+  seasons_of = ->(list) { list.map { |row| row.season.title }.join("、") }
+  total, per_game = SeasonHomeRuns.summary(rows, &:home_runs), SeasonHomeRuns.summary(rows, &:per_game)
+  decades = rows.group_by { |row| row.season.year / 10 * 10 }
+  no_record = SeasonHomeRuns.no_record
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if total %>
+    <p>
+      1シーズンの本塁打は、6大学合わせて平均<strong><%= one.(total.mean) %>本</strong>（標準偏差<%= one.(total.sd) %>本）でした。
+      もっとも多かったのは<strong><%= seasons_of.(total.max_rows) %>の<%= total.max %>本</strong>、
+      もっとも少なかったのは<strong><%= seasons_of.(total.min_rows) %>の<%= total.min %>本</strong>です
+      （<%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズン）。
+    </p>
+    <p>
+      シーズンによって試合の数が違う（3回戦や中止の振り替えで、30〜40試合ほど）ので、1試合あたりの本数でも比べました。
+      平均は<%= two.(per_game.mean) %>本（標準偏差<%= two.(per_game.sd) %>本）、もっとも多かったのは<%= seasons_of.(per_game.max_rows) %>の<%= two.(per_game.max) %>本、
+      もっとも少なかったのは<%= seasons_of.(per_game.min_rows) %>の<%= two.(per_game.min) %>本です。
+    </p>
+
+    <h2 class="card-heading">全シーズン</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th></th><th>最少</th><th>最多</th><th>平均</th><th>標準偏差</th></tr></thead>
+        <tbody>
+          <tr>
+            <th>本塁打数</th>
+            <td class="num"><%= total.min %></td><td class="num"><%= total.max %></td><td class="num"><%= one.(total.mean) %></td><td class="num"><%= one.(total.sd) %></td>
+          </tr>
+          <tr>
+            <th>1試合あたり</th>
+            <td class="num"><%= two.(per_game.min) %></td><td class="num"><%= two.(per_game.max) %></td><td class="num"><%= two.(per_game.mean) %></td><td class="num"><%= two.(per_game.sd) %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="card-heading">年代ごと</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>年代</th><th>シーズン</th><th>最少</th><th>最多</th><th>平均</th><th>標準偏差</th><th>1試合あたりの平均</th></tr>
+        </thead>
+        <tbody>
+          <% decades.each do |decade, list| %>
+            <% stats = SeasonHomeRuns.summary(list, &:home_runs) %>
+            <tr>
+              <td><%= decade %>年代</td>
+              <td class="num"><%= stats.count %></td>
+              <td class="num"><%= stats.min %></td>
+              <td class="num"><%= stats.max %></td>
+              <td class="num"><%= one.(stats.mean) %></td>
+              <td class="num"><%= one.(stats.sd) %></td>
+              <td class="num"><%= two.(SeasonHomeRuns.summary(list, &:per_game).mean) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">年代によって数えたシーズンの数が違います。数の少ない年代の数字は、その年代全体を表しているとは限りません。</p>
+
+    <h2 class="card-heading">シーズンごと</h2>
+    <div class="table-scroll">
+      <table data-controller="sortable-table">
+        <thead>
+          <tr>
+            <%= sortable_column_header "シーズン", "S", first: "asc" %>
+            <%= sortable_column_header "試合", "G", first: "desc" %>
+            <%= sortable_column_header "本塁打", "H", first: "desc" %>
+            <%= sortable_column_header "1試合あたり", "P", first: "desc" %>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.each_with_index do |row, index| %>
+            <tr>
+              <%= sort_cell link_to(row.season.title, standings_season_path(row.season.year, row.season.term)), index %>
+              <td class="num"><%= row.games %></td>
+              <td class="num"><%= row.home_runs %></td>
+              <%= sort_cell two.(row.per_game), row.per_game %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="card-heading">数え方</h2>
+    <p class="muted">
+      BIG6 Scorebook の各試合のボックススコアにある打者の本塁打を、シーズンごとに足しました。優勝決定戦はのぞいています。
+      数えたのは、終わったシーズンのうち、すべての試合のボックススコアがそろっているシーズンだけです。
+      Scorebook には試合ごとの成績がないシーズンが多く（1950年代の大半、2010年代の前半など）、<%= SeasonHomeRuns.without_box_scores %>シーズンは数えていません。
+      <% if no_record.any? %>
+        また、<%= seasons_of.(no_record) %>は、ボックススコアはあっても本塁打が1本も記録されていないため、のぞきました
+        （2012年と2013年は、二塁打・三塁打は記録されていて本塁打だけがない、Scorebook のデータの欠けです）。
+      <% end %>
+      標準偏差は、各シーズンの値と平均との差を2乗して平均し、その平方根をとったものです。
+    </p>
+  <% else %>
+    <p>まだ数えられるシーズンがありません。</p>
+  <% end %>
+</article>
