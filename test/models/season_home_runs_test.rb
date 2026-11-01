@@ -28,6 +28,29 @@ class SeasonHomeRunsTest < ActiveSupport::TestCase
     assert_equal 1, SeasonHomeRuns.without_box_scores
   end
 
+  test "the season being played is apart, with its games so far that have a box score, and its pace over all its games" do
+    season(2001, [ 1, 1 ])
+    today = ActiveSupport::TimeZone["Asia/Tokyo"].today
+    on = Season.create!(year: today.year + 1, term: "autumn")
+    [ [ 2, today - 2 ], [ 1, today - 1 ], [ nil, today - 1 ], [ nil, today + 5 ] ].each_with_index do |(count, day), i|
+      game = Game.create!(season: on, team0: @alpha, team1: @beta, played_on: day, game_number: i + 1,
+        team0_score: (3 if day < today), team1_score: (1 if day < today), game_status: day < today ? "試合終了" : "試合前")
+      BattingLine.create!(game:, player: @player, university: @alpha, ab: 4, hits: 1, home_runs: count) if count
+    end
+
+    current = SeasonHomeRuns.current
+
+    assert_equal [ on, 2, 3, 4 ], [ current.season, current.games, current.home_runs, current.scheduled_games ]
+    assert_equal 6, current.projected # 1.5 a game over 4 games
+    assert_not_includes SeasonHomeRuns.rows.map(&:season), on
+  end
+
+  test "there is no season being played between seasons" do
+    season(2001, [ 1, 1 ])
+
+    assert_nil SeasonHomeRuns.current
+  end
+
   test "the fewest, the most, the mean and the population's standard deviation, with the seasons of each" do
     fewest = season(2001, [ 1, 1 ])
     most = season(2002, [ 3, 3 ])

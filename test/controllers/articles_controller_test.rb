@@ -95,6 +95,20 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article p", text: /2002年春季の5本/
     assert_select "table[data-controller=sortable-table] tbody tr", 2
     assert_select "tr:not(.muted) td", text: "2／2" # the 2000s: both seasons counted
+    assert_select "h2", text: /今季/, count: 0
+
+    today = ActiveSupport::TimeZone["Asia/Tokyo"].today
+    on = Season.create!(year: today.year + 1, term: "spring")
+    [ today - 1, today + 1 ].each_with_index do |day, i|
+      game = Game.create!(season: on, team0: universities(:one), team1: universities(:two), played_on: day, game_number: i + 1,
+        team0_score: (3 if i.zero?), team1_score: (1 if i.zero?), game_status: i.zero? ? "試合終了" : "試合前")
+      BattingLine.create!(game:, player:, university: universities(:one), ab: 4, hits: 2, home_runs: 2) if i.zero?
+    end
+
+    get article_path("home-runs-per-season")
+
+    assert_select "h2", text: "今季（#{on.title}、途中）"
+    assert_select "article p", text: /ここまで1試合で\s*2本\s*、1試合あたり\s*2.00本.*全2試合を終えると、約4本/m
   end
 
   test "the fifty years article's old URL is sent on to the postwar one" do

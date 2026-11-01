@@ -51,6 +51,34 @@ class SeasonHomeRuns
       .map { |season| Row.new(season:, games: held[season.id], home_runs: home_runs[season.id].to_i) }
   end
 
+  # The season being played so far (今季), not counted with the others: its
+  # games with a box score so far, their home runs, and how many games it has
+  # in all, played or to play (the 3回戦 not yet added aren't). nil when no
+  # season is on, or none of its games has a box score yet.
+  Current = Data.define(:season, :games, :home_runs, :scheduled_games) do
+    def per_game
+      home_runs.to_f / games
+    end
+
+    # The home runs at this rate over all its games.
+    def projected
+      (per_game * scheduled_games).round
+    end
+  end
+
+  def self.current
+    games = Game.where(counted_in_stats: true).where.not(game_status: Game::NOT_HELD_STATUSES)
+    season_id = games.where(game_status: %w[試合前 試合中]).where(played_on: ActiveSupport::TimeZone["Asia/Tokyo"].today..).pick(:season_id)
+    return nil unless season_id
+
+    season_games = games.where(season_id:)
+    boxed = BattingLine.joins(:game).merge(season_games).distinct.count(:game_id)
+    return nil if boxed.zero?
+
+    Current.new(season: Season.select(:id, :year, :term).find(season_id), games: boxed,
+      home_runs: BattingLine.joins(:game).merge(season_games).sum(:home_runs), scheduled_games: season_games.count)
+  end
+
   # How many seasons with games aren't counted for want of a box score for some
   # of their games (the season being played among them).
   def self.without_box_scores

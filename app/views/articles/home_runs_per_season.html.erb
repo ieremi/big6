@@ -11,6 +11,7 @@
   total, per_game = SeasonHomeRuns.summary(rows, &:home_runs), SeasonHomeRuns.summary(rows, &:per_game)
   decades = rows.group_by { |row| row.season.year / 10 * 10 }
   played = SeasonHomeRuns.seasons_by_decade
+  current = SeasonHomeRuns.current
   no_record = SeasonHomeRuns.no_record
 %>
 
@@ -32,6 +33,18 @@
       平均は<%= two.(per_game.mean) %>本（標準偏差<%= two.(per_game.sd) %>本）、もっとも多かったのは<%= seasons_of.(per_game.max_rows) %>の<%= two.(per_game.max) %>本、
       もっとも少なかったのは<%= seasons_of.(per_game.min_rows) %>の<%= two.(per_game.min) %>本です。
     </p>
+
+    <% if current %>
+      <%# Where the season being played stands by home runs per game: the seasons counted with more, plus one. %>
+      <% place = rows.count { |row| row.per_game > current.per_game } + 1 %>
+      <h2 class="card-heading">今季（<%= current.season.title %>、途中）</h2>
+      <p>
+        ここまで<%= current.games %>試合で<strong><%= current.home_runs %>本</strong>、1試合あたり<strong><%= two.(current.per_game) %>本</strong>です。
+        1試合あたりの本数では、数えた<%= rows.size %>シーズンの中で<%= place %>位にあたります（平均は<%= two.(per_game.mean) %>本）。
+        このペースのまま全<%= current.scheduled_games %>試合を終えると、約<%= current.projected %>本になります。
+      </p>
+      <p class="muted">今季はまだ終わっていないので、ほかの表や数字には含めていません。試合数は、成績（Scorebook）が入っている試合の数です。成績は試合の数日後に入ります。</p>
+    <% end %>
 
     <h2 class="card-heading">全シーズン</h2>
     <div class="table-scroll">
