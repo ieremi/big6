@@ -15,7 +15,7 @@
 #
 # A card none of whose results ever changes the champion (whatever the others
 # do) is left out of the grid, so it only has the cards that matter. Only for a
-# season played as best-of-three cards (not the 2020 formats, nor one from
+# season played as best-of-three cards (not the 2020 and 2021 formats, nor one from
 # printed sources), with at most ChampionshipOdds::OPEN_CARDS cards open (to
 # count) and at most MAX_CARDS of them mattering (to draw: 4 cards make a grid
 # of up to 16 by 16).
@@ -173,7 +173,7 @@ class TitleRace
   end
 
   def compute
-    return nil if GameDataCheck::SPECIAL_FORMATS.key?([ season.year, season.term ])
+    return nil if season.points_season? # no 勝ち点 cards to count through
     return nil if @games.empty? || @games.any?(&:source_citation)
 
     teams = @games.flat_map { |game| [ game.team0, game.team1 ] }.uniq.sort_by(&:position)

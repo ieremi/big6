@@ -481,11 +481,11 @@ components:
       type: object
       properties:
         university: { $ref: "#/components/schemas/University" }
-        rank: { type: integer, description: 順位。勝ち点と勝率がどちらも同じ大学は同じ順位（1, 2, 3, 3, 3, 6） }
+        rank: { type: integer, description: "順位。勝ち点と勝率がどちらも同じ大学は同じ順位（1, 2, 3, 3, 3, 6）。2020年・2021年の季は、それでも並んだ2校を直接対決の勝敗で分ける" }
         wins: { type: integer }
         losses: { type: integer }
         draws: { type: integer }
-        points: { type: integer, nullable: true, description: "勝ち点。部史の勝敗表に勝ち点の欄がない季は null" }
+        points: { type: number, nullable: true, description: "勝ち点。2020年・2021年の季は勝ち1点・引分0.5点の合計で、8.5 のような小数になることがある。部史の勝敗表に勝ち点の欄がない季は null" }
         games: { type: integer }
         percentage: { type: number, description: 勝率 }
         runs_scored: { type: integer, nullable: true, description: 得点（勝敗のついた試合と引き分けの合計）。source のある季は null }

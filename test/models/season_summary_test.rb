@@ -46,11 +46,12 @@ class SeasonSummaryTest < ActiveSupport::TestCase
     assert_equal "東京六大学野球 2026年秋季リーグ戦は、9月12日までに1試合を終え、#{@alpha.short_name}が勝ち点0（1勝0敗）で首位。", summary(s, finished: false)
   end
 
-  test "claims no champion for 2020 and 2021, played in other formats" do
+  test "names the champion of 2020 and 2021 by its points, a draw half of one" do
     s = season(2021, "autumn")
     game(s, "2021-09-18", 1, 3, 1)
+    game(s, "2021-09-19", 2, 2, 2)
 
-    assert_equal "東京六大学野球 2021年秋季リーグ戦は、全1試合が行われた。", summary(s)
+    assert_equal "東京六大学野球 2021年秋季リーグ戦は、#{@alpha.short_name}が勝ち点1.5（1勝0敗1分）で優勝した。", summary(s)
   end
 
   test "a past season without games has no record" do

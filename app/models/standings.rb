@@ -1,3 +1,8 @@
+# The 2020 and 2021 seasons (Season#points_season?), of one- and two-game cards
+# with no 勝ち点 to win, are ranked as the league ranked them: by points, a win 1
+# and a draw 0.5 (2020 autumn's 慶大 「6勝2分、勝ち点7」), then 勝率, and two
+# universities still level by the games between them (2020 spring's 法大 over
+# 慶大, its champion). Their points are those, and 8.5 can be one.
 class Standings
   # runs_scored and runs_allowed (得点・失点) are summed over the same games as the
   # wins and losses: the ones with a final score.
@@ -92,15 +97,24 @@ class Standings
       pair_games[[g.team0_id, g.team1_id].sort] << g
     end
 
+    # In a points season, half-points: a win 2, a draw 1, halved below.
     points = Hash.new(0)
+    head_to_head = {}
     @results = {}
     @attendances = {}
 
     pair_games.each do |(a_id, b_id), pair|
       wins_a = pair.count { |g| winner_id(g) == a_id }
       wins_b = pair.count { |g| winner_id(g) == b_id }
-      points[a_id] += 1 if wins_a >= 2
-      points[b_id] += 1 if wins_b >= 2
+      if season.points_season?
+        points[a_id] += wins_a * 2 + (pair.size - wins_a - wins_b)
+        points[b_id] += wins_b * 2 + (pair.size - wins_a - wins_b)
+        head_to_head[[ a_id, b_id ]] = wins_a <=> wins_b
+        head_to_head[[ b_id, a_id ]] = wins_b <=> wins_a
+      else
+        points[a_id] += 1 if wins_a >= 2
+        points[b_id] += 1 if wins_b >= 2
+      end
 
       @results[[a_id, b_id]] = pair.map { |g| symbol_for(g, a_id) }
       @results[[b_id, a_id]] = pair.map { |g| symbol_for(g, b_id) }
@@ -117,7 +131,7 @@ class Standings
         wins: t[:wins],
         losses: t[:losses],
         draws: t[:draws],
-        points: points[u.id],
+        points: season.points_season? ? halves(points[u.id]) : points[u.id],
         games: t[:wins] + t[:losses] + t[:draws],
         runs_scored: t[:runs_scored],
         runs_allowed: t[:runs_allowed],
@@ -129,9 +143,31 @@ class Standings
     end
 
     @rows = @rows_by_id.values.sort_by { |r| [-r.points, -r.percentage] }
-    @rows.each_with_index do |row, index|
-      previous = @rows[index - 1] if index.positive?
-      row.rank = previous && previous.standing_key == row.standing_key ? previous.rank : index + 1
+    places = @rows.chunk_while { |a, b| a.standing_key == b.standing_key }.flat_map do |level|
+      season.points_season? ? separate_pair(level, head_to_head) : [ level ]
+    end
+    @rows = places.flatten
+    places.each_with_object([]) do |place, ranked|
+      place.each { |row| row.rank = ranked.size + 1 }
+      ranked.concat(place)
+    end
+  end
+
+  # 7 for 14 half-points, 8.5 for 17.
+  def halves(count)
+    count.even? ? count / 2 : count / 2.0
+  end
+
+  # The places of universities level on points and 勝率: two, and only two, in
+  # the order of the games between them (the one that won more of them first),
+  # unless those were even too.
+  def separate_pair(level, head_to_head)
+    return [ level ] unless level.size == 2
+
+    case head_to_head[[ level[0].university.id, level[1].university.id ]]
+    when 1 then [ [ level[0] ], [ level[1] ] ]
+    when -1 then [ [ level[1] ], [ level[0] ] ]
+    else [ level ]
     end
   end
 

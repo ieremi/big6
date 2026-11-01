@@ -3,7 +3,8 @@
 #
 # The champion is decided as SeasonSummary says it: the winner of the playoff
 # (優勝決定戦) when there was one, else the top of the standings (勝ち点, then
-# 勝率). Only for seasons ranked that way (Season#ranked?); for the others, and
+# 勝率; for 2020 and 2021, points as Standings ranks them). Only for seasons
+# ranked one of those ways (Season#ranked?, Season#points_season?); for the others, and
 # for a season with two sides level at the top and no playoff, there is none.
 #
 # Works from the games alone, without the seasons' large Scorebook columns, so
@@ -12,7 +13,7 @@ class SeasonChampion
   # The champion of season (a University), or nil. The season is taken as over:
   # for the current one, ask only once its title is decided.
   def self.of(season)
-    return nil unless season.ranked?
+    return nil unless season.ranked? || season.points_season?
 
     games = Game.where(season_id: season.id).includes(:team0, :team1).order(:played_on, :game_number).to_a
     playoff = games.reverse.find { |game| game.title_playoff? && game.decided? && game.team0_score != game.team1_score }
@@ -21,7 +22,7 @@ class SeasonChampion
     rows = Standings.new(season, games: games.select(&:counted_in_stats)).rows
     top, second = rows
     return nil if top.nil? || top.games.zero?
-    return nil if second && [ second.points, second.percentage ] == [ top.points, top.percentage ]
+    return nil if second && second.rank == top.rank
 
     top.university
   end

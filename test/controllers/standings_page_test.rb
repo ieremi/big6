@@ -21,6 +21,19 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_equal %w[6 5], alpha_row.css("td").to_a.values_at(scored, allowed).map { |td| td.text.strip }
   end
 
+  test "a 2021 season's standings page says its 勝ち点 are points, a draw half of one, and a usual season's doesn't" do
+    season = Season.create!(year: 2021, term: "autumn")
+    Game.create!(season:, team0: universities(:one), team1: universities(:two), played_on: Date.new(2021, 9, 18), game_number: 1,
+      team0_score: 2, team1_score: 2, game_status: "試合終了")
+
+    get standings_season_url(2021, "autumn")
+    assert_select "p.muted", text: /1カード2試合.*勝ち1点・引分0.5点/m
+    assert_select "table.standings-table td", text: "0.5"
+
+    get standings_season_url(2026, "spring")
+    assert_select "p.muted", text: /勝ち1点・引分0.5点/, count: 0
+  end
+
   test "the standings API gives each team's runs scored and allowed" do
     get "/api/v1/seasons/2026/spring/standings"
 

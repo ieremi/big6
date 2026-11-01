@@ -5,7 +5,8 @@
 # Like GameSummary, for people and for search engines and AI search alike. The
 # champion is taken from the standings (勝ち点, then 勝率), or from the playoff
 # when there was one; but only for seasons played under that system
-# (Season#ranked?), so none is claimed for 2020 and 2021 or for the seasons
+# (Season#ranked?), or the 2020 and 2021 ones of points (Season#points_season?,
+# 「勝ち点8.5」 as the league wrote it), so none is claimed for the seasons
 # before 1950. For those it says only what the page lists.
 class SeasonSummary
   def initialize(season, standings, games)
@@ -26,7 +27,7 @@ class SeasonSummary
     return "試合の記録がない。" if @games.empty? && @season.year < Date.current.year
     return "まだ試合が行われていない。" if decided.empty?
     return printed_source_body(decided) if decided.any?(&:source_citation)
-    return "全#{held.size}試合が行われた。" unless @season.ranked?
+    return "全#{held.size}試合が行われた。" unless @season.ranked? || @season.points_season?
 
     @season.finished? ? champion : "#{last_date(decided)}までに#{decided.size}試合を終え、#{leaders}。"
   end
@@ -42,12 +43,12 @@ class SeasonSummary
 
     top = @standings.rows.first
     record = "勝ち点#{top.points}（#{top.wins}勝#{top.losses}敗#{"#{top.draws}分" if top.draws.positive?}）"
-    top.points == 5 ? "#{top.university.short_name}が#{record}で完全優勝した。" : "#{top.university.short_name}が#{record}で優勝した。"
+    top.points == 5 && @season.ranked? ? "#{top.university.short_name}が#{record}で完全優勝した。" : "#{top.university.short_name}が#{record}で優勝した。"
   end
 
   # 「慶大が勝ち点3（6勝1敗）で首位」, or the universities level at the top.
   def leaders
-    key = ->(row) { [ row.points, row.percentage.round(6) ] }
+    key = ->(row) { row.rank }
     top = @standings.rows.select { |row| key.(row) == key.(@standings.rows.first) }
     first = top.first
     if top.size == 1

@@ -21,6 +21,15 @@
     <%= link_to "試合一覧を見る", season_path(@season.year, @season.term) %>
   </p>
 
+  <% if @season.points_season? %>
+    <%# Standings ranks these seasons by points (Season#points_season?): say so, as the 勝ち点 here isn't the usual one. %>
+    <p class="muted">
+      この季は<%= @season.year == 2020 && @season.term == "spring" ? "1カード1試合の総当たり" : "1カード2試合" %>で、勝ち点をかけた3回戦制ではありませんでした。
+      連盟の方式どおり、勝ち1点・引分0.5点の合計を勝ち点とし、次に勝率で順位を決めています。
+      勝ち点も勝率も同じ2校は、直接対決の勝敗で上下をつけています。
+    </p>
+  <% end %>
+
   <div class="table-zoom" data-controller="cell-toggle table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
     <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
 

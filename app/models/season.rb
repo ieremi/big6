@@ -23,7 +23,12 @@ class Season < ApplicationRecord
     FIRST_YEAR_RANKED = 1950
 
     def ranked?
-        year >= FIRST_YEAR_RANKED && !POINTS_SEASONS.include?([ year, term ])
+        year >= FIRST_YEAR_RANKED && !points_season?
+    end
+
+    # One of POINTS_SEASONS, which Standings ranks by points (a win 1, a draw 0.5).
+    def points_season?
+        POINTS_SEASONS.include?([ year, term ])
     end
 
     # The season before this one (spring before autumn, the year's autumn before

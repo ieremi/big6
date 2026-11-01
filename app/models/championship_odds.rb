@@ -13,7 +13,7 @@
 #
 # Only for the second half of a season (OPEN_CARDS or fewer cards undecided),
 # when the counting is quick and the odds mean something, and only for seasons
-# played as best-of-three cards: not the 2020 formats, nor a season whose cards
+# played as best-of-three cards: not the 2020 and 2021 formats, nor a season whose cards
 # don't look like that (several prewar ones).
 class ChampionshipOdds
   OPEN_CARDS = 7
@@ -22,7 +22,7 @@ class ChampionshipOdds
   # not worked out for this game.
   def self.around(game)
     return nil unless game.counted_in_stats && game.decided?
-    return nil if GameDataCheck::SPECIAL_FORMATS.key?([ game.season.year, game.season.term ])
+    return nil if game.season.points_season?
 
     season_games = Game.held.where(season_id: game.season_id, counted_in_stats: true).order(:played_on, :game_number).to_a
     return nil if season_games.any?(&:source_citation) # only one club's games (Season#from_printed_sources?)
