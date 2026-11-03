@@ -50,8 +50,6 @@ module SeasonsHelper
     ])
   end
 
-  # Text with strengths written in it as {59} (a chance in percent): each one
-  # shown as strength_figure, so the text follows the buttons too.
   # 「2022年春」 for a StreakRecords season key ([2022, 1]).
   def streak_season_label(key)
     "#{key[0]}年#{key[1] == 1 ? "春" : "秋"}"
@@ -83,6 +81,29 @@ module SeasonsHelper
     ].compact.join("。") + "。"
   end
 
+  # What a StreakRecords comeback says, after the university's name: 「Aクラス（3位以上）
+  # 92季ぶり（前回1981年春）」, or 「優勝　1950年以降初」.
+  def comeback_text(comeback)
+    return "#{comeback.label}　1950年以降初" unless comeback.count
+
+    "#{comeback.label}　#{comeback.count}季ぶり（前回#{streak_season_label(comeback.last)}）"
+  end
+
+  # How the gap stands: 「1950年以降で歴代2位。1993年秋の東大（法大から81季ぶり）以来」.
+  # The rank only in the top ten, as short gaps are many.
+  def comeback_notes(comeback)
+    return "" unless comeback.count
+
+    gap = ->((run, holder, opponent)) { "#{streak_season_label(run.to)}の#{holder.short_name}（#{"#{opponent.short_name}から" if opponent}#{run.count}季ぶり）" }
+    [
+      ("1950年以降で歴代#{comeback.rank}位#{"タイ" if comeback.tied}" if comeback.rank <= 10),
+      ("#{gap.(comeback.since)}以来" if comeback.since),
+      ("最長は#{gap.(comeback.longest)}" if comeback.longest)
+    ].compact.join("。").then { |text| text.empty? ? text : "#{text}。" }
+  end
+
+  # Text with strengths written in it as {59} (a chance in percent): each one
+  # shown as strength_figure, so the text follows the buttons too.
   def with_strength_figures(text)
     safe_join(text.split(/\{(\d+(?:\.\d+)?)\}/).each_with_index.map { |part, index| index.odd? ? strength_figure(part.to_f / 100) : part })
   end

@@ -126,9 +126,10 @@ class StreakRecordsTest < ActiveSupport::TestCase
   end
 
   # The 2004 spring season with every card over but alpha v beta, whose games
-  # are given as [alpha's score, beta's] (nil for still to play).
-  def season_with_alpha_beta(*scores)
-    seasons(6, order)
+  # are given as [alpha's score, beta's] (nil for still to play), after six
+  # seasons in the order before.
+  def season_with_alpha_beta(*scores, before: order)
+    seasons(6, before)
     target = Season.create!(year: 2004, term: "spring")
     order.combination(2).each_with_index do |(winner, loser), i|
       next if [ winner, loser ] == [ @alpha, @beta ]
@@ -185,7 +186,40 @@ class StreakRecordsTest < ActiveSupport::TestCase
     assert_nil find(target, @alpha, "優勝")
   end
 
-  test "before 1950 there are no runs" do
+def comeback(season, university, label)
+  StreakRecords.new(season).comebacks.find { |comeback| comeback.university == university && comeback.label == label }
+end
+
+test "a season over brings back what a university last did long ago, with how the gap stands" do
+  season(2001, "spring", [ @gamma, @alpha, @beta, @delta, @epsilon, @tokyo ]) # gamma champion, alpha second
+  (1...6).each { |i| season(2001 + i / 2, i.even? ? "spring" : "autumn", order) }
+  target = season(2004, "spring", [ @gamma, @alpha, @beta, @delta, @epsilon, @tokyo ])
+
+  title = comeback(target, @gamma, "優勝")
+
+  assert_equal [ :decided, 6, [ 2001, 1 ] ], [ title.status, title.count, title.last ]
+  assert_equal [ 1, false ], [ title.rank, title.tied ]
+  assert_equal [ 6, [ 2001, 1 ] ], comeback(target, @gamma, "Alphaから勝ち点").then { |found| [ found.count, found.last ] }
+  assert_nil comeback(target, @alpha, "Bクラス（4位以下）")
+  assert_nil comeback(target, @gamma, "Aクラス（3位以上）"), "every season: no gap"
+end
+
+test "what a university hasn't done since 1950 comes back with no count, 勝ち点 from 東大 and 最下位脱出 included" do
+  seasons(6, order)
+  target = season(2004, "spring", [ @alpha, @beta, @gamma, @delta, @tokyo, @epsilon ])
+
+  assert_nil comeback(target, @tokyo, "最下位脱出").count
+  assert_nil comeback(target, @tokyo, "Epsilonから勝ち点").count
+  assert_nil comeback(target, @epsilon, "Bクラス（4位以下）"), "always 5th"
+end
+
+test "a game's summary says what it brought back" do
+  _first, second = season_with_alpha_beta([ 3, 1 ], [ 2, 0 ], before: [ @beta, @alpha, @gamma, @delta, @epsilon, @tokyo ])
+
+  assert_includes summary(second), "これでAlphaはBetaから1950年以降初めて勝ち点を取った。"
+end
+
+test "before 1950 there are no runs" do
     assert_empty StreakRecords.new(Season.new(year: 1949, term: "spring")).records
   end
 end

@@ -29,6 +29,11 @@
               <%= record.university.short_name %>が勝ち点を取れば、<%= record.opponent.short_name %>から<%= record.count %>季連続<%= "（#{record.university.short_name}の対#{record.opponent.short_name}で最長）" if record.own_best %>
             </div>
           <% end %>
+          <% entry.comebacks.each do |comeback| %>
+            <div class="muted">
+              <%= comeback.university.short_name %>が勝ち点を取れば、<%= comeback.opponent.short_name %>から<%= comeback.count ? "#{comeback.count}季ぶり（前回#{streak_season_label(comeback.last)}）" : "1950年以降初" %>
+            </div>
+          <% end %>
         </li>
       <% end %>
     </ul>

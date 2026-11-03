@@ -6,7 +6,8 @@
 # season how the game moved each side's chance of the title (ChampionshipOdds),
 # or that it decided the title, with how many seasons in a row
 # (SeasonChampion), and the other runs of seasons in a row it decided or ended
-# (StreakRecords: 「これで明大の10季連続の2位以上が決まった」).
+# (StreakRecords: 「これで明大の10季連続の2位以上が決まった」), and what it brought
+# back after a long while (「これで東大の1981年春以来、92季ぶりのAクラスが決まった」).
 #
 # Written for people and for search engines and AI search alike, which quote
 # a sentence more readily than a scoreboard. Every fact comes from the data the
@@ -234,19 +235,38 @@ class GameSummary
     before = StreakRecords.new(@game.season, after: games[index - 1])
     return nil unless before.applicable?
 
+    after = StreakRecords.new(@game.season, after: @game)
     # Before the places were counted, a run only looked at stake: it may have been
     # settled games ago. Only a card's run is then told, its card won or lost here.
     counted = before.counted?
     at_stake = before.records.select { |record| record.status == :at_stake && (counted || record.kind.key == :card) }.map(&key).to_set
-    return nil if at_stake.empty?
-
-    settled = StreakRecords.new(@game.season, after: @game).records.select do |record|
+    settled = after.records.select do |record|
       record.status != :at_stake && at_stake.include?(key.(record)) && !(record.kind.key == :champion && record.status == :decided)
     end
-    settled.map { |record| streak_sentence(record) }.join.presence
+
+    # A comeback is at stake only once counted (a card's from its first game), so
+    # one decided here was at stake just before.
+    coming = before.comebacks.select { |comeback| comeback.status == :at_stake }.map(&key).to_set
+    back = after.comebacks.select { |comeback| comeback.status == :decided && coming.include?(key.(comeback)) }
+
+    (settled.map { |record| streak_sentence(record) } + back.map { |comeback| comeback_sentence(comeback) }).join.presence
+  end
+
+  # 「これで東大の1981年春以来、92季ぶりのAクラスが決まった。」; the title's, after the
+  # sentence that it was decided, 「立大の優勝は1990年秋以来、53季ぶり。」
+  def comeback_sentence(comeback)
+    university = comeback.university.short_name
+    since = comeback.count ? "#{comeback.last[0]}年#{comeback.last[1] == 1 ? "春" : "秋"}以来、#{comeback.count}季ぶり" : "1950年以降初"
+    case comeback.kind.key
+    when :champion then "#{university}の優勝は#{since}。"
+    when :card
+      "これで#{university}は#{comeback.opponent.short_name}から#{comeback.count ? "#{since}に" : "1950年以降初めて"}勝ち点を取った。"
+    else "これで#{university}の#{since}の#{COMEBACK_NAMES.fetch(comeback.kind.key)}が決まった。"
+    end
   end
 
   STREAK_NAMES = { champion: "優勝", top_two: "2位以上", a_class: "Aクラス", winning: "勝ち越し", last: "最下位" }.freeze
+  COMEBACK_NAMES = STREAK_NAMES.except(:last).merge(b_class: "Bクラス", off_bottom: "最下位脱出").freeze
 
   def streak_sentence(record)
     university = record.university.short_name

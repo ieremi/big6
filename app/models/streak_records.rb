@@ -13,6 +13,13 @@
 # it, as TitleRace counts the cards still open (place_range, margin_range,
 # settled); before then, or with too many cards open to count, it is at stake.
 # The seasons before it are worked out once and cached until a game changes.
+#
+# The other way round, the same seasons give what a season brings back after
+# a long while (ひさしぶりの記録, comebacks): 「東大 Aクラス 92季ぶり（前回1981年春）」,
+# 「1950年以降初」 when not since, with how the gap stands among the others of its
+# kind. Those are the kinds above but 最下位, and Bクラス and 最下位脱出, a fall
+# and a climb fans count as well; a card's 勝ち点 from 東大 too, which can be
+# long in coming back however often the rest take it.
 class StreakRecords
   # A kind: its label, and whether a university's season counts towards it
   # (facts: the season's ranks, champion and wins less losses, by university id).
@@ -21,6 +28,10 @@ class StreakRecords
     Kind.new(:champion, "優勝"), Kind.new(:top_two, "2位以上"), Kind.new(:a_class, "Aクラス（3位以上）"),
     Kind.new(:winning, "勝ち越し"), Kind.new(:last, "最下位"), Kind.new(:card, "勝ち点")
   ].freeze
+
+  # The kinds a comeback is counted for: KINDS but 最下位 (no news to come back
+  # to), and Bクラス and 最下位脱出.
+  COMEBACK_KINDS = (KINDS.reject { |kind| kind.key == :last } + [ Kind.new(:b_class, "Bクラス（4位以下）"), Kind.new(:off_bottom, "最下位脱出") ]).freeze
 
   # A run shown: who, of what kind (from whom, for a card), how long, from when,
   # and its status: :decided (this season adds to it), :at_stake (it would) or
@@ -34,6 +45,17 @@ class StreakRecords
   # A run of seasons in a row: its university (and opponent), its first and last
   # season (as [year, term]) and how many.
   Run = Data.define(:university_id, :opponent_id, :from, :to, :count)
+
+  # A comeback shown: who, of what kind (from whom, for a card), in how many
+  # seasons (count; nil when not since 1950) since the last (last, [year, term]),
+  # its status (:decided or :at_stake; one no longer possible isn't shown), and
+  # how the gap stands among the others of its kind since 1950 (as Record's,
+  # each gap a Run from the season it was last done to the one it came back in).
+  Comeback = Data.define(:university, :kind, :opponent, :count, :last, :status, :rank, :tied, :since, :longest) do
+    def label
+      kind.key == :card ? "#{opponent.short_name}から#{kind.label}" : kind.label
+    end
+  end
 
   # The runs shown: at least this long, and not cards won from 東大, which the
   # others take all but every season.
@@ -65,6 +87,21 @@ class StreakRecords
     return [] unless applicable?
 
     @records ||= compute
+  end
+
+  # The comebacks, most notable first: decided, then at stake, each the longest
+  # (or the first since 1950) first. Only those of MIN_COUNT seasons or more; a
+  # place or a winning record at stake only once counted?, as before then every
+  # one is, 東大's title included (a card's from its first game).
+  def comebacks
+    return [] unless applicable?
+
+    @comebacks ||= compute_comebacks
+  end
+
+  # Seasons from one [year, term number] to another: 92 from 1981 spring to 2027 spring.
+  def self.seasons_between(from, to)
+    (to[0] - from[0]) * 2 + (to[1] - from[1])
   end
 
   # { [year, term number] => facts } of every season over from 1950, oldest first;
@@ -149,6 +186,8 @@ class StreakRecords
     when :a_class then facts[:ranks][university_id] <= 3
     when :winning then facts[:margins][university_id].positive?
     when :last then facts[:ranks][university_id] == facts[:ranks].values.max # level at the bottom too: 2017 autumn's 早大 and 東大, 5th
+    when :b_class then facts[:ranks][university_id] >= 4
+    when :off_bottom then facts[:ranks][university_id] < facts[:ranks].values.max
     when :card then facts[:cards][[ university_id, opponent_id ].sort] == university_id
     end
   end
@@ -173,14 +212,53 @@ class StreakRecords
     self.class.key_of(@season)
   end
 
+  def compute_comebacks
+    history = self.class.history.select { |key, _| (key <=> season_key) == -1 }
+    now = (@current_facts ||= current_facts)
+    return [] if now[:over] && now[:facts].nil?
+
+    universities = University.all.index_by(&:id)
+    COMEBACK_KINDS.flat_map do |kind|
+      # The seasons each pair did it in, and every gap between two of them.
+      done = pairs(kind, universities, every_opponent: true).to_h do |pair|
+        [ pair, history.filter_map { |key, facts| key if facts && self.class.counts?(kind, facts, *pair) } ]
+      end
+      gaps = done.flat_map do |(university_id, opponent_id), keys|
+        keys.each_cons(2).map { |from, to| Run.new(university_id:, opponent_id:, from:, to:, count: self.class.seasons_between(from, to)) }
+      end
+      done.filter_map { |(university_id, opponent_id), keys| comeback_for(kind, university_id, opponent_id, keys.last, gaps, now, universities) }
+    end.sort_by { |comeback| [ %i[decided at_stake].index(comeback.status), -(comeback.count || Float::INFINITY), COMEBACK_KINDS.index(comeback.kind) ] }
+  end
+
+  # The university's comeback of the kind (from the opponent) this season, last
+  # done in the season last, if long enough in coming and still possible.
+  def comeback_for(kind, university_id, opponent_id, last, gaps, now, universities)
+    status = status_of(kind, university_id, opponent_id, now)
+    return nil if status == :ended
+    return nil if status == :at_stake && kind.key != :card && !(now[:over] || now[:race].applicable?)
+
+    count = last && self.class.seasons_between(last, season_key)
+    return nil if count && count < MIN_COUNT
+
+    held = ->(run) { [ run, universities[run.university_id], universities[run.opponent_id] ] }
+    if count
+      since = gaps.select { |run| run.count >= count }.max_by(&:to)
+      # The longest told only when it isn't the one already 「以来」.
+      longest = gaps.max_by { |run| [ run.count, run.to ] }
+    end
+    Comeback.new(university: universities[university_id], kind:, opponent: universities[opponent_id], count:, last:, status:,
+      rank: (gaps.count { |run| run.count > count } + 1 if count), tied: count ? gaps.any? { |run| run.count == count } : false,
+      since: since && held.(since), longest: longest && longest.count > count && longest != since ? held.(longest) : nil)
+  end
+
   # The pairs a kind is counted for: each university (no opponent), or for a card
-  # each university and each opponent but 東大.
-  def pairs(kind, universities)
+  # each university and each opponent but 東大 (every opponent, for comebacks).
+  def pairs(kind, universities, every_opponent: false)
     ids = universities.keys
     return ids.map { |id| [ id, nil ] } unless kind.key == :card
 
     tokyo = universities.values.find { |university| university.slug == "tokyo" }&.id
-    ids.product(ids).reject { |a, b| a == b || b == tokyo }
+    ids.product(ids).reject { |a, b| a == b || (b == tokyo && !every_opponent) }
   end
 
   # Every run of the kind over the history, for each university (and opponent).
@@ -262,6 +340,8 @@ class StreakRecords
     when :a_class then decide(worst <= 3, best > 3)
     when :winning then decide(low.positive?, high <= 0)
     when :last then race.last_place(university).then { |always, ever| decide(always, !ever) }
+    when :b_class then decide(best > 3, worst <= 3)
+    when :off_bottom then race.last_place(university).then { |always, ever| decide(!ever, always) }
     end
   end
 

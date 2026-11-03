@@ -2,7 +2,8 @@
 # the next day's within a week, each with what a fan looks up before it — when
 # it starts, who starts on the mound (先発), who has come into the starting
 # lineup since the side's previous game (RosterDiff), and the runs of seasons in
-# a row the card has at stake (StreakRecords: 「明大が勝ち点を取れば立大から10季連続」).
+# a row the card has at stake (StreakRecords: 「明大が勝ち点を取れば立大から10季連続」), and
+# the 勝ち点 it would bring back after a long while (「東大が勝ち点を取れば早大から56季ぶり」).
 #
 # The lineup is Scorebook's (GameMember) once it has one, or before then the
 # league site's provisional one (LeagueOfficialLineup), which is up some half
@@ -14,8 +15,8 @@ class NextGameDay
   # A game of the day: the game, its scheduled start (「13:00」), the starting
   # pitcher and the new starters of each side (by university id; a pitcher or a
   # starter is a GameMember, or a LeagueOfficialLineup entry, whose player may be
-  # nil), and the card's runs at stake.
-  Entry = Data.define(:game, :start_time, :starting_pitchers, :new_starters, :streaks)
+  # nil), and the card's runs and comebacks at stake.
+  Entry = Data.define(:game, :start_time, :starting_pitchers, :new_starters, :streaks, :comebacks)
 
   def initialize(today: ActiveSupport::TimeZone["Asia/Tokyo"].today)
     @today = today
@@ -38,15 +39,19 @@ class NextGameDay
 
     @entries ||= begin
       games = Game.where(played_on: date).includes(:season, :team0, :team1).order(:game_order, :id).to_a
-      streaks = games.map(&:season).uniq.to_h { |season| [ season.id, StreakRecords.new(season).records.select { |record| record.status == :at_stake } ] }
-      games.map { |game| entry_for(game, streaks.fetch(game.season_id)) }
+      at_stake = ->(list) { list.select { |record| record.status == :at_stake && record.kind.key == :card } }
+      records = games.map(&:season).uniq.to_h { |season| [ season.id, StreakRecords.new(season) ] }
+      games.map do |game|
+        season = records.fetch(game.season_id)
+        entry_for(game, at_stake.(season.records), at_stake.(season.comebacks))
+      end
     end
   end
 
   private
 
-  def entry_for(game, at_stake)
-    return Entry.new(game:, start_time: nil, starting_pitchers: {}, new_starters: {}, streaks: []) if game.not_held?
+  def entry_for(game, at_stake, comebacks)
+    return Entry.new(game:, start_time: nil, starting_pitchers: {}, new_starters: {}, streaks: [], comebacks: []) if game.not_held?
 
     members = game.game_members.includes(:player).group_by(&:university_id)
     lineup = LeagueOfficialLineup.new(game) if members.blank?
@@ -63,7 +68,13 @@ class NextGameDay
       start_time: EstimatedGameSchedule.new(game).scheduled_start_time,
       starting_pitchers: pitchers,
       new_starters: new_starters.reject { |_, players| players.empty? },
-      streaks: at_stake.select { |record| record.kind.key == :card && [ record.university.id, record.opponent.id ].sort == [ game.team0_id, game.team1_id ].sort }
+      streaks: at_stake.select { |record| card_of?(record, game) },
+      comebacks: comebacks.select { |comeback| card_of?(comeback, game) }
     )
+  end
+
+  # Whether a card's run or comeback is the game's card.
+  def card_of?(record, game)
+    [ record.university.id, record.opponent.id ].sort == [ game.team0_id, game.team1_id ].sort
   end
 end

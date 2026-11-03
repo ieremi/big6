@@ -1,0 +1,27 @@
+<%# ひさしぶりの記録 (StreakRecords#comebacks): what this season brings back after a long while (決定), or would
+    (かかる), each with how long since and how the gap stands among the others of its kind since 1950. Only gaps of
+    StreakRecords::MIN_COUNT seasons or more. %>
+<% comebacks = streaks.comebacks %>
+<% if comebacks.any? %>
+  <section class="streak-records">
+    <h2 class="card-heading">ひさしぶりの記録</h2>
+    <ul>
+      <% comebacks.each do |comeback| %>
+        <li>
+          <span class="season-tag"><%= { decided: "決定", at_stake: "かかる" }.fetch(comeback.status) %></span>
+          <span class="team-chip" style="background: <%= comeback.university.color %>"><%= comeback.university.initial %></span>
+          <strong><%= comeback.university.short_name %></strong>
+          <%= comeback_text(comeback) %>
+          <% if (notes = comeback_notes(comeback)).present? %>
+            <br><span class="muted"><%= notes %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="muted">
+      1950年以降、全15カードを終えた季で数えています。「N季ぶり」は前回からの春秋の季の数で、<%= StreakRecords::MIN_COUNT %>季ぶり以上のものだけです。
+      順位と勝ち越しは、残りのカードの結果の組み合わせを数えられるようになってから「かかる」として出しています。
+      2020年・2021年の季の扱いは連続記録と同じです。
+    </p>
+  </section>
+<% end %>
