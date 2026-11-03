@@ -1,0 +1,109 @@
+<%# 1年生の首位打者: the 首位打者 who won it in their first year (LeadingHitters, from the league's list, each player's
+    year from the entry year in the 名鑑), how many won it in each year of study, and the 1年生 near the top of the
+    season being played. Worked out from the data file and the 名鑑, so the counts follow them. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  champions = LeadingHitters.all
+  freshmen = champions.select(&:freshman?)
+  average = ->(value) { format("%.3f", value).sub(/\A0/, "") }
+  names = ->(list) { list.map { |champion| "#{champion.name}（#{champion.university.short_name}、#{champion.season_title}）" }.join("、") }
+  postwar = freshmen.select { |champion| champion.year >= 1946 }
+  spring = freshmen.select { |champion| champion.term == "spring" }
+  grades = champions.group_by(&:grade)
+  current = LeadingHitters.current(champions)
+  leaders = current ? current.entries.select { |entry| entry.rank <= PlayerRanking::DEFAULT_TOP } : []
+  current_freshmen = current ? leaders.select { |entry| entry.player.enter_year == current.season.year } : []
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if champions.any? %>
+    <p>
+      <%= champions.first.season_title %>から<%= champions.last.season_title %>までの首位打者<%= champions.size %>人（2人が並んだ季や、2度なった選手も1回ずつ数えています）のうち、
+      1年生で首位打者になったのは<strong><%= freshmen.size %>人</strong>です。
+      <% if postwar.any? %>戦後に限ると、<%= names.(postwar) %>の<%= postwar.size %>人だけです。<% end %>
+      <% if spring.any? %>入学してすぐの1年春に首位打者になったのは、<%= names.(spring) %>の<%= spring.size %>人です。<% end %>
+    </p>
+
+    <% if freshmen.any? %>
+      <div class="table-scroll">
+        <table data-controller="sortable-table">
+          <thead>
+            <tr>
+              <%= sortable_column_header "季", "D", first: "asc" %>
+              <th>選手</th>
+              <%= sortable_column_header "大学", "U", first: "asc" %>
+              <th>出身校</th>
+              <%= sortable_column_header "試合", "G", first: "desc" %>
+              <%= sortable_column_header "打数", "B", first: "desc" %>
+              <%= sortable_column_header "安打", "H", first: "desc" %>
+              <%= sortable_column_header "打率", "A", first: "desc" %>
+            </tr>
+          </thead>
+          <tbody>
+            <% freshmen.each_with_index do |champion, index| %>
+              <tr>
+                <%= sort_cell(champion.term == "single" ? champion.season_title : link_to(champion.season_title, season_path(champion.year, champion.term)), index) %>
+                <td><%= champion.player ? link_to(champion.name, player_path(champion.player)) : champion.name %></td>
+                <%= sort_cell champion.university.short_name, champion.university.position %>
+                <td><%= champion.player&.high_school %></td>
+                <td class="num"><%= champion.games %></td>
+                <td class="num"><%= champion.ab %></td>
+                <td class="num"><%= champion.hits %></td>
+                <%= sort_cell average.(champion.average), champion.average %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <h2 class="card-heading">首位打者の学年</h2>
+    <p class="muted">首位打者<%= champions.size %>人の、首位打者になった季の学年です。<% most = (1..4).max_by { |grade| grades.fetch(grade, []).size } %>もっとも多いのは<%= most %>年生です。</p>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead>
+          <tr><th>学年</th><th>人数</th><th>割合</th></tr>
+        </thead>
+        <tbody>
+          <% [ 1, 2, 3, 4, nil ].each do |grade| %>
+            <% count = grades.fetch(grade, []).size %>
+            <tr>
+              <th><%= grade ? "#{grade}年生" : "わからない" %></th>
+              <td class="num"><%= count %>人</td>
+              <td class="num"><%= (count * 100.0 / champions.size).round %>%</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if current %>
+      <h2 class="card-heading">今季（<%= current.season.title %>、途中）</h2>
+      <p>
+        <%= current.stats_through&.then { |date| "#{date.month}月#{date.day}日の試合まで" } %>の打率ランキング（規定打席以上）で、
+        <% if current_freshmen.any? %>
+          上位<%= PlayerRanking::DEFAULT_TOP %>位までにいる1年生は
+          <%= safe_join(current_freshmen.map { |entry| safe_join([ link_to(entry.player.name, player_path(entry.player)), "（#{entry.player.university.short_name}、#{entry.rank}位、#{average.(entry.totals.average)}）" ]) }, "、") %>です。
+          <% if current_freshmen.any? { |entry| entry.rank == 1 } %>このまま終われば、1年生の首位打者が生まれます。<% end %>
+        <% else %>
+          上位<%= PlayerRanking::DEFAULT_TOP %>位までに1年生はいません。
+        <% end %>
+        <%= link_to "今季の個人成績", players_season_path(current.season.year, current.season.term) %>
+      </p>
+    <% end %>
+
+    <p class="muted">
+      首位打者と成績は<%= link_to LeadingHitters.source.fetch("name"), LeadingHitters.source.fetch("url") %>（<%= champions.last.season_title %>まで）によります。
+      学年は、BIG6 Scorebook の選手名鑑の入学年から数えています（入学した年の春・秋が1年生）。
+      戦前・戦中は予科からの在籍や戦争での中断で、入学年から5年以上たって首位打者になった選手がいて、学年はわかりません。名鑑にない選手（<%= champions.reject(&:scorebook_id).map(&:name).uniq.join("、") %>）も「わからない」に入れています。
+    </p>
+  <% else %>
+    <p class="muted">首位打者のデータがありません。</p>
+  <% end %>
+</article>

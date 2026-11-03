@@ -118,6 +118,23 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :moved_permanently
   end
 
+  test "the freshman batting champions article lists them, how many won it in each year, and the 1年生 leading now" do
+    Player.create!(scorebook_id: 2, university: universities(:two), name: "一年秋", enter_year: 2024, role: "選手", high_school: "花巻東")
+    game = Game.where(season: seasons(:one)).order(:played_on).first
+    rookie = Player.create!(scorebook_id: 4, university: game.team0, name: "新人", enter_year: 2026, role: "選手")
+    BattingLine.create!(game:, player: rookie, university: game.team0, pa: 4, ab: 4, hits: 3)
+
+    stub_method(LeadingHitters, :path, -> { file_fixture("leading_hitters_test.yml") }) { get article_path("freshman-leading-hitters") }
+
+    assert_response :success
+    assert_select "table[data-controller=sortable-table] tbody tr", 1
+    assert_select "table tbody td a[href=?]", player_path(2), text: "一年秋"
+    assert_select "table tbody td", text: "花巻東"
+    assert_select "table.formula-table tbody tr", 5 # 1年生 to 4年生, and わからない
+    assert_select "article p", text: /上位10位までにいる1年生は\s*新人（.+、1位、\.750）です。\s*このまま終われば/
+    assert_select "article p.muted", text: /名鑑にない選手（名鑑外）/
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

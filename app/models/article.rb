@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "freshman-leading-hitters", title: "1年生の首位打者", published_on: Date.new(2026, 11, 3),
+      description: "東京六大学野球のリーグ戦で、1年生で首位打者になった選手。1925年秋からの首位打者の学年ごとの人数と、今季の打率上位の1年生も。"
+    ),
+    Entry.new(
       slug: "home-runs-per-season", title: "シーズンの本塁打数", published_on: Date.new(2026, 11, 1),
       description: "1シーズンの本塁打の本数（6大学の合計）の最少・最多・平均・標準偏差。1試合あたりの本数と、年代ごとの移り変わりも。"
     ),

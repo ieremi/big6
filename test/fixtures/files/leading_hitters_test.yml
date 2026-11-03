@@ -1,0 +1,9 @@
+source:
+  name: 東京六大学野球連盟「東京六大学野球リーグ戦 個人：首位打者」
+  url: https://www.big6.gr.jp/system/prog/record.php?kind=record_leadhitter
+champions:
+  - { season: 1925-autumn, name: 名鑑外, university: alpha, scorebook_id: null, games: 11, ab: 35, hits: 12 }
+  - { season: 1933-single, name: 単季, university: alpha, scorebook_id: 1, games: 15, ab: 59, hits: 23 }
+  - { season: 2024-autumn, name: 一年秋, university: beta, scorebook_id: 2, games: 11, ab: 34, hits: 16 }
+  - { season: 2025-spring, name: 二年春, university: beta, scorebook_id: 2, games: 12, ab: 40, hits: 18 }
+  - { season: 2025-autumn, name: 予科, university: alpha, scorebook_id: 3, games: 12, ab: 40, hits: 16 }

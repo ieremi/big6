@@ -1,0 +1,216 @@
+# Every season's 首位打者 (batting champion) of the league, from the league's own list
+# (東京六大学野球連盟「個人：首位打者」), for the article at /articles/freshman-leading-hitters
+# (LeadingHitters). Checked 2026-11-03, through 2026 spring; add each season's once the
+# league lists it.
+#
+# season: <year>-<spring|autumn>; 1933 and 1934 had one season each (single). No
+#   seasons from 1943 to 1945 (the war). Two in one season are two entries.
+# scorebook_id: the player in Scorebook's 名鑑 (Player#scorebook_id), matched by name,
+#   university and entry year; listed_as is the 名鑑's name where it differs from the
+#   list's (old kanji, a later name, a slip there). nil for the two not in the 名鑑.
+# university: its slug; 帝大 (the Imperial University, later 東大) is tokyo.
+# games, ab, hits: as the list has them, the average being hits ÷ ab.
+source:
+  name: 東京六大学野球連盟「東京六大学野球リーグ戦 個人：首位打者」
+  url: https://www.big6.gr.jp/system/prog/record.php?kind=record_leadhitter
+champions:
+  - { season: 1925-autumn, name: 芥田 武夫, university: waseda, scorebook_id: null, games: 11, ab: 35, hits: 12 }
+  - { season: 1926-spring, name: 伊丹 安廣, university: waseda, scorebook_id: 19241001, games: 12, ab: 39, hits: 14 }
+  - { season: 1926-autumn, name: 森岡 雅善, university: hosei, scorebook_id: 19254004, games: 13, ab: 42, hits: 14 }
+  - { season: 1927-spring, name: 浜井 武夫, listed_as: 浜井 武雄, university: keio, scorebook_id: 19252005, games: 8, ab: 22, hits: 9 }
+  - { season: 1927-autumn, name: 水原 義明, university: waseda, scorebook_id: 19251009, games: 11, ab: 45, hits: 16 }
+  - { season: 1928-spring, name: 伊達 正男, university: waseda, scorebook_id: 19281006, games: 8, ab: 32, hits: 15 }
+  - { season: 1928-autumn, name: 三島 東作, university: tokyo, scorebook_id: 19265006, games: 10, ab: 32, hits: 11 }
+  - { season: 1929-spring, name: 水原 義明, university: waseda, scorebook_id: 19251009, games: 8, ab: 32, hits: 15 }
+  - { season: 1929-autumn, name: 山下 実, university: keio, scorebook_id: 19272004, games: 11, ab: 32, hits: 14 }
+  - { season: 1930-spring, name: 宮武 三郎, listed_as: 宮武 武三郎, university: keio, scorebook_id: 19272003, games: 13, ab: 35, hits: 14 }
+  - { season: 1930-autumn, name: 佐藤 茂美, university: waseda, scorebook_id: 19291008, games: 11, ab: 29, hits: 14 }
+  - { season: 1931-spring, name: 弘世 正方, university: waseda, scorebook_id: 19281008, games: 6, ab: 17, hits: 6 }
+  - { season: 1931-autumn, name: 広岡 知男, university: tokyo, scorebook_id: 19285003, games: 11, ab: 33, hits: 15 }
+  - { season: 1932-spring, name: 勝川 正義, university: keio, scorebook_id: 19312007, games: 8, ab: 27, hits: 10 }
+  - { season: 1932-autumn, name: 菊谷 正一, university: rikkio, scorebook_id: 19306004, games: 13, ab: 46, hits: 17 }
+  - { season: 1933-single, name: 岩本 義行, university: meiji, scorebook_id: 19333001, games: 15, ab: 59, hits: 23 }
+  - { season: 1934-single, name: 小島 利男, university: waseda, scorebook_id: 19311007, games: 15, ab: 58, hits: 21 }
+  - { season: 1935-spring, name: 高須 清, university: waseda, scorebook_id: 19331001, games: 10, ab: 38, hits: 17 }
+  - { season: 1935-autumn, name: 小島 利男, university: waseda, scorebook_id: 19311007, games: 10, ab: 38, hits: 18 }
+  - { season: 1936-spring, name: 藤田 宗−, university: hosei, scorebook_id: 19334009, games: 8, ab: 38, hits: 15 }
+  - { season: 1936-autumn, name: 呉 明捷, university: waseda, scorebook_id: 19331005, games: 10, ab: 36, hits: 12 }
+  - { season: 1937-spring, name: 野村 正守, university: tokyo, scorebook_id: 19355008, games: 10, ab: 34, hits: 13 }
+  - { season: 1937-autumn, name: 辻井 弘, university: waseda, scorebook_id: 19371012, games: 10, ab: 23, hits: 9 }
+  - { season: 1938-spring, name: 南村不可止, listed_as: 南村 侑広, university: waseda, scorebook_id: 19361010, games: 10, ab: 25, hits: 12 }
+  - { season: 1938-autumn, name: 鶴岡 一人, university: hosei, scorebook_id: 19354007, games: 10, ab: 35, hits: 13 }
+  - { season: 1939-spring, name: 南村不可止, listed_as: 南村 侑広, university: waseda, scorebook_id: 19361010, games: 10, ab: 35, hits: 13 }
+  - { season: 1939-autumn, name: 小野 欣助, university: waseda, scorebook_id: 19371004, games: 10, ab: 36, hits: 14 }
+  - { season: 1940-spring, name: 浅井 礼三, university: waseda, scorebook_id: 19351002, games: 10, ab: 37, hits: 16 }
+  - { season: 1940-autumn, name: 根津 辰治, university: keio, scorebook_id: 19362010, games: 5, ab: 15, hits: 6 }
+  - { season: 1941-spring, name: 大舘 盈六, listed_as: 大館 盈六, university: keio, scorebook_id: 19372012, games: 10, ab: 33, hits: 13 }
+  - { season: 1941-autumn, name: 田川 豊, university: hosei, scorebook_id: 19384007, games: 5, ab: 20, hits: 10 }
+  - { season: 1942-spring, name: 別当 薫, university: keio, scorebook_id: 19402006, games: 10, ab: 40, hits: 20 }
+  - { season: 1942-autumn, name: 永利 勇吉, university: rikkio, scorebook_id: 19406005, games: 5, ab: 16, hits: 8 }
+  - { season: 1946-spring, name: 川崎 信一, university: rikkio, scorebook_id: 19426002, games: 5, ab: 23, hits: 9 }
+  - { season: 1946-autumn, name: 中村 茂, university: meiji, scorebook_id: 19433010, games: 12, ab: 50, hits: 21 }
+  - { season: 1947-spring, name: 久保木 清, university: keio, scorebook_id: 19412006, games: 10, ab: 32, hits: 12 }
+  - { season: 1947-autumn, name: 土屋 五郎, university: hosei, scorebook_id: 19454001, games: 10, ab: 31, hits: 14 }
+  - { season: 1948-spring, name: 常見 昇, university: meiji, scorebook_id: 19453003, games: 13, ab: 50, hits: 21 }
+  - { season: 1948-autumn, name: 青池 清, university: rikkio, scorebook_id: 19466007, games: 12, ab: 44, hits: 15 }
+  - { season: 1949-spring, name: 藤田 繁男, listed_as: 藤田 繁雄, university: rikkio, scorebook_id: 19466006, games: 12, ab: 47, hits: 19 }
+  - { season: 1949-autumn, name: 山村 泰弘, university: keio, scorebook_id: 19462012, games: 15, ab: 66, hits: 30 }
+  - { season: 1950-spring, name: 石井藤吉郎, listed_as: 石井 藤吉郎, university: waseda, scorebook_id: 19431001, games: 12, ab: 50, hits: 22 }
+  - { season: 1950-autumn, name: 日下 隆, university: hosei, scorebook_id: 19484007, games: 12, ab: 48, hits: 22 }
+  - { season: 1951-spring, name: 大沢 貞義, listed_as: 大澤 貞義, university: rikkio, scorebook_id: 19486003, games: 12, ab: 42, hits: 17 }
+  - { season: 1951-autumn, name: 篠原 一豊, listed_as: 篠原 一豐, university: rikkio, scorebook_id: 19496001, games: 13, ab: 51, hits: 20 }
+  - { season: 1952-spring, name: 松本 豊, university: keio, scorebook_id: 19482012, games: 11, ab: 45, hits: 17 }
+  - { season: 1952-spring, name: 福沢 弘行, university: keio, scorebook_id: 19502008, games: 11, ab: 45, hits: 17 }
+  - { season: 1952-autumn, name: 渡辺礼次郎, university: meiji, scorebook_id: 19503012, games: 12, ab: 42, hits: 14 }
+  - { season: 1952-autumn, name: 岩崎 亘利, university: meiji, scorebook_id: 19513002, games: 10, ab: 36, hits: 12 }
+  - { season: 1953-spring, name: 堺 竜平, listed_as: 堺 龍平, university: tokyo, scorebook_id: 19505005, games: 11, ab: 34, hits: 16 }
+  - { season: 1953-autumn, name: 鷲 雅文, university: hosei, scorebook_id: 19534029, games: 12, ab: 31, hits: 10 }
+  - { season: 1954-spring, name: 日野 美澄, university: keio, scorebook_id: 19532014, games: 12, ab: 34, hits: 13 }
+  - { season: 1954-autumn, name: 石井 連蔵, university: waseda, scorebook_id: 19511013, games: 15, ab: 56, hits: 21 }
+  - { season: 1955-spring, name: 衆樹 資宏, university: keio, scorebook_id: 19532007, games: 10, ab: 37, hits: 16 }
+  - { season: 1955-autumn, name: 中野 健−, university: hosei, scorebook_id: 19524010, games: 13, ab: 47, hits: 18 }
+  - { season: 1956-spring, name: 長嶋 茂雄, university: rikkio, scorebook_id: 19546016, games: 14, ab: 48, hits: 22 }
+  - { season: 1956-autumn, name: 中田 昌宏, university: keio, scorebook_id: 19532012, games: 14, ab: 47, hits: 20 }
+  - { season: 1957-spring, name: 志貴 正視, university: hosei, scorebook_id: 19544011, games: 11, ab: 47, hits: 18 }
+  - { season: 1957-autumn, name: 長嶋 茂雄, university: rikkio, scorebook_id: 19546016, games: 11, ab: 39, hits: 13 }
+  - { season: 1958-spring, name: 赤木 健一, university: keio, scorebook_id: 19552017, games: 12, ab: 47, hits: 19 }
+  - { season: 1958-autumn, name: 川添 雄弘, university: meiji, scorebook_id: 19563037, games: 13, ab: 46, hits: 18 }
+  - { season: 1959-spring, name: 高畑鷹千代, university: meiji, scorebook_id: 19583007, games: 11, ab: 39, hits: 15 }
+  - { season: 1959-autumn, name: 高林 恒夫, university: rikkio, scorebook_id: 19566006, games: 11, ab: 37, hits: 16 }
+  - { season: 1960-spring, name: 室山皓之助, university: hosei, scorebook_id: 19584018, games: 12, ab: 40, hits: 15 }
+  - { season: 1960-autumn, name: 丸山 完二, university: rikkio, scorebook_id: 19586004, games: 14, ab: 52, hits: 19 }
+  - { season: 1961-spring, name: 榎本 博明, university: keio, scorebook_id: 19592002, games: 11, ab: 29, hits: 15 }
+  - { season: 1961-autumn, name: 小川 博, university: hosei, scorebook_id: 19584020, games: 11, ab: 36, hits: 15 }
+  - { season: 1962-spring, name: 本郷 良直, university: keio, scorebook_id: 19602019, games: 14, ab: 52, hits: 20 }
+  - { season: 1962-autumn, name: 榎本 博明, university: keio, scorebook_id: 19592002, games: 13, ab: 56, hits: 21 }
+  - { season: 1963-spring, name: 三原 啓治, university: waseda, scorebook_id: 19611010, games: 12, ab: 40, hits: 14 }
+  - { season: 1963-autumn, name: 西岡 浩史, university: keio, scorebook_id: 19602009, games: 14, ab: 54, hits: 19 }
+  - { season: 1964-spring, name: 小淵 進, university: waseda, scorebook_id: 19621008, games: 12, ab: 50, hits: 21 }
+  - { season: 1964-autumn, name: 長池 徳二, university: hosei, scorebook_id: 19624021, games: 13, ab: 48, hits: 17 }
+  - { season: 1965-spring, name: 高田 繁, university: meiji, scorebook_id: 19643004, games: 12, ab: 45, hits: 18 }
+  - { season: 1965-autumn, name: 谷木 恭平, university: rikkio, scorebook_id: 19646009, games: 11, ab: 38, hits: 16 }
+  - { season: 1966-spring, name: 槌田 誠, university: rikkio, scorebook_id: 19636010, games: 13, ab: 45, hits: 20 }
+  - { season: 1966-autumn, name: 秋元 国武, university: hosei, scorebook_id: 19644010, games: 13, ab: 48, hits: 18 }
+  - { season: 1967-spring, name: 谷沢 健一, university: waseda, scorebook_id: 19661018, games: 13, ab: 48, hits: 19 }
+  - { season: 1967-autumn, name: 宇賀山 徹, university: keio, scorebook_id: 19642001, games: 9, ab: 33, hits: 14 }
+  - { season: 1968-spring, name: 倉田 晃, university: meiji, scorebook_id: 19663008, games: 11, ab: 34, hits: 15 }
+  - { season: 1968-autumn, name: 阿野 鉱二, university: waseda, scorebook_id: 19661001, games: 13, ab: 47, hits: 19 }
+  - { season: 1969-spring, name: 山田 克己, university: hosei, scorebook_id: 19664012, games: 12, ab: 50, hits: 23 }
+  - { season: 1969-autumn, name: 松下 勝実, university: keio, scorebook_id: 19682005, games: 12, ab: 48, hits: 19 }
+  - { season: 1970-spring, name: 金子 勝美, university: waseda, scorebook_id: 19681003, games: 13, ab: 53, hits: 23 }
+  - { season: 1970-autumn, name: 野村 隆, university: rikkio, scorebook_id: 19676013, games: 12, ab: 28, hits: 12 }
+  - { season: 1971-spring, name: 望月 博, university: waseda, scorebook_id: 19681018, games: 12, ab: 45, hits: 19 }
+  - { season: 1971-autumn, name: 松下 勝実, university: keio, scorebook_id: 19682005, games: 11, ab: 46, hits: 22 }
+  - { season: 1972-spring, name: 長崎 慶−, university: hosei, scorebook_id: 19694013, games: 12, ab: 47, hits: 24 }
+  - { season: 1972-autumn, name: 長崎 慶一, university: hosei, scorebook_id: 19694013, games: 11, ab: 43, hits: 17 }
+  - { season: 1973-spring, name: 山下 大輔, university: keio, scorebook_id: 19702006, games: 11, ab: 40, hits: 18 }
+  - { season: 1973-autumn, name: 斉藤 茂樹, listed_as: 斎藤 茂樹, university: meiji, scorebook_id: 19713004, games: 11, ab: 44, hits: 16 }
+  - { season: 1974-spring, name: 遠藤 昭夫, university: tokyo, scorebook_id: 19725002, games: 13, ab: 48, hits: 18 }
+  - { season: 1974-autumn, name: 八木 勝彦, university: meiji, scorebook_id: 19713009, games: 11, ab: 46, hits: 21 }
+  - { season: 1975-spring, name: 後藤 寿彦, university: keio, scorebook_id: 19722004, games: 14, ab: 54, hits: 21 }
+  - { season: 1975-autumn, name: 高代 延博, university: hosei, scorebook_id: 19734005, games: 11, ab: 42, hits: 21 }
+  - { season: 1976-spring, name: 中谷 和彦, university: rikkio, scorebook_id: 19736009, games: 10, ab: 36, hits: 15 }
+  - { season: 1976-autumn, name: 横井 勲, university: meiji, scorebook_id: 19733008, games: 14, ab: 66, hits: 27 }
+  - { season: 1977-spring, name: 豊田 誠佑, university: meiji, scorebook_id: 19753023, games: 14, ab: 54, hits: 24 }
+  - { season: 1977-autumn, name: 清水 健五, university: keio, scorebook_id: 19752008, games: 12, ab: 42, hits: 15 }
+  - { season: 1978-spring, name: 金森 栄治, university: waseda, scorebook_id: 19751004, games: 12, ab: 48, hits: 24 }
+  - { season: 1978-autumn, name: 岡田 彰布, university: waseda, scorebook_id: 19761003, games: 11, ab: 39, hits: 19 }
+  - { season: 1979-spring, name: 有賀 佳弘, university: waseda, scorebook_id: 19761020, games: 12, ab: 48, hits: 24 }
+  - { season: 1979-autumn, name: 武藤 一邦, university: hosei, scorebook_id: 19774018, games: 13, ab: 50, hits: 22 }
+  - { season: 1980-spring, name: 豊田 和泰, university: meiji, scorebook_id: 19773015, games: 13, ab: 40, hits: 14 }
+  - { season: 1980-autumn, name: 中葉伸二郎, university: hosei, scorebook_id: 19784018, games: 13, ab: 38, hits: 15 }
+  - { season: 1981-spring, name: 栗山 和行, university: meiji, scorebook_id: 19783006, games: 13, ab: 47, hits: 21 }
+  - { season: 1981-autumn, name: 小早川毅彦, university: hosei, scorebook_id: 19804011, games: 11, ab: 42, hits: 18 }
+  - { season: 1982-spring, name: 銚子 利夫, university: hosei, scorebook_id: 19804018, games: 10, ab: 30, hits: 12 }
+  - { season: 1982-autumn, name: 広岡 資生, university: waseda, scorebook_id: 19791005, games: 13, ab: 45, hits: 16 }
+  - { season: 1983-spring, name: 広沢 克己, university: meiji, scorebook_id: 19813007, games: 12, ab: 46, hits: 21 }
+  - { season: 1983-autumn, name: 広沢 克己, university: meiji, scorebook_id: 19813007, games: 10, ab: 31, hits: 15 }
+  - { season: 1984-spring, name: 湯川 素哉, university: waseda, scorebook_id: 19821024, games: 14, ab: 50, hits: 20 }
+  - { season: 1984-autumn, name: 立迫 浩一, university: tokyo, scorebook_id: 19815018, games: 11, ab: 44, hits: 18 }
+  - { season: 1985-spring, name: 福嶋 敦志, university: rikkio, scorebook_id: 19826008, games: 14, ab: 58, hits: 21 }
+  - { season: 1985-autumn, name: 福王 昭仁, university: meiji, scorebook_id: 19823018, games: 12, ab: 38, hits: 18 }
+  - { season: 1986-spring, name: 加藤 健, university: keio, scorebook_id: 19842007, games: 14, ab: 62, hits: 25 }
+  - { season: 1986-autumn, name: 猿田 和三, university: keio, scorebook_id: 19842002, games: 10, ab: 41, hits: 17 }
+  - { season: 1987-spring, name: 田宮 実, university: waseda, scorebook_id: 19841020, games: 10, ab: 27, hits: 14 }
+  - { season: 1987-autumn, name: 中根 仁, university: hosei, scorebook_id: 19854025, games: 13, ab: 48, hits: 21 }
+  - { season: 1987-autumn, name: 高橋 智尚, university: meiji, scorebook_id: 19843015, games: 13, ab: 48, hits: 21 }
+  - { season: 1988-spring, name: 大森 剛, university: keio, scorebook_id: 19862015, games: 10, ab: 42, hits: 21 }
+  - { season: 1988-autumn, name: 宮間 豊智, university: hosei, scorebook_id: 19854010, games: 10, ab: 32, hits: 13 }
+  - { season: 1989-spring, name: 高芝 秀長, university: keio, scorebook_id: 19862008, games: 13, ab: 38, hits: 16 }
+  - { season: 1989-autumn, name: 鈴木 文雄, university: meiji, scorebook_id: 19863031, games: 12, ab: 43, hits: 18 }
+  - { season: 1990-spring, name: 上杉 健, university: waseda, scorebook_id: 19871012, games: 14, ab: 51, hits: 20 }
+  - { season: 1990-autumn, name: 山口 高誉, university: rikkio, scorebook_id: 19876009, games: 13, ab: 50, hits: 21 }
+  - { season: 1991-spring, name: 諸積 兼司, university: hosei, scorebook_id: 19884008, games: 14, ab: 54, hits: 23 }
+  - { season: 1991-autumn, name: 鈴木 浩文, university: waseda, scorebook_id: 19891015, games: 12, ab: 50, hits: 18 }
+  - { season: 1992-spring, name: 大森 篤, university: waseda, scorebook_id: 19921007, games: 11, ab: 44, hits: 22 }
+  - { season: 1992-autumn, name: 田代 則雄, university: rikkio, scorebook_id: 19906013, games: 12, ab: 42, hits: 19 }
+  - { season: 1993-spring, name: 中村 豊, university: meiji, scorebook_id: 19923012, games: 13, ab: 52, hits: 26 }
+  - { season: 1993-autumn, name: 山下 圭, university: keio, scorebook_id: 19902008, games: 14, ab: 47, hits: 17 }
+  - { season: 1993-autumn, name: 野村 克則, university: meiji, scorebook_id: 19923020, games: 13, ab: 47, hits: 17 }
+  - { season: 1994-spring, name: 筒井 壮, university: meiji, scorebook_id: 19933020, games: 13, ab: 47, hits: 23 }
+  - { season: 1994-autumn, name: 丸山 泰令, university: keio, scorebook_id: 19912005, games: 14, ab: 49, hits: 20 }
+  - { season: 1995-spring, name: 間宮 敦, university: tokyo, scorebook_id: 19925005, games: 11, ab: 43, hits: 18 }
+  - { season: 1995-autumn, name: 中村 寿博, listed_as: 中村 壽博, university: waseda, scorebook_id: 19931012, games: 12, ab: 40, hits: 19 }
+  - { season: 1996-spring, name: 高橋 由伸, university: keio, scorebook_id: 19942008, games: 12, ab: 43, hits: 22 }
+  - { season: 1996-autumn, name: 鷲北 剛, university: meiji, scorebook_id: null, games: 10, ab: 34, hits: 14 }
+  - { season: 1997-spring, name: 三島 裕, university: hosei, scorebook_id: 19944011, games: 12, ab: 47, hits: 20 }
+  - { season: 1997-autumn, name: 高松 竜馬, university: meiji, scorebook_id: 19943008, games: 12, ab: 39, hits: 15 }
+  - { season: 1998-spring, name: 佐藤 友亮, university: keio, scorebook_id: 19972012, games: 11, ab: 40, hits: 18 }
+  - { season: 1998-autumn, name: 阿部 真宏, university: hosei, scorebook_id: 19974001, games: 12, ab: 45, hits: 17 }
+  - { season: 1999-spring, name: 廣瀬 純, university: hosei, scorebook_id: 19974020, games: 12, ab: 44, hits: 19 }
+  - { season: 1999-autumn, name: 梅沢 健, university: waseda, scorebook_id: 19961022, games: 12, ab: 46, hits: 18 }
+  - { season: 2000-spring, name: 後藤 武敏, university: hosei, scorebook_id: 19994007, games: 12, ab: 44, hits: 20 }
+  - { season: 2000-autumn, name: 後藤 武敏, university: hosei, scorebook_id: 19994007, games: 13, ab: 43, hits: 17 }
+  - { season: 2001-spring, name: 鳥谷 敬, university: waseda, scorebook_id: 20001016, games: 12, ab: 43, hits: 20 }
+  - { season: 2001-autumn, name: 喜多 隆志, university: keio, scorebook_id: 19982001, games: 11, ab: 43, hits: 23 }
+  - { season: 2002-spring, name: 宮澤健太郎, university: meiji, scorebook_id: 19993006, games: 11, ab: 35, hits: 14 }
+  - { season: 2002-autumn, name: 青木 宣親, university: waseda, scorebook_id: 20001013, games: 11, ab: 39, hits: 17 }
+  - { season: 2003-spring, name: 由田慎太郎, university: waseda, scorebook_id: 20001023, games: 11, ab: 44, hits: 19 }
+  - { season: 2003-autumn, name: 鳥谷 敬, university: waseda, scorebook_id: 20001016, games: 10, ab: 34, hits: 14 }
+  - { season: 2004-spring, name: 大引 啓次, university: hosei, scorebook_id: 20034016, games: 13, ab: 44, hits: 18 }
+  - { season: 2004-autumn, name: 中村 太郎, university: keio, scorebook_id: 20012018, games: 13, ab: 54, hits: 23 }
+  - { season: 2005-spring, name: 齋藤 達則, university: meiji, scorebook_id: 20023032, games: 15, ab: 51, hits: 18 }
+  - { season: 2005-autumn, name: 武内 晋一, university: waseda, scorebook_id: 20021028, games: 13, ab: 47, hits: 20 }
+  - { season: 2006-spring, name: 大引 啓次, university: hosei, scorebook_id: 20034016, games: 12, ab: 46, hits: 23 }
+  - { season: 2006-spring, name: 小野寺 優, university: rikkio, scorebook_id: 20036009, games: 10, ab: 34, hits: 17 }
+  - { season: 2006-autumn, name: 岡崎 祥昊, university: keio, scorebook_id: 20032004, games: 11, ab: 43, hits: 16 }
+  - { season: 2007-spring, name: 細山田武史, university: waseda, scorebook_id: 20051006, games: 11, ab: 33, hits: 14 }
+  - { season: 2007-autumn, name: 田中 幸長, university: waseda, scorebook_id: 20041019, games: 14, ab: 56, hits: 22 }
+  - { season: 2008-spring, name: 小野寺和也, university: keio, scorebook_id: 20062024, games: 13, ab: 47, hits: 18 }
+  - { season: 2008-autumn, name: 松本啓二朗, university: waseda, scorebook_id: 20051014, games: 14, ab: 63, hits: 21 }
+  - { season: 2009-spring, name: 松本 雅俊, university: hosei, scorebook_id: 20064015, games: 12, ab: 38, hits: 17 }
+  - { season: 2009-autumn, name: 小野寺和也, university: keio, scorebook_id: 20062024, games: 12, ab: 46, hits: 21 }
+  - { season: 2010-spring, name: 渡邊 侑也, university: waseda, scorebook_id: 20081025, games: 11, ab: 42, hits: 16 }
+  - { season: 2010-autumn, name: 土生 翔平, university: waseda, scorebook_id: 20081026, games: 12, ab: 44, hits: 17 }
+  - { season: 2011-spring, name: 那賀 裕司, university: rikkio, scorebook_id: 20086038, games: 14, ab: 55, hits: 23 }
+  - { season: 2011-autumn, name: 岡崎 啓介, university: rikkio, scorebook_id: 20086003, games: 10, ab: 33, hits: 14 }
+  - { season: 2012-spring, name: 阿加多 直樹, university: keio, scorebook_id: 20092001, games: 12, ab: 38, hits: 17 }
+  - { season: 2012-autumn, name: 杉山 翔大, university: waseda, scorebook_id: 20091014, games: 12, ab: 36, hits: 14 }
+  - { season: 2013-spring, name: 大城戸 匠理, university: hosei, scorebook_id: 20104013, games: 10, ab: 41, hits: 20 }
+  - { season: 2013-autumn, name: 岡部 通織, university: rikkio, scorebook_id: 20116006, games: 13, ab: 50, hits: 23 }
+  - { season: 2014-spring, name: 武藤 風行, university: waseda, scorebook_id: 20111028, games: 12, ab: 44, hits: 21 }
+  - { season: 2014-autumn, name: 茂木 栄五郎, university: waseda, scorebook_id: 20121023, games: 10, ab: 35, hits: 18 }
+  - { season: 2015-spring, name: 丸子 達也, university: waseda, scorebook_id: 20121005, games: 12, ab: 48, hits: 21 }
+  - { season: 2015-autumn, name: 重信 慎之介, university: waseda, scorebook_id: 20121013, games: 10, ab: 37, hits: 16 }
+  - { season: 2016-spring, name: 金子 凌也, university: hosei, scorebook_id: 20134006, games: 13, ab: 40, hits: 17 }
+  - { season: 2016-autumn, name: 山本 瑛大, university: keio, scorebook_id: 20132021, games: 12, ab: 40, hits: 19 }
+  - { season: 2017-spring, name: 加藤 雅樹, university: waseda, scorebook_id: 20161004, games: 12, ab: 40, hits: 15 }
+  - { season: 2017-autumn, name: 清水 翔太, university: keio, scorebook_id: 20142025, games: 13, ab: 50, hits: 24 }
+  - { season: 2018-spring, name: 中村 浩人, university: hosei, scorebook_id: 20154031, games: 12, ab: 40, hits: 18 }
+  - { season: 2018-autumn, name: 渡辺 佳明, university: meiji, scorebook_id: 20153031, games: 14, ab: 50, hits: 21 }
+  - { season: 2019-spring, name: 添田 真海, university: meiji, scorebook_id: 20163029, games: 12, ab: 40, hits: 16 }
+  - { season: 2019-autumn, name: 郡司 裕也, university: keio, scorebook_id: 20162010, games: 11, ab: 33, hits: 13 }
+  - { season: 2020-spring, name: 永廣 知紀, university: hosei, scorebook_id: 20174004, games: 4, ab: 16, hits: 8 }
+  - { season: 2020-autumn, name: 竹葉 章人, university: rikkio, scorebook_id: 20176029, games: 9, ab: 21, hits: 9 }
+  - { season: 2021-spring, name: 陶山 勇軌, university: meiji, scorebook_id: 20183017, games: 10, ab: 40, hits: 20 }
+  - { season: 2021-spring, name: 山田 陸人, university: meiji, scorebook_id: 20193030, games: 9, ab: 26, hits: 13 }
+  - { season: 2021-autumn, name: 今井 脩斗, university: waseda, scorebook_id: 20181001, games: 8, ab: 34, hits: 16 }
+  - { season: 2022-spring, name: 宗山 塁, university: meiji, scorebook_id: 20213035, games: 15, ab: 56, hits: 24 }
+  - { season: 2022-autumn, name: 萩尾 匡也, university: keio, scorebook_id: 20192023, games: 14, ab: 55, hits: 22 }
+  - { season: 2023-spring, name: 飯森 太慈, university: meiji, scorebook_id: 20213002, games: 12, ab: 47, hits: 20 }
+  - { season: 2023-autumn, name: 栗林 泰三, university: keio, scorebook_id: 20202017, games: 14, ab: 54, hits: 22 } # the list has 52 at-bats, a slip: 22 ÷ 52 isn't its .407, and the box scores have 54
+  - { season: 2024-spring, name: 尾瀬 雄大, university: waseda, scorebook_id: 20221011, games: 12, ab: 48, hits: 23 }
+  - { season: 2024-autumn, name: 熊谷 陸, university: hosei, scorebook_id: 20244011, games: 11, ab: 34, hits: 16 }
+  - { season: 2025-spring, name: 山形 球道, university: rikkio, scorebook_id: 20226034, games: 13, ab: 54, hits: 24 }
+  - { season: 2025-autumn, name: 藤森 康淳, university: hosei, scorebook_id: 20234025, games: 15, ab: 58, hits: 27 }
+  - { season: 2026-spring, name: 德丸 快晴, university: waseda, scorebook_id: 20251024, games: 13, ab: 49, hits: 19 }
