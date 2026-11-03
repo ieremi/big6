@@ -34,6 +34,13 @@ class SourceGameImport
     new(path).season
   end
 
+  # A line_score's runs inning by inning: one character an inning ("x" for a
+  # bottom half not played), or an inning of ten or more in parentheses, as
+  # "000 (11)00 100" (1930 spring's 帝大).
+  def self.innings(line)
+    line.delete(" ").scan(/\(\d+\)|[0-9x]/i).map { |runs| runs.delete("()") }
+  end
+
   def initialize(path)
     @path = Pathname(path)
     @data = YAML.safe_load_file(@path, permitted_classes: [ Date ])
@@ -127,7 +134,7 @@ class SourceGameImport
   def scoreboard(entry)
     detail = { "stadium" => entry["venue"] }
     { "Top" => entry["top"], "Bottom" => entry["bottom"] }.each do |half, team|
-      entry.dig("line_score", team).delete(" ").chars.each.with_index(1) do |runs, inning|
+      self.class.innings(entry.dig("line_score", team)).each.with_index(1) do |runs, inning|
         detail["runs#{inning}#{half}"] = runs == "x" ? "X" : runs
       end
 

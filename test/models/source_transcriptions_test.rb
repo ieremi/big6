@@ -31,13 +31,13 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
         assert_equal game["score"].keys.sort, game["line_score"].keys.sort, "games[#{i}]"
         assert_equal game["score"].keys.sort, [ game["top"], game["bottom"] ].sort, "games[#{i}]"
         game["line_score"].each do |team, innings|
-          runs = innings.delete(" ").chars.reject { |c| c == "x" }.sum(&:to_i)
+          runs = SourceGameImport.innings(innings).reject { |runs| runs == "x" }.sum(&:to_i)
           assert_equal game.dig("score", team), runs, "games[#{i}] #{team}: #{innings}"
         end
         # A home side ahead after nine has an x for the half it didn't bat,
         # unless it won in that half (a walk-off, printed as the runs).
-        bottom = game.dig("line_score", game["bottom"]).delete(" ")
-        if bottom.size == 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"]) && !bottom.end_with?("x")
+        bottom = SourceGameImport.innings(game.dig("line_score", game["bottom"]))
+        if bottom.size == 9 && game.dig("score", game["bottom"]) > game.dig("score", game["top"]) && bottom.last != "x"
           assert bottom[-1].to_i.positive?, "games[#{i}]: the home side won but batted in the ninth without scoring"
         end
       end
