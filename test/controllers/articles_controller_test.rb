@@ -135,6 +135,25 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article p.muted", text: /名鑑にない選手（名鑑外）/
   end
 
+  test "the 越後 article says what each batter with games left needs to pass him" do
+    Game.delete_all
+    alpha, beta = universities(:one), universities(:two)
+    season = Season.find_or_create_by!(year: 2026, term: "autumn")
+    played = Game.create!(season:, team0: alpha, team1: beta, played_on: Date.new(2026, 10, 31), game_number: 1, team0_score: 3, team1_score: 1, game_status: "試合終了")
+    Game.create!(season:, team0: beta, team1: alpha, played_on: Date.current + 3, game_number: 2, game_status: "試合前")
+    echigo = Player.create!(scorebook_id: 20266006, university: alpha, name: "越後 駿祐", enter_year: 2026, role: "選手")
+    rival = Player.create!(scorebook_id: 2, university: beta, name: "打者", enter_year: 2025, role: "選手")
+    BattingLine.create!(game: played, player: echigo, university: alpha, pa: 4, ab: 4, hits: 2)
+    BattingLine.create!(game: played, player: rival, university: beta, pa: 4, ab: 4, hits: 1)
+
+    get article_path("echigo-batting-title")
+
+    assert_response :success
+    assert_select "article p", text: /越後 駿祐選手（.+、1年）は\s*1位、打率\.500/
+    assert_select "article table tbody tr", 1
+    assert_select "article table tbody td a[href=?]", player_path(rival), text: "打者"
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

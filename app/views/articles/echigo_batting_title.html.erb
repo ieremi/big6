@@ -1,0 +1,107 @@
+<%# 越後選手が首位打者にならないパターン: 2026 autumn's batting title as it stands for 越後 駿祐 (立大, 1年), who led it
+    when 立大 had played its last game (BattingTitleRace): whether anyone above has no games left, and what each batter
+    who still has games would need to pass. Worked out from the data as it comes in, so it follows the box scores
+    (the last game's included once Scorebook has it) and the 早慶戦. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  season = Season.find_by(year: 2026, term: "autumn")
+  player = Player.find_by(scorebook_id: 20266006)
+  race = BattingTitleRace.new(season, player:) if season && player
+  average = ->(value) { format("%.3f", value).sub(/\A0/, "") }
+  date = ->(day) { "#{day.month}月#{day.day}日" }
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if race&.entry %>
+    <% entry = race.entry %>
+    <% totals = entry.totals %>
+    <% through = PlayerRanking.new("batting", season:).stats_through %>
+    <% rivals = race.rivals %>
+    <% passed = race.passed_for_good %>
+    <p>
+      <%= season.title %>の打率ランキング（規定打席以上<%= "、#{date.(through)}の試合まで" if through %>）で、
+      <%= link_to player.name, player_path(player) %>選手（<%= player.university.short_name %>、<%= season.year - player.enter_year + 1 %>年）は
+      <strong><%= entry.rank %>位、打率<%= average.(totals.average) %></strong>（<%= totals.ab %>打数<%= totals.hits %>安打）です。
+      <% if race.games_left(player.university).max.zero? %>
+        <%= player.university.short_name %>はリーグ戦の試合を終えたので、越後選手の打率はこれ以上変わりません。
+      <% end %>
+    </p>
+
+    <% if race.pending_games.any? %>
+      <p>
+        ただし、<%= safe_join(race.pending_games.map { |game| "#{date.(game.played_on)}の#{game.team0.short_name}-#{game.team1.short_name}#{game.round_name}" }, "、") %>の成績は、まだ入っていません。
+        入ると、越後選手の打率と、このページの計算が変わります。
+      </p>
+    <% end %>
+
+    <% if passed.any? %>
+      <p>
+        <%= safe_join(passed.map { |other| "#{other.player.name}（#{other.player.university.short_name}、#{average.(other.totals.average)}）" }, "、") %>は、
+        すでに越後選手を上回っていて、試合も残っていません。越後選手が首位打者になることはありません。
+      </p>
+    <% elsif rivals.empty? %>
+      <p><strong>越後選手を抜ける打者は、もういません。</strong><%= race.final? ? "越後選手の首位打者が決まりました。" : "" %></p>
+    <% else %>
+      <h2 class="card-heading">越後選手が首位打者にならないのは</h2>
+      <p>
+        まだ試合が残っている打者の誰かが、残りの試合で下の表の安打数以上を打ったときです。それ以外は、越後選手が首位打者になります。
+        残りの試合数は、<%= rivals.map { |rival| rival.player.university }.uniq.sort_by(&:position).map { |university| "#{university.short_name}が#{race.games_left(university).then { |left| left.min == left.max ? "#{left.min}" : "#{left.min}〜#{left.max}" }}試合" }.join("、") %>です
+        （カードが1勝1敗になると3回戦があります）。
+      </p>
+      <% counts = rivals.flat_map { |rival| rival.games_left.to_a }.uniq.sort %>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>選手</th><th>大学</th><th>いま</th>
+              <% counts.each do |games| %><th>残り<%= games %>試合なら</th><% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% rivals.each do |rival| %>
+              <tr>
+                <td><%= link_to rival.player.name, player_path(rival.player) %></td>
+                <td>
+                  <span class="team-chip" style="background: <%= rival.player.university.color %>"><%= rival.player.university.initial %></span>
+                  <%= rival.player.university.short_name %>
+                </td>
+                <td><%= average.(rival.totals.average) %>（<%= rival.totals.ab %>打数<%= rival.totals.hits %>安打）</td>
+                <% counts.each do |games| %>
+                  <% need = rival.needs[rival.games_left.to_a.index(games)] if rival.games_left.include?(games) %>
+                  <td>
+                    <% if !rival.games_left.include?(games) %>
+                      －
+                    <% elsif need.nil? %>
+                      <span class="muted">規定打席に届かない</span>
+                    <% elsif need.hits %>
+                      約<%= need.at_bats %>打数<strong><%= need.hits %>安打</strong>以上（<%= average.(need.average) %>）
+                    <% else %>
+                      <span class="muted">全打席安打でも届かない</span>
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <p class="muted">
+      打数は、その選手のこれまでの1試合あたりの打数（四死球・犠打をのぞく）で見積もっています。打数が多ければ必要な安打も増え、少なければ減ります。
+      規定打席（チームの試合数×3.1、四捨五入）も、これまでの1試合あたりの打席で届くかどうかを見ています。
+      打率は連盟の発表と同じく小数第3位までで比べ、同じなら2人の首位打者です（1952年春季、2006年春季などの例があります）。
+      成績は BIG6 Scorebook の各試合のボックススコアの合計で、優勝決定戦はのぞいています。<%= link_to "今季の個人成績", players_season_path(season.year, season.term) %>
+    </p>
+  <% elsif race %>
+    <p class="muted"><%= player.name %>選手は、<%= season.title %>の規定打席に達していません。</p>
+  <% else %>
+    <p class="muted">データがありません。</p>
+  <% end %>
+</article>

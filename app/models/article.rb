@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "echigo-batting-title", title: "越後選手が首位打者にならないパターン", published_on: Date.new(2026, 11, 3),
+      description: "2026年秋季、打率1位の立大・越後 駿祐（1年）が首位打者を逃すのはどんなときか。早慶戦の打者が抜くのに必要な安打数。"
+    ),
+    Entry.new(
       slug: "freshman-leading-hitters", title: "1年生の首位打者", published_on: Date.new(2026, 11, 3),
       description: "東京六大学野球のリーグ戦で、1年生で首位打者になった選手。1925年秋からの首位打者の学年ごとの人数と、今季の打率上位の1年生も。"
     ),
