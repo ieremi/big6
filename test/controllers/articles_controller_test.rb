@@ -154,6 +154,15 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article table tbody td a[href=?]", player_path(rival), text: "打者"
   end
 
+  test "the 2026 autumn highlights give three or four points for each university done, linking the players" do
+    get article_path("autumn-2026-highlights")
+
+    assert_response :success
+    assert_select "article h2.card-heading", 4
+    assert_select "article ul", 4
+    assert_select "article li a[href=?]", player_path(20266006), text: "越後駿祐"
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

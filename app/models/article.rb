@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "autumn-2026-highlights", title: "2026年秋季 明大・法大・立大・東大のよかったところ", published_on: Date.new(2026, 11, 3),
+      description: "2026年秋季のリーグ戦を終えた明大・法大・立大・東大の、打率・防御率・打数・投球回・出場試合数ですぐれた選手や、春からのチーム成績ののび、観衆の増えたところ。"
+    ),
+    Entry.new(
       slug: "echigo-batting-title", title: "越後選手が首位打者にならないパターン", published_on: Date.new(2026, 11, 3),
       description: "2026年秋季、打率1位の立大・越後 駿祐（1年）が首位打者を逃すのはどんなときか。早慶戦の打者が抜くのに必要な安打数。"
     ),

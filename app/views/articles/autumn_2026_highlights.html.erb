@@ -1,0 +1,69 @@
+<%# 2026年秋季 明大・法大・立大・東大のよかったところ: three or four things to praise in each university whose games
+    were over by 11/3 (only the 早慶戦 left), written by hand from the season's figures as they stood then: the
+    players who led in batting average, ERA, at-bats, innings and games, and the team's batting average, ERA, errors
+    and crowds against the season before. Players link to their pages by Scorebook id. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  player = ->(id, name) { link_to name, player_path(id) }
+  # [slug, the place and record, the points (HTML built with player links)]
+  sections = [
+    [ "meiji", "1〜2位（9勝4敗）", [
+      safe_join([ "チーム打率 .296 はリーグ1位で、春（.289）からさらに上がりました。88得点もリーグ最多です。" ]),
+      safe_join([ "打数の多い上位5人のうち4人が明大です。全13試合に出た", player.(20233010, "岡田啓吾"), "（57打数）、", player.(20233005, "内海優太"), "（56）、",
+        player.(20233013, "榊原七斗"), "（53、打率.321）、", player.(20243015, "田上夏衣"), "（51）が打線を引っ張り、田上は本塁打3本でリーグ最多タイです。" ]),
+      safe_join([ player.(20243028, "湯田統真"), "は防御率2.53でリーグ2位タイ、3勝。救援の", player.(20233017, "松本直"), "はリーグ最多タイの8試合に投げて3勝、防御率2.37です。" ]),
+      safe_join([ "観衆は1試合平均9,346人、合計121,500人で、ともにリーグ最多です。" ])
+    ] ],
+    [ "hosei", "2〜3位（7勝5敗1分）", [
+      safe_join([ player.(20254001, "井上和輝"), "が打率.396でリーグ3位。全13試合に出て、チーム最多タイの48打数です。", player.(20234025, "藤森康淳"), "（.326）、",
+        player.(20244011, "熊谷陸"), "（.317）も規定打席以上で3割を超えました。" ]),
+      safe_join([ player.(20234006, "助川太志"), "は投球回42、奪三振41がリーグ最多、登板8も最多タイ。防御率3.43で3勝を挙げました。" ]),
+      safe_join([ "1年生の", player.(20264028, "富田櫂成"), "は7試合で23回を投げ、防御率0.78です。" ]),
+      safe_join([ "失策は春の14から5に減り、チーム打率も .278 から .283 に上がりました。盗塁12はリーグ最多、勝ち点も春の2から3に増えています。" ])
+    ] ],
+    [ "rikkio", "4〜5位（5勝6敗1分）", [
+      safe_join([ "打率の上位5人のうち4人が立大です。1年生の", player.(20266006, "越後駿祐"), "が .457 で1位、", player.(20236010, "落合智哉"), "が .400 で2位、",
+        player.(20246009, "河野優輝"), "が .389 で4位、1年生の", player.(20266032, "本間律輝"), "が .385 で5位です。" ]),
+      safe_join([ "チーム打率は春の .262 から .271 に上がり、本塁打11本はリーグ最多です（本間3本、落合・", player.(20256023, "長島颯"), "2本）。" ]),
+      safe_join([ "チーム防御率は春の6.29から4.39に大きく良くなりました。", player.(20246018, "田中優飛"), "は投球回37でリーグ2位、防御率2.92でリーグ5位です。" ]),
+      safe_join([ "失策は12試合でわずか1で、リーグ最少です。観衆は1試合平均8,375人で、前年秋（7,192人）より16%多くなりました。" ])
+    ] ],
+    [ "tokyo", "6位（0勝10敗）", [
+      safe_join([ "失策は7で、前年秋の14から半分に減りました。" ]),
+      safe_join([ player.(20245001, "秋元諒"), "は全10試合に出てチーム最多の35打数、打率 .229 は20打数以上でチーム1位です。", player.(20235013, "小村旺輔"), "（.214）も全試合に出場しました。" ]),
+      safe_join([ player.(20235015, "佐伯豪栄"), "は6試合で15回1/3を投げて防御率4.70。チームで10回以上投げた投手の中でもっとも良い数字です。" ]),
+      safe_join([ "観衆は1試合平均6,600人で、前年秋（6,125人）より8%多くなりました。" ])
+    ] ]
+  ]
+  universities = University.where(slug: sections.map(&:first)).index_by(&:slug)
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <p>
+    2026年秋季のリーグ戦は、11月3日の立大-明大3回戦で早慶戦を残すだけになりました。試合を終えた明大・法大・立大・東大について、
+    打率・防御率・打数・投球回・出場試合数ですぐれた選手と、春（前年秋）からのチーム成績や観衆ののびから、よかったところを挙げます。
+  </p>
+
+  <% sections.each do |slug, standing, points| %>
+    <% university = universities[slug] %>
+    <h2 class="card-heading">
+      <% if university %><span class="team-chip" style="background: <%= university.color %>"><%= university.initial %></span><% end %>
+      <%= university ? link_to(university.short_name, university_path(slug)) : slug %>
+      <span class="muted"><%= standing %></span>
+    </h2>
+    <ul>
+      <% points.each do |point| %><li><%= point %></li><% end %>
+    </ul>
+  <% end %>
+
+  <p class="muted">
+    数字は11月3日の試合までのもので、成績は各試合のボックススコア（BIG6 Scorebook）の合計です（<%= link_to "個人成績", players_season_path(2026, "autumn") %>・<%= link_to "チーム成績", records_season_path(2026, "autumn") %>）。
+    規定打席・規定投球回は連盟と同じくチームの試合数×3.1打席、×2回です。早慶戦がまだ残っているため、「リーグ最多」などのリーグ全体での順位は、早大・慶大の成績しだいで変わることがあります。
+  </p>
+</article>
