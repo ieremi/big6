@@ -26,6 +26,12 @@ module SeasonsHelper
     "防御率" => [ "Q", "asc" ], "失策" => [ "F", "asc" ]
   }.freeze
 
+  # The 個人成績 tab's columns: the player pages' (PlayersHelper), with the player
+  # and the university first. Their shortcuts are letters those don't use, upper
+  # case for batting and lower for pitching as there, as both tables are on the page.
+  SEASON_BATTING_COLUMNS = { "選手" => [ "J", "asc" ], "大学" => [ "U", "asc" ] }.merge(PlayersHelper::BATTING_COLUMNS).freeze
+  SEASON_PITCHING_COLUMNS = { "選手" => [ "j", "asc" ], "大学" => [ "u", "asc" ] }.merge(PlayersHelper::PITCHING_COLUMNS).freeze
+
   # The mark of a convention's result (ScheduleConventions) and what it means.
   CONVENTION_MARKS = {
     followed: [ "○", "したがっている" ], broken: [ "×", "したがっていない" ],

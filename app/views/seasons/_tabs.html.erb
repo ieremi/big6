@@ -1,10 +1,11 @@
 <%# The season's pages as tabs, under its heading: 試合一覧 (seasons#show), 順位・優勝のゆくえ (#standings) and
-    チーム成績・記録・強さ (#records). Each a page of its own, so each is worked out only when opened and has its own URL.
-    Locals: season, current (:games, :standings or :records). %>
+    チーム成績・記録・強さ (#records) and 個人成績 (#players). Each a page of its own, so each is worked out only when opened and has its own URL.
+    Locals: season, current (:games, :standings, :records or :players). %>
 <% tabs = {
      games: [ "試合一覧", season_path(season.year, season.term) ],
      standings: [ "順位・優勝のゆくえ", standings_season_path(season.year, season.term) ],
-     records: [ "チーム成績・記録・強さ", records_season_path(season.year, season.term) ]
+     records: [ "チーム成績・記録・強さ", records_season_path(season.year, season.term) ],
+     players: [ "個人成績", players_season_path(season.year, season.term) ]
    } %>
 <nav class="season-tabs" aria-label="<%= season.title %>のページ">
   <% tabs.each do |key, (label, path)| %>

@@ -1,0 +1,5 @@
+<%# The player and university cells of a 個人成績 row (SeasonPlayerStats::Row): ＊ after the name of one reaching the
+    league's minimum; the university sorts in the league's order. %>
+<%= sort_cell safe_join([ link_to(row.player.name, player_path(row.player)), ("＊" if row.qualified) ].compact), row.player.name %>
+<%= sort_cell safe_join([ tag.span(row.player.university.initial, class: "team-chip", style: "background: #{row.player.university.color}"), " ", row.player.university.short_name ]),
+      row.player.university.position %>

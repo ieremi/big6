@@ -81,6 +81,15 @@ class SeasonsController < ApplicationController
     @team_strength = TeamStrength.new(@season)
   end
 
+  # The fourth tab: 個人成績, every player's batting and pitching totals for the
+  # season, of the universities chosen (none chosen: all of them).
+  def players
+    @season = Season.find_by!(year: params[:year], term: params[:term])
+    @universities = University.where(id: @season.games.pluck(:team0_id, :team1_id).flatten.uniq).order(:position).to_a
+    @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
+    @player_stats = SeasonPlayerStats.new(@season, university_ids: @selected_university_ids.presence)
+  end
+
   # The seasons grouped by the order of their cards (CardOrders).
   def card_orders
     @orders = CardOrders.all

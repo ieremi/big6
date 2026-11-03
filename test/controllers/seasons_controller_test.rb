@@ -250,13 +250,13 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     season = Season.create!(year: year, term: term)
     Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: played_on, game_number: 1)
   end
-  test "a season's three pages are tabs, the one shown marked current" do
+  test "a season's four pages are tabs, the one shown marked current" do
     { season_url(2026, "spring") => "試合一覧", standings_season_url(2026, "spring") => "順位・優勝のゆくえ",
-      records_season_url(2026, "spring") => "チーム成績・記録・強さ" }.each do |url, current|
+      records_season_url(2026, "spring") => "チーム成績・記録・強さ", players_season_url(2026, "spring") => "個人成績" }.each do |url, current|
       get url
 
       assert_response :success
-      assert_select "nav.season-tabs a", 3
+      assert_select "nav.season-tabs a", 4
       assert_select "nav.season-tabs a[aria-current=page]", text: current
       assert_select "nav.season-tabs a[href=?]", records_season_path(2026, "spring"), text: "チーム成績・記録・強さ"
     end
@@ -275,5 +275,37 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "p.muted", text: "この季のチーム成績・記録・強さはありません。"
+  end
+
+  test "the 個人成績 tab lists every player's batting and pitching by university, marking those reaching the league's minimum" do
+    game = Game.where(season: seasons(:one)).order(:played_on).first
+    regular = Player.create!(scorebook_id: 1, university: game.team0, name: "正選手", enter_year: 2023, role: "選手")
+    bench = Player.create!(scorebook_id: 2, university: game.team0, name: "控え", enter_year: 2024, role: "選手")
+    other = Player.create!(scorebook_id: 3, university: game.team1, name: "相手", enter_year: 2023, role: "選手")
+    BattingLine.create!(game:, player: regular, university: game.team0, pa: 5, ab: 4, hits: 2)
+    BattingLine.create!(game:, player: bench, university: game.team0, pa: 1, ab: 1, hits: 1)
+    BattingLine.create!(game:, player: other, university: game.team1, pa: 4, ab: 4, hits: 0)
+    PitchingLine.create!(game:, player: other, university: game.team1, outs: 27, earned_runs: 2)
+
+    get players_season_url(2026, "spring")
+
+    assert_response :success
+    assert_select "nav.season-tabs a[aria-current=page]", text: "個人成績"
+    names = css_select("section.season-players").first.css("tbody tr td:first-child").map(&:text)
+    expected = [ game.team0, game.team1 ].min_by(&:position) == game.team0 ? [ "正選手＊", "控え", "相手＊" ] : [ "相手＊", "正選手＊", "控え" ]
+    assert_equal expected, names # by university, then by plate appearances; ＊ for 3.1 a game (1 game: 3)
+    assert_select "section.season-players h2", text: "投手成績"
+    assert_select "fieldset label[data-shortcut]", 0 # the tables' sort keys take the initials
+
+    get players_season_url(2026, "spring", university_ids: [ game.team1.id ])
+
+    assert_equal [ "相手＊" ], css_select("section.season-players").first.css("tbody tr td:first-child").map(&:text)
+    assert_select "input[name='university_ids[]'][checked]", 1
+  end
+
+  test "a 個人成績 tab with no box scores says so" do
+    get players_season_url(2026, "spring")
+
+    assert_select "p.muted", text: "この季の個人成績はありません。"
   end
 end

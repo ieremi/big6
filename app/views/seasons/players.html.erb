@@ -1,0 +1,75 @@
+<%# The season's fourth tab (seasons/_tabs): 個人成績 (SeasonPlayerStats), every player's batting and pitching totals,
+    narrowed to the universities chosen, by university and then by plate appearances or innings, sortable in the
+    browser by any column. ＊ marks those reaching the league's minimum, whom the rankings page ranks. %>
+<%
+  content_for :title, site_title("#{@season.title} 個人成績")
+  content_for :description, "#{@season.title}の東京六大学野球の個人成績。全選手の打撃成績（打率・OPS・本塁打・打点など）と投手成績（防御率・勝敗・奪三振など）を大学ごとに。"
+  content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Players")
+%>
+
+<h1><%= @season.title %></h1>
+<%= render "seasons/tabs", season: @season, current: :players %>
+
+<% if @player_stats.any? || @selected_university_ids.any? %>
+  <%= render "seasons/university_filter", url: players_season_path(@season.year, @season.term), universities: @universities,
+        selected_ids: @selected_university_ids, shortcuts: false %>
+
+  <% batting, pitching = @player_stats.rows("batting"), @player_stats.rows("pitching") %>
+  <% if batting.any? %>
+    <section class="season-players">
+      <h2 class="card-heading">打撃成績</h2>
+      <div class="table-scroll">
+        <table data-controller="sortable-table">
+          <thead>
+            <tr>
+              <%= sortable_headers SeasonsHelper::SEASON_BATTING_COLUMNS, *%w[選手 大学 打率 OPS 試合 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策] %>
+            </tr>
+          </thead>
+          <tbody>
+            <% batting.each do |row| %>
+              <tr>
+                <%= render "seasons/player_cells", row: row %>
+                <%= render "players/batting_cells", totals: row.totals %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
+
+  <% if pitching.any? %>
+    <section class="season-players">
+      <h2 class="card-heading">投手成績</h2>
+      <div class="table-scroll">
+        <table data-controller="sortable-table">
+          <thead>
+            <tr>
+              <%= sortable_headers SeasonsHelper::SEASON_PITCHING_COLUMNS, *%w[選手 大学 防御率 登板 先発 完投 完封 勝 敗 投球回 被安打 被本塁打 奪三振 与四死球 失点 自責点] %>
+            </tr>
+          </thead>
+          <tbody>
+            <% pitching.each do |row| %>
+              <tr>
+                <%= render "seasons/player_cells", row: row %>
+                <%= render "players/pitching_cells", totals: row.totals %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
+
+  <% if batting.any? || pitching.any? %>
+    <p class="muted">
+      各試合のボックススコア（BIG6 Scorebook）の合計で、<%= l(@player_stats.through, format: "%-m月%-d日") if @player_stats.through %>の試合までです。優勝決定戦はのぞいています。
+      ＊は規定打席・規定投球回（連盟と同じく、チームの試合数×3.1打席、×2回）に達した選手で、<%= link_to "ランキング", rankings_path(season: "#{@season.year}-#{@season.term}") %>ではこの選手を順位づけしています。
+      出塁率は（安打＋四死球）÷（打数＋四死球）です。
+    </p>
+  <% else %>
+    <p class="muted">選んだ大学の個人成績はありません。</p>
+  <% end %>
+<% else %>
+  <p class="muted">この季の個人成績はありません。</p>
+<% end %>
