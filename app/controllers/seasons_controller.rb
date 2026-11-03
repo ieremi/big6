@@ -21,6 +21,7 @@ class SeasonsController < ApplicationController
     end
   end
 
+  # The season's first tab (seasons/_tabs): its games, with the summary and tags.
   def show
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @games = @season.games.includes(:team0, :team1, :season).order(:played_on, :game_number)
@@ -56,19 +57,28 @@ class SeasonsController < ApplicationController
     @conventions = ScheduleConventions.for(@season)
   end
 
+  # The season's second tab (seasons/_tabs): the standings and 優勝のゆくえ.
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @standings = Standings.new(@season)
-    # チーム成績: each university's batting average, ERA and so on, from the box scores.
-    @team_stats = TeamStats.new(@season)
     # 優勝のゆくえ once the game picked with its button had ended (after), or as it stands now.
     @title_race_timeline = TitleRaceTimeline.new(@season)
     @title_race_point = @title_race_timeline.find(params[:after])
     @title_race = @title_race_timeline.race(@title_race_point)
+  end
+
+  # The third tab: チーム成績, the records and 強さの推移, each worked out apart
+  # from the standings tab's title race, so neither page waits on the other's.
+  def records
+    @season = Season.find_by!(year: params[:year], term: params[:term])
+    @standings = Standings.new(@season) # the order the team stats are listed in
+    # チーム成績: each university's batting average, ERA and so on, from the box scores.
+    @team_stats = TeamStats.new(@season)
+    # 連続記録 and ひさしぶりの記録: the runs of seasons in a row this one adds to, has
+    # at stake or ends, and what it brings back after a long while.
+    @streak_records = StreakRecords.new(@season)
     # 強さの推移: each university's chance of beating an average side, game by game.
     @team_strength = TeamStrength.new(@season)
-    # 連続記録: the runs of seasons in a row this one adds to, has at stake or ends.
-    @streak_records = StreakRecords.new(@season)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).

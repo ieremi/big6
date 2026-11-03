@@ -1,6 +1,6 @@
 require "test_helper"
 
-# 連続記録 and ひさしぶりの記録 (StreakRecords) on the standings page.
+# 連続記録 and ひさしぶりの記録 (StreakRecords) on a season's records tab.
 class StreakRecordsPageTest < ActionDispatch::IntegrationTest
   setup do
     Game.delete_all
@@ -19,8 +19,8 @@ class StreakRecordsPageTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the standings page lists the runs the season adds to, with how each stands" do
-    get standings_season_url(2004, "spring")
+  test "the records tab lists the runs the season adds to, with how each stands" do
+    get records_season_url(2004, "spring")
 
     assert_response :success
     assert_select "section.streak-records h2", "連続記録"
@@ -32,7 +32,7 @@ class StreakRecordsPageTest < ActionDispatch::IntegrationTest
     season = Season.find_by!(year: 2004, term: "spring")
     Game.where(season: season, team0: universities(:one), team1: @order[2]).update_all("team0_id = team1_id, team1_id = team0_id")
 
-    get standings_season_url(2004, "spring")
+    get records_season_url(2004, "spring")
 
     assert_select "section.streak-records h2", "ひさしぶりの記録"
     assert_select "section.streak-records li", text: /Gamma\s+Alphaから勝ち点　1950年以降初/

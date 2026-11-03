@@ -77,7 +77,7 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
   end
 
   test "a chart shows each university's strength from the opening day on, game by game" do
-    get standings_season_url(2026, "spring")
+    get records_season_url(2026, "spring")
 
     assert_select "section.team-strength h2", "強さの推移"
     assert_select "section.team-strength [data-view=chance]:not([hidden]) figure.line-chart[data-controller=line-chart]" do
@@ -88,7 +88,7 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
   end
 
   test "buttons show the strengths as a chance, odds or log odds, the same figures each way" do
-    get standings_season_url(2026, "spring")
+    get records_season_url(2026, "spring")
 
     assert_select "section.team-strength [data-controller=view-switch] button.period-btn", %w[確率 オッズ 対数オッズ].size
     assert_select "section.team-strength button.active[aria-pressed=true][data-view=chance]", "確率"
@@ -106,7 +106,7 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
   end
 
   test "the strength chart links to the page explaining it, whose figures come from the model" do
-    get standings_season_url(2026, "spring")
+    get records_season_url(2026, "spring")
     assert_select "section.team-strength a[href=?]", strength_seasons_path
 
     get strength_seasons_url

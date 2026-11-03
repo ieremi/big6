@@ -250,4 +250,30 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     season = Season.create!(year: year, term: term)
     Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: played_on, game_number: 1)
   end
+  test "a season's three pages are tabs, the one shown marked current" do
+    { season_url(2026, "spring") => "試合一覧", standings_season_url(2026, "spring") => "順位・優勝のゆくえ",
+      records_season_url(2026, "spring") => "チーム成績・記録・強さ" }.each do |url, current|
+      get url
+
+      assert_response :success
+      assert_select "nav.season-tabs a", 3
+      assert_select "nav.season-tabs a[aria-current=page]", text: current
+      assert_select "nav.season-tabs a[href=?]", records_season_path(2026, "spring"), text: "チーム成績・記録・強さ"
+    end
+  end
+
+  test "the standings tab leaves the team stats, records and strength to the records tab" do
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.title-race, table.standings-table"
+    assert_select "section.team-stats, section.streak-records, section.team-strength", 0
+  end
+
+  test "a records tab with nothing to show says so" do
+    Season.create!(year: 1949, term: "autumn")
+    get records_season_url(1949, "autumn")
+
+    assert_response :success
+    assert_select "p.muted", text: "この季のチーム成績・記録・強さはありません。"
+  end
 end

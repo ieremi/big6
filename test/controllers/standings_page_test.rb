@@ -34,13 +34,13 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_select "p.muted", text: /勝ち1点・引分0.5点/, count: 0
   end
 
-  test "the standings page has each team's batting average and ERA, and says when box scores are missing" do
+  test "the records tab has each team's batting average and ERA, and says when box scores are missing" do
     player = Player.create!(scorebook_id: 1, university: universities(:one), name: "打者", enter_year: 2023, role: "選手")
     game = Game.where(season: seasons(:one)).order(:played_on).first
     BattingLine.create!(game:, player:, university: universities(:one), ab: 4, hits: 1)
     PitchingLine.create!(game:, player:, university: universities(:one), outs: 27, earned_runs: 3)
 
-    get standings_season_url(2026, "spring")
+    get records_season_url(2026, "spring")
 
     assert_select "section.team-stats tbody tr", 1
     assert_select "section.team-stats tbody td", text: ".250"

@@ -26,7 +26,7 @@
   <% if rows.size > 1 %>
     <p>
       戦後、<%= rows.first.season.title %>から<%= rows.last.season.title %>までの<%= rows.size %>シーズンについて、シーズンの終わりの時点での6大学の強さを並べました。
-      強さは順位表のページの「強さの推移」と同じもので、平均的な強さの相手に勝つ確率です（<%= link_to "強さとは", strength_seasons_path %>）。
+      強さは各シーズンの「チーム成績・記録・強さ」の「強さの推移」と同じもので、平均的な強さの相手に勝つ確率です（<%= link_to "強さとは", strength_seasons_path %>）。
       直近<%= TeamStrength::PAST_SEASONS %>シーズンの勝率に重きを置いているので、1シーズンの好不調より、数年単位の地力の移り変わりがよく表れます。
       リーグ戦は1946年春季に再開しましたが、強さは直近<%= TeamStrength::PAST_SEASONS %>シーズンの試合がそろうシーズンからしか計算できないため、<%= rows.first.season.title %>からです。
     </p>
@@ -77,8 +77,8 @@
             <% weakest = rows.min_by { |row| row.chances.fetch(university, 0) } %>
             <tr>
               <td><%= link_to university.short_name, university_path(university.slug) %></td>
-              <td><%= link_to strongest.season.title, standings_season_path(strongest.season.year, strongest.season.term) %>（<%= strength_figure(strongest.chances.fetch(university)) %>）</td>
-              <td><%= link_to weakest.season.title, standings_season_path(weakest.season.year, weakest.season.term) %>（<%= strength_figure(weakest.chances.fetch(university)) %>）</td>
+              <td><%= link_to strongest.season.title, records_season_path(strongest.season.year, strongest.season.term) %>（<%= strength_figure(strongest.chances.fetch(university)) %>）</td>
+              <td><%= link_to weakest.season.title, records_season_path(weakest.season.year, weakest.season.term) %>（<%= strength_figure(weakest.chances.fetch(university)) %>）</td>
               <td><%= strength_figure(average.(rows, university)) %></td>
             </tr>
           <% end %>

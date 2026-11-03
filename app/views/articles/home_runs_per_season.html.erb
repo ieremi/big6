@@ -110,7 +110,7 @@
         <tbody>
           <% rows.each_with_index do |row, index| %>
             <tr>
-              <%= sort_cell link_to(row.season.title, standings_season_path(row.season.year, row.season.term)), index %>
+              <%= sort_cell link_to(row.season.title, records_season_path(row.season.year, row.season.term)), index %>
               <td class="num"><%= row.games %></td>
               <td class="num"><%= row.home_runs %></td>
               <%= sort_cell two.(row.per_game), row.per_game %>

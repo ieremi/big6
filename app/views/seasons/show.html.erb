@@ -6,6 +6,7 @@
 %>
 
 <h1><%= @season.title %></h1>
+<%= render "seasons/tabs", season: @season, current: :games %>
 
 <%# The season in a sentence or two (SeasonSummary), also the page's description. %>
 <p class="game-summary"><%= summary %></p>
@@ -31,7 +32,6 @@
 <% end %>
 
 <% if @games.any? %>
-  <p><%= link_to "順位表を見る", standings_season_path(@season.year, @season.term) %></p>
   <%# The calendar has the games shown: those of the chosen universities, or all of them. %>
   <% ics_params = { format: :ics, university_ids: @selected_university_ids.presence } %>
   <p>

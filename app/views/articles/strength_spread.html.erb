@@ -18,7 +18,7 @@
           tag.tbody do
             safe_join(list.map do |row|
               tag.tr do
-                safe_join([ tag.td(link_to(row.season.title, standings_season_path(row.season.year, row.season.term))), tag.td(spread.(row.public_send(value)), class: "num"), tag.td(standing.(row)) ])
+                safe_join([ tag.td(link_to(row.season.title, records_season_path(row.season.year, row.season.term))), tag.td(spread.(row.public_send(value)), class: "num"), tag.td(standing.(row)) ])
               end
             end)
           end
@@ -43,7 +43,7 @@
 
     <h2 class="card-heading">強さと、その散らばり</h2>
     <p>
-      ここでいう強さは、順位表のページの「強さの推移」と同じもので、各大学の直近<%= past %>シーズンの勝率と、そのシーズンの勝率から計算した点数です
+      ここでいう強さは、各シーズンの「チーム成績・記録・強さ」の「強さの推移」と同じもので、各大学の直近<%= past %>シーズンの勝率と、そのシーズンの勝率から計算した点数です
       （<%= link_to "強さとは", strength_seasons_path %>）。表の数字は、シーズンの終わりの時点で、6大学の平均と同じ強さの相手に勝つ確率（%）です。
     </p>
     <p>
@@ -83,7 +83,7 @@
         <tbody>
           <% rows.each_with_index do |row, index| %>
             <tr>
-              <td data-sort-value="<%= index %>"><%= link_to row.season.title, standings_season_path(row.season.year, row.season.term) %></td>
+              <td data-sort-value="<%= index %>"><%= link_to row.season.title, records_season_path(row.season.year, row.season.term) %></td>
               <%= sort_cell(spread.(row.variance), row.variance) %>
               <%= sort_cell(spread.(row.variance_without_tokyo), row.variance_without_tokyo) %>
               <td><%= standing.(row) %></td>

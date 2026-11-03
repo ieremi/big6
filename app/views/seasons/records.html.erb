@@ -1,0 +1,22 @@
+<%# The season's third tab (seasons/_tabs): チーム成績, 連続記録, ひさしぶりの記録 and 強さの推移. Each section shows
+    only when it has something, so a season with none of them says so. %>
+<%
+  content_for :title, site_title("#{@season.title} チーム成績・記録・強さ")
+  content_for :description, "#{@season.title}の東京六大学野球の、各大学のチーム打率・防御率などのチーム成績、連続記録・ひさしぶりの記録、強さの推移。"
+  content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Records")
+%>
+
+<h1><%= @season.title %></h1>
+<%= render "seasons/tabs", season: @season, current: :records %>
+
+<% sections = [
+     render("seasons/team_stats", stats: @team_stats, standings: @standings),
+     render("seasons/streak_records", streaks: @streak_records),
+     render("seasons/comebacks", streaks: @streak_records),
+     render("seasons/team_strength", strength: @team_strength)
+   ].select(&:present?) %>
+<% if sections.any? %>
+  <%= safe_join(sections) %>
+<% else %>
+  <p class="muted">この季のチーム成績・記録・強さはありません。</p>
+<% end %>
