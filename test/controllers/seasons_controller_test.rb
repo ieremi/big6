@@ -6,7 +6,7 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "a[href=?]", season_path(2026, "spring"), text: "2026年春季"
-    assert_select "a[href=?]", standings_season_path(2026, "spring")
+    assert_select "a[href=?]", standings_season_path(2026, "spring"), 0 # the season's tabs have it
     assert_match "1試合", response.body
   end
 
