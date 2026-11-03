@@ -137,4 +137,34 @@ class TitleRacePageTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#title-race p.title-race-as-of", "5月3日のBeta 0-2 Alpha（2回戦）のあとの優勝のゆくえです。"
     assert_select "turbo-frame#title-race .title-race-table td.title-race-cell", 16
   end
+
+  test "順位のゆくえ gives each university's possible places and the order for every way the open cards can end" do
+    get standings_season_url(2026, "spring")
+
+    assert_select "section.place-race h2", "順位のゆくえ"
+    assert_select ".place-race-ranges li", text: /Alpha\s+1〜2位/
+    assert_select ".place-race-table tbody tr", 16
+    assert_select ".standings-table .rank-badge.open", 3 # nothing decided yet
+  end
+
+  test "the table fills in a place once it is decided" do
+    Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
+      game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
+    end
+
+    get standings_season_url(2026, "spring")
+
+    assert_select ".standings-table .rank-badge:not(.open)", 1
+    assert_select ".standings-table .rank-badge:not(.open)[title=確定]", text: "1"
+    assert_select ".place-race-ranges li", text: /Alpha\s+1位（確定）/
+  end
+
+  test "a season over has every place decided, and no 順位のゆくえ" do
+    Game.where(played_on: Date.new(2026, 5, 9)..).delete_all
+
+    get standings_season_url(2026, "spring")
+
+    assert_select ".standings-table .rank-badge.open", 0
+    assert_select "section.place-race", 0
+  end
 end

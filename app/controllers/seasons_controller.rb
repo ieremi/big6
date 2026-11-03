@@ -65,6 +65,10 @@ class SeasonsController < ApplicationController
     @title_race_timeline = TitleRaceTimeline.new(@season)
     @title_race_point = @title_race_timeline.find(params[:after])
     @title_race = @title_race_timeline.race(@title_race_point)
+    # 順位のゆくえ, and which places the table marks as decided: as it stands now,
+    # whichever game 優勝のゆくえ is shown after.
+    @place_race = TitleRace.new(@season)
+    @season_over = StreakRecords.over?(TitleRace.games_of(@season))
   end
 
   # The third tab: チーム成績, the records and 強さの推移, each worked out apart

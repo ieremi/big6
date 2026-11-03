@@ -1,0 +1,58 @@
+<%# 順位のゆくえ (TitleRace): while the season is on, each university's best and worst place whatever the cards still
+    open do, and with one or two cards open, the final order for every way they can end (each card's result from the
+    side of the university named first, as 優勝のゆくえ shows it). Universities level share a place; level at the top,
+    they meet in a playoff (優勝決定戦). Only once the counting is small enough. %>
+<% race, standings = local_assigns[:race], local_assigns[:standings] %>
+<% if race&.applicable? && !race.over? %>
+  <section class="place-race">
+    <h2 class="card-heading">順位のゆくえ</h2>
+    <ul class="place-race-ranges">
+      <% standings.rows.each do |row| %>
+        <% best, worst = race.place_range(row.university) %>
+        <li>
+          <span class="team-chip" style="background: <%= row.university.color %>"><%= row.university.initial %></span>
+          <%= row.university.short_name %>
+          <strong><%= best == worst ? "#{best}位（確定）" : "#{best}〜#{worst}位" %></strong>
+        </li>
+      <% end %>
+    </ul>
+
+    <% scenarios = race.scenarios %>
+    <% if scenarios.any? %>
+      <% cards = race.open_cards %>
+      <% places = (1..standings.rows.size).to_a %>
+      <div class="table-scroll">
+        <table class="place-race-table">
+          <thead>
+            <tr>
+              <% cards.each do |card| %><th><%= card.label %></th><% end %>
+              <% places.each do |place| %><th><%= place %>位</th><% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% scenarios.each do |results, ranks| %>
+              <tr>
+                <% results.each do |result| %><td><%= result.join("-") %></td><% end %>
+                <% places.each do |place| %>
+                  <% teams = ranks.select { |_, rank| rank == place }.keys.sort_by(&:position) %>
+                  <td>
+                    <% if teams.empty? %>
+                      <span class="muted">－</span>
+                    <% else %>
+                      <% teams.each do |team| %><span class="team-chip" style="background: <%= team.color %>" title="<%= team.short_name %>"><%= team.initial %></span><% end %>
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+    <p class="muted">
+      残りのカードのすべての結果の組み合わせで数えています。順位は勝ち点、同じなら勝率の順で、勝ち点と勝率が同じ大学は同じ順位です（1位で並べば優勝決定戦）。
+      <% if scenarios.any? %>カードの結果は、先に書いた大学から見た勝ち数-負け数です。<% end %>
+      順位表の白抜きの順位は確定したものです。
+    </p>
+  </section>
+<% end %>

@@ -2108,3 +2108,28 @@ tr.bench-only td a {
 .conventions-row-na td {
   color: var(--text-muted);
 }
+
+/* A place in the standings that can still change: a plain number, the filled badge being kept for a decided one (seasons/standings, 順位のゆくえ). */
+.rank-badge.open {
+  background: transparent;
+  color: var(--text);
+}
+
+/* 順位のゆくえ (seasons/_place_race): each university's possible places, then the final order for each way the open cards can end. */
+.place-race-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.place-race-table th,
+.place-race-table td {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.place-race-table .team-chip + .team-chip {
+  margin-left: 0.15rem;
+}

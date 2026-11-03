@@ -134,4 +134,26 @@ class TitleRaceTest < ActiveSupport::TestCase
       team0_score: 1, team1_score: 4, game_status: "試合終了", counted_in_stats: false)
     assert_equal @gamma, TitleRace.new(@season).playoff_winner
   end
+
+  test "keeps the final order for every way the open cards can end, and the places already decided" do
+    three_teams
+
+    race = TitleRace.new(@season)
+
+    assert_equal [ "②Alpha-Gamma", "③Beta-Gamma" ], race.open_cards.map(&:label)
+    assert_equal 16, race.scenarios.size
+    results, places = race.scenarios.find { |results, _| results == [ [ 2, 0 ], [ 2, 0 ] ] }
+    assert_equal [ [ 2, 0 ], [ 2, 0 ] ], results
+    assert_equal({ "alpha" => 1, "beta" => 2, "gamma" => 3 }, places.transform_keys(&:slug))
+    assert_nil race.decided_place(@alpha) # level with both in a playoff if it loses to gamma and gamma loses to beta
+
+    Game.where(played_on: [ Date.new(2026, 5, 9), Date.new(2026, 5, 10) ]).each do |game|
+      game.update!(game_status: "試合終了", team0_score: game.team0 == @alpha ? 3 : 0, team1_score: game.team0 == @alpha ? 0 : 3)
+    end
+    race = TitleRace.new(@season)
+
+    assert_equal 1, race.decided_place(@alpha)
+    assert_nil race.decided_place(@gamma)
+    assert_equal 4, race.scenarios.size # beta v gamma alone
+  end
 end

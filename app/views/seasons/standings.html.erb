@@ -64,7 +64,9 @@
         <tbody>
           <% @standings.rows.each do |row| %>
             <tr>
-              <td class="col-rank"><span class="rank-badge"><%= row.rank %></span></td>
+              <%# Filled (白抜き) once the place is decided, as the league's own table marks it; a plain number while it can change. %>
+              <% decided = @place_race.applicable? ? (@place_race.over? || @place_race.decided_place(row.university) == row.rank) : @season_over %>
+              <td class="col-rank"><%= tag.span row.rank, class: [ "rank-badge", ("open" unless decided) ], title: ("確定" if decided) %></td>
               <td class="col-team">
                 <span class="team-chip" style="background: <%= row.university.color %>">
                   <%= row.university.initial %>
@@ -104,5 +106,6 @@
     </div>
   </div>
 
+  <%= render "seasons/place_race", race: @place_race, standings: @standings %>
   <%= render "seasons/title_race", race: @title_race, timeline: @title_race_timeline, point: @title_race_point %>
 <% end %>
