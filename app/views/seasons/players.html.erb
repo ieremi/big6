@@ -1,6 +1,7 @@
-<%# The season's fourth tab (seasons/_tabs): 個人成績 (SeasonPlayerStats), every player's batting and pitching totals,
-    narrowed to the universities chosen, by university and then by plate appearances or innings, sortable in the
-    browser by any column. ＊ marks those reaching the league's minimum, whom the rankings page ranks. %>
+<%# The season's fourth tab (seasons/_tabs): 個人成績 (SeasonPlayerStats), the players' batting and pitching totals,
+    narrowed to the universities chosen, ranked by batting average and ERA among those reaching the league's minimum:
+    the top ten places at first, everyone with top=all (the others after, unranked). Sortable in the browser by any
+    column. %>
 <%
   content_for :title, site_title("#{@season.title} 個人成績")
   content_for :description, "#{@season.title}の東京六大学野球の個人成績。全選手の打撃成績（打率・OPS・本塁打・打点など）と投手成績（防御率・勝敗・奪三振など）を大学ごとに。"
@@ -12,59 +13,23 @@
 
 <% if @player_stats.any? || @selected_university_ids.any? %>
   <%= render "seasons/university_filter", url: players_season_path(@season.year, @season.term), universities: @universities,
-        selected_ids: @selected_university_ids, shortcuts: false %>
+        selected_ids: @selected_university_ids, shortcuts: false, hidden: { top: ("all" unless @top) } %>
 
-  <% batting, pitching = @player_stats.rows("batting"), @player_stats.rows("pitching") %>
-  <% if batting.any? %>
-    <section class="season-players">
-      <h2 class="card-heading">打撃成績</h2>
-      <div class="table-scroll">
-        <table data-controller="sortable-table">
-          <thead>
-            <tr>
-              <%= sortable_headers SeasonsHelper::SEASON_BATTING_COLUMNS, *%w[選手 大学 打率 OPS 試合 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策] %>
-            </tr>
-          </thead>
-          <tbody>
-            <% batting.each do |row| %>
-              <tr>
-                <%= render "seasons/player_cells", row: row %>
-                <%= render "players/batting_cells", totals: row.totals %>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  <% end %>
+  <% shown = ->(top) { players_season_path(@season.year, @season.term, university_ids: @selected_university_ids.presence, top: top) } %>
+  <div class="period-toolbar" role="group" aria-label="表示する選手">
+    <%= link_to "上位#{PlayerRanking::DEFAULT_TOP}位まで", shown.(nil), class: [ "period-btn", ("active" if @top) ], aria: { current: ("page" if @top) } %>
+    <%= link_to "全選手", shown.("all"), class: [ "period-btn", ("active" unless @top) ], aria: { current: ("page" unless @top) } %>
+  </div>
 
-  <% if pitching.any? %>
-    <section class="season-players">
-      <h2 class="card-heading">投手成績</h2>
-      <div class="table-scroll">
-        <table data-controller="sortable-table">
-          <thead>
-            <tr>
-              <%= sortable_headers SeasonsHelper::SEASON_PITCHING_COLUMNS, *%w[選手 大学 防御率 登板 先発 完投 完封 勝 敗 投球回 被安打 被本塁打 奪三振 与四死球 失点 自責点] %>
-            </tr>
-          </thead>
-          <tbody>
-            <% pitching.each do |row| %>
-              <tr>
-                <%= render "seasons/player_cells", row: row %>
-                <%= render "players/pitching_cells", totals: row.totals %>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  <% end %>
+  <%= render "seasons/players_table", title: "打撃成績", stats: @player_stats, kind: "batting", cells: "players/batting_cells",
+        columns: SeasonsHelper::SEASON_BATTING_COLUMNS, labels: %w[順位 選手 大学 打率 OPS 試合 打席 打数 安打 二塁打 三塁打 本塁打 打点 得点 三振 四死球 犠打・犠飛 盗塁 併殺打 失策] %>
+  <%= render "seasons/players_table", title: "投手成績", stats: @player_stats, kind: "pitching", cells: "players/pitching_cells",
+        columns: SeasonsHelper::SEASON_PITCHING_COLUMNS, labels: %w[順位 選手 大学 防御率 登板 先発 完投 完封 勝 敗 投球回 被安打 被本塁打 奪三振 与四死球 失点 自責点] %>
 
-  <% if batting.any? || pitching.any? %>
+  <% if @player_stats.any? %>
     <p class="muted">
       各試合のボックススコア（BIG6 Scorebook）の合計で、<%= l(@player_stats.through, format: "%-m月%-d日") if @player_stats.through %>の試合までです。優勝決定戦はのぞいています。
-      ＊は規定打席・規定投球回（連盟と同じく、チームの試合数×3.1打席、×2回）に達した選手で、<%= link_to "ランキング", rankings_path(season: "#{@season.year}-#{@season.term}") %>ではこの選手を順位づけしています。
+      順位は、連盟と同じく規定打席・規定投球回（チームの試合数×3.1打席、×2回）に達した選手の、打率と防御率の順位です（<%= link_to "ランキング", rankings_path(season: "#{@season.year}-#{@season.term}") %>と同じ）。「全選手」では、達していない選手を順位なし（－）で後に続けています。
       出塁率は（安打＋四死球）÷（打数＋四死球）です。
     </p>
   <% else %>

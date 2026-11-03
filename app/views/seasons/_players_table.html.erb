@@ -1,0 +1,30 @@
+<%# One table of the 個人成績 tab (SeasonPlayerStats): the rows of the kind shown, with how many of how many, or that
+    nobody has reached the league's minimum yet when only the ranked are shown. Nothing when the kind has no player.
+    Locals: title, stats, kind, cells (the stat cells' partial), columns and labels (the headings, SeasonsHelper). %>
+<% rows = stats.rows(kind) %>
+<% all = stats.count(kind) %>
+<% if all.positive? %>
+  <section class="season-players">
+    <h2 class="card-heading"><%= title %></h2>
+    <% if rows.empty? %>
+      <p class="muted"><%= kind == "batting" ? "規定打席" : "規定投球回" %>に達した選手はまだいません（<%= all %>人）。「全選手」で全員を見られます。</p>
+    <% else %>
+      <p class="muted"><%= rows.size < all ? "#{all}人中、上位#{rows.size}人（同順位を含む）" : "#{all}人" %></p>
+      <div class="table-scroll">
+        <table data-controller="sortable-table">
+          <thead>
+            <tr><%= sortable_headers columns, *labels %></tr>
+          </thead>
+          <tbody>
+            <% rows.each do |row| %>
+              <tr>
+                <%= render "seasons/player_cells", row: row %>
+                <%= render cells, totals: row.totals %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </section>
+<% end %>

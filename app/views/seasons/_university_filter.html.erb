@@ -1,8 +1,12 @@
 <%# 大学で絞る: checkboxes of the season's universities, sent to url as university_ids[] as soon as one changes
     (search-filter). Locals: url, universities, selected_ids, and shortcuts (optional, true by default): false on a page
-    whose sortable tables already take the universities' initials as keys (H, K, M, R, W). %>
+    whose sortable tables already take the universities' initials as keys (H, K, M, R, W); and hidden (optional), other
+    parameters of the page the form keeps ({ top: "all" }). %>
 <% shortcuts = local_assigns.fetch(:shortcuts, true) %>
 <%= form_with url: url, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>
+  <% local_assigns.fetch(:hidden, {}).compact.each do |name, value| %>
+    <%= hidden_field_tag name, value, id: nil %>
+  <% end %>
   <fieldset>
     <legend>大学で絞る</legend>
     <div class="period-toolbar">

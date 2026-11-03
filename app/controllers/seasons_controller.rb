@@ -82,12 +82,14 @@ class SeasonsController < ApplicationController
   end
 
   # The fourth tab: 個人成績, every player's batting and pitching totals for the
-  # season, of the universities chosen (none chosen: all of them).
+  # season, of the universities chosen (none chosen: all of them): the top ten
+  # places at first, as the league ranks them, and everyone with top=all.
   def players
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @universities = University.where(id: @season.games.pluck(:team0_id, :team1_id).flatten.uniq).order(:position).to_a
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
-    @player_stats = SeasonPlayerStats.new(@season, university_ids: @selected_university_ids.presence)
+    @top = PlayerRanking.top_from(params[:top])
+    @player_stats = SeasonPlayerStats.new(@season, university_ids: @selected_university_ids.presence, top: @top)
   end
 
   # The seasons grouped by the order of their cards (CardOrders).
