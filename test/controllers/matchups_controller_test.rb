@@ -268,6 +268,14 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".source-notes li", text: "法政2回戦の法政の回ごとの得点の合計は13、印刷は12。"
   end
 
+  test "game page says what the printed source tells of how the game went" do
+    @game.update!(source_citation: "立教大学野球部 編『立教大学野球部史』（1981年）p.63", source_remark: "雨のため七回コールドゲーム")
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select "p.muted", text: "雨のため七回コールドゲーム（出典の本文より）"
+  end
+
   test "game page cites no source for a Scorebook game" do
     get matchup_game_url("alpha", "beta", 2026, "spring", 1)
 

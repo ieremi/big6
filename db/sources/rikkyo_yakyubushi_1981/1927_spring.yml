@@ -107,13 +107,13 @@ games:
       盗塁: { meiji: 1 }
       犠打: { meiji: 3, rikkio: 2 }
 
-  # 8回裏で降雨のため打ち切り、引分（本文）。
   - date: 1927-05-07
     venue: 神宮
     round: 1
     top: rikkio
     bottom: hosei
     score: { rikkio: 1, hosei: 1 }
+    note: 八回裏に雨のため打ち切り、引分
     line_score:
       rikkio: "001 000 00"
       hosei: "100 000 00"

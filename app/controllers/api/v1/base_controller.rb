@@ -53,7 +53,7 @@ module Api
           attendance: game.attendance,
           status: game.game_status,
           cancelled: game.not_held?,
-          source: game.source_citation.present? ? { citation: game.source_citation, url: game.source_url, notes: game.source_notes || [] } : nil
+          source: game.source_citation.present? ? { citation: game.source_citation, url: game.source_url, remark: game.source_remark, notes: game.source_notes || [] } : nil
         }
         json.delete(:season) unless include_season
         json.delete(:id) unless include_id

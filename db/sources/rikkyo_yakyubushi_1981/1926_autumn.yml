@@ -312,13 +312,13 @@ games:
       二塁打: [岡本]
       犠打: { rikkio: 1, tokyo: 1 }
 
-  # 7回で降雨コールドゲーム（本文）。
   - date: 1926-11-12
     venue: 長崎
     round: 3
     top: tokyo
     bottom: rikkio
     score: { rikkio: 12, tokyo: 4 }
+    note: 雨のため七回コールドゲーム
     line_score:
       tokyo: "003 100 0"
       rikkio: "435 000 x"

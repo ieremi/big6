@@ -29,6 +29,10 @@
 
 <%# The game in a few sentences (GameSummary), also the page's description. %>
 <p class="game-summary"><%= summary %></p>
+<%# What the printed source says of how the game went (「雨のため七回コールドゲーム」). %>
+<% if @game.source_remark.present? %>
+  <p class="muted"><%= @game.source_remark %>（出典の本文より）</p>
+<% end %>
 
 <% if detail.innings.any? %>
   <% if provisional %>

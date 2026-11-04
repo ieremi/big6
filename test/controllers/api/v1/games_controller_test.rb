@@ -8,7 +8,7 @@ class Api::V1::GamesControllerTest < ActionDispatch::IntegrationTest
     get "/api/v1/games/2026/spring/alpha/beta/1"
 
     assert_equal({ "citation" => "立教大学野球部 編『立教大学野球部史』（1981年）pp.29–31", "url" => "https://dl.ndl.go.jp/pid/12172714/1/37",
-      "notes" => [ "法政の打数。選手の合計は28、合計行は23。" ] }, response.parsed_body["source"])
+      "remark" => nil, "notes" => [ "法政の打数。選手の合計は28、合計行は23。" ] }, response.parsed_body["source"])
     assert_equal [ "池袋", { "top" => "1", "bottom" => "0" } ], [ response.parsed_body.dig("scoreboard", "stadium"), response.parsed_body.dig("scoreboard", "innings", "1") ]
   end
 

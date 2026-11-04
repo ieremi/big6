@@ -296,7 +296,8 @@ games:
     top: rikkio
     bottom: keio
     score: { keio: 6, rikkio: 0 }
-    # 七回、雨でコールドゲーム。慶應の七回の欄は印刷では空欄。
+    note: 雨のため七回コールドゲーム
+    # 慶應の七回の欄は印刷では空欄。
     line_score:
       rikkio: "000 000 0"
       keio: "110 040 x"

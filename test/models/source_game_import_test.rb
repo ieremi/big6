@@ -109,4 +109,14 @@ class SourceGameImportTest < ActiveSupport::TestCase
     assert_match "法政2回戦の法政の回ごとの得点", second.source_notes.first
     assert_nil first.source_notes
   end
+
+  test "keeps what the book says of how the game went" do
+    Season.create!(year: 1929, term: "spring")
+    file = Rails.root.join("db/sources/rikkyo_yakyubushi_1981/1929_spring.yml")
+
+    game = SourceGameImport.call(file, played_on: Date.new(1929, 5, 11)) # 慶應1回戦
+
+    assert_equal "雨のため七回コールドゲーム", game.source_remark
+    assert_nil SourceGameImport.call(file, played_on: Date.new(1929, 5, 12)).source_remark
+  end
 end

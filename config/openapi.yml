@@ -472,6 +472,7 @@ components:
           properties:
             citation: { type: string, description: "書誌（書名・ページなど）" }
             url: { type: string, nullable: true, description: "出典の所在（国立国会図書館デジタルコレクションなど）" }
+            remark: { type: string, nullable: true, description: "出典の本文にある試合のようす（「雨のため七回コールドゲーム」など）。なければ null" }
             notes:
               type: array
               items: { type: string }

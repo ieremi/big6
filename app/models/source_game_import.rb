@@ -84,7 +84,8 @@ class SourceGameImport
       source_citation: citation,
       source_url: @data.dig("source", "ndl_url"),
       source_scoreboard: scoreboard(entry),
-      source_notes: notes(entry).presence
+      source_notes: notes(entry).presence,
+      source_remark: entry["note"]
     )
     game
   end
