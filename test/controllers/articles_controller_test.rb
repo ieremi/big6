@@ -180,6 +180,22 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "image/png", response.media_type
   end
 
+  test "the seniors article shows each university's starters and bench as a band chart and a table" do
+    game = Game.where(season: seasons(:one)).order(:played_on).first
+    player = Player.create!(scorebook_id: 1, university: game.team0, name: "四年", enter_year: 2023, role: "選手", enrollment_status: Player::ACTIVE_ENROLLMENT_STATUS)
+    GameMember.create!(game:, player:, university: game.team0, batting_order: 1, fielding_position: "中")
+
+    get article_path("senior-appearances")
+
+    assert_response :success
+    assert_select ".band-chart .band-row", 2 # the university and 全体
+    assert_select ".band-chart .band-started[style=?]", "width: 100.0%"
+    assert_select "table.formula-table tbody tr", 2
+    lead = css_select("p.article-lead").first.text.gsub(/\s+/, "")
+    assert_operator lead.length, :<=, 140
+    assert_match "1人のうち、リーグ戦で1回でもスタメンに入ったのは100%", lead
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

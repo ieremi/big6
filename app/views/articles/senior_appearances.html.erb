@@ -1,0 +1,79 @@
+<%# 4年生のスタメン・ベンチ入り: the 4年生 of 2026 (entered 2023) of each university, by whether they started a league
+    game at least once, were only on a roster, or never on one (SeniorAppearances), as a 100% band chart and a table.
+    Worked out from the rosters as they come in, so it follows the games still to play. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  appearances = SeniorAppearances.new(2023)
+  rows = appearances.rows
+  total = appearances.total
+  labels = { started: "スタメン", bench: "ベンチ入りのみ", none: "ベンチ入りなし" }
+  percent = ->(share) { "#{(share * 100).round}%" }
+  through = appearances.through
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if rows.any? %>
+    <%# The lead (リード文), within 140 characters: the overall split, and how far the share ever on a roster runs between universities. %>
+    <% on_roster = ->(row) { row.share(:started) + row.share(:bench) } %>
+    <% most, least = rows.max_by(&on_roster), rows.min_by(&on_roster) %>
+    <p class="article-lead">
+      2026年の4年生（2023年入学）<%= total.total %>人のうち、リーグ戦で1回でもスタメンに入ったのは<%= percent.(total.share(:started)) %>、ベンチ入りまでが<%= percent.(total.share(:bench)) %>、
+      1回もベンチ入りできなかったのは<%= percent.(total.share(:none)) %>。ベンチ入りした割合は<%= most.university.short_name %>の<%= percent.(on_roster.(most)) %>から<%= least.university.short_name %>の<%= percent.(on_roster.(least)) %>まで、大学によって大きく違います。
+    </p>
+
+    <div class="band-legend">
+      <% SeniorAppearances::KINDS.each do |kind| %>
+        <span><span class="band-swatch band-<%= kind %>"></span><%= labels[kind] %></span>
+      <% end %>
+    </div>
+    <div class="band-chart" role="img" aria-label="大学ごとの4年生のスタメン・ベンチ入り・ベンチ入りなしの割合">
+      <% (rows + [ total ]).each do |row| %>
+        <div class="band-row">
+          <span class="band-label"><%= row.university ? row.university.short_name : "全体" %></span>
+          <span class="band-bar">
+            <% SeniorAppearances::KINDS.each do |kind| %>
+              <% share = row.share(kind) %>
+              <% next if share.zero? %>
+              <%= tag.span (percent.(share) if share >= 0.08), class: "band-#{kind}", style: "width: #{(share * 100).round(2)}%",
+                    title: "#{labels[kind]} #{row.public_send(kind)}人（#{percent.(share)}）" %>
+            <% end %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead>
+          <tr><th>大学</th><th>4年生</th><% labels.each_value do |label| %><th><%= label %></th><% end %></tr>
+        </thead>
+        <tbody>
+          <% (rows + [ total ]).each do |row| %>
+            <tr>
+              <th><%= row.university ? link_to(row.university.short_name, university_path(row.university.slug)) : "全体" %></th>
+              <td class="num"><%= row.total %>人</td>
+              <% SeniorAppearances::KINDS.each do |kind| %>
+                <td class="num"><%= row.public_send(kind) %>人（<%= percent.(row.share(kind)) %>）</td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      BIG6 Scorebook の選手名鑑で2023年入学の選手（マネージャーなどはのぞく）のうち、いまも在籍している選手を数えています。
+      スタメンは打順に入った選手と先発投手（指名打者のある試合では打順に入りません）、ベンチ入りは試合のベンチ入りメンバーに入った選手で、
+      Scorebook の各試合のメンバーによります（<%= through ? "#{through.year}年#{through.month}月#{through.day}日の試合まで" : "" %>）。優勝決定戦もふくみます。
+    </p>
+  <% else %>
+    <p class="muted">データがありません。</p>
+  <% end %>
+</article>

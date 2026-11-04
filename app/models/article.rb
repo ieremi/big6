@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "senior-appearances", title: "4年生のスタメン・ベンチ入り", published_on: Date.new(2026, 11, 4),
+      description: "2026年の4年生（2023年入学）のうち、リーグ戦で1回でもスタメンに入った選手、ベンチ入りだけの選手、ベンチ入りしなかった選手の人数と割合を大学ごとに。帯グラフつき。"
+    ),
+    Entry.new(
       slug: "autumn-2026-highlights", title: "2026年秋季 明大・法大・立大・東大のよかったところ", published_on: Date.new(2026, 11, 3),
       description: "2026年秋季のリーグ戦を終えた明大・法大・立大・東大の、打率・防御率・打数・投球回・出場試合数ですぐれた選手や、春からのチーム成績ののび、観衆の増えたところ。"
     ),
