@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -137,6 +137,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_000001) do
     t.bigint "scorebook_game_id"
     t.bigint "season_id", null: false
     t.text "source_citation"
+    t.jsonb "source_notes"
     t.jsonb "source_scoreboard"
     t.string "source_url"
     t.datetime "stats_checked_at"

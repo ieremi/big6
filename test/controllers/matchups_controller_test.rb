@@ -257,6 +257,15 @@ class MatchupsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", "https://dl.ndl.go.jp/pid/12172714/1/37", text: "立教大学野球部 編『立教大学野球部史』（1981年）pp.29–31"
     assert_select "table.scoreboard-table"
     assert_match "池袋", response.body
+    assert_select ".source-notes", 0 # nothing the book disagrees with itself about
+  end
+
+  test "game page lists where the printed source disagrees with itself about the game" do
+    @game.update!(source_citation: "立教大学野球部 編『立教大学野球部史』（1981年）p.70", source_notes: [ "法政2回戦の法政の回ごとの得点の合計は13、印刷は12。" ])
+
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    assert_select ".source-notes li", text: "法政2回戦の法政の回ごとの得点の合計は13、印刷は12。"
   end
 
   test "game page cites no source for a Scorebook game" do

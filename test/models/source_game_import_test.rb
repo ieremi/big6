@@ -97,4 +97,16 @@ class SourceGameImportTest < ActiveSupport::TestCase
     assert_equal [ Date.new(1928, 5, 5) ], skipped
     assert_nil season.reload.source_standings
   end
+
+  test "keeps the file's discrepancies about the game with it, and none for a game without" do
+    Season.create!(year: 1930, term: "spring")
+    file = Rails.root.join("db/sources/rikkyo_yakyubushi_1981/1930_spring.yml")
+
+    second = SourceGameImport.call(file, played_on: Date.new(1930, 4, 17)) # games[1], 法政2回戦
+    first = SourceGameImport.call(file, played_on: Date.new(1930, 4, 16))
+
+    assert_equal 1, second.source_notes.size
+    assert_match "法政2回戦の法政の回ごとの得点", second.source_notes.first
+    assert_nil first.source_notes
+  end
 end

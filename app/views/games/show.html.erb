@@ -136,6 +136,15 @@
   <p class="muted">
     出典：<%= @game.source_url.present? ? link_to(@game.source_citation, @game.source_url, target: "_blank", rel: "noopener noreferrer") : @game.source_citation %>
   </p>
+  <%# Where the book disagrees with itself about this game (SourceGameImport#notes): the figures above are as printed. %>
+  <% if @game.source_notes.present? %>
+    <div class="muted source-notes">
+      <p>出典の中で食い違うところ（数字は印刷のまま載せています）：</p>
+      <ul>
+        <% @game.source_notes.each do |note| %><li><%= note %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
 <% end %>
 <% if (url = league_official_game_url(@game)) %>
   <p class="muted">

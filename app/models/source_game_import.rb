@@ -83,9 +83,17 @@ class SourceGameImport
       game_status: "試合終了",
       source_citation: citation,
       source_url: @data.dig("source", "ndl_url"),
-      source_scoreboard: scoreboard(entry)
+      source_scoreboard: scoreboard(entry),
+      source_notes: notes(entry).presence
     )
     game
+  end
+
+  # The notes of the file's discrepancies about this game (where: games[i] or
+  # games[i].<something>), in the file's order.
+  def notes(entry)
+    index = @data["games"].index { |game| game.equal?(entry) }
+    Array(@data["discrepancies"]).select { |d| d["where"].to_s.match?(/\Agames\[#{index}\](\.|\z)/) }.map { |d| d["note"] }
   end
 
   # A playoff's number: the pair's next in the season after its games (the

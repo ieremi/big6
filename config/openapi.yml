@@ -472,6 +472,10 @@ components:
           properties:
             citation: { type: string, description: "書誌（書名・ページなど）" }
             url: { type: string, nullable: true, description: "出典の所在（国立国会図書館デジタルコレクションなど）" }
+            notes:
+              type: array
+              items: { type: string }
+              description: "出典の中でこの試合について食い違うところ（成績表の列の合計が合計行と合わない、回ごとの得点の合計など）。値は印刷のまま。なければ空"
     GameSide:
       type: object
       properties:
