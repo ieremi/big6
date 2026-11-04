@@ -5,6 +5,7 @@
   rows = StrengthSpread.rows
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   past = TeamStrength::PAST_SEASONS
   spread = ->(value) { number_with_precision(value, precision: 3) }
   # The universities at the season's end, strongest first: 「明大78 早大62 …」, each its chance of beating an average side.

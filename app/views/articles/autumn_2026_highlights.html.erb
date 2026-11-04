@@ -5,6 +5,7 @@
 <%
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   player = ->(id, name) { link_to name, player_path(id) }
   # [slug, the place and record, the points (HTML built with player links)]
   sections = [

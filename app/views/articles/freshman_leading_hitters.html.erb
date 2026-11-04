@@ -4,6 +4,7 @@
 <%
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   champions = LeadingHitters.all
   freshmen = champions.select(&:freshman?)
   average = ->(value) { format("%.3f", value).sub(/\A0/, "") }

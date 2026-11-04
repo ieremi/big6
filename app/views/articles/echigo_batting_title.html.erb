@@ -5,6 +5,7 @@
 <%
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   season = Season.find_by(year: 2026, term: "autumn")
   player = Player.find_by(scorebook_id: 20266006)
   race = BattingTitleRace.new(season, player:) if season && player

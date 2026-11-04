@@ -5,6 +5,7 @@
   rows = SeasonHomeRuns.rows
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   one = ->(value) { number_with_precision(value, precision: 1) }
   two = ->(value) { number_with_precision(value, precision: 2) }
   seasons_of = ->(list) { list.map { |row| row.season.title }.join("、") }

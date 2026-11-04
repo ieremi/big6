@@ -32,6 +32,8 @@ Rails.application.routes.draw do
 
   get "news", to: "news#index", as: :news
   get "articles", to: "articles#index", as: :articles
+  get "articles/og.png", to: "articles#index_og_image", as: :articles_og_image
+  get "articles/:slug/og.png", to: "articles#og_image", as: :article_og_image, constraints: { slug: /[a-z0-9][a-z0-9-]*/ }
   get "articles/:slug", to: "articles#show", as: :article, constraints: { slug: /[a-z0-9][a-z0-9-]*/ }
   get "developers", to: "developers#show", as: :developers
   get "developers/:page", to: "developers#show", as: :developer_page, constraints: { page: /[a-z0-9][a-z0-9-]*/ }

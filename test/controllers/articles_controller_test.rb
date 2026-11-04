@@ -163,6 +163,23 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article li a[href=?]", player_path(20266006), text: "越後駿祐"
   end
 
+  test "each article and the list have an OG image, which the page names" do
+    get article_path("home-runs-per-season")
+    assert_select "meta[property='og:image'][content=?]", article_og_image_url("home-runs-per-season")
+
+    get article_og_image_path("home-runs-per-season")
+    assert_response :success
+    assert_equal "image/png", response.media_type
+
+    get article_og_image_path("strength-50-years") # moved: the image of the article it moved to
+    assert_response :success
+
+    get articles_path
+    assert_select "meta[property='og:image'][content=?]", articles_og_image_url
+    get articles_og_image_path
+    assert_equal "image/png", response.media_type
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

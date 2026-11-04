@@ -8,6 +8,7 @@
   in_progress = draft.season_in_progress
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   date = ->(day) { day.strftime("%-m月%-d日") }
   first_round = picked.select { |entrant| !entrant.pick.development && entrant.pick.round == 1 }
   development = picked.select { |entrant| entrant.pick.development }

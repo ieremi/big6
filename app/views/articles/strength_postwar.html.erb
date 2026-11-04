@@ -9,6 +9,7 @@
   rows = StrengthSpread.rows.select { |row| row.season.year >= 1946 }
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
   universities = rows.flat_map { |row| row.chances.keys }.uniq.sort_by(&:position)
   # The decades, the first one partial (「1950年代（1951年〜）」).
   decades = rows.group_by { |row| row.season.year / 10 * 10 }
