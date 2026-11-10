@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "komiyama-record", title: "小宮山監督の戦績", published_on: Date.new(2026, 11, 10),
+      description: "早大の小宮山悟監督の在任期間、指導した選手の数とプロ野球に進んだ選手、各大学との勝ち負け、優勝回数と連覇、在任中のおもな選手。"
+    ),
+    Entry.new(
       slug: "schedule-2027-spring", title: "2027年春季の日程を予想する", published_on: Date.new(2026, 11, 9),
       description: "日程の慣例がすべて守られるとして、2027年春季リーグ戦の開幕日、各週のカードの順番、終盤がシングルカードになるかを予想。早慶法が2位で並んだときの前例も。"
     ),

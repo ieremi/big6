@@ -242,6 +242,20 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "the 小宮山 article gives 早大's record against each university since 2019 and the players drafted" do
+    create_the_six
+    waseda, keio = University.find_by(slug: "waseda"), University.find_by(slug: "keio")
+    season = Season.find_or_create_by!(year: 2019, term: "spring")
+    Game.create!(season:, team0: waseda, team1: keio, played_on: Date.new(2019, 6, 1), game_number: 1, team0_score: 4, team1_score: 2, game_status: "試合終了")
+
+    get article_path("komiyama-record")
+
+    assert_response :success
+    assert_select "p.article-lead", text: /1勝0敗0分/
+    assert_select "table.formula-table tbody tr th a", text: "慶大"
+    assert_select "table.formula-table tbody td a[href=?]", player_path(20171019), text: "早川隆久"
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

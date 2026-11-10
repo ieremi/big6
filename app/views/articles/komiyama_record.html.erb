@@ -1,0 +1,116 @@
+<%# 小宮山監督の戦績: 早大 under 小宮山悟, 監督 from 2019 spring (ManagerTenure): the seasons, the players in the club,
+    those drafted (by hand, from each year's draft results), the record against each university, the titles and the
+    longest run of them, and the batting champions of those years (LeadingHitters). The records follow the games as
+    they come in; the drafted players are as checked on 2026-11-10. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  waseda = University.find_by(slug: "waseda")
+  tenure = ManagerTenure.new(waseda, from: [ 2019, "spring" ]) if waseda
+  # [draft year, Scorebook id, name, team, round], from each year's draft results (2019 to 2026).
+  drafted = [
+    [ 2020, 20171019, "早川隆久", "東北楽天ゴールデンイーグルス", "1位" ],
+    [ 2021, 20181022, "徳山壮磨", "横浜DeNAベイスターズ", "2位" ],
+    [ 2021, 20181027, "西垣雅矢", "東北楽天ゴールデンイーグルス", "6位" ],
+    [ 2022, 20191025, "蛭間拓哉", "埼玉西武ライオンズ", "1位" ],
+    [ 2024, 20211037, "吉納翼", "東北楽天ゴールデンイーグルス", "5位" ],
+    [ 2024, 20211036, "山縣秀", "北海道日本ハムファイターズ", "5位" ],
+    [ 2025, 20221004, "伊藤樹", "東北楽天ゴールデンイーグルス", "2位" ],
+    [ 2025, 20221023, "田和廉", "読売ジャイアンツ", "2位" ]
+  ]
+  average = ->(value) { format("%.3f", value).sub(/\A0/, "") }
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if tenure && tenure.seasons.any? %>
+    <% wins, losses, draws = tenure.total %>
+    <% titles = tenure.titles %>
+    <% run = tenure.longest_run %>
+    <p class="article-lead">
+      2019年に早大の監督になった小宮山悟監督の<%= tenure.seasons.size %>季の戦績は、<%= wins %>勝<%= losses %>敗<%= draws %>分、優勝<%= titles.size %>回<%= "（#{run.size}連覇あり）" if run.size > 1 %>。
+      在任中に指導した選手は<%= tenure.players.count %>人で、そのうち<%= drafted.size %>人がドラフト指名を受けてプロ野球に進みました。
+    </p>
+
+    <h2 class="card-heading">在任期間</h2>
+    <p>
+      小宮山悟監督は、早大の投手としてリーグ戦に出たOB（1986年入学）で、プロ野球の投手をへて、2019年に早大の監督に就きました。
+      2019年春季から<%= tenure.seasons.last.title %>まで<%= tenure.seasons.size %>季、早大を率いています。
+    </p>
+
+    <h2 class="card-heading">指導した選手</h2>
+    <p>
+      在任中に早大に在籍した選手（2016年以降の入学、マネージャーなどはのぞく）は<%= tenure.players.count %>人です。
+      そのうち、ドラフト会議で指名されてプロ野球に進んだのは<%= drafted.size %>人です（<%= drafted.first.first %>年〜<%= drafted.last.first %>年のドラフト）。
+    </p>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead><tr><th>ドラフト</th><th>選手</th><th>球団</th><th>順位</th></tr></thead>
+        <tbody>
+          <% drafted.each do |year, id, name, team, round| %>
+            <tr><td><%= year %>年</td><td><%= link_to name, player_path(id) %></td><td><%= team %></td><td><%= round %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="card-heading">各大学との勝ち負け</h2>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead><tr><th>相手</th><th>勝</th><th>敗</th><th>分</th><th>勝率</th><th>勝ち点</th></tr></thead>
+        <tbody>
+          <% tenure.by_opponent.each do |opponent| %>
+            <tr>
+              <th><%= link_to opponent.university.short_name, matchup_path("waseda", opponent.university.slug) %></th>
+              <td class="num"><%= opponent.wins %></td>
+              <td class="num"><%= opponent.losses %></td>
+              <td class="num"><%= opponent.draws %></td>
+              <td class="num"><%= average.(opponent.wins.to_f / [ opponent.wins + opponent.losses, 1 ].max) %></td>
+              <td class="num"><%= opponent.cards_won %>取って<%= opponent.cards_lost %>取られた</td>
+            </tr>
+          <% end %>
+          <tr>
+            <th>計</th><td class="num"><%= wins %></td><td class="num"><%= losses %></td><td class="num"><%= draws %></td>
+            <td class="num"><%= average.(wins.to_f / [ wins + losses, 1 ].max) %></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="card-heading">優勝と連覇</h2>
+    <p>
+      <% if titles.any? %>
+        優勝は<%= titles.size %>回（<%= safe_join(titles.map { |season| link_to(season.title, standings_season_path(season.year, season.term)) }, "、") %>）です。
+        <% if run.size > 1 %>
+          <%= run.first.title %>から<%= run.last.title %>までの<%= run.size %>連覇が、在任中のもっとも長い連覇です。
+        <% end %>
+      <% else %>
+        まだ優勝はありません。
+      <% end %>
+    </p>
+
+    <h2 class="card-heading">在任中のおもな選手</h2>
+    <% champions = LeadingHitters.all.select { |champion| champion.university == waseda && champion.year >= 2019 } %>
+    <ul>
+      <% drafted.select { |_, _, _, _, round| round == "1位" }.each do |year, id, name, team, round| %>
+        <li><%= link_to name, player_path(id) %>：<%= year %>年のドラフトで<%= team %>から<%= round %>指名。</li>
+      <% end %>
+      <% champions.each do |champion| %>
+        <li><%= champion.player ? link_to(champion.name, player_path(champion.player)) : champion.name %>：<%= champion.season_title %>の首位打者（打率<%= average.(champion.average) %>）。</li>
+      <% end %>
+    </ul>
+
+    <p class="muted">
+      勝ち負けはリーグ戦の試合（優勝決定戦はのぞく）で、2020年・2021年の勝ち点は、そのカードで相手より多く勝ったときとしています。
+      ドラフト指名は、2019年から2025年までの各年のドラフト会議の結果で確認できた選手で、2026年のドラフトでは早大の選手は指名されていません。
+      選手の数は BIG6 Scorebook の選手名鑑によります。
+    </p>
+  <% else %>
+    <p class="muted">データがありません。</p>
+  <% end %>
+</article>
