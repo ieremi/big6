@@ -2206,3 +2206,36 @@ tr.bench-only td a {
   font-weight: 600;
   line-height: 1.8;
 }
+
+/* A week of a predicted schedule as a diagram (articles/_schedule_week_diagram): the schools as dots in their colours, a line a card. */
+.week-diagram {
+  max-width: 400px;
+  margin: 0.5rem 0 1rem;
+}
+
+.week-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.week-diagram-card {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.5;
+}
+
+.week-diagram-initial {
+  fill: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.week-diagram-label {
+  fill: var(--text);
+  font-size: 12px;
+}
+
+.week-diagram-idle {
+  opacity: 0.25;
+}

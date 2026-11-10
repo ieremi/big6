@@ -1,0 +1,36 @@
+<%# One week of the 2027 spring prediction as a diagram: 早大 and 慶大 on the left, the other four on the right in their
+    order among themselves the season before (1st at the top), and a line for each of the week's cards; the schools
+    not playing are faded. A card within one side bows in, toward the middle, clear of the labels. Locals: week (a
+    SchedulePrediction2027Spring::Week) and universities ({ slug => University }). %>
+<%
+  # slug => [x, y, the label beside it]
+  nodes = {
+    "waseda" => [ 110, 55, "早大" ], "keio" => [ 110, 125, "慶大" ],
+    "meiji" => [ 250, 25, "明大（4校の1位）" ], "hosei" => [ 250, 70, "法大（2位）" ],
+    "rikkio" => [ 250, 115, "立大（3位）" ], "tokyo" => [ 250, 160, "東大（4位）" ]
+  }
+  playing = week.cards.flatten.map(&:slug)
+  path = lambda do |a, b|
+    (x1, y1), (x2, y2) = nodes.fetch(a.slug).first(2), nodes.fetch(b.slug).first(2)
+    next "M#{x1} #{y1} L#{x2} #{y2}" unless x1 == x2
+
+    bow = (25 + (y2 - y1).abs / 3) * (x1 > 180 ? -1 : 1) # toward the middle, further for nodes further apart
+    "M#{x1} #{y1} C#{x1 + bow} #{y1}, #{x2 + bow} #{y2}, #{x2} #{y2}"
+  end
+%>
+<figure class="week-diagram">
+  <%= tag.svg viewBox: "0 0 400 185", role: "img",
+        aria: { label: "第#{week.number}週の組み合わせ：#{week.cards.map { |pair| pair.map(&:short_name).join("–") }.join("、")}" } do %>
+    <% week.cards.each do |a, b| %>
+      <%= tag.path d: path.(a, b), class: "week-diagram-card" %>
+    <% end %>
+    <% nodes.each do |slug, (x, y, label)| %>
+      <% university = universities.fetch(slug) %>
+      <%= tag.g class: [ "week-diagram-node", ("week-diagram-idle" unless playing.include?(slug)) ] do %>
+        <%= tag.circle cx: x, cy: y, r: 13, fill: university.color %>
+        <%= tag.text university.initial, x: x, y: y + 4.5, "text-anchor": "middle", class: "week-diagram-initial" %>
+        <%= tag.text label, x: x + (x > 180 ? 20 : -20), y: y + 4.5, "text-anchor": (x > 180 ? "start" : "end"), class: "week-diagram-label" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</figure>

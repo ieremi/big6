@@ -9,6 +9,7 @@
   content_for :image_url, article_og_image_url(@article.slug)
   # The predicted weeks (SchedulePrediction2027Spring), 早大 first, and the same with 慶大 first.
   weeks = SchedulePrediction2027Spring.new.weeks
+  universities = University.all.index_by(&:slug)
   swapped_weeks = SchedulePrediction2027Spring.new(swapped: true).weeks
   cards = ->(week) { week.cards.map { |pair| pair.map(&:short_name).join("–") }.join("、") }
   date = ->(day) { "#{day.month}月#{day.day}日" }
@@ -71,6 +72,7 @@
   </p>
 
   <h3>第1週（4月10日）明大–東大、早大–立大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[0], universities: %>
   <p>
     春季リーグ戦は、2015年から2026年まで（中止になった2020年と、試合の形が違った2021年をのぞく）すべて4月の第2土曜日に開幕しています。
     2027年の4月の第2土曜日は4月10日です。例年どおりなら、各週の初日は土曜日で、2回戦は日曜日、1勝1敗になれば3回戦は月曜日になります。
@@ -89,34 +91,40 @@
   </p>
 
   <h3>第2週（4月17日）法大–立大、慶大–東大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[1], universities: %>
   <p>
     第2週は、4校のなかの2位と3位が当たるのが慣例で、法大–立大になります。
     もう1カードは、第1週に出なかった慶大と、4校のなかの4位の東大です。過去6回の春も同じでした。
   </p>
 
   <h3>第3週（4月24日）慶大–法大、早大–明大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[2], universities: %>
   <p>
     第3週は慣例では決まりません。過去6回の春はすべて、第1週に出なかった早慶の一方が4校の2位と、第1週に出た方が4校の1位と当たっているので、
     慶大–法大と早大–明大としました。
   </p>
 
   <h3>第4週（5月1日）早大–東大、明大–立大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[3], universities: %>
   <p>
     第4週は、第1週と同じ4校が出るのが慣例です。第1週の明大–東大、早大–立大から相手を入れ替えて、早大–東大と明大–立大になります。
   </p>
 
   <h3>第5週（5月8日）法大–東大、慶大–立大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[4], universities: %>
   <p>
     第5週も同じように、第2週と同じ4校が出るのが慣例です。第2週の法大–立大、慶大–東大から相手を入れ替えて、法大–東大と慶大–立大になります。
   </p>
 
   <h3>第6週（5月15日）早大–法大、慶大–明大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[5], universities: %>
   <p>
     第6週は、早慶が出て、4校のなかの1位・2位（明大・法大）を迎え撃つのが慣例です。
     どちらがどちらと当たるかは、過去6回の春にならって、第1週に出た早大が法大と、慶大が明大と当たるとしました。
   </p>
 
   <h3>第7週（5月22日）明大–法大、立大–東大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[6], universities: %>
   <p>
     早慶戦の前の週は、4校のなかの1位対2位、3位対4位が当たるのが慣例で、明大–法大と立大–東大になります。
     東大がほぼいつも4校のなかの4位で、立大が3位になることも多いため、この組み合わせはよく見られます。
@@ -128,6 +136,7 @@
   </p>
 
   <h3>第8週（5月29日）早大–慶大</h3>
+  <%= render "articles/schedule_week_diagram", week: weeks[7], universities: %>
   <p>
     最終週は早慶戦だけ、というのが長くつづく形です。その前の週までにシングルカードの週はないと予想されます。
     2015年以降の春季（2020年・2021年をのぞく）は、第1週から第7週まで毎週2カードずつ、第8週の早慶戦だけが1カードという形がつづいています。
