@@ -6,8 +6,14 @@
 #
 # A card's 1回戦 is on the week's Saturday and its 2回戦 on the Sunday; a 3回戦,
 # the Monday after, is played only at one win each, so the calendar leaves it
-# out. Which card is the day's first game isn't known, so the games are all-day.
+# out. The week's first card in WEEKS (and the article's table) is taken as the
+# day's 第1試合, 11:00 to 13:30, and the second as the 第2試合, 14:00 to 16:30;
+# a day shared with the professionals (プロ併用日, not yet known) starts at 10:00
+# instead, as the article says. The 早慶戦, alone on its days, is all-day.
 class SchedulePrediction2027Spring
+  # [hour, minute] of the start and the end of the day's first and second game.
+  GAME_TIMES = [ [ [ 11, 0 ], [ 13, 30 ] ], [ [ 14, 0 ], [ 16, 30 ] ] ].freeze
+
   # [the week's Saturday, its cards as pairs of slugs (which side bats first isn't known)]
   WEEKS = [
     [ Date.new(2027, 4, 10), [ %w[meiji tokyo], %w[waseda rikkio] ] ],
@@ -37,13 +43,16 @@ class SchedulePrediction2027Spring
 
   def to_ics
     calendar = IcsCalendar.new(name: "2027年春季リーグ戦（予想）")
+    tokyo = ActiveSupport::TimeZone["Asia/Tokyo"]
     weeks.each do |week|
-      week.cards.each do |a, b|
+      week.cards.each_with_index do |(a, b), order|
         [ [ 1, week.starts_on ], [ 2, week.starts_on + 1 ] ].each do |round, day|
+          # A day of two cards: the first card first; the 早慶戦 alone, all-day.
+          start, finish = (GAME_TIMES[order] if week.cards.size > 1)&.map { |hour, minute| tokyo.local(day.year, day.month, day.day, hour, minute) }
           calendar.add_event(
             uid: "prediction-2027-spring-#{a.slug}-#{b.slug}-#{round}@big6",
             summary: "【予想】#{a.short_name} vs #{b.short_name}#{IcsGameEvent::CIRCLED_DIGITS[round - 1]}",
-            all_day_date: day,
+            start_time: start, end_time: finish, all_day_date: (day unless start),
             location: StadiumLocation.for("神宮球場"),
             description: "2027年春季リーグ戦 第#{week.number}週 #{round}回戦（予想）。日程の慣例から予想したもので、連盟の発表ではありません。1勝1敗なら翌日に3回戦。"
           )

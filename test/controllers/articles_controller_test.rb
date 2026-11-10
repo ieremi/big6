@@ -221,7 +221,9 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/calendar", response.media_type
     assert_equal 30, response.body.scan("BEGIN:VEVENT").size # 15 cards, a Saturday and a Sunday game each
-    assert_includes response.body, "DTSTART;VALUE=DATE:20270410"
+    assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270410T110000" # 明大–東大, the week's first card
+    assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270410T140000" # 早大–立大, the second
+    assert_includes response.body, "DTSTART;VALUE=DATE:20270529" # the 早慶戦, all-day
     assert_includes response.body, "SUMMARY:【予想】早大 vs 立大①"
 
     get article_path("schedule-2027-spring", format: :ics, first: "keio")
