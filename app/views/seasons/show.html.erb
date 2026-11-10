@@ -42,10 +42,6 @@
   <%= render "shared/ics_preview", url: season_path(@season.year, @season.term, **ics_params) %>
 <% end %>
 
-<% if @attendance_trend.any_data? %>
-  <%= render "attendance_trend", trend: @attendance_trend %>
-<% end %>
-
 <% if @conventions %>
   <%= render "conventions", result: @conventions %>
 <% end %>

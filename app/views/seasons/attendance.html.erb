@@ -1,0 +1,98 @@
+<%# The season's third tab (seasons/_tabs): 観衆. The season's total and average against the same term a year earlier
+    (SeasonAttendance), the weekly running total against it (SeasonAttendanceTrend), each university's figures as
+    Standings counts them (every game it played, and those on Saturdays and Sundays), most first, and the
+    best-attended games. A season without figures says so. %>
+<%
+  content_for :title, site_title("#{@season.title} 観衆")
+  content_for :description, "#{@season.title}の東京六大学野球の観衆数。シーズンの合計と1試合平均、前年同季との比較、週ごとの累積、大学ごとの観衆、観衆の多かった試合。"
+  content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Attendance")
+  number = ->(value) { value ? number_with_delimiter(value) : "—" }
+  previous = @attendance.previous
+%>
+
+<h1><%= @season.title %></h1>
+<%= render "seasons/tabs", season: @season, current: :attendance %>
+
+<% if @attendance.count.positive? %>
+  <section class="season-attendance">
+    <h2 class="card-heading">シーズンの観衆</h2>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead>
+          <tr><th></th><th>試合</th><th>合計</th><th>1試合平均</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th><%= @season.title %></th>
+            <td><%= @attendance.count %></td>
+            <td><%= number.(@attendance.total) %></td>
+            <td><%= number.(@attendance.average) %></td>
+          </tr>
+          <% if previous %>
+            <tr class="muted">
+              <th><%= previous.season.title %>（前年同季）</th>
+              <td><%= previous.count %></td>
+              <td><%= number.(previous.total) %></td>
+              <td><%= number.(previous.average) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if previous %>
+      <% change = (@attendance.average - previous.average).fdiv(previous.average) * 100 %>
+      <p>1試合平均は前年同季より<%= number_with_precision(change.abs, precision: 1) %>%<%= change.negative? ? "少なく" : "多く" %>なっています。</p>
+    <% end %>
+  </section>
+
+  <% if @attendance_trend.any_data? %>
+    <%= render "attendance_trend", trend: @attendance_trend %>
+  <% end %>
+
+  <section class="university-attendance">
+    <h2 class="card-heading">大学ごとの観衆</h2>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead>
+          <tr><th></th><th>試合</th><th>合計</th><th>1試合平均</th><th>土日の1試合平均</th></tr>
+        </thead>
+        <tbody>
+          <% @standings.rows.select { |row| row.attendance_count.positive? }.sort_by { |row| -row.average_attendance }.each do |row| %>
+            <tr>
+              <td><span class="team-chip" style="background: <%= row.university.color %>"><%= row.university.initial %></span> <%= row.university.short_name %></td>
+              <td><%= row.attendance_count %></td>
+              <td><%= number.(row.total_attendance) %></td>
+              <td><%= number.(row.average_attendance) %></td>
+              <td><%= number.(row.average_attendance(weekends_only: true)) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">その大学が出た試合の観衆で、1試合平均の多い順です。観衆の発表のない試合はのぞいています。</p>
+  </section>
+
+  <section class="top-attendance">
+    <h2 class="card-heading">観衆の多かった試合</h2>
+    <div class="table-scroll">
+      <table class="week-games-table">
+        <thead>
+          <tr><th></th><th class="col-date">日付</th><th class="col-round">回戦</th><th class="col-matchup">対戦</th><th class="col-attendance">観衆</th></tr>
+        </thead>
+        <tbody>
+          <% @attendance.top_games.each.with_index(1) do |game, place| %>
+            <tr>
+              <td><%= place %></td>
+              <td><%= game.played_on %></td>
+              <td><%= round_label(game) %></td>
+              <td><%= game_matchup_link(game) %></td>
+              <td><%= number.(game.attendance) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% else %>
+  <p class="muted">この季の観衆の記録はありません。</p>
+<% end %>

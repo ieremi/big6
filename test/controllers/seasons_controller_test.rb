@@ -250,16 +250,38 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     season = Season.create!(year: year, term: term)
     Game.create!(season: season, team0: universities(:one), team1: universities(:two), played_on: played_on, game_number: 1)
   end
-  test "a season's four pages are tabs, the one shown marked current" do
-    { season_url(2026, "spring") => "試合一覧", standings_season_url(2026, "spring") => "順位・優勝のゆくえ",
-      records_season_url(2026, "spring") => "チーム成績・記録・強さ", players_season_url(2026, "spring") => "個人成績" }.each do |url, current|
+  test "a season's five pages are tabs, the one shown marked current" do
+    { season_url(2026, "spring") => "試合日程", standings_season_url(2026, "spring") => "順位・優勝のゆくえ",
+      attendance_season_url(2026, "spring") => "観衆", records_season_url(2026, "spring") => "チーム成績・記録・強さ", players_season_url(2026, "spring") => "個人成績" }.each do |url, current|
       get url
 
       assert_response :success
-      assert_select "nav.season-tabs a", 4
+      assert_select "nav.season-tabs a", 5
       assert_select "nav.season-tabs a[aria-current=page]", text: current
       assert_select "nav.season-tabs a[href=?]", records_season_path(2026, "spring"), text: "チーム成績・記録・強さ"
     end
+  end
+
+  test "the 観衆 tab has the season's total and average against the same term a year earlier, and the best-attended games" do
+    create_season_with_game(2025, "spring", "2025-04-12").update!(attendance: 10_000, team0_score: 1, team1_score: 0, game_status: :finished)
+    games = Game.where(season: seasons(:one)).order(:played_on).to_a
+    games.each_with_index { |game, i| game.update!(attendance: 12_000 + i * 1000) }
+
+    get attendance_season_url(2026, "spring")
+
+    assert_response :success
+    assert_select "nav.season-tabs a[aria-current=page]", text: "観衆"
+    assert_select "section.season-attendance th", text: "2025年春季（前年同季）"
+    assert_select "section.top-attendance tbody tr", games.count(&:decided?)
+    assert_select "section.university-attendance tbody tr"
+  end
+
+  test "a 観衆 tab without figures says so" do
+    Season.create!(year: 1949, term: "autumn")
+    get attendance_season_url(1949, "autumn")
+
+    assert_response :success
+    assert_select "p.muted", text: "この季の観衆の記録はありません。"
   end
 
   test "the standings tab leaves the team stats, records and strength to the records tab" do

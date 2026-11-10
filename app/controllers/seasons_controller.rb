@@ -53,7 +53,6 @@ class SeasonsController < ApplicationController
     @prime_ministers = PrimeMinisterTerm.serving_between(*@games.map(&:played_on).minmax).to_a
     @gdp_per_capita = GdpPerCapitaYear.usd_for(@season.year)
     @tags = SeasonTags.new(@season).tags
-    @attendance_trend = SeasonAttendanceTrend.new(@season)
     @conventions = ScheduleConventions.for(@season)
   end
 
@@ -71,7 +70,16 @@ class SeasonsController < ApplicationController
     @season_over = StreakRecords.over?(TitleRace.games_of(@season))
   end
 
-  # The third tab: チーム成績, the records and 強さの推移, each worked out apart
+  # The third tab: 観衆, the season's attendance as a whole, week by week
+  # against the same term a year earlier, by university and by game.
+  def attendance
+    @season = Season.find_by!(year: params[:year], term: params[:term])
+    @attendance = SeasonAttendance.new(@season)
+    @attendance_trend = SeasonAttendanceTrend.new(@season)
+    @standings = Standings.new(@season) # each university's figures, in the order of the table
+  end
+
+  # The fourth tab: チーム成績, the records and 強さの推移, each worked out apart
   # from the standings tab's title race, so neither page waits on the other's.
   def records
     @season = Season.find_by!(year: params[:year], term: params[:term])
@@ -85,7 +93,7 @@ class SeasonsController < ApplicationController
     @team_strength = TeamStrength.new(@season)
   end
 
-  # The fourth tab: 個人成績, every player's batting and pitching totals for the
+  # The fifth tab: 個人成績, every player's batting and pitching totals for the
   # season, of the universities chosen (none chosen: all of them): the top ten
   # places at first, as the league ranks them, and everyone with top=all.
   def players
