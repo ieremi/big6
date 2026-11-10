@@ -136,10 +136,12 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
         columns = season["columns"]
         player_columns = season.fetch("player_columns", columns)
         # To the places printed (three, or four in some tables), rounded or, in
-        # some tables, truncated; .000 for a player with no at-bats.
+        # some tables, truncated; .000 for a player with no at-bats, 1.000 for
+        # one with a hit every time.
         averages = lambda do |at|
-          places = at.("打撃率").length - 1
+          places = at.("打撃率").split(".").last.length
           return [ ".#{"0" * places}" ] if at.("打撃数").zero?
+          return [ "1.#{"0" * places}" ] if at.("安打") == at.("打撃数")
 
           ratio = Rational(at.("安打"), at.("打撃数")) * 10**places
           [ ratio.round, ratio.floor ].map { |digits| ".#{digits.to_s.rjust(places, "0")}" }
