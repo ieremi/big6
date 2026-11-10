@@ -2272,3 +2272,15 @@ tr.bench-only td a {
 .week-cards {
   font-weight: 700;
 }
+
+/* Players in a table cell, one a line, the names in one column and their figures in the next, both from the left
+   (articles/komiyama_record), so the lines line up whatever the length of the names. */
+.formula-table td.leader-cell {
+  text-align: left;
+}
+
+.leader-list {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: 0.15rem 1rem;
+}

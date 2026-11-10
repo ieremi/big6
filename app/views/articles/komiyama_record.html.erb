@@ -59,6 +59,36 @@
       </table>
     </div>
 
+    <%# Each year's three batters (batting average, among those reaching the year's minimum) and three pitchers (innings). %>
+    <h3>年ごとのおもな選手</h3>
+    <p class="muted">年ごとに、打率の高い打者3人（その年の規定打席以上）と、投球回の多い投手3人です。</p>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead><tr><th>年</th><th>打者</th><th>投手</th></tr></thead>
+        <tbody>
+          <% tenure.leaders.each do |leaders| %>
+            <tr>
+              <th><%= leaders.year %>年</th>
+              <td class="leader-cell">
+                <div class="leader-list">
+                  <% leaders.batters.each do |leader| %>
+                    <%= link_to leader.player.name, player_path(leader.player) %><span>打率<%= average.(leader.totals.average) %>・<%= leader.totals.home_runs %>本・<%= leader.totals.rbi %>打点</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="leader-cell">
+                <div class="leader-list">
+                  <% leaders.pitchers.each do |leader| %>
+                    <%= link_to leader.player.name, player_path(leader.player) %><span><%= innings_label(leader.totals.outs) %>回・<%= leader.totals.wins %>勝<%= leader.totals.losses %>敗・防御率<%= leader.totals.era ? format("%.2f", leader.totals.era) : "－" %></span>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
     <h2 class="card-heading">各大学との勝ち負け</h2>
     <div class="table-scroll">
       <table class="formula-table">
@@ -93,32 +123,6 @@
         まだ優勝はありません。
       <% end %>
     </p>
-
-    <%# Each year's three batters (batting average, among those reaching the year's minimum) and three pitchers (innings). %>
-    <h2 class="card-heading">在任中のおもな選手</h2>
-    <p class="muted">年ごとに、打率の高い打者3人（その年の規定打席以上）と、投球回の多い投手3人です。</p>
-    <div class="table-scroll">
-      <table class="formula-table">
-        <thead><tr><th>年</th><th>打者</th><th>投手</th></tr></thead>
-        <tbody>
-          <% tenure.leaders.each do |leaders| %>
-            <tr>
-              <th><%= leaders.year %>年</th>
-              <td>
-                <% leaders.batters.each do |leader| %>
-                  <div><%= link_to leader.player.name, player_path(leader.player) %>　打率<%= average.(leader.totals.average) %>・<%= leader.totals.home_runs %>本・<%= leader.totals.rbi %>打点</div>
-                <% end %>
-              </td>
-              <td>
-                <% leaders.pitchers.each do |leader| %>
-                  <div><%= link_to leader.player.name, player_path(leader.player) %>　<%= innings_label(leader.totals.outs) %>回・<%= leader.totals.wins %>勝<%= leader.totals.losses %>敗・防御率<%= leader.totals.era ? format("%.2f", leader.totals.era) : "－" %></div>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
 
     <p class="muted">
       勝ち負けはリーグ戦の試合（優勝決定戦はのぞく）で、2020年・2021年の勝ち点は、そのカードで相手より多く勝ったときとしています。
