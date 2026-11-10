@@ -2284,3 +2284,13 @@ tr.bench-only td a {
   grid-template-columns: max-content max-content;
   gap: 0.15rem 1rem;
 }
+
+/* The site's changes in an article (articles/site_changes_2026_autumn): the change itself from the left. */
+.formula-table.site-changes td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.formula-table.site-changes td:first-child {
+  white-space: nowrap;
+}

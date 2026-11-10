@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "site-changes-2026-autumn", title: "2026年秋季の当サイトの進歩", published_on: Date.new(2026, 11, 10),
+      description: "2026年秋季リーグ戦のあいだに当サイトに加わったもの。日時と、そのときどの試合が行われていたかと、変更の内容。"
+    ),
+    Entry.new(
       slug: "komiyama-record", title: "小宮山監督の戦績", published_on: Date.new(2026, 11, 10),
       description: "早大の小宮山悟監督の在任期間、指導した選手の数とプロ野球に進んだ選手、各大学との勝ち負け、優勝回数と連覇、在任中のおもな選手。"
     ),

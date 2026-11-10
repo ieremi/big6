@@ -257,6 +257,20 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table.formula-table tbody tr th", text: "2019年"
   end
 
+  test "the site's changes this autumn give each change's time and the games of that day, or the last before it" do
+    season = Season.find_or_create_by!(year: 2026, term: "autumn")
+    Game.create!(season:, team0: universities(:one), team1: universities(:two), played_on: Date.new(2026, 9, 13), game_number: 2,
+      team0_score: 3, team1_score: 1, game_status: "試合終了")
+
+    get article_path("site-changes-2026-autumn")
+
+    assert_response :success
+    rows = css_select("table.site-changes tbody tr")
+    assert_equal 54, rows.size
+    assert_match "この日：Alpha–Beta 2回戦", rows.first.text # 9月13日 11:47
+    assert_match "9月13日：Alpha–Beta 2回戦", rows[4].text # 9月15日, no game that day
+  end
+
   test "an article that isn't there is not found" do
     get article_path("no-such-article")
 

@@ -1,0 +1,63 @@
+<%# 2026年秋季の当サイトの進歩: the changes a visitor sees, made during 2026 autumn's league season (from
+    db/articles/site_changes_2026_autumn.yml, picked from the git history by hand), each with its time and the games
+    of that day, or on a day without games the last game before it, found among the season's games. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  tokyo = ActiveSupport::TimeZone["Asia/Tokyo"]
+  changes = YAML.safe_load_file(Rails.root.join("db/articles/site_changes_2026_autumn.yml")).fetch("changes")
+    .map { |change| [ tokyo.parse(change.fetch("at")), change.fetch("text") ] }
+  season = Season.find_by(year: 2026, term: "autumn")
+  games = season ? season.games.includes(:team0, :team1).to_a.sort_by { |game| [ game.played_on, game.game_order.to_i, game.id ] } : []
+  label = ->(game) { "#{game.team0.short_name}–#{game.team1.short_name}#{game.not_held? ? "（#{game.status_label}）" : " #{game.round_name}"}" }
+  day = ->(date) { "#{date.month}月#{date.day}日" }
+  # The games of the change's day, or the last day's before it, and whether they were on the day.
+  games_at = lambda do |time|
+    date = time.to_date
+    today = games.select { |game| game.played_on == date }
+    next [ today, true ] if today.any?
+
+    last = games.select { |game| game.played_on < date }.last
+    [ last ? games.select { |game| game.played_on == last.played_on } : [], false ]
+  end
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <p class="article-lead">
+    2026年秋季リーグ戦（9月12日開幕）のあいだに、当サイトには<%= changes.size %>の大きな変更がありました。
+    試合のスコアボードやスタメンの速報、選手のページやランキング、優勝のゆくえ、強さの推移、読み物などです。いつ、どの試合のころに加わったかをまとめました。
+  </p>
+
+  <div class="table-scroll">
+    <table class="formula-table site-changes">
+      <thead><tr><th>日時</th><th>そのときの試合</th><th>変更</th></tr></thead>
+      <tbody>
+        <% changes.each do |time, text| %>
+          <% list, on_the_day = games_at.(time) %>
+          <tr>
+            <td><%= day.(time) %> <%= time.strftime("%H:%M") %></td>
+            <td>
+              <% if list.any? %>
+                <span class="muted"><%= on_the_day ? "この日：" : "#{day.(list.first.played_on)}：" %></span><%= list.map(&label).join("、") %>
+              <% else %>
+                <span class="muted">開幕前</span>
+              <% end %>
+            </td>
+            <td><%= text %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted">
+    変更の日時は、当サイトの変更履歴（日本時間）によります。表示の修正やデータの取り込みなど、見た目に表れにくい変更はのぞいています。
+    「そのときの試合」は、その日に試合があればその日の試合、なければその前に行われた日の試合です。
+  </p>
+</article>
