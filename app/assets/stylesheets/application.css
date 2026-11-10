@@ -2239,3 +2239,36 @@ tr.bench-only td a {
 .week-diagram-idle {
   opacity: 0.25;
 }
+
+/* A week's heading in a predicted schedule (articles/schedule_2027_spring): a badge with the week, its first day,
+   then its cards, on a band with an accent bar, so each week stands out from the text around it. */
+.week-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 2rem 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--row-alt);
+  font-size: 1.05rem;
+}
+
+.week-badge {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.week-date {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.week-cards {
+  font-weight: 700;
+}
