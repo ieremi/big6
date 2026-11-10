@@ -1,5 +1,11 @@
 # The articles (読み物, Article): the list, and each one in its own view.
 class ArticlesController < ApplicationController
+  # Articles that come with a calendar (.ics) of the games they tell of: the
+  # calendar for a request (first=keio for the other case of the prediction).
+  CALENDARS = {
+    "schedule-2027-spring" => ->(params) { SchedulePrediction2027Spring.new(swapped: params[:first] == "keio") }
+  }.freeze
+
   def index
     @articles = Article.all
   end
@@ -12,6 +18,12 @@ class ArticlesController < ApplicationController
     end
 
     @article = Article.find(params[:slug])
+    if request.format.ics?
+      calendar = CALENDARS[@article.slug] or raise ActionController::RoutingError, "no calendar for #{@article.slug}"
+      send_data calendar.call(params).to_ics, type: "text/calendar", filename: "#{@article.slug}.ics", disposition: "attachment"
+      return
+    end
+
     render @article.template
   end
 

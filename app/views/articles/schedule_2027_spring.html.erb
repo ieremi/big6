@@ -1,0 +1,102 @@
+<%# 2027年春季の日程を予想する: the 2027 spring schedule as the conventions (ScheduleConventions, as /seasons/conventions
+    reads them) would lay it out from 2026 autumn's standings, written by hand on 2026-11-09: the opening day (the second
+    Saturday of April, as every spring from 2015), the cards week by week, and that only the 早慶戦 is a week of its own.
+    早慶 finished level at 2nd with 法大, so which of the two plays in the first week rests on precedent (the 早慶戦's
+    winner, as in 1976 and 1997 spring); the other case is given too. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  # The predicted weeks (SchedulePrediction2027Spring), 早大 first, and the same with 慶大 first.
+  weeks = SchedulePrediction2027Spring.new.weeks
+  swapped_weeks = SchedulePrediction2027Spring.new(swapped: true).weeks
+  cards = ->(week) { week.cards.map { |pair| pair.map(&:short_name).join("–") }.join("、") }
+  date = ->(day) { "#{day.month}月#{day.day}日" }
+%>
+
+<p><%= link_to "← 読み物", articles_path %></p>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <p class="article-lead">
+    日程の慣例がすべて守られるなら、2027年春季は4月10日（土）に開幕し、明大–東大と早大–立大で始まると予想されます。
+    各週2カードで7週、第8週は早慶戦だけで5月29日から、終盤も早慶戦のほかにシングルカードの週はないと予想されます。
+  </p>
+
+  <h2 class="card-heading">予想した日程</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead>
+        <tr><th>週</th><th>初日（土）</th><th>カード</th><th>早慶が逆のとき</th></tr>
+      </thead>
+      <tbody>
+        <% weeks.zip(swapped_weeks).each do |week, swapped| %>
+          <tr>
+            <th>第<%= week.number %>週</th>
+            <td><%= date.(week.starts_on) %></td>
+            <td><%= cards.(week) %></td>
+            <td class="muted"><%= week.number == weeks.size ? "（同じ）" : cards.(swapped) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% ics = ->(**options) { article_url(@article.slug, format: :ics, **options) } %>
+  <p>
+    カレンダーに追加：<%= link_to "早大が第1週の場合 (.ics)", ics.() %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.()), target: "_blank", rel: "noopener noreferrer" %>）・
+    <%= link_to "慶大が第1週の場合 (.ics)", ics.(first: "keio") %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.(first: "keio")), target: "_blank", rel: "noopener noreferrer" %>）
+  </p>
+  <p class="muted">1回戦（土曜）と2回戦（日曜）を終日の予定として入れています。第1試合か第2試合かはわからないため時刻はなく、1勝1敗のときの3回戦（月曜）は入っていません。</p>
+
+  <h2 class="card-heading">開幕日</h2>
+  <p>
+    春季リーグ戦は、2015年から2026年まで（中止になった2020年と、試合の形が違った2021年をのぞく）すべて4月の第2土曜日に開幕しています。
+    2027年の4月の第2土曜日は4月10日です。例年どおりなら、各週の初日は土曜日で、2回戦は日曜日、1勝1敗になれば3回戦は月曜日になります。
+  </p>
+
+  <h2 class="card-heading">カードの順番</h2>
+  <p>
+    2026年秋季の順位は、明大1位、慶大・早大・法大が2位で並び、立大5位、東大6位でした。
+    <%= link_to "日程の慣例", conventions_seasons_path %>では、明法立東の4校の前季の順位（明大・法大・立大・東大の順）でカードが決まります。
+  </p>
+  <ul>
+    <li>明大が前季1位なので、第1週に明大–東大（明法立東のなかの4位）。</li>
+    <li>第2週に明法立東のなかの2位対3位（法大–立大）。</li>
+    <li>第4週は第1週と、第5週は第2週と同じ4校。</li>
+    <li>第6週は早慶が明法立東のなかの1位・2位（明大・法大）を迎え撃ち、第7週は明大–法大と立大–東大。</li>
+  </ul>
+  <p>
+    ここまでで決まらない第1週のもう1カードと第3週は、前季に明大が1位で早慶の一方が2位だった春（2010年・2012年・2015年・2017年・2023年・2026年）の日程がすべて同じ並びなので、それにならいました。
+    第1週に出る早慶の一方は、明法立東のなかの3位（立大）と当たると予想されます。
+  </p>
+
+  <h2 class="card-heading">第1週に出るのは早大か慶大か</h2>
+  <p>
+    慣例では「早慶のどちらかが前季2位なら、2位でない方が第1週に出る」のですが、今回は早慶がともに2位で、しかも法大を加えた3校は直接対決も1勝ずつ（法大が早大に、慶大が法大に、早大が慶大に勝ち点）で、順位をつけられません。
+  </p>
+  <p>
+    早慶が2位で並んだ前例は2回あり、どちらも早慶戦に勝った方が翌春の第1週に出ています。
+    1975年秋季（明大1位、慶大・早大・法大が2位で、今回とまったく同じ形）は早慶戦に勝った慶大が1976年春季の第1週に、
+    1996年秋季（明大1位、慶大・早大が2位）は早慶戦に勝った早大が1997年春季の第1週に出ました。
+    2026年秋季の早慶戦は早大が2連勝したので、早大が第1週に出ると予想しました。慶大が出る場合は、表の右の列のように第1週から第6週まで早慶が入れ替わります。
+  </p>
+
+  <h2 class="card-heading">終盤はシングルカードになるか</h2>
+  <p>
+    ならないと予想されます。2015年以降の春季（2020年・2021年をのぞく）は、第1週から第7週まで毎週2カードずつ、第8週の早慶戦だけが1カードという形がつづいています。
+    慣例どおりなら2027年春季も同じで、第7週（5月22日）の明大–法大と立大–東大が早慶戦の前の最後の2カードになると予想されます。
+    2026年秋季は、早慶戦の前の10月24日の週（法大–東大）と10月31日の週（明大–立大）がシングルカードでした。日本シリーズが神宮球場で行われる場合にそなえた日程だったようです。日本シリーズは秋なので、春季の日程にはこの事情はありません。
+    終盤の2週がシングルカードになった秋季は、2022年（10月22日の週の法大–東大、10月29日の週の明大–立大）と2024年（10月26日の週の立大–東大、11月2日の週の明大–法大）にもありました。
+    1990年以降、早慶戦のほかにシングルカードの週があったのは、この3回の秋季のほかは1993年秋季（第3週・第8週）と変則日程だった2021年秋季だけで、春季には一度もありません。
+  </p>
+
+  <p class="muted">
+    2026年11月9日に、日程の慣例（<%= link_to "慣例の一覧", conventions_seasons_path %>）がすべて守られると仮定して予想したものです。
+    雨による中止や、連盟の発表する実際の日程とは違うことがあります。
+  </p>
+</article>

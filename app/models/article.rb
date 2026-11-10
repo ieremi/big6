@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "schedule-2027-spring", title: "2027年春季の日程を予想する", published_on: Date.new(2026, 11, 9),
+      description: "日程の慣例がすべて守られるとして、2027年春季リーグ戦の開幕日、各週のカードの順番、終盤がシングルカードになるかを予想。早慶法が2位で並んだときの前例も。"
+    ),
+    Entry.new(
       slug: "senior-appearances", title: "4年生のスタメン・ベンチ入り", published_on: Date.new(2026, 11, 4),
       description: "2026年の4年生（2023年入学）のうち、リーグ戦で1回でもスタメンに入った選手、ベンチ入りだけの選手、ベンチ入りしなかった選手の人数と割合を大学ごとに。帯グラフつき。"
     ),

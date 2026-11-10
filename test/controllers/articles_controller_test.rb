@@ -1,6 +1,13 @@
 require "test_helper"
 
 class ArticlesControllerTest < ActionDispatch::IntegrationTest
+  # The six universities, which the 2027 spring prediction names by slug.
+  def create_the_six
+    { "waseda" => "早大", "keio" => "慶大", "meiji" => "明大", "hosei" => "法大", "rikkio" => "立大", "tokyo" => "東大" }.each_with_index do |(slug, short), i|
+      University.create!(name: short, short_name: short, slug:, position: 10 + i)
+    end
+  end
+
   test "the articles are listed, and each has its own page" do
     get articles_path
 
@@ -194,6 +201,33 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     lead = css_select("p.article-lead").first.text.gsub(/\s+/, "")
     assert_operator lead.length, :<=, 140
     assert_match "1人のうち、リーグ戦で1回でもスタメンに入ったのは100%", lead
+  end
+
+  test "the 2027 spring schedule article gives the eight weeks, and the cards if 慶大 plays first instead" do
+    create_the_six
+    get article_path("schedule-2027-spring")
+
+    assert_response :success
+    assert_select "table.formula-table tbody tr", 8
+    assert_select "table.formula-table tbody tr:first-child td", text: "明大–東大、早大–立大"
+    assert_select "table.formula-table tbody tr:first-child td.muted", text: "明大–東大、慶大–立大"
+  end
+
+  test "the 2027 spring schedule comes as a calendar, 慶大 first on asking, and other articles have none" do
+    create_the_six
+    get article_path("schedule-2027-spring", format: :ics)
+
+    assert_response :success
+    assert_equal "text/calendar", response.media_type
+    assert_equal 30, response.body.scan("BEGIN:VEVENT").size # 15 cards, a Saturday and a Sunday game each
+    assert_includes response.body, "DTSTART;VALUE=DATE:20270410"
+    assert_includes response.body, "SUMMARY:【予想】早大 vs 立大①"
+
+    get article_path("schedule-2027-spring", format: :ics, first: "keio")
+    assert_includes response.body, "SUMMARY:【予想】慶大 vs 立大①"
+
+    get article_path("home-runs-per-season", format: :ics)
+    assert_response :not_found
   end
 
   test "an article that isn't there is not found" do
