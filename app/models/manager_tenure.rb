@@ -2,7 +2,8 @@
 # (/articles/komiyama-record): the university's league record over the seasons
 # from the one the manager took over (wins, losses and draws against each
 # opponent, and the cards won and lost), the seasons it won, its longest run of
-# titles, and how many players were in the club while the manager was.
+# titles, how many players were in the club while the manager was, and each
+# year's leading batters and pitchers (leaders).
 #
 # Worked out from the games as they come in, so it follows the seasons still
 # being played. Only league games (counted_in_stats): a 優勝決定戦 playoff is
@@ -10,6 +11,12 @@
 # with two wins (in the 2020 and 2021 seasons, with more wins than the other
 # side, as StreakRecords counts them).
 class ManagerTenure
+  # A year's leading players: batters (BattingLine::Totals) by batting average
+  # among those reaching the league's minimum over the year's games (3.1 plate
+  # appearances a team game), and pitchers (PitchingLine::Totals) by innings.
+  Leaders = Data.define(:year, :batters, :pitchers)
+  Leader = Data.define(:player, :totals)
+
   # The record against one opponent.
   Opponent = Data.define(:university, :wins, :losses, :draws, :cards_won, :cards_lost)
 
@@ -66,7 +73,27 @@ class ManagerTenure
     Player.where(university: @university, role: "選手", enter_year: (@from_year - 3)..)
   end
 
+  # Each year's leaders, oldest first: count of each (3 batters and 3 pitchers),
+  # from the year's box scores (league games only).
+  def leaders(count: 3)
+    seasons.group_by(&:year).map do |year, list|
+      games = Game.where(season_id: list.map(&:id), counted_in_stats: true).where("team0_id = :id OR team1_id = :id", id: @university.id)
+      minimum = (BattingLine.where(game_id: games.select(:id)).distinct.count(:game_id) * PlayerRanking::LEAGUE_PA_PER_GAME_TENTHS + 5) / 10
+      batters = totals_by_player(BattingLine, games).select { |_, totals| totals.pa >= minimum && totals.average }
+        .sort_by { |player, totals| [ -totals.average, -totals.hits, player.name ] }.first(count)
+      pitchers = totals_by_player(PitchingLine, games).sort_by { |player, totals| [ -totals.outs, player.name ] }.first(count)
+      Leaders.new(year:, batters: batters.map { |player, totals| Leader.new(player:, totals:) },
+        pitchers: pitchers.map { |player, totals| Leader.new(player:, totals:) })
+    end
+  end
+
   private
+
+  # { Player => Totals } of the university's players over the games.
+  def totals_by_player(line_class, games)
+    lines = line_class.where(game_id: games.select(:id), university_id: @university.id).includes(:player).to_a
+    lines.group_by(&:player).transform_values { |player_lines| line_class.totals(player_lines) }
+  end
 
   def record_of(games)
     results = games.map do |game|

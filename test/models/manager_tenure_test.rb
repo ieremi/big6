@@ -39,4 +39,21 @@ class ManagerTenureTest < ActiveSupport::TestCase
       assert_equal 2, tenure.longest_run.size
     end
   end
+
+  test "each year's leaders: batters by average among those reaching the minimum, pitchers by innings" do
+    games = card(2019, "spring", 2) # 2 games: a minimum of 6 plate appearances
+    player = ->(id) { Player.create!(scorebook_id: id, university: @alpha, name: "選手#{id}", enter_year: 2018, role: "選手") }
+    regular, short, pitcher = player.(1), player.(2), player.(3)
+    games.each do |game|
+      BattingLine.create!(game:, player: regular, university: @alpha, pa: 4, ab: 4, hits: 2)
+      BattingLine.create!(game:, player: short, university: @alpha, pa: 1, ab: 1, hits: 1) # 1.000, but 2 plate appearances
+      PitchingLine.create!(game:, player: pitcher, university: @alpha, outs: 27, earned_runs: 1, wins: 1)
+    end
+
+    leaders = ManagerTenure.new(@alpha, from: [ 2019, "spring" ]).leaders.sole
+
+    assert_equal 2019, leaders.year
+    assert_equal [ regular ], leaders.batters.map(&:player)
+    assert_equal [ [ pitcher, 54, 2 ] ], leaders.pitchers.map { |leader| [ leader.player, leader.totals.outs, leader.totals.wins ] }
+  end
 end

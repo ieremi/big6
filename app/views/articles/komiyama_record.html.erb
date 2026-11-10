@@ -1,6 +1,6 @@
 <%# 小宮山監督の戦績: 早大 under 小宮山悟, 監督 from 2019 spring (ManagerTenure): the seasons, the players in the club,
     those drafted (by hand, from each year's draft results), the record against each university, the titles and the
-    longest run of them, and the batting champions of those years (LeadingHitters). The records follow the games as
+    longest run of them, and each year's three leading batters and pitchers. The records follow the games as
     they come in; the drafted players are as checked on 2026-11-10. %>
 <%
   content_for :title, site_title(@article.title)
@@ -94,19 +94,35 @@
       <% end %>
     </p>
 
+    <%# Each year's three batters (batting average, among those reaching the year's minimum) and three pitchers (innings). %>
     <h2 class="card-heading">在任中のおもな選手</h2>
-    <% champions = LeadingHitters.all.select { |champion| champion.university == waseda && champion.year >= 2019 } %>
-    <ul>
-      <% drafted.select { |_, _, _, _, round| round == "1位" }.each do |year, id, name, team, round| %>
-        <li><%= link_to name, player_path(id) %>：<%= year %>年のドラフトで<%= team %>から<%= round %>指名。</li>
-      <% end %>
-      <% champions.each do |champion| %>
-        <li><%= champion.player ? link_to(champion.name, player_path(champion.player)) : champion.name %>：<%= champion.season_title %>の首位打者（打率<%= average.(champion.average) %>）。</li>
-      <% end %>
-    </ul>
+    <p class="muted">年ごとに、打率の高い打者3人（その年の規定打席以上）と、投球回の多い投手3人です。</p>
+    <div class="table-scroll">
+      <table class="formula-table">
+        <thead><tr><th>年</th><th>打者</th><th>投手</th></tr></thead>
+        <tbody>
+          <% tenure.leaders.each do |leaders| %>
+            <tr>
+              <th><%= leaders.year %>年</th>
+              <td>
+                <% leaders.batters.each do |leader| %>
+                  <div><%= link_to leader.player.name, player_path(leader.player) %>　打率<%= average.(leader.totals.average) %>・<%= leader.totals.home_runs %>本・<%= leader.totals.rbi %>打点</div>
+                <% end %>
+              </td>
+              <td>
+                <% leaders.pitchers.each do |leader| %>
+                  <div><%= link_to leader.player.name, player_path(leader.player) %>　<%= innings_label(leader.totals.outs) %>回・<%= leader.totals.wins %>勝<%= leader.totals.losses %>敗・防御率<%= leader.totals.era ? format("%.2f", leader.totals.era) : "－" %></div>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
     <p class="muted">
       勝ち負けはリーグ戦の試合（優勝決定戦はのぞく）で、2020年・2021年の勝ち点は、そのカードで相手より多く勝ったときとしています。
+      打者・投手の成績は各試合のボックススコア（BIG6 Scorebook）の合計で、規定打席はその年の早大の試合数×3.1です。
       ドラフト指名は、2019年から2025年までの各年のドラフト会議の結果で確認できた選手で、2026年のドラフトでは早大の選手は指名されていません。
       選手の数は BIG6 Scorebook の選手名鑑によります。
     </p>

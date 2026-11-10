@@ -254,6 +254,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "p.article-lead", text: /1勝0敗0分/
     assert_select "table.formula-table tbody tr th a", text: "慶大"
     assert_select "table.formula-table tbody td a[href=?]", player_path(20171019), text: "早川隆久"
+    assert_select "table.formula-table tbody tr th", text: "2019年"
   end
 
   test "an article that isn't there is not found" do
