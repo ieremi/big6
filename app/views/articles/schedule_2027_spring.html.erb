@@ -52,6 +52,8 @@
     <%= link_to "慶大が第1週の場合 (.ics)", ics.(first: "keio") %>
     （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.(first: "keio")), target: "_blank", rel: "noopener noreferrer" %>）
   </p>
+  <%# The calendar's contents, loaded on opening (早大 first, the main case). %>
+  <%= render "shared/ics_preview", url: article_path(@article.slug, format: :ics) %>
   <p class="muted">
     1回戦（土曜）と2回戦（日曜）を入れています。時刻は、土曜は表で先に書いたカードを第1試合（11時〜13時30分）、あとのカードを第2試合（14時〜16時30分）と仮定しました。日曜は試合の順も、各カードの大学の順も入れかわります（土曜が明大–東大、早大–立大なら、日曜は立大–早大、東大–明大）。
     プロ野球と神宮球場を併用する日（プロ併用日）はまだ決まっていませんが、併用日には第1試合が10時からになります。

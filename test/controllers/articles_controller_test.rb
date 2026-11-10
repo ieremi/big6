@@ -213,6 +213,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table.formula-table tbody tr:first-child td.muted", text: "明大–東大、慶大–立大"
     assert_includes 135..140, css_select("p.article-lead").first.text.gsub(/\s+/, "").length
     assert_select "article h3.week-heading", 8
+    assert_select "details.ics-preview-toggle[data-ics-preview-url-value=?]", article_path("schedule-2027-spring", format: :ics)
     assert_select "h3.week-heading .week-cards", text: "慶大–法大、早大–明大"
     assert_select "figure.week-diagram", 8
     assert_select "figure.week-diagram svg[aria-label=?] path", "第8週の組み合わせ：早大–慶大", 1
