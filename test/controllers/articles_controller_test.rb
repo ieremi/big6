@@ -211,6 +211,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table.formula-table tbody tr", 8
     assert_select "table.formula-table tbody tr:first-child td", text: "明大–東大、早大–立大"
     assert_select "table.formula-table tbody tr:first-child td.muted", text: "明大–東大、慶大–立大"
+    assert_includes 135..140, css_select("p.article-lead").first.text.gsub(/\s+/, "").length
   end
 
   test "the 2027 spring schedule comes as a calendar, 慶大 first on asking, and other articles have none" do
