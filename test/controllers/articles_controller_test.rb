@@ -228,6 +228,9 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 30, response.body.scan("BEGIN:VEVENT").size # 15 cards, a Saturday and a Sunday game each
     assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270410T110000" # 明大–東大, the week's first card
     assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270410T140000" # 早大–立大, the second
+    # On Sunday the other way round, each card's sides swapped: 立大–早大 first, then 東大–明大.
+    assert_match(/DTSTART;TZID=Asia\/Tokyo:20270411T110000\r\n.*?SUMMARY:【予想】立大 vs 早大②/m, response.body)
+    assert_match(/DTSTART;TZID=Asia\/Tokyo:20270411T140000\r\n.*?SUMMARY:【予想】東大 vs 明大②/m, response.body)
     assert_includes response.body, "DTSTART;VALUE=DATE:20270529" # the 早慶戦, all-day
     assert_includes response.body, "SUMMARY:【予想】早大 vs 立大①"
 
