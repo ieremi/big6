@@ -208,9 +208,10 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     get article_path("schedule-2027-spring")
 
     assert_response :success
-    assert_select "table.formula-table tbody tr", 8
+    assert_select "table.formula-table:not(.game-times) tbody tr", 8
     assert_select "table.formula-table tbody tr:first-child td", text: "明大–東大、早大–立大"
     assert_select "table.formula-table tbody tr:first-child td.muted", text: "明大–東大、慶大–立大"
+    assert_select "table.game-times tbody tr:first-child td", text: "10:00 am〜12:30 pm" # プロ併用日
     assert_includes 135..140, css_select("p.article-lead").first.text.gsub(/\s+/, "").length
     assert_select "article h3.week-heading", 8
     assert_select "details.ics-preview-toggle[data-ics-preview-url-value=?]", article_path("schedule-2027-spring", format: :ics)

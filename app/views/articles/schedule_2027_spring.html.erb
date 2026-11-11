@@ -67,11 +67,28 @@
   <%# The calendar's contents, loaded on opening (早大 first, the main case). %>
   <%= render "shared/ics_preview", url: article_path(@article.slug, format: :ics) %>
   <p class="muted">
-    1回戦（土曜）と2回戦（日曜）を入れています。時刻は、土曜は表で先に書いたカードを第1試合（11:00 am〜1:30 pm）、あとのカードを第2試合（2:00 pm〜4:30 pm）と仮定しました。日曜は試合の順も、各カードの大学の順も入れかわります（土曜が明大–東大、早大–立大なら、日曜は立大–早大、東大–明大）。
-    プロ野球と神宮球場を併用する日（プロ併用日）は、第1試合が10:00 amからになります。<%= link_to "東京ヤクルトスワローズの2027年の試合日程", "https://www.yakult-swallows.co.jp/game", target: "_blank", rel: "noopener noreferrer" %>では、ヤクルトが神宮で試合をするのは、この予想の日程のうち
-    <%= SchedulePrediction2027Spring::PRO_SHARED_DAYS.map { |day| "#{date.(day)}（#{%w[日 月 火 水 木 金 土][day.wday]}）" }.join("・") %>
-    （第2週・第5週・第6週）で、カレンダーではこの日の2試合をどちらも1時間早め、第1試合10:00 am〜12:30 pm、第2試合1:00 pm〜3:30 pmとしました。第4週の3回戦になる5月3日（祝）も併用日です。
-    早慶戦は終日の予定とし、1勝1敗のときの3回戦（月曜）は入っていません。
+    カレンダーには1回戦（土曜）と2回戦（日曜）を入れています。1勝1敗のときの3回戦（月曜）は入っていません。早慶戦は終日の予定にしています。
+  </p>
+  <p class="muted">
+    時刻は下の表のように仮定しました。土曜は表で先に書いたカードが第1試合です。
+    日曜は試合の順も、各カードの大学の順も入れかわります（土曜が明大–東大、早大–立大なら、日曜は立大–早大、東大–明大）。
+  </p>
+  <%# The times the calendar gives (SchedulePrediction2027Spring::GAME_TIMES and SHARED_GAME_TIMES). %>
+  <div class="table-scroll">
+    <table class="formula-table game-times">
+      <thead>
+        <tr><th></th><th>ふだんの日</th><th>プロ併用日</th></tr>
+      </thead>
+      <tbody>
+        <tr><th>第1試合</th><td>11:00 am〜1:30 pm</td><td>10:00 am〜12:30 pm</td></tr>
+        <tr><th>第2試合</th><td>2:00 pm〜4:30 pm</td><td>1:00 pm〜3:30 pm</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">
+    プロ併用日は、プロ野球と神宮球場を併用する日で、第1試合が10:00 amからになります。
+    <%= link_to "東京ヤクルトスワローズの2027年の試合日程", "https://www.yakult-swallows.co.jp/game", target: "_blank", rel: "noopener noreferrer" %>では、
+    この予想の第2週・第5週・第6週の土日と、第4週の3回戦になる5月3日（祝）がそうです（週ごとの予想にも書いています）。
   </p>
 
   <%# Why each week has its cards, a heading a week, for readers new to the conventions (ScheduleConventions):
