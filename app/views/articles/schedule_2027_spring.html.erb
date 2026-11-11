@@ -15,6 +15,14 @@
   swapped_weeks = SchedulePrediction2027Spring.new(swapped: true).weeks
   cards = ->(week) { week.cards.map { |pair| pair.map(&:short_name).join("–") }.join("、") }
   date = ->(day) { "#{day.month}月#{day.day}日" }
+  # A week's プロ併用日 (SchedulePrediction2027Spring::PRO_SHARED_DAYS, and a 3回戦's Monday), said under its diagram.
+  shared_days = lambda do |week|
+    days = [ week.starts_on, week.starts_on + 1 ] & SchedulePrediction2027Spring::PRO_SHARED_DAYS
+    monday = ([ week.starts_on + 2 ] & SchedulePrediction2027Spring::PRO_SHARED_MONDAYS).first
+    text = days.map { |day| "#{date.(day)}（#{%w[日 月 火 水 木 金 土][day.wday]}）" }.join("・")
+    text += "#{"、" if days.any?}3回戦になれば#{date.(monday)}（祝）" if monday
+    text.presence
+  end
 %>
 
 <p><%= link_to "← 読み物", articles_path %></p>
@@ -58,7 +66,7 @@
   <%= render "shared/ics_preview", url: article_path(@article.slug, format: :ics) %>
   <p class="muted">
     1回戦（土曜）と2回戦（日曜）を入れています。時刻は、土曜は表で先に書いたカードを第1試合（11:00 am〜1:30 pm）、あとのカードを第2試合（2:00 pm〜4:30 pm）と仮定しました。日曜は試合の順も、各カードの大学の順も入れかわります（土曜が明大–東大、早大–立大なら、日曜は立大–早大、東大–明大）。
-    プロ野球と神宮球場を併用する日（プロ併用日）は、第1試合が10:00 amからになります。11月5日に発表されたセ・リーグの2027年の日程では、ヤクルトが神宮で試合をするのは、この予想の日程のうち
+    プロ野球と神宮球場を併用する日（プロ併用日）は、第1試合が10:00 amからになります。11月5日に発表された<%= link_to "セ・リーグの2027年の日程", "https://www.nikkansports.com/baseball/news/202611050000042.html", target: "_blank", rel: "noopener noreferrer" %>（日刊スポーツ）では、ヤクルトが神宮で試合をするのは、この予想の日程のうち
     <%= SchedulePrediction2027Spring::PRO_SHARED_DAYS.map { |day| "#{date.(day)}（#{%w[日 月 火 水 木 金 土][day.wday]}）" }.join("・") %>
     （第2週・第5週・第6週）で、カレンダーではこの日の2試合をどちらも1時間早め、第1試合10:00 am〜12:30 pm、第2試合1:00 pm〜3:30 pmとしました。第4週の3回戦になる5月3日（祝）も併用日です。
     早慶戦は終日の予定とし、1勝1敗のときの3回戦（月曜）は入っていません。
@@ -79,6 +87,9 @@
 
   <h3 class="week-heading"><span class="week-badge">第1週</span><span class="week-date">4月10日〜</span><span class="week-cards">明大–東大、早大–立大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[0], universities: %>
+  <% if (days = shared_days.(weeks[0])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     春季リーグ戦は、2015年から2026年まで（中止になった2020年と、試合の形が違った2021年をのぞく）すべて4月の第2土曜日に開幕しています。
     2027年の4月の第2土曜日は4月10日です。例年どおりなら、各週の初日は土曜日で、2回戦は日曜日、1勝1敗になれば3回戦は月曜日になります。
@@ -106,6 +117,9 @@
 
   <h3 class="week-heading"><span class="week-badge">第2週</span><span class="week-date">4月17日〜</span><span class="week-cards">法大–立大、慶大–東大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[1], universities: %>
+  <% if (days = shared_days.(weeks[1])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     第2週は、4校のなかの2位と3位が当たるのが慣例で、法大–立大になります。
     もう1カードは、第1週に出なかった慶大と、4校のなかの4位の東大です。過去6回の春も同じでした。
@@ -113,6 +127,9 @@
 
   <h3 class="week-heading"><span class="week-badge">第3週</span><span class="week-date">4月24日〜</span><span class="week-cards">慶大–法大、早大–明大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[2], universities: %>
+  <% if (days = shared_days.(weeks[2])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     第3週は慣例では決まりません。過去6回の春はすべて、第1週に出なかった早慶の一方が4校の2位と、第1週に出た方が4校の1位と当たっているので、
     慶大–法大と早大–明大としました。
@@ -120,18 +137,27 @@
 
   <h3 class="week-heading"><span class="week-badge">第4週</span><span class="week-date">5月1日〜</span><span class="week-cards">早大–東大、明大–立大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[3], universities: %>
+  <% if (days = shared_days.(weeks[3])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     第4週は、第1週と同じ4校が出るのが慣例です。第1週の明大–東大、早大–立大から相手を入れ替えて、早大–東大と明大–立大になります。
   </p>
 
   <h3 class="week-heading"><span class="week-badge">第5週</span><span class="week-date">5月8日〜</span><span class="week-cards">法大–東大、慶大–立大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[4], universities: %>
+  <% if (days = shared_days.(weeks[4])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     第5週も同じように、第2週と同じ4校が出るのが慣例です。第2週の法大–立大、慶大–東大から相手を入れ替えて、法大–東大と慶大–立大になります。
   </p>
 
   <h3 class="week-heading"><span class="week-badge">第6週</span><span class="week-date">5月15日〜</span><span class="week-cards">早大–法大、慶大–明大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[5], universities: %>
+  <% if (days = shared_days.(weeks[5])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     第6週は、早慶が出て、4校のなかの1位・2位（明大・法大）を迎え撃つのが慣例です。
     どちらがどちらと当たるかは、過去6回の春にならって、第1週に出た早大が法大と、慶大が明大と当たるとしました。
@@ -139,6 +165,9 @@
 
   <h3 class="week-heading"><span class="week-badge">第7週</span><span class="week-date">5月22日〜</span><span class="week-cards">明大–法大、立大–東大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[6], universities: %>
+  <% if (days = shared_days.(weeks[6])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     早慶戦の前の週は、4校のなかの1位対2位、3位対4位が当たるのが慣例で、明大–法大と立大–東大になります。
     東大がほぼいつも4校のなかの4位で、立大が3位になることも多いため、この組み合わせはよく見られます。
@@ -151,6 +180,9 @@
 
   <h3 class="week-heading"><span class="week-badge">第8週</span><span class="week-date">5月29日〜</span><span class="week-cards">早大–慶大</span></h3>
   <%= render "articles/schedule_week_diagram", week: weeks[7], universities: %>
+  <% if (days = shared_days.(weeks[7])) %>
+    <p class="muted">プロ併用日：<%= days %>。この日は第1試合が10:00 amからになります。</p>
+  <% end %>
   <p>
     最終週は早慶戦だけ、というのが長くつづく形です。その前の週までにシングルカードの週はないと予想されます。
     2015年以降の春季（2020年・2021年をのぞく）は、第1週から第7週まで毎週2カードずつ、第8週の早慶戦だけが1カードという形がつづいています。

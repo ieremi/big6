@@ -19,12 +19,13 @@ class SchedulePrediction2027Spring
   SHARED_GAME_TIMES = [ [ [ 10, 0 ], [ 12, 30 ] ], [ [ 13, 0 ], [ 15, 30 ] ] ].freeze
 
   # The predicted Saturdays and Sundays on which ヤクルト plays at home at 神宮 (プロ併用日).
-  # Of the Mondays a 3回戦 could fall on, only 5月3日 (祝), after the fourth week, is one.
   PRO_SHARED_DAYS = [
     Date.new(2027, 4, 17), Date.new(2027, 4, 18),
     Date.new(2027, 5, 8), Date.new(2027, 5, 9),
     Date.new(2027, 5, 15), Date.new(2027, 5, 16)
   ].freeze
+  # The Mondays among them a 3回戦 would be played on (not in the calendar).
+  PRO_SHARED_MONDAYS = [ Date.new(2027, 5, 3) ].freeze
 
   # [the week's Saturday, its cards as pairs of slugs (which side bats first isn't known)]
   WEEKS = [

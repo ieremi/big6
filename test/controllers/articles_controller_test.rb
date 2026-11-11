@@ -216,6 +216,10 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "details.ics-preview-toggle[data-ics-preview-url-value=?]", article_path("schedule-2027-spring", format: :ics)
     assert_select "h3.week-heading .week-cards", text: "慶大–法大、早大–明大"
     assert_select "figure.week-diagram", 8
+    # The weeks with days shared with the professionals say so: 第2・5・6週, and 第4週's 3回戦 day.
+    assert_select "article p.muted", text: /\Aプロ併用日：/, count: 4
+    assert_select "article p.muted", text: /プロ併用日：4月17日（土）・4月18日（日）。/
+    assert_select "article p.muted", text: /プロ併用日：3回戦になれば5月3日（祝）。/
     assert_select "figure.week-diagram svg[aria-label=?] path", "第8週の組み合わせ：早大–慶大", 1
     assert_select "figure.week-diagram svg[aria-label=?] .week-diagram-idle", "第8週の組み合わせ：早大–慶大", 4
   end
