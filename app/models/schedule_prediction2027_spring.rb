@@ -11,12 +11,14 @@
 # on Sunday the order turns round and each card's sides swap, as the league does.
 # A day shared with the professionals (プロ併用日: ヤクルト at home at 神宮 that day,
 # from the 2027 schedule on the スワローズ site, read 2026-11-11) starts at 10:00
-# instead, both games taken as an hour earlier. The 早慶戦, alone on its days, is all-day.
+# instead, both games taken as an hour earlier. The 早慶戦, alone on its days, starts at 1:00 pm.
 class SchedulePrediction2027Spring
   # [hour, minute] of the start and the end of the day's first and second game.
   GAME_TIMES = [ [ [ 11, 0 ], [ 13, 30 ] ], [ [ 14, 0 ], [ 16, 30 ] ] ].freeze
   # The same on a プロ併用日: an hour earlier.
   SHARED_GAME_TIMES = [ [ [ 10, 0 ], [ 12, 30 ] ], [ [ 13, 0 ], [ 15, 30 ] ] ].freeze
+  # The 早慶戦, the only game of its days.
+  SOLE_GAME_TIMES = [ [ 13, 0 ], [ 15, 30 ] ].freeze
 
   # The predicted Saturdays and Sundays on which ヤクルト plays at home at 神宮 (プロ併用日).
   PRO_SHARED_DAYS = [
@@ -61,15 +63,15 @@ class SchedulePrediction2027Spring
       week.cards.each_with_index do |(a, b), order|
         [ [ 1, week.starts_on ], [ 2, week.starts_on + 1 ] ].each do |round, day|
           # A day of two cards: on Saturday the first card first, and on Sunday the other way round, each card's
-          # sides swapped too (明大–東大 and 早大–立大, then 立大–早大 and 東大–明大); the 早慶戦 alone, all-day.
+          # sides swapped too (明大–東大 and 早大–立大, then 立大–早大 and 東大–明大); the 早慶戦 alone, at 1:00 pm.
           slot = round == 1 ? order : week.cards.size - 1 - order
           first, second = round == 1 ? [ a, b ] : [ b, a ]
           times = PRO_SHARED_DAYS.include?(day) ? SHARED_GAME_TIMES : GAME_TIMES
-          start, finish = (times[slot] if week.cards.size > 1)&.map { |hour, minute| tokyo.local(day.year, day.month, day.day, hour, minute) }
+          start, finish = (week.cards.size > 1 ? times[slot] : SOLE_GAME_TIMES).map { |hour, minute| tokyo.local(day.year, day.month, day.day, hour, minute) }
           calendar.add_event(
             uid: "prediction-2027-spring-#{a.slug}-#{b.slug}-#{round}@big6",
             summary: "【予想】#{first.short_name} vs #{second.short_name}#{IcsGameEvent::CIRCLED_DIGITS[round - 1]}",
-            start_time: start, end_time: finish, all_day_date: (day unless start),
+            start_time: start, end_time: finish,
             location: StadiumLocation.for("神宮球場"),
             description: "2027年春季リーグ戦 第#{week.number}週 #{round}回戦（予想）。日程の慣例から予想したもので、連盟の発表ではありません。1勝1敗なら翌日に3回戦。"
           )

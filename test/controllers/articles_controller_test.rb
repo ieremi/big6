@@ -241,7 +241,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T100000"
     assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T130000"
     assert_not_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T110000"
-    assert_includes response.body, "DTSTART;VALUE=DATE:20270529" # the 早慶戦, all-day
+    assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270529T130000" # the 早慶戦, at 1:00 pm
     assert_includes response.body, "SUMMARY:【予想】早大 vs 立大①"
 
     get article_path("schedule-2027-spring", format: :ics, first: "keio")
