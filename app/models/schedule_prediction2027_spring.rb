@@ -11,12 +11,12 @@
 # on Sunday the order turns round and each card's sides swap, as the league does.
 # A day shared with the professionals (プロ併用日: ヤクルト at home at 神宮 that day,
 # from the 2027 セ・リーグ schedule published on 2026-11-05) starts at 10:00
-# instead, the second game taken as 12:30. The 早慶戦, alone on its days, is all-day.
+# instead, both games taken as an hour earlier. The 早慶戦, alone on its days, is all-day.
 class SchedulePrediction2027Spring
   # [hour, minute] of the start and the end of the day's first and second game.
   GAME_TIMES = [ [ [ 11, 0 ], [ 13, 30 ] ], [ [ 14, 0 ], [ 16, 30 ] ] ].freeze
-  # The same on a プロ併用日.
-  SHARED_GAME_TIMES = [ [ [ 10, 0 ], [ 12, 30 ] ], [ [ 12, 30 ], [ 15, 0 ] ] ].freeze
+  # The same on a プロ併用日: an hour earlier.
+  SHARED_GAME_TIMES = [ [ [ 10, 0 ], [ 12, 30 ] ], [ [ 13, 0 ], [ 15, 30 ] ] ].freeze
 
   # The predicted Saturdays and Sundays on which ヤクルト plays at home at 神宮 (プロ併用日).
   # Of the Mondays a 3回戦 could fall on, only 5月3日 (祝), after the fourth week, is one.
