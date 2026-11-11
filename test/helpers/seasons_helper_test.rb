@@ -36,7 +36,7 @@ class SeasonsHelperTest < ActionView::TestCase
     hosei, tokyo = University.new(short_name: "法大"), University.new(short_name: "東大")
     run = StreakRecords::Run.new(university_id: 1, opponent_id: 2, from: [ 1953, 1 ], to: [ 1993, 2 ], count: 81)
 
-    assert_equal "1950年以降で歴代2位タイ。1993年秋の東大（法大から81季ぶり）以来。",
+    assert_equal "1950年以降、6校のAクラス（3位以上）までの間隔のなかで2番目に長い（タイ）。1993年秋の東大（法大から81季ぶり）以来。",
       comeback_notes(comeback_of(count: 81, rank: 2, tied: true, since: [ run, tokyo, hosei ]))
     assert_equal "最長は1993年秋の東大（法大から81季ぶり）。", comeback_notes(comeback_of(count: 6, rank: 11, longest: [ run, tokyo, hosei ]))
     assert_equal "", comeback_notes(comeback_of(count: nil))

@@ -25,7 +25,7 @@ class StreakRecordsPageTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "section.streak-records h2", "連続記録"
     assert_select "section.streak-records li", text: /Alpha\s+優勝　7季連続（2001年春〜）/
-    assert_select "section.streak-records li .muted", text: /1950年以降で歴代1位。Alphaで最長。/
+    assert_select "section.streak-records li .muted", text: /1950年以降、6校の優勝の連続のなかでいちばん長い。Alphaで最長。/
   end
 
   test "and what it brings back after a long while" do

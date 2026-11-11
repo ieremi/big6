@@ -76,7 +76,7 @@ module SeasonsHelper
     end
   end
 
-  # How a decided or at-stake run stands: 「歴代2位タイ。1989年春の法大（18季）以来。明大で最長」.
+  # How a decided or at-stake run stands: 「1950年以降、6校の優勝の連続のなかで2番目に長い（タイ）。1989年春の法大（18季）以来。明大で最長」.
   def streak_record_notes(record)
     return "" if record.status == :ended
 
@@ -84,7 +84,7 @@ module SeasonsHelper
     since, holder, since_opponent = record.since
     longest, longest_holder, longest_opponent = record.longest
     [
-      "1950年以降で歴代#{record.rank}位#{"タイ" if record.tied}",
+      "1950年以降、6校の#{record.kind.label}の連続のなかで#{rank_length(record.rank, record.tied)}",
       ("#{streak_season_label(since.to)}の#{holder.short_name}（#{"対#{since_opponent.short_name}" if since_opponent}#{since.count}季）以来" if since),
       ("#{who}で最長" if record.own_best),
       ("最長は#{longest_holder.short_name}の#{"対#{longest_opponent.short_name}" if longest_opponent}#{longest.count}季（#{streak_season_label(longest.from)}〜#{streak_season_label(longest.to)}）" if longest)
@@ -99,17 +99,23 @@ module SeasonsHelper
     "#{comeback.label}　#{comeback.count}季ぶり（前回#{streak_season_label(comeback.last)}）"
   end
 
-  # How the gap stands: 「1950年以降で歴代2位。1993年秋の東大（法大から81季ぶり）以来」.
+  # How the gap stands: 「1950年以降、6校の勝ち点までの間隔のなかで2番目に長い。1993年秋の東大（法大から81季ぶり）以来」.
   # The rank only in the top ten, as short gaps are many.
   def comeback_notes(comeback)
     return "" unless comeback.count
 
     gap = ->((run, holder, opponent)) { "#{streak_season_label(run.to)}の#{holder.short_name}（#{"#{opponent.short_name}から" if opponent}#{run.count}季ぶり）" }
     [
-      ("1950年以降で歴代#{comeback.rank}位#{"タイ" if comeback.tied}" if comeback.rank <= 10),
+      ("1950年以降、6校の#{comeback.kind.label}までの間隔のなかで#{rank_length(comeback.rank, comeback.tied)}" if comeback.rank <= 10),
       ("#{gap.(comeback.since)}以来" if comeback.since),
       ("最長は#{gap.(comeback.longest)}" if comeback.longest)
     ].compact.join("。").then { |text| text.empty? ? text : "#{text}。" }
+  end
+
+  # Where a run or a gap ranks among those of its kind since 1950, of all six (not the university's own), said as its length:
+  # 「いちばん長い」, 「2番目に長い（タイ）」.
+  def rank_length(rank, tied)
+    "#{rank == 1 ? "いちばん" : "#{rank}番目に"}長い#{"（タイ）" if tied}"
   end
 
   # Text with strengths written in it as {59} (a chance in percent): each one
