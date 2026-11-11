@@ -26,7 +26,10 @@ class WeekendAttendanceControllerTest < ActionDispatch::IntegrationTest
     get attendance_season_url(2026, "spring")
 
     assert_response :success
-    # 試合, 合計, 1試合平均, 土日の1試合平均
+    # 試合, 合計, 1試合平均, 土日の1試合平均: the season's, then each university's.
+    assert_select "section.season-attendance tbody tr:first-child" do |rows|
+      assert_equal %w[3 33,000 11,000 15,000], rows.first.css("td").map { |td| td.text.strip }
+    end
     assert_select "section.university-attendance tbody tr", 2 do |rows|
       assert_equal %w[3 33,000 11,000 15,000], rows.first.css("td").drop(1).map { |td| td.text.strip }
     end

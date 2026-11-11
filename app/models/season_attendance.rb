@@ -29,6 +29,13 @@ class SeasonAttendance
     (total.to_f / count).round if count.positive?
   end
 
+  # The same over the games on a Saturday or a Sunday (Game#weekend?), as the
+  # university table's 土日の1試合平均: weekday games draw far smaller crowds.
+  def weekend_average
+    weekend = games.select(&:weekend?)
+    (weekend.sum(&:attendance).to_f / weekend.size).round if weekend.any?
+  end
+
   # The same for the same term a year earlier, or nil if it has no figures.
   def previous
     return @previous if defined?(@previous)

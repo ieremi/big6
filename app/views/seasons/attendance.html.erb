@@ -18,7 +18,7 @@
     <div class="table-scroll">
       <table class="formula-table">
         <thead>
-          <tr><th></th><th>試合</th><th>合計</th><th>1試合平均</th></tr>
+          <tr><th></th><th>試合</th><th>合計</th><th>1試合平均</th><th>土日の1試合平均</th></tr>
         </thead>
         <tbody>
           <tr>
@@ -26,6 +26,7 @@
             <td><%= @attendance.count %></td>
             <td><%= number.(@attendance.total) %></td>
             <td><%= number.(@attendance.average) %></td>
+            <td><%= number.(@attendance.weekend_average) %></td>
           </tr>
           <% if previous %>
             <tr class="muted">
@@ -33,6 +34,7 @@
               <td><%= previous.count %></td>
               <td><%= number.(previous.total) %></td>
               <td><%= number.(previous.average) %></td>
+              <td><%= number.(previous.weekend_average) %></td>
             </tr>
           <% end %>
         </tbody>
