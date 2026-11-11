@@ -1,4 +1,10 @@
 module SeasonsHelper
+  # The season's tabs (seasons/_tabs), also the last step of their breadcrumbs (seasons/_heading).
+  SEASON_TAB_LABELS = {
+    games: "試合日程", standings: "順位・優勝のゆくえ", attendance: "観衆",
+    records: "チーム成績・記録・強さ", players: "個人成績"
+  }.freeze
+
   # The sortable columns of the standings table: heading => [shortcut, direction of
   # the first click]. Counts start with the most, except the losses and the runs
   # allowed, which start with the fewest (the better first, as the rank does).

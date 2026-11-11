@@ -5,6 +5,7 @@
   content_for :image_url, university_og_image_url(@university.slug)
 %>
 
+<% breadcrumbs [ "大学一覧", universities_path ], [ @university.name ] %>
 <h1>
   <span class="team-chip" style="background: <%= @university.color %>"><%= @university.initial %></span>
   <%= @university.name %>

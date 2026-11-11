@@ -7,7 +7,7 @@
 # Structured data (JSON-LD, schema.org) says the same in a form machines read
 # without guessing: a game is a SportsEvent between two SportsTeams, a player a
 # Person on one of them. Only what the page itself shows goes in, as Google
-# asks; so there is no BreadcrumbList, as the pages show no breadcrumbs.
+# asks; the BreadcrumbList goes with the breadcrumbs a page shows (BreadcrumbsHelper).
 module SeoHelper
   LEAGUE = { "@type" => "SportsOrganization", "name" => "東京六大学野球連盟", "alternateName" => "東京六大学野球", "url" => "https://www.big6.gr.jp/" }.freeze
   SITE_SUFFIX = "東京六大学野球 - Big6".freeze

@@ -10,6 +10,10 @@
   content_for :description, description
   content_for :head, structured_data(game_structured_data(@game, description: description, stadium: detail.stadium))
   content_for :image_url, game_og_image_url(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term, @game.game_number)
+  # A game sits in its season, under the pair's games that season (the page its heading links to).
+  breadcrumbs [ "シーズン一覧", seasons_path ], [ @game.season.title, season_path(@game.season.year, @game.season.term) ],
+    [ "#{@game.team0.short_name} vs #{@game.team1.short_name}", matchup_season_path(@game.team0.slug, @game.team1.slug, @game.season.year, @game.season.term) ],
+    [ @game.round_name ]
 %>
 
 <h1>

@@ -3,6 +3,7 @@
   content_for :description, "東京六大学野球の選手・スタッフの名簿（1872年入学〜）"
 %>
 
+<% breadcrumbs [ "選手一覧" ] %>
 <h1>選手一覧</h1>
 
 <%= form_with url: players_path, method: :get, data: { controller: "search-filter", action: "change->search-filter#submit" } do %>

@@ -4,6 +4,7 @@
   content_for :image_url, seasons_index_og_image_url
 %>
 
+<% breadcrumbs [ "シーズン一覧" ] %>
 <h1>シーズン一覧</h1>
 
 <p class="muted"><%= link_to "カードの順番で見る", card_orders_seasons_path %>・<%= link_to "順位で見る", standings_orders_seasons_path %>・<%= link_to "日程の慣例", conventions_seasons_path %></p>

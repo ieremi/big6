@@ -7,6 +7,7 @@
   content_for :image_url, player_og_image_url(@player)
 %>
 
+<% breadcrumbs [ "選手一覧", players_path ], [ @player.name ] %>
 <h1>
   <span class="team-chip" style="background: <%= @player.university.color %>"><%= @player.university.initial %></span>
   <%= @player.name %>
@@ -59,4 +60,3 @@
 
 <%= render "players/games", log: @game_log %>
 
-<p><%= link_to "← 選手一覧へ", players_path %></p>

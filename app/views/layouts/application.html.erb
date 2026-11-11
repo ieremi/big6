@@ -82,6 +82,7 @@
     </div>
 
     <main class="container">
+      <%= yield :breadcrumbs %>
       <% flash.each do |type, message| %>
         <%= tag.p message, class: [ "flash", "flash-#{type}" ], role: (type == "alert" ? "alert" : "status") %>
       <% end %>

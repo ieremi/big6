@@ -4,6 +4,7 @@
   content_for :image_url, matchups_index_og_image_url
 %>
 
+<% breadcrumbs [ "対戦カード" ] %>
 <h1>対戦カード</h1>
 
 <% pct = ->(value) { value.nil? ? "—" : number_with_precision(value, precision: 3).sub(/\A0/, "") } %>

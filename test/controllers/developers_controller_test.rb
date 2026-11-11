@@ -10,7 +10,7 @@ class DevelopersControllerTest < ActionDispatch::IntegrationTest
     get developer_page_path("league-site-game-page")
     assert_response :success
     assert_select "title", "連盟公式サイト（big6.gr.jp）の試合ページのURL - 開発者向けの解説 - Big6"
-    assert_select "a[href=?]", developers_path, text: "← 開発者向けの解説"
+    assert_select "nav.breadcrumbs a[href=?]", developers_path, text: "開発者向けの解説"
     assert_select ".markdown-body table", minimum: 3
     assert_select "a[href*=github]", 0
   end

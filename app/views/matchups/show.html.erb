@@ -9,6 +9,16 @@
   else
     matchup_og_image_url(@team0.slug, @team1.slug)
   end
+  # The trail follows the URL: the pair, then its year, then the season.
+  pair = "#{@team0.short_name} vs #{@team1.short_name}"
+  if @season
+    breadcrumbs [ "対戦カード", matchups_path ], [ pair, matchup_path(@team0.slug, @team1.slug) ],
+      [ "#{@season.year}年", matchup_year_path(@team0.slug, @team1.slug, @season.year) ], [ @season.title ]
+  elsif @year
+    breadcrumbs [ "対戦カード", matchups_path ], [ pair, matchup_path(@team0.slug, @team1.slug) ], [ "#{@year}年" ]
+  else
+    breadcrumbs [ "対戦カード", matchups_path ], [ pair ]
+  end
 %>
 
 <h1>

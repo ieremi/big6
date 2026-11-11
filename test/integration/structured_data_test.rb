@@ -2,8 +2,39 @@ require "test_helper"
 
 # The JSON-LD (schema.org) in the head of the public pages (SeoHelper).
 class StructuredDataTest < ActionDispatch::IntegrationTest
+  # The page's own JSON-LD; the BreadcrumbList that goes with its breadcrumbs apart (breadcrumb_list).
   def structured_data
+    all_structured_data.reject { |data| data["@type"] == "BreadcrumbList" }
+  end
+
+  def breadcrumb_list
+    all_structured_data.find { |data| data["@type"] == "BreadcrumbList" }
+  end
+
+  def all_structured_data
     css_select('script[type="application/ld+json"]').map { |node| JSON.parse(node.text) }
+  end
+
+  test "a game page's breadcrumbs go through its season and the pair's games that season, and say so to machines too" do
+    get matchup_game_url("alpha", "beta", 2026, "spring", 1)
+
+    labels = [ "トップ", "シーズン一覧", "2026年春季", "#{universities(:one).short_name} vs #{universities(:two).short_name}", "1回戦" ]
+    assert_equal labels, css_select("nav.breadcrumbs li").map { |li| li.text.strip }
+    assert_select "nav.breadcrumbs li[aria-current=page]", text: "1回戦"
+    assert_select "nav.breadcrumbs a[href=?]", season_path(2026, "spring")
+    items = breadcrumb_list["itemListElement"]
+    assert_equal labels, items.map { |item| item["name"] }
+    assert_equal [ root_url.chomp("/"), season_url(2026, "spring") ], items.values_at(0, 2).map { |item| item["item"].chomp("/") }
+    assert_equal matchup_game_url("alpha", "beta", 2026, "spring", 1), items.last["item"]
+  end
+
+  test "the top page has no breadcrumbs, and a season tab's end with the tab" do
+    get root_url
+    assert_select "nav.breadcrumbs", 0
+    assert_nil breadcrumb_list
+
+    get standings_season_url(2026, "spring")
+    assert_equal [ "トップ", "シーズン一覧", "2026年春季", "順位・優勝のゆくえ" ], css_select("nav.breadcrumbs li").map { |li| li.text.strip }
   end
 
   test "the home page describes the site" do

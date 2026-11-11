@@ -17,7 +17,7 @@
   average = ->(list, university) { list.sum { |row| row.chances.fetch(university, 0) } / list.size }
 %>
 
-<p><%= link_to "← 読み物", articles_path %></p>
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
 
 <%# One view-switch over the whole article: the chart's buttons switch the figures in the tables and text too. %>
 <article class="article" data-controller="view-switch">

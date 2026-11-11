@@ -4,8 +4,10 @@
   content_for :description, @doc.summary.truncate(160)
 %>
 
-<% unless @doc.index? %>
-  <p><%= link_to "← 開発者向けの解説", developers_path %></p>
+<% if @doc.index? %>
+  <% breadcrumbs [ "開発者向けの解説" ] %>
+<% else %>
+  <% breadcrumbs [ "開発者向けの解説", developers_path ], [ @doc.title ] %>
 <% end %>
 
 <article class="markdown-body">

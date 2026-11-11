@@ -5,6 +5,7 @@
   content_for :image_url, @season ? team_season_og_image_url(@team0.slug, @season.year, @season.term) : team_og_image_url(@team0.slug)
 %>
 
+<% breadcrumbs [ "試合検索", games_path ], *(period_label ? [ [ @team0.name, team_browse_path(@team0.slug) ], [ period_label ] ] : [ [ @team0.name ] ]) %>
 <h1>
   <%= @team0.short_name %>
   <%= period_label %>

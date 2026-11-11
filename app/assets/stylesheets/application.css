@@ -263,6 +263,23 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+/* パンくずリスト (shared/breadcrumbs), small above the heading, wrapping on a phone. */
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.breadcrumbs li + li::before {
+  content: "›";
+  margin: 0 0.5rem;
+}
+
 .week-heading {
   font-size: 1.1rem;
   margin: 2rem 0 0.75rem;

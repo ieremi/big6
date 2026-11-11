@@ -13,7 +13,7 @@
   date = ->(day) { "#{day.month}月#{day.day}日" }
 %>
 
-<p><%= link_to "← 読み物", articles_path %></p>
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
 
 <article class="article">
   <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>

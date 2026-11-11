@@ -1,6 +1,12 @@
 <%# The top of every season tab: its title, the season in a sentence or two (SeasonSummary), the Prime Minister(s) and
     GDP per capita of the time, its tags (SeasonTags), then the tabs.
     Locals: season, heading (SeasonsController::Heading, from #season_heading), current (the tab, as seasons/_tabs takes it). %>
+<%# The 試合日程 tab is the season's own page; the others sit under it. %>
+<% if current == :games %>
+  <% breadcrumbs [ "シーズン一覧", seasons_path ], [ season.title ] %>
+<% else %>
+  <% breadcrumbs [ "シーズン一覧", seasons_path ], [ season.title, season_path(season.year, season.term) ], [ SeasonsHelper::SEASON_TAB_LABELS.fetch(current) ] %>
+<% end %>
 <h1><%= season.title %></h1>
 
 <p class="game-summary"><%= heading.summary %></p>

@@ -17,7 +17,7 @@
   current_freshmen = current ? leaders.select { |entry| entry.player.enter_year == current.season.year } : []
 %>
 
-<p><%= link_to "← 読み物", articles_path %></p>
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
 
 <article class="article">
   <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>

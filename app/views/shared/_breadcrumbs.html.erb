@@ -1,0 +1,14 @@
+<%# The page's trail (BreadcrumbsHelper#breadcrumbs): links up to the page itself, which is plain text.
+    Locals: crumbs ([label, path] pairs, トップ first). %>
+<nav class="breadcrumbs" aria-label="パンくずリスト">
+  <ol>
+    <% crumbs.each_with_index do |(label, path), index| %>
+      <% if index == crumbs.size - 1 %>
+        <li aria-current="page"><%= label %></li>
+      <% else %>
+        <li><%= link_to label, path %></li>
+      <% end %>
+    <% end %>
+  </ol>
+</nav>
+<%= structured_data(breadcrumb_list_data(crumbs)) %>
