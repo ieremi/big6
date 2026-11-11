@@ -1,35 +1,10 @@
 <%
   content_for :title, site_title("#{@season.title} 試合結果・日程")
-  summary = SeasonSummary.new(@season, @standings, @games.to_a)
-  content_for :description, summary.to_s
+  content_for :description, @heading.summary.to_s
   content_for :image_url, season_og_image_url(@season.year, @season.term)
 %>
 
-<h1><%= @season.title %></h1>
-<%= render "seasons/tabs", season: @season, current: :games %>
-
-<%# The season in a sentence or two (SeasonSummary), also the page's description. %>
-<p class="game-summary"><%= summary %></p>
-
-<% if @prime_ministers.any? || @gdp_per_capita %>
-  <p class="muted">
-    <% if @prime_ministers.any? %>
-      内閣総理大臣：<%= @prime_ministers.map(&:name).join(" → ") %>
-    <% end %>
-    <% if @prime_ministers.any? && @gdp_per_capita %><br><% end %>
-    <% if @gdp_per_capita %>
-      日本の1人あたりGDP：<%= number_with_delimiter(@gdp_per_capita) %> USD/y
-    <% end %>
-  </p>
-<% end %>
-
-<% if @tags.any? %>
-  <p>
-    <% @tags.each do |t| %>
-      <span class="season-tag"><%= t.label %></span>
-    <% end %>
-  </p>
-<% end %>
+<%= render "seasons/heading", season: @season, heading: @heading, current: :games %>
 
 <% if @games.any? %>
   <%# The calendar has the games shown: those of the chosen universities, or all of them. %>

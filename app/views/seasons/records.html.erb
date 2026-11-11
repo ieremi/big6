@@ -6,8 +6,7 @@
   content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Records")
 %>
 
-<h1><%= @season.title %></h1>
-<%= render "seasons/tabs", season: @season, current: :records %>
+<%= render "seasons/heading", season: @season, heading: @heading, current: :records %>
 
 <% sections = [
      render("seasons/team_stats", stats: @team_stats, standings: @standings),

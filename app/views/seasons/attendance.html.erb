@@ -10,8 +10,7 @@
   previous = @attendance.previous
 %>
 
-<h1><%= @season.title %></h1>
-<%= render "seasons/tabs", season: @season, current: :attendance %>
+<%= render "seasons/heading", season: @season, heading: @heading, current: :attendance %>
 
 <% if @attendance.count.positive? %>
   <section class="season-attendance">

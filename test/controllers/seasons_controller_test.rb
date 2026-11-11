@@ -39,6 +39,20 @@ class SeasonsControllerTest < ActionDispatch::IntegrationTest
     assert_match "日本の1人あたりGDP：44,000 USD/y", response.body
   end
 
+  test "every tab has the season's summary and Prime Minister under its title, above the tabs" do
+    create_season_with_game(1995, "spring", "1995-04-08")
+
+    [ standings_season_url(1995, "spring"), attendance_season_url(1995, "spring"),
+      records_season_url(1995, "spring"), players_season_url(1995, "spring") ].each do |url|
+      get url
+
+      assert_response :success
+      assert_select "h1 + p.game-summary", text: /\A東京六大学野球 1995年春季リーグ戦は/
+      assert_match "内閣総理大臣：村山富市", response.body
+      assert_operator response.body.index("内閣総理大臣"), :<, response.body.index("season-tabs")
+    end
+  end
+
   test "show joins Prime Ministers with an arrow when the office changed during the season" do
     create_season_with_game(2001, "spring", "2001-04-14")
     Game.create!(season: Season.find_by!(year: 2001, term: "spring"), team0: universities(:two), team1: universities(:one),

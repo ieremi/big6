@@ -4,8 +4,7 @@
   content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Standings")
 %>
 
-<h1><%= @season.title %></h1>
-<%= render "seasons/tabs", season: @season, current: :standings %>
+<%= render "seasons/heading", season: @season, heading: @heading, current: :standings %>
 
 <% if @season.source_standings %>
   <%= render "seasons/printed_standings", season: @season %>

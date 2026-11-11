@@ -5,6 +5,9 @@ class SeasonsController < ApplicationController
   # CPU/memory and get the instance restarted (502s).
   TAGS_CACHE_EXPIRY = 7.days
 
+  # What every season tab shows under its title (season_heading, seasons/_heading).
+  Heading = Data.define(:summary, :prime_ministers, :gdp_per_capita, :tags)
+
   def index
     # Only the columns the list needs: scorebook_data/scorebook_games are large
     # JSONB blobs (~20MB across all seasons) that nothing on this page reads.
@@ -46,20 +49,17 @@ class SeasonsController < ApplicationController
     end
 
     season_weeks = SeasonWeeks.new(@games)
-    @standings = Standings.new(@season, games: @games.to_a) # for the page's description
+    season_heading(@games.to_a) # the summary is also the page's description
     @weeks = season_weeks.weeks_with(@selected_university_ids)
     @shown_game_count = @weeks.sum { |week| week.games.count { |game| !game.not_held? } }
     @played_game_count = @games.count { |game| !game.not_held? }
-    @prime_ministers = PrimeMinisterTerm.serving_between(*@games.map(&:played_on).minmax).to_a
-    @gdp_per_capita = GdpPerCapitaYear.usd_for(@season.year)
-    @tags = SeasonTags.new(@season).tags
     @conventions = ScheduleConventions.for(@season)
   end
 
   # The season's second tab (seasons/_tabs): the standings and 優勝のゆくえ.
   def standings
     @season = Season.find_by!(year: params[:year], term: params[:term])
-    @standings = Standings.new(@season)
+    season_heading
     # 優勝のゆくえ once the game picked with its button had ended (after), or as it stands now.
     @title_race_timeline = TitleRaceTimeline.new(@season)
     @title_race_point = @title_race_timeline.find(params[:after])
@@ -76,14 +76,14 @@ class SeasonsController < ApplicationController
     @season = Season.find_by!(year: params[:year], term: params[:term])
     @attendance = SeasonAttendance.new(@season)
     @attendance_trend = SeasonAttendanceTrend.new(@season)
-    @standings = Standings.new(@season) # each university's figures, in the order of the table
+    season_heading # @standings: each university's figures, in the order of the table
   end
 
   # The fourth tab: チーム成績, the records and 強さの推移, each worked out apart
   # from the standings tab's title race, so neither page waits on the other's.
   def records
     @season = Season.find_by!(year: params[:year], term: params[:term])
-    @standings = Standings.new(@season) # the order the team stats are listed in
+    season_heading # @standings: the order the team stats are listed in
     # チーム成績: each university's batting average, ERA and so on, from the box scores.
     @team_stats = TeamStats.new(@season)
     # 連続記録 and ひさしぶりの記録: the runs of seasons in a row this one adds to, has
@@ -98,6 +98,7 @@ class SeasonsController < ApplicationController
   # places at first, as the league ranks them, and everyone with top=all.
   def players
     @season = Season.find_by!(year: params[:year], term: params[:term])
+    season_heading
     @universities = University.where(id: @season.games.pluck(:team0_id, :team1_id).flatten.uniq).order(:position).to_a
     @selected_university_ids = Array(params[:university_ids]).map(&:to_i) & @universities.map(&:id)
     @top = PlayerRanking.top_from(params[:top])
@@ -135,6 +136,20 @@ class SeasonsController < ApplicationController
   end
 
   private
+
+  # What every season tab shows under its title (seasons/_heading), as @heading: the season in a sentence
+  # or two (SeasonSummary), the Prime Minister(s) and GDP per capita of the time, and its tags. Sets
+  # @standings too, which most tabs use anyway. games: the season's games, when the action has them already.
+  def season_heading(games = nil)
+    games ||= @season.games.includes(:team0, :team1, :season).order(:played_on, :game_number).to_a
+    @standings = Standings.new(@season, games: games)
+    @heading = Heading.new(
+      summary: SeasonSummary.new(@season, @standings, games),
+      prime_ministers: PrimeMinisterTerm.serving_between(*games.map(&:played_on).minmax).to_a,
+      gdp_per_capita: GdpPerCapitaYear.usd_for(@season.year),
+      tags: SeasonTags.new(@season).tags
+    )
+  end
 
   # { season_id => [Tag, ...] } for the seasons that have games. Each season is
   # cached separately (one multi-read), so a warm request loads no game or

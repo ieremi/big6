@@ -8,8 +8,7 @@
   content_for :image_url, season_og_image_url(@season.year, @season.term, label: "Players")
 %>
 
-<h1><%= @season.title %></h1>
-<%= render "seasons/tabs", season: @season, current: :players %>
+<%= render "seasons/heading", season: @season, heading: @heading, current: :players %>
 
 <% if @player_stats.any? || @selected_university_ids.any? %>
   <%= render "seasons/university_filter", url: players_season_path(@season.year, @season.term), universities: @universities,

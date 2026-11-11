@@ -1,0 +1,28 @@
+<%# The top of every season tab: its title, the season in a sentence or two (SeasonSummary), the Prime Minister(s) and
+    GDP per capita of the time, its tags (SeasonTags), then the tabs.
+    Locals: season, heading (SeasonsController::Heading, from #season_heading), current (the tab, as seasons/_tabs takes it). %>
+<h1><%= season.title %></h1>
+
+<p class="game-summary"><%= heading.summary %></p>
+
+<% if heading.prime_ministers.any? || heading.gdp_per_capita %>
+  <p class="muted">
+    <% if heading.prime_ministers.any? %>
+      内閣総理大臣：<%= heading.prime_ministers.map(&:name).join(" → ") %>
+    <% end %>
+    <% if heading.prime_ministers.any? && heading.gdp_per_capita %><br><% end %>
+    <% if heading.gdp_per_capita %>
+      日本の1人あたりGDP：<%= number_with_delimiter(heading.gdp_per_capita) %> USD/y
+    <% end %>
+  </p>
+<% end %>
+
+<% if heading.tags.any? %>
+  <p>
+    <% heading.tags.each do |t| %>
+      <span class="season-tag"><%= t.label %></span>
+    <% end %>
+  </p>
+<% end %>
+
+<%= render "seasons/tabs", season: season, current: current %>
