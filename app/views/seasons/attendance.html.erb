@@ -1,7 +1,7 @@
 <%# The season's third tab (seasons/_tabs): 観衆. The season's total and average against the same term a year earlier
     (SeasonAttendance), the weekly running total against it (SeasonAttendanceTrend), each university's figures as
-    Standings counts them (every game it played, and those on Saturdays and Sundays), most first, and the
-    best-attended games. A season without figures says so. %>
+    Standings counts them (every game it played, and those on Saturdays and Sundays), most first, each pair's games
+    in a grid like the standings table's, and the best-attended games. A season without figures says so. %>
 <%
   content_for :title, site_title("#{@season.title} 観衆")
   content_for :description, "#{@season.title}の東京六大学野球の観衆数。シーズンの合計と1試合平均、前年同季との比較、週ごとの累積、大学ごとの観衆、観衆の多かった試合。"
@@ -69,6 +69,41 @@
       </table>
     </div>
     <p class="muted">その大学が出た試合の観衆で、1試合平均の多い順です。観衆の発表のない試合はのぞいています。</p>
+  </section>
+
+  <%# Each pair's games, one figure a game in the order played (1回戦/2回戦/...), laid out as the standings table is
+      (the standings' order, the same cell on both sides), each cell linking to the pair's games. %>
+  <section class="matchup-attendance">
+    <h2 class="card-heading">対戦ごとの観衆</h2>
+    <div class="table-scroll">
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th class="col-team"></th>
+            <% @standings.rows.each do |col_row| %>
+              <th><span class="team-chip" style="background: <%= col_row.university.color %>"><%= col_row.university.initial %></span></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @standings.rows.each do |row| %>
+            <tr>
+              <td class="col-team"><span class="team-chip" style="background: <%= row.university.color %>"><%= row.university.initial %></span></td>
+              <% @standings.rows.each do |col_row| %>
+                <td class="result-cell">
+                  <% if col_row.university == row.university %>
+                    <span class="dash">---</span>
+                  <% else %>
+                    <% figures = @standings.attendances_between(row.university, col_row.university).map { |a| a ? number_with_delimiter(a) : "-" } %>
+                    <%= link_to safe_join(figures, safe_join([ "/", tag.br ])), matchup_season_path(row.university.slug, col_row.university.slug, @season.year, @season.term) if figures.any? %>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="top-attendance">

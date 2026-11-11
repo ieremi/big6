@@ -26,21 +26,12 @@
     </p>
   <% end %>
 
-  <div class="table-zoom" data-controller="cell-toggle table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
+  <div class="table-zoom" data-controller="table-zoom" data-action="keydown.esc@window->table-zoom#closeOnEscape">
     <div class="table-zoom-backdrop" data-table-zoom-target="backdrop" data-action="click->table-zoom#close"></div>
 
     <div class="table-scroll" data-table-zoom-target="panel">
       <div class="table-zoom-bar">
         <button type="button" class="table-zoom-btn" data-table-zoom-target="button" data-action="table-zoom#toggle">⤢ 拡大表示</button>
-      </div>
-
-      <div class="period-toolbar">
-        <span class="muted">セル表示:</span>
-        <button type="button" class="period-btn" data-mode="results" data-cell-toggle-target="button" data-action="cell-toggle#setMode">対戦成績</button>
-        <button type="button" class="period-btn" data-mode="attendance" data-cell-toggle-target="button" data-action="cell-toggle#setMode">観衆数</button>
-        <%# Weekday games draw far smaller crowds; this leaves them out of the totals and averages (土日の試合だけ). %>
-        <button type="button" class="period-btn" data-cell-toggle-target="weekendButton" data-action="cell-toggle#toggleWeekends"
-                data-shortcut="h" data-shortcut-label="観衆: 平日の試合をのぞく" aria-pressed="false">平日の試合をのぞく <kbd>h</kbd></button>
       </div>
 
       <%# Sortable in the browser by the figures on the right (SeasonsHelper::STANDINGS_COLUMNS), which show only in 拡大表示; the rank keeps the standings' own order, and 「並べ替えをリセット」 brings it back. The rank and team columns are too narrow for a sort button. %>
@@ -77,27 +68,18 @@
                     <span class="dash">---</span>
                   <% else %>
                     <% results_text = @standings.results_between(row.university, col_row.university).join %>
-                    <% attendance_text = @standings.attendances_between(row.university, col_row.university)
-                         .map { |a| a ? number_with_delimiter(a) : "-" }.join("/") %>
-                    <%= link_to results_text,
-                          matchup_season_path(row.university.slug, col_row.university.slug, @season.year, @season.term),
-                          data: { cell_toggle_target: "cell", results: results_text, attendance: attendance_text } %>
+                    <%= link_to results_text, matchup_season_path(row.university.slug, col_row.university.slug, @season.year, @season.term) %>
                   <% end %>
                 </td>
               <% end %>
-              <td data-cell-toggle-target="resultsColumn"><%= row.games %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.wins %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.losses %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.draws %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.points %></td>
-              <td data-cell-toggle-target="resultsColumn" data-sort-value="<%= row.percentage %>"><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.runs_scored %></td>
-              <td data-cell-toggle-target="resultsColumn"><%= row.runs_allowed %></td>
-              <% total, weekend_total = [ false, true ].map { |weekends_only| number_with_delimiter(row.total_attendance(weekends_only:)) } %>
-              <% average, weekend_average = [ false, true ].map { |weekends_only| row.average_attendance(weekends_only:)&.then { number_with_delimiter(_1) } || "—" } %>
-              <%# sort_value follows the figure shown (cell-toggle sets it when 平日の試合をのぞく is switched). Hidden until cell-toggle shows the attendance. %>
-              <%= tag.td total, hidden: true, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: total, weekend: weekend_total, sort_value: total.delete(",") } %>
-              <%= tag.td average, hidden: true, data: { cell_toggle_target: "attendanceColumn attendanceFigure", all: average, weekend: weekend_average, sort_value: average.delete(",") } %>
+              <td data-stat-column><%= row.games %></td>
+              <td data-stat-column><%= row.wins %></td>
+              <td data-stat-column><%= row.losses %></td>
+              <td data-stat-column><%= row.draws %></td>
+              <td data-stat-column><%= row.points %></td>
+              <td data-stat-column data-sort-value="<%= row.percentage %>"><%= number_with_precision(row.percentage, precision: 3).sub(/\A0/, "") %></td>
+              <td data-stat-column><%= row.runs_scored %></td>
+              <td data-stat-column><%= row.runs_allowed %></td>
             </tr>
           <% end %>
         </tbody>

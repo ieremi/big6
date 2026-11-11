@@ -22,13 +22,16 @@ class WeekendAttendanceControllerTest < ActionDispatch::IntegrationTest
     assert_select "span[data-period-filter-target=rowSum][data-attendance-all-weekend='30,000']"
   end
 
-  test "the standings carry both attendance figures, with a button to switch" do
-    get standings_season_url(2026, "spring")
+  test "the season's 観衆 tab gives each university's average with and without the weekday games, and each pair's games" do
+    get attendance_season_url(2026, "spring")
 
     assert_response :success
-    assert_select "button[data-action='cell-toggle#toggleWeekends'][data-shortcut=h]", text: /平日の試合をのぞく/
-    assert_select "td[data-all='11,000'][data-weekend='15,000']", 2
-    assert_select "td[data-all='33,000'][data-weekend='30,000']", 2
+    # 試合, 合計, 1試合平均, 土日の1試合平均
+    assert_select "section.university-attendance tbody tr", 2 do |rows|
+      assert_equal %w[3 33,000 11,000 15,000], rows.first.css("td").drop(1).map { |td| td.text.strip }
+    end
+    assert_select "section.matchup-attendance td.result-cell a", text: "20,000/10,000/3,000", count: 2
+    assert_select "section.matchup-attendance td.result-cell a br", 4
   end
 
   test "the matchup API counts the weekend games only when asked" do

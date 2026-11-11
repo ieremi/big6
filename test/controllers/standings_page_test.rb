@@ -75,27 +75,25 @@ class StandingsPageTest < ActionDispatch::IntegrationTest
     assert_select "table.standings-table[data-controller~=sortable-table]"
     sortable = css_select("table.standings-table th.sortable button[data-action='sortable-table#sort']").map { |button| button.text.split.first }
     assert_equal SeasonsHelper::STANDINGS_COLUMNS.keys, sortable
-    assert_select "th.sortable[data-cell-toggle-target=resultsColumn] button[data-shortcut=S][data-sortable-table-first-param=desc]", text: /得点/
-    assert_select "th.sortable[data-cell-toggle-target=resultsColumn] button[data-shortcut=E][data-sortable-table-first-param=asc]", text: /失点/
-    assert_select "th.sortable[data-cell-toggle-target=attendanceColumn] button[data-shortcut=T]", text: /総観衆/
+    assert_select "th.sortable[data-stat-column] button[data-shortcut=S][data-sortable-table-first-param=desc]", text: /得点/
+    assert_select "th.sortable[data-stat-column] button[data-shortcut=E][data-sortable-table-first-param=asc]", text: /失点/
     assert_select "th.col-rank:not(.sortable)"
   end
 
-  test "the attendance columns start hidden, headings and figures alike, until the attendance is chosen" do
-    get standings_season_url(2026, "spring")
-
-    assert_select "th.sortable[data-cell-toggle-target=attendanceColumn][hidden]", 2
-    assert_select "td[data-cell-toggle-target~=attendanceColumn][hidden]", 2 * css_select("table.standings-table tbody tr").size
-    assert_select "th.sortable[data-cell-toggle-target=resultsColumn]:not([hidden])", SeasonsHelper::STANDINGS_COLUMNS.size - 2
-  end
-
-  test "the rate and the attendance sort by their values, not by the text shown" do
+  test "the standings have no attendance: that is on the 観衆 tab" do
     Game.update_all(attendance: 12_000)
 
     get standings_season_url(2026, "spring")
 
+    assert_no_match "観衆数", response.body
+    assert_no_match "12,000", response.body
+    assert_select "td[data-stat-column]", SeasonsHelper::STANDINGS_COLUMNS.size * css_select("table.standings-table tbody tr").size
+  end
+
+  test "the rate sorts by its value, not by the text shown" do
+    get standings_season_url(2026, "spring")
+
     assert_select "td[data-sort-value='0.5']", text: ".500"
-    assert_select "td[data-all='24,000'][data-sort-value='24000']", 2
   end
 
   test "teams level on both 勝ち点 and 勝率 share a place on the page and in the API" do
