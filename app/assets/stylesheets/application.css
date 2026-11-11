@@ -322,6 +322,29 @@ table {
   width: 25%;
 }
 
+/* The 観衆 tab's best-attended games put a place before the date. Those four
+   take the whole width above, which left the place no room (its digit ran
+   into the date), so here they give some of it up. */
+.week-games-table.ranked .col-place {
+  width: 8%;
+}
+
+.week-games-table.ranked .col-date {
+  width: 20%;
+}
+
+.week-games-table.ranked .col-round {
+  width: 12%;
+}
+
+.week-games-table.ranked .col-matchup {
+  width: 38%;
+}
+
+.week-games-table.ranked .col-attendance {
+  width: 22%;
+}
+
 th,
 td {
   padding: 0.65rem 1rem;
