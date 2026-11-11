@@ -10,7 +10,7 @@
 # Saturday's 第1試合, 11:00 to 13:30, and the second as the 第2試合, 14:00 to 16:30;
 # on Sunday the order turns round and each card's sides swap, as the league does.
 # A day shared with the professionals (プロ併用日: ヤクルト at home at 神宮 that day,
-# from the 2027 セ・リーグ schedule published on 2026-11-05) starts at 10:00
+# from the 2027 schedule on the スワローズ site, read 2026-11-11) starts at 10:00
 # instead, both games taken as an hour earlier. The 早慶戦, alone on its days, is all-day.
 class SchedulePrediction2027Spring
   # [hour, minute] of the start and the end of the day's first and second game.
