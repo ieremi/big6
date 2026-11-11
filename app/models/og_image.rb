@@ -56,10 +56,17 @@ class OgImage
     (Vips::Image.black(WIDTH, HEIGHT) + hex_to_rgb(hex)).cast(:uchar).copy(interpretation: :srgb)
   end
 
+  # The colour of the gap between stripes: the site's dark background, as the contrast band.
+  STRIPE_GAP_RGB = [ 17, 24, 39 ].freeze
+  STRIPE_GAP = 12
+
+  # Vertical stripes, one per colour, each set apart from the next by a thin dark
+  # gap: some universities' colours clash where they touch (orange beside crimson).
   def stripe_background(hexes)
-    band_width = (WIDTH.to_f / hexes.size).ceil
+    band_width = ((WIDTH - STRIPE_GAP * (hexes.size - 1)).to_f / hexes.size).ceil
+    gap = (Vips::Image.black(STRIPE_GAP, HEIGHT) + STRIPE_GAP_RGB).cast(:uchar)
     bands = hexes.map { |hex| (Vips::Image.black(band_width, HEIGHT) + hex_to_rgb(hex)).cast(:uchar) }
-    bands.reduce { |acc, band| acc.join(band, :horizontal) }.crop(0, 0, WIDTH, HEIGHT).copy(interpretation: :srgb)
+    bands.reduce { |acc, band| acc.join(gap, :horizontal).join(band, :horizontal) }.crop(0, 0, WIDTH, HEIGHT).copy(interpretation: :srgb)
   end
 
   def contrast_band(bg, center_y:, height:, opacity: 140)
