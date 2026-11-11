@@ -8,12 +8,23 @@
 # the Monday after, is played only at one win each, so the calendar leaves it
 # out. The week's first card in WEEKS (and the article's table) is taken as
 # Saturday's 第1試合, 11:00 to 13:30, and the second as the 第2試合, 14:00 to 16:30;
-# on Sunday the order turns round and each card's sides swap, as the league does;
-# a day shared with the professionals (プロ併用日, not yet known) starts at 10:00
-# instead, as the article says. The 早慶戦, alone on its days, is all-day.
+# on Sunday the order turns round and each card's sides swap, as the league does.
+# A day shared with the professionals (プロ併用日: ヤクルト at home at 神宮 that day,
+# from the 2027 セ・リーグ schedule published on 2026-11-05) starts at 10:00
+# instead, the second game taken as 12:30. The 早慶戦, alone on its days, is all-day.
 class SchedulePrediction2027Spring
   # [hour, minute] of the start and the end of the day's first and second game.
   GAME_TIMES = [ [ [ 11, 0 ], [ 13, 30 ] ], [ [ 14, 0 ], [ 16, 30 ] ] ].freeze
+  # The same on a プロ併用日.
+  SHARED_GAME_TIMES = [ [ [ 10, 0 ], [ 12, 30 ] ], [ [ 12, 30 ], [ 15, 0 ] ] ].freeze
+
+  # The predicted Saturdays and Sundays on which ヤクルト plays at home at 神宮 (プロ併用日).
+  # Of the Mondays a 3回戦 could fall on, only 5月3日 (祝), after the fourth week, is one.
+  PRO_SHARED_DAYS = [
+    Date.new(2027, 4, 17), Date.new(2027, 4, 18),
+    Date.new(2027, 5, 8), Date.new(2027, 5, 9),
+    Date.new(2027, 5, 15), Date.new(2027, 5, 16)
+  ].freeze
 
   # [the week's Saturday, its cards as pairs of slugs (which side bats first isn't known)]
   WEEKS = [
@@ -52,7 +63,8 @@ class SchedulePrediction2027Spring
           # sides swapped too (明大–東大 and 早大–立大, then 立大–早大 and 東大–明大); the 早慶戦 alone, all-day.
           slot = round == 1 ? order : week.cards.size - 1 - order
           first, second = round == 1 ? [ a, b ] : [ b, a ]
-          start, finish = (GAME_TIMES[slot] if week.cards.size > 1)&.map { |hour, minute| tokyo.local(day.year, day.month, day.day, hour, minute) }
+          times = PRO_SHARED_DAYS.include?(day) ? SHARED_GAME_TIMES : GAME_TIMES
+          start, finish = (times[slot] if week.cards.size > 1)&.map { |hour, minute| tokyo.local(day.year, day.month, day.day, hour, minute) }
           calendar.add_event(
             uid: "prediction-2027-spring-#{a.slug}-#{b.slug}-#{round}@big6",
             summary: "【予想】#{first.short_name} vs #{second.short_name}#{IcsGameEvent::CIRCLED_DIGITS[round - 1]}",

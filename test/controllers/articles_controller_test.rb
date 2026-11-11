@@ -232,6 +232,10 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     # On Sunday the other way round, each card's sides swapped: 立大–早大 first, then 東大–明大.
     assert_match(/DTSTART;TZID=Asia\/Tokyo:20270411T110000\r\n.*?SUMMARY:【予想】立大 vs 早大②/m, response.body)
     assert_match(/DTSTART;TZID=Asia\/Tokyo:20270411T140000\r\n.*?SUMMARY:【予想】東大 vs 明大②/m, response.body)
+    # A プロ併用日 (4月17日, ヤクルト at home at 神宮) starts at 10:00, the second game at 12:30.
+    assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T100000"
+    assert_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T123000"
+    assert_not_includes response.body, "DTSTART;TZID=Asia/Tokyo:20270417T110000"
     assert_includes response.body, "DTSTART;VALUE=DATE:20270529" # the 早慶戦, all-day
     assert_includes response.body, "SUMMARY:【予想】早大 vs 立大①"
 
