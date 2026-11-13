@@ -102,8 +102,16 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           if stats.key?("points")
             assert_equal stats["points"], others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
           end
+          # 勝点 counting a draw as half a win (1933's single season).
+          if stats.key?("half_points")
+            assert_equal wins + Rational(draws, 2), Rational(stats["half_points"].to_s), team
+          end
           # Rounded in most tables, truncated in some (法政's .166 in 1923 spring).
-          ratio = Rational(wins, standings["average"] == "wins_per_game" ? games : wins + losses) * 1000
+          ratio = case standings["average"]
+          when "wins_per_game" then Rational(wins, games) * 1000
+          when "points_per_game" then Rational(2 * wins + draws, 2 * games) * 1000
+          else Rational(wins, wins + losses) * 1000
+          end
           candidates = ratio == 1000 ? [ "1.000" ] : [ ratio.round, ratio.floor ].map { |digits| format(".%03d", digits) }
           assert_includes candidates, stats["average"], team unless known.include?("standings.#{team}.率")
         end
