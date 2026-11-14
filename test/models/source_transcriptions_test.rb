@@ -160,7 +160,8 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
           assert_equal at.("塁打数"), bases.(at), label if columns.include?("塁打数") && !known.include?("#{key}.塁打数")
         end
 
-        season["teams"].each do |team, row|
+        # Some years print only 立教's players, without the teams (1934).
+        Hash(season["teams"]).each do |team, row|
           next if known.include?("season_batting.teams.#{team}")
 
           check.(team, "season_batting.teams.#{team}", ->(column) { row[columns.index(column)] })
@@ -169,7 +170,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
         players = Array(season["rikkio_players"]).map { |name, *row| [ name, ->(column) { row[player_columns.index(column)] } ] }
         players.each { |name, at| check.(name, "season_batting.rikkio_players[#{name}]", at) }
         # Some tables list only part of the team (rikkio_players_partial).
-        if players.any? && !season["rikkio_players_partial"]
+        if players.any? && !season["rikkio_players_partial"] && season.dig("teams", "rikkio")
           team = season.dig("teams", "rikkio")
           ((columns - %w[試合数 打撃率]) & player_columns).each do |column|
             next if known.include?("season_batting.teams.rikkio.#{column}")
