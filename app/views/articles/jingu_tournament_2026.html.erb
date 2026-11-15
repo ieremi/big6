@@ -1,0 +1,107 @@
+<%# 2026年 明治神宮野球大会の日取り: the 第57回明治神宮野球大会's games day by day (JinguTournament2026), as 日本学生野球協会's
+    schedule gave them on 2026-11-15, with 明治大 (the 東京六大学's representative) picked out, whose winner fills each blank
+    of the 大学の部, and calendars (.ics) of all the games or one division's. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  games = JinguTournament2026::GAMES
+  time = ->(game) { JinguTournament2026.time_label(game.start) }
+  date = ->(day) { "#{day.month}月#{day.day}日（#{%w[日 月 火 水 木 金 土][day.wday]}）" }
+  meiji = games.find { |game| [ game.team0, game.team1 ].include?("明治大") }
+%>
+
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <%# The lead (リード文), also for bringing readers over from X: it opens with what the page is. %>
+  <p class="article-lead">
+    第57回明治神宮野球大会は11月19日（木）から24日（火）まで、神宮球場で行われます。東京六大学代表の明治大は2回戦からの登場で、初戦は<%= date.(meiji.date) %>の第<%= meiji.number %>試合（<%= time.(meiji) %>）、相手は筑波大–中京大の勝者です。全試合の日程のカレンダー（.ics）もあります。
+  </p>
+
+  <h2 class="card-heading">日程</h2>
+  <% games.group_by(&:date).each do |day, day_games| %>
+    <h3 class="week-heading"><span class="week-date"><%= date.(day) %></span></h3>
+    <div class="table-scroll">
+      <table class="formula-table jingu-games">
+        <thead>
+          <tr><th></th><th>開始</th><th>部</th><th>回戦</th><th>対戦</th></tr>
+        </thead>
+        <tbody>
+          <% day_games.each do |game| %>
+            <tr class="<%= "highlight" if game == meiji %>">
+              <th>第<%= game.number %>試合</th>
+              <td><%= time.(game) %></td>
+              <td><%= game.division_label %></td>
+              <td><%= game.round %></td>
+              <td>
+                <%= game.matchup %>
+                <% if (note = JinguTournament2026.blank_note(game)) %><br><span class="muted"><%= note %></span><% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <% ics = ->(**options) { article_url(@article.slug, format: :ics, **options) } %>
+  <p>
+    カレンダーに追加：<%= link_to "全試合 (.ics)", ics.() %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.()), target: "_blank", rel: "noopener noreferrer" %>）・
+    <%= link_to "大学の部 (.ics)", ics.(division: "college") %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.(division: "college")), target: "_blank", rel: "noopener noreferrer" %>）・
+    <%= link_to "高校の部 (.ics)", ics.(division: "highschool") %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.(division: "highschool")), target: "_blank", rel: "noopener noreferrer" %>）
+  </p>
+  <%# The calendar's contents, loaded on opening (all the games). %>
+  <%= render "shared/ics_preview", url: article_path(@article.slug, format: :ics) %>
+  <p class="muted">
+    日程に載っているのは開始時刻だけなので、カレンダーでは1試合を2時間30分とし、次の試合の開始までに終わるようにしました。
+    雨などで日程が変わることがあります。
+  </p>
+
+  <h2 class="card-heading">明治大が優勝する場合の日取り</h2>
+  <p>
+    明治大は<%= link_to "2026年秋季", season_path(2026, "autumn") %>の東京六大学の代表です。2回戦から登場するので、優勝までは3試合です。
+  </p>
+  <div class="table-scroll">
+    <table class="formula-table meiji-path">
+      <thead>
+        <tr><th>回戦</th><th>日</th><th>開始</th><th>相手</th></tr>
+      </thead>
+      <tbody>
+        <% JinguTournament2026.meiji_path.each do |match, opponents| %>
+          <% game = match.game %>
+          <tr>
+            <th><%= game.round %></th>
+            <td><%= date.(game.date) %></td>
+            <td><%= time.(game) %></td>
+            <td><%= opponents.join("・") %><%= { 1 => "", 2 => "のどちらか" }.fetch(opponents.size, "のどれか") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    <%= link_to "明治大の試合だけのカレンダー (.ics)", ics.(division: "meiji") %>
+    （<%= link_to "Googleカレンダーに登録", google_calendar_subscribe_url(ics.(division: "meiji")), target: "_blank", rel: "noopener noreferrer" %>）。
+    勝ち進んだ場合の3試合を入れています。
+  </p>
+
+  <h2 class="card-heading">大学の部のトーナメント</h2>
+  <p>
+    出場は11校で、1回戦は3試合、2回戦から明治大・仙台大・亜細亜大が登場します。準決勝は11月23日（月・祝）、決勝は24日（火）の1:00 pmからです。
+    東都大学の代表の亜細亜大とは、勝ち進めば決勝で当たります。
+  </p>
+  <%= render "articles/jingu_bracket" %>
+
+  <p class="muted">
+    <%= link_to "日本学生野球協会の試合日程", JinguTournament2026::SOURCE_URL, target: "_blank", rel: "noopener noreferrer" %>と
+    <%= link_to "組み合わせ（大学の部）", JinguTournament2026::BRACKET_URL, target: "_blank", rel: "noopener noreferrer" %>（2026年11月15日時点）によります。
+    球場は明治神宮野球場です。
+  </p>
+</article>

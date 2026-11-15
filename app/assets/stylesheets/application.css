@@ -2329,3 +2329,50 @@ tr.bench-only td a {
 .formula-table.site-changes td:first-child {
   white-space: nowrap;
 }
+
+/* The 明治神宮野球大会 article (articles/jingu_tournament_2026): the 東京六大学
+   representative's game picked out in the day's table. */
+.jingu-games tr.highlight th,
+.jingu-games tr.highlight td {
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* The 明治神宮野球大会's 大学の部 bracket (articles/_jingu_bracket), with 明治大's
+   way to the title in the accent colour. */
+.jingu-bracket {
+  margin: 1rem 0;
+}
+
+.jingu-bracket svg {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+.jingu-bracket text {
+  fill: var(--text);
+  font-size: 12px;
+}
+
+.jingu-bracket .jingu-bracket-day {
+  fill: var(--text-muted);
+  font-size: 9px;
+}
+
+.jingu-bracket .jingu-bracket-meiji {
+  fill: var(--accent);
+  font-weight: 700;
+}
+
+.jingu-bracket-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.jingu-bracket-path {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: square;
+}

@@ -11,6 +11,10 @@ class Article
 
   ALL = [
     Entry.new(
+      slug: "jingu-tournament-2026", title: "2026年 明治神宮野球大会の日取り", published_on: Date.new(2026, 11, 15),
+      description: "第57回明治神宮野球大会（11月19日〜24日・神宮球場）の高校の部・大学の部の日程と開始時刻、明治大の初戦、大学の部の組み合わせ。カレンダー（.ics）つき。"
+    ),
+    Entry.new(
       slug: "site-changes-2026-autumn", title: "2026年秋季の当サイトの進歩", published_on: Date.new(2026, 11, 10),
       description: "2026年秋季リーグ戦のあいだに当サイトに加わったもの。日時と、そのときどの試合が行われていたかと、変更の内容。"
     ),

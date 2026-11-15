@@ -225,6 +225,36 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "figure.week-diagram svg[aria-label=?] .week-diagram-idle", "第8週の組み合わせ：早大–慶大", 4
   end
 
+  test "the 明治神宮野球大会 article gives every game day by day, with 明治大's first, and calendars of either division" do
+    get article_path("jingu-tournament-2026")
+
+    assert_response :success
+    assert_select "table.jingu-games tbody tr", 19
+    assert_select "table.jingu-games tr.highlight td", text: /明治大 vs 未定/
+    assert_select "table.jingu-games td", text: "1:30 pm"
+    assert_match "11月21日（土）の第3試合（1:30 pm）", css_select("p.article-lead").first.text
+
+    get article_path("jingu-tournament-2026", format: :ics)
+    assert_equal 19, response.body.scan("BEGIN:VEVENT").size
+    assert_match(/DTSTART;TZID=Asia\/Tokyo:20261121T133000\r\n.*?SUMMARY:【神宮大会・大学】明治大 vs 未定（2回戦）/m, response.body)
+    # Two and a half hours, but no later than the next game: 8:30 am then 11:00 am.
+    assert_match(/DTSTART;TZID=Asia\/Tokyo:20261119T083000\r\nDTEND;TZID=Asia\/Tokyo:20261119T110000/, response.body)
+
+    # If 明治大 wins it: three games, and the bracket with its way drawn in.
+    get article_path("jingu-tournament-2026")
+    assert_select "table.meiji-path tbody tr", 3
+    assert_select "table.meiji-path tbody tr:first-child td", text: "筑波大・中京大のどちらか"
+    assert_select "figure.jingu-bracket svg text", text: "日本体育大"
+    assert_select "figure.jingu-bracket line.jingu-bracket-path", 7 # 明治大 to 2回戦, on to 準決勝 and 決勝 (two each), and 優勝
+
+    get article_path("jingu-tournament-2026", format: :ics, division: "meiji")
+    assert_equal 3, response.body.scan("BEGIN:VEVENT").size
+
+    get article_path("jingu-tournament-2026", format: :ics, division: "college")
+    assert_equal 10, response.body.scan("BEGIN:VEVENT").size # 11 universities
+    assert_no_match "高校", response.body.split("BEGIN:VEVENT", 2).last
+  end
+
   test "the 2027 spring schedule comes as a calendar, 慶大 first on asking, and other articles have none" do
     create_the_six
     get article_path("schedule-2027-spring", format: :ics)

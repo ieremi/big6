@@ -3,7 +3,9 @@ class ArticlesController < ApplicationController
   # Articles that come with a calendar (.ics) of the games they tell of: the
   # calendar for a request (first=keio for the other case of the prediction).
   CALENDARS = {
-    "schedule-2027-spring" => ->(params) { SchedulePrediction2027Spring.new(swapped: params[:first] == "keio") }
+    "schedule-2027-spring" => ->(params) { SchedulePrediction2027Spring.new(swapped: params[:first] == "keio") },
+    # division=college or highschool for one division's games.
+    "jingu-tournament-2026" => ->(params) { JinguTournament2026.new(division: params[:division]) }
   }.freeze
 
   def index

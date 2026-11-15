@@ -1,0 +1,47 @@
+<%# The 明治神宮野球大会's 大学の部 as a bracket (JinguTournament2026::COLLEGE_BRACKET), drawn left to right: the
+    universities in the bracket page's order, each match at its round's column with its day, and the final's winner
+    (優勝) at the right. 明治大's way to the title is drawn in the accent colour. Locals: none. %>
+<%
+  bracket = JinguTournament2026::COLLEGE_BRACKET
+  column = { "1回戦" => 158, "2回戦" => 200, "準決勝" => 246, "決勝" => 292 }
+  leaf_x, champion_x, top, gap = 120, 334, 26, 26
+  leaves = bracket.universities
+  leaf_y = leaves.each_with_index.to_h { |name, i| [ name, top + i * gap ] }
+  # Each match's point (where its sides meet), worked out from its sides'.
+  point = lambda do |side|
+    next [ leaf_x, leaf_y.fetch(side) ] unless side.is_a?(JinguTournament2026::Match)
+
+    [ column.fetch(side.game.round), side.sides.sum { |s| point.(s).last } / 2.0 ]
+  end
+  on_path = ->(side) { side == "明治大" || (side.is_a?(JinguTournament2026::Match) && side.include?("明治大")) }
+  # The lines: [x1, y1, x2, y2, on 明治大's way], and each match's day by its point.
+  lines, labels = [], []
+  walk = lambda do |match|
+    mx, my = point.(match)
+    match.sides.each do |side|
+      sx, sy = point.(side)
+      lines << [ sx, sy, mx, sy, on_path.(side) ] << [ mx, sy, mx, my, on_path.(side) ]
+      walk.(side) if side.is_a?(JinguTournament2026::Match)
+    end
+    labels << [ mx, my, "#{match.date.month}/#{match.date.day}" ]
+  end
+  walk.(bracket)
+  fx, fy = point.(bracket)
+  lines << [ fx, fy, champion_x, fy, true ]
+  height = top + (leaves.size - 1) * gap + 22
+%>
+<figure class="jingu-bracket">
+  <svg viewBox="0 0 380 <%= height %>" role="img" aria-label="大学の部の組み合わせ。明治大が優勝するまでの道すじを色で示す">
+    <% lines.sort_by { |*, path| path ? 1 : 0 }.each do |x1, y1, x2, y2, path| %>
+      <line x1="<%= x1 %>" y1="<%= y1 %>" x2="<%= x2 %>" y2="<%= y2 %>" class="<%= path ? "jingu-bracket-path" : "jingu-bracket-line" %>" />
+    <% end %>
+    <% leaves.each do |name| %>
+      <text x="<%= leaf_x - 4 %>" y="<%= leaf_y[name] + 4 %>" text-anchor="end" class="<%= "jingu-bracket-meiji" if name == "明治大" %>"><%= name %></text>
+    <% end %>
+    <% labels.each do |x, y, day| %>
+      <text x="<%= x + 3 %>" y="<%= y - 4 %>" class="jingu-bracket-day"><%= day %></text>
+    <% end %>
+    <text x="<%= champion_x + 4 %>" y="<%= fy + 4 %>" class="jingu-bracket-meiji">優勝</text>
+  </svg>
+  <figcaption class="muted">数字は試合の日。色の線は、明治大が優勝するまでの道すじ。</figcaption>
+</figure>
