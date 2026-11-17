@@ -34,6 +34,7 @@ BIG6 Scorebook の試合データは1938年春季からで、それより前の�
   1933年・1934年の一シーズン制の表は、引分を0.5勝と数えた勝点（`half_points`）と、勝点÷試合数の率（`points_per_game`）。
   この2年は春秋で一つのシーズンなので、勝敗表と成績表は秋季のファイル（`1933_autumn.yml`・`1934_autumn.yml`）に書いている。
 - `team_fielding`: チーム守備成績。守備率の列だけの表（1935年秋季）は `team_fielding_average`。
+- `rikkio_pitching`: 立教の投手成績（1936年から）。列は `columns` に書く。
 - `other_games`: その他の戦績（リーグ戦以外の試合）。年がわからないものは `month_day` だけを書く。
 - `tour`: 遠征の戦績と一行。日付や球場がない試合もある。
 - `rikkio_roster`: その年の部員。
