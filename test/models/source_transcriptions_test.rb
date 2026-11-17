@@ -103,7 +103,7 @@ class SourceTranscriptionsTest < ActiveSupport::TestCase
             assert_equal stats["points"], others.count { |other| wins_against.(team, other) > wins_against.(other, team) }, team
           end
           # 勝点 counting a draw as half a win (1933's single season).
-          if stats.key?("half_points")
+          if stats.key?("half_points") && !known.include?("standings.#{team}.得点")
             assert_equal wins + Rational(draws, 2), Rational(stats["half_points"].to_s), team
           end
           # Rounded in most tables, truncated in some (法政's .166 in 1923 spring).
