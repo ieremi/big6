@@ -1,0 +1,118 @@
+<%# 早慶戦は順位が下の方が勝ちやすいか: in each season since 1938, which of 早慶 stood lower going into the 早慶戦 and
+    which took it (SokeiUnderdog), against every other card of the same seasons but 東大's, overall, by how far apart the
+    two stood and by era, with the latest seasons listed. Worked out from the data, so it follows it as seasons end. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  rows, cards = SokeiUnderdog.rows, SokeiUnderdog.cards
+  tally = SokeiUnderdog::Tally
+  all, others = tally.of(rows), tally.of(cards)
+  percent = ->(t) { t.rate ? "#{(t.rate * 100).round}%" : "—" }
+  name = { waseda: "早大", keio: "慶大" }
+  eras = { "1938〜1949年" => 1938..1949, "1950〜1969年" => 1950..1969, "1970〜1989年" => 1970..1989, "1990〜2009年" => 1990..2009, "2010年〜" => 2010.. }
+  p_value = SokeiUnderdog.p_value(all)
+%>
+
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <% if rows.empty? %>
+    <p class="muted">数えられる早慶戦がまだありません。</p>
+  <% else %>
+
+  <p class="article-lead">
+    「早慶戦は、それまでの順位が下の方が勝つ」とよく言われます。<%= SokeiUnderdog::FROM_YEAR %>年以降の<%= all.count %>回の早慶戦で確かめると、
+    順位が下だった方が勝ち点を取ったのは<%= all.lower_won %>回（<%= percent.(all) %>）で、上だった方が勝つことのほうが多くありました。
+    ほかのカードと比べても、早慶戦だけ下の方が勝ちやすいということはありません。
+  </p>
+
+  <h2 class="card-heading">数え方</h2>
+  <p>
+    シーズンごとに、早慶戦の1試合目より前の試合だけで順位をつけ（勝ち点、つぎに勝率）、早大と慶大のどちらが下だったかを見ます。
+    そして早慶戦で勝ち越した方（勝ち点を取った方）と比べます。早慶戦の前に早慶が同じ順位だった季と、早慶戦が1勝1敗や引き分けで勝ち越しがなかった季はのぞきました。
+    BIG6 Scorebook にすべての試合がある<%= SokeiUnderdog::FROM_YEAR %>年春季からの季を数え、優勝決定戦は数えていません。
+  </p>
+  <p>
+    くらべる相手として、同じ季のほかのカードも同じように数えました（カードの1試合目より前の順位と、勝ち点を取った方）。
+    東大とのカードは相手がほとんど勝つので、のぞいています。
+  </p>
+
+  <h2 class="card-heading">順位が下だった方が勝った割合</h2>
+  <div class="table-scroll">
+    <table class="formula-table sokei-underdog">
+      <thead>
+        <tr><th></th><th>早慶戦</th><th>ほかのカード（東大をのぞく）</th></tr>
+      </thead>
+      <tbody>
+        <% [ [ "すべて", ->(row) { true } ], [ "順位の差が1", ->(row) { row.gap == 1 } ], [ "順位の差が2以上", ->(row) { row.gap >= 2 } ] ].each do |label, keep| %>
+          <% mine, theirs = tally.of(rows.select(&keep)), tally.of(cards.select(&keep)) %>
+          <tr>
+            <th><%= label %></th>
+            <td><%= percent.(mine) %>（<%= mine.lower_won %>/<%= mine.count %>）</td>
+            <td><%= percent.(theirs) %>（<%= theirs.lower_won %>/<%= theirs.count %>）</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    早慶戦で順位が下だった方が勝ったのは<%= percent.(all) %>で、ほかのカードの<%= percent.(others) %>とほとんど変わらないか、やや少ないくらいです。
+    順位の差が大きいほど上の方が勝ちやすいのも、ほかのカードと同じです。
+  </p>
+  <p>
+    もし早慶戦が順位に関係なく五分五分なら、<%= all.count %>回のうち下の方の勝ちが<%= all.lower_won %>回以下（または同じだけ偏って多い）になる確率は
+    <%= number_with_precision(p_value * 100, precision: 1) %>%ほどです。
+    下の方が勝ちやすいどころか、ふつうのカードと同じように、順位が上の方が勝ちやすいと言えます。
+  </p>
+
+  <h2 class="card-heading">年代ごと</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead>
+        <tr><th>年代</th><th>早慶戦</th><th>下の方が勝った割合</th></tr>
+      </thead>
+      <tbody>
+        <% eras.each do |label, years| %>
+          <% era = tally.of(rows.select { |row| years.cover?(row.season.year) }) %>
+          <% next if era.count.zero? %>
+          <tr>
+            <th><%= label %></th>
+            <td><%= era.count %>回</td>
+            <td><%= percent.(era) %>（<%= era.lower_won %>回）</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    回数の少ない1940年代をのぞくと、どの年代も半分に届いておらず、とくに下の方が勝ちやすかった時期も見当たりません。
+    下の方が勝った早慶戦は、優勝がかかっていたり、大差を覆したりして記憶に残りやすいので、そう言われるのかもしれません。
+  </p>
+
+  <h2 class="card-heading">最近の早慶戦</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead>
+        <tr><th>シーズン</th><th>早慶戦の前の順位（早大・慶大）</th><th>勝ち点を取った方</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% rows.last(20).reverse_each do |row| %>
+          <tr>
+            <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
+            <td><%= row.waseda_rank %>位・<%= row.keio_rank %>位</td>
+            <td><%= name.fetch(row.winner) %></td>
+            <td><%= row.lower_won? ? "下の方が勝った" : "" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">
+    順位は早慶戦の1試合目より前の試合だけでつけたもので、シーズンの最終順位ではありません。勝ち点、つぎに勝率の順で、同じなら同じ順位です。
+  </p>
+  <% end %>
+</article>

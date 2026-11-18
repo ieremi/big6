@@ -8,6 +8,29 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the 早慶戦 article counts who stood lower going in and whether that side took the card" do
+    create_the_six
+    by = University.all.index_by(&:slug)
+    season = Season.find_or_create_by!(year: 2025, term: "spring")
+    game = lambda do |day, winner, loser, number|
+      Game.create!(season:, team0: by[winner], team1: by[loser], played_on: Date.new(2025, 5, day), game_number: number,
+        team0_score: 3, team1_score: 1, game_status: "試合終了")
+    end
+    # Before the 早慶戦: 早大 takes a card from 明大, 慶大 loses one to 法大, so 慶大 stands lower.
+    game.(3, "waseda", "meiji", 1); game.(4, "waseda", "meiji", 2)
+    game.(3, "hosei", "keio", 1); game.(4, "hosei", "keio", 2)
+    # 法大–明大 the same days, then the 早慶戦, which 慶大 takes.
+    game.(10, "hosei", "meiji", 1); game.(11, "meiji", "hosei", 2); game.(12, "hosei", "meiji", 3)
+    game.(31, "keio", "waseda", 1); game.(31, "keio", "waseda", 2)
+
+    get article_path("sokei-underdog")
+
+    assert_response :success
+    assert_select "table.sokei-underdog tbody tr:first-child td:first-of-type", text: "100%（1/1）"
+    assert_select "table.sokei-underdog tbody tr:first-child td:last-of-type", text: "0%（0/1）" # 法大–明大: 明大 stood lower, 法大 took it
+    assert_select "td", text: "下の方が勝った"
+  end
+
   test "the articles are listed, and each has its own page" do
     get articles_path
 
