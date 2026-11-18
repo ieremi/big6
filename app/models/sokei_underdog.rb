@@ -31,7 +31,14 @@ class SokeiUnderdog
     def self.of(rows) = new(count: rows.size, lower_won: rows.count { |row| row.respond_to?(:lower_won?) ? row.lower_won? : row.lower_won })
   end
 
+  # A season whose 早慶戦 cost its loser the title: taking the card (2-0 for it,
+  # the rest as played) would have put it top on its own (or level at the top,
+  # shared), but another university was champion (SeasonChampion).
+  Lost = Data.define(:season, :loser, :waseda_wins, :keio_wins, :champion, :loser_rank, :shared)
+
   def self.rows = computed.fetch(:rows)
+
+  def self.lost_titles = computed.fetch(:lost)
 
   def self.cards = computed.fetch(:cards)
 
@@ -44,15 +51,17 @@ class SokeiUnderdog
   end
 
   def self.computed
-    Rails.cache.fetch([ "sokei_underdog/v1", Game.maximum(:updated_at)&.to_i, Game.count ], expires_in: 1.week) { new.compute }
+    Rails.cache.fetch([ "sokei_underdog/v2", Game.maximum(:updated_at)&.to_i, Game.count ], expires_in: 1.week) { new.compute }
   end
 
   def compute
     universities = University.order(:position).to_a
     waseda, keio, tokyo = %w[waseda keio tokyo].map { |slug| universities.find { |u| u.slug == slug } }
-    rows, cards = [], []
+    rows, cards, lost = [], [], []
     Season.where(year: FROM_YEAR..).select(:id, :year, :term).order(:year, :term).each do |season|
       games = season.games.order(:played_on, :game_number).to_a.select { |game| game.decided? && game.counted_in_stats != false }
+      lost_title = lost_title(season, games, waseda, keio, universities)
+      lost << lost_title if lost_title
       games.group_by { |game| [ game.team0_id, game.team1_id ].sort }.each do |pair, card|
         first = card.map(&:played_on).min
         before = games.select { |game| game.played_on < first }
@@ -74,10 +83,34 @@ class SokeiUnderdog
         end
       end
     end
-    { rows:, cards: }
+    { rows:, cards:, lost: }
   end
 
   private
+
+  # The Lost for season, if its 早慶戦 cost its loser the title. Only seasons
+  # ranked by 勝ち点 (not 2020 and 2021's points) and over.
+  def lost_title(season, games, waseda, keio, universities)
+    return unless season.ranked? && !season.points_season?
+
+    card = games.select { |game| [ game.team0_id, game.team1_id ].sort == [ waseda.id, keio.id ].sort }
+    wins = [ waseda, keio ].map { |university| card.count { |game| winner_id(game) == university.id } }
+    return if card.empty? || wins.uniq.size == 1
+
+    loser = wins.first > wins.last ? keio : waseda
+    champion = SeasonChampion.of(season)
+    return if champion.nil? || champion == loser
+
+    other = loser == waseda ? keio : waseda
+    taken = 2.times.map do |i|
+      Game.new(season:, team0: loser, team1: other, played_on: card.first.played_on, game_number: i + 1, team0_score: 1, team1_score: 0, game_status: :finished)
+    end
+    top, second = Standings.new(season, games: games - card + taken, universities:).rows
+    return unless top.university == loser
+
+    rank = Standings.new(season, games:, universities:).row_for(loser).rank
+    Lost.new(season:, loser: loser.slug.to_sym, waseda_wins: wins.first, keio_wins: wins.last, champion:, loser_rank: rank, shared: second.rank == top.rank)
+  end
 
   def winner_id(game)
     return if game.team0_score == game.team1_score

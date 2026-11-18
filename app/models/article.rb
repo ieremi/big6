@@ -12,7 +12,7 @@ class Article
   ALL = [
     Entry.new(
       slug: "sokei-underdog", title: "早慶戦は順位が下の方が勝ちやすいか", published_on: Date.new(2026, 11, 18),
-      description: "「早慶戦は順位が下の方が勝つ」と言われるが本当か。1938年以降の早慶戦で、それまでの順位が下だった方が勝ち点を取った割合を、ほかのカードや年代ごとと比べる。"
+      description: "「早慶戦は順位が下の方が勝つ」と言われるが本当か。1938年以降の早慶戦で、それまでの順位が下だった方が勝ち点を取った割合を、ほかのカードや年代ごとと比べる。早慶戦で負けて優勝をのがした例も。"
     ),
     Entry.new(
       slug: "jingu-tournament-2026", title: "2026年 明治神宮野球大会の日取り", published_on: Date.new(2026, 11, 15),

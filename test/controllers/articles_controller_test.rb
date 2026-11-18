@@ -29,6 +29,11 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table.sokei-underdog tbody tr:first-child td:first-of-type", text: "100%（1/1）"
     assert_select "table.sokei-underdog tbody tr:first-child td:last-of-type", text: "0%（0/1）" # 法大–明大: 明大 stood lower, 法大 took it
     assert_select "td", text: "下の方が勝った"
+    # Had 早大 taken the 早慶戦, it would have been top (勝ち点2 like 法大, 4勝0敗 to 4勝1敗); 法大 won it instead.
+    assert_select "table.sokei-lost-titles tbody tr", 1 do
+      assert_select "td", text: "早大"
+      assert_select "td", text: "法大"
+    end
   end
 
   test "the articles are listed, and each has its own page" do

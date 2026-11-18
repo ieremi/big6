@@ -93,6 +93,39 @@
     下の方が勝った早慶戦は、優勝がかかっていたり、大差を覆したりして記憶に残りやすいので、そう言われるのかもしれません。
   </p>
 
+  <% lost = SokeiUnderdog.lost_titles %>
+  <% if lost.any? %>
+    <h2 class="card-heading">早慶戦で負けて優勝をのがした例</h2>
+    <p>
+      早慶戦で勝ち点を取っていれば単独で首位（または同率首位）になったのに、早慶戦に負けてほかの大学に優勝をさらわれた季は<%= lost.size %>回あります
+      （早大<%= lost.count { |row| row.loser == :waseda } %>回、慶大<%= lost.count { |row| row.loser == :keio } %>回）。
+      このうち<%= lost.count { |row| row.champion.slug == (row.loser == :waseda ? "keio" : "waseda") } %>回は、早慶戦に勝った方がそのまま優勝しました。
+    </p>
+    <div class="table-scroll">
+      <table class="formula-table sokei-lost-titles">
+        <thead>
+          <tr><th>シーズン</th><th>負けた方</th><th>早慶戦（早大–慶大）</th><th>優勝</th><th>負けた方の順位</th></tr>
+        </thead>
+        <tbody>
+          <% lost.reverse_each do |row| %>
+            <tr>
+              <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
+              <td><%= name.fetch(row.loser) %></td>
+              <td><%= row.waseda_wins %>勝–<%= row.keio_wins %>勝</td>
+              <td><%= row.champion.short_name %></td>
+              <td><%= row.loser_rank %>位<%= "（勝てば同率首位）" if row.shared %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">
+      早慶戦の勝ち点を負けた方が2勝0敗で取り、ほかの試合はそのままだったとして順位をつけ直したとき、首位になる季です。
+      勝ち点、つぎに勝率で並べ、同率首位は「勝てば同率首位」としました（優勝決定戦になったかどうかは問いません）。
+      負けた方がそれでも優勝した季はのぞいています。優勝校を勝ち点で決めている1950年以降で、勝ち点のなかった2020・2021年はのぞきました。
+    </p>
+  <% end %>
+
   <h2 class="card-heading">最近の早慶戦</h2>
   <div class="table-scroll">
     <table class="formula-table">
