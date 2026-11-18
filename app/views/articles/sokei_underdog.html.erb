@@ -9,7 +9,10 @@
   tally = SokeiUnderdog::Tally
   all, others = tally.of(rows), tally.of(cards)
   percent = ->(t) { t.rate ? "#{(t.rate * 100).round}%" : "—" }
-  name = { waseda: "早大", keio: "慶大" }
+  # A university as its chip (colour and initial) and short name, as the site shows it elsewhere.
+  chips = University.where(slug: %w[waseda keio]).index_by { |u| u.slug.to_sym }
+  badge = ->(university) { tag.span(university.initial, class: "team-chip", style: "background: #{university.color}", title: university.short_name) }
+  chip = ->(university) { safe_join([ tag.span(university.initial, class: "team-chip", style: "background: #{university.color}"), " ", university.short_name ]) }
   eras = { "1938〜1949年" => 1938..1949, "1950〜1969年" => 1950..1969, "1970〜1989年" => 1970..1989, "1990〜2009年" => 1990..2009, "2010年〜" => 2010.. }
   p_value = SokeiUnderdog.p_value(all)
 %>
@@ -25,9 +28,11 @@
   <% else %>
 
   <p class="article-lead">
-    「早慶戦は、それまでの順位が下の方が勝つ」とよく言われます。<%= SokeiUnderdog::FROM_YEAR %>年以降の<%= all.count %>回の早慶戦で確かめると、
-    順位が下だった方が勝ち点を取ったのは<%= all.lower_won %>回（<%= percent.(all) %>）で、上だった方が勝つことのほうが多くありました。
-    ほかのカードと比べても、早慶戦だけ下の方が勝ちやすいということはありません。
+    「早慶戦は、それまでの順位が下の方が勝つ」とよく言われます。<%= SokeiUnderdog::FROM_YEAR %>年以降、早慶戦の前の順位に差があり勝ち点が決まった<%= all.count %>回で確かめると、
+    下だった方が勝ったのは<%= all.lower_won %>回（<%= percent.(all) %>）で、ほかのカードと同じく上の方が勝ちやすく、回数の少ない1940年代のほかは、そう言える年代もありませんでした。
+    <% if (lost = SokeiUnderdog.lost_titles).any? %>
+      早慶戦に負けて優勝をのがした<%= lost.size %>回の季も一覧にしました。
+    <% end %>
   </p>
 
   <h2 class="card-heading">数え方</h2>
@@ -104,15 +109,15 @@
     <div class="table-scroll">
       <table class="formula-table sokei-lost-titles">
         <thead>
-          <tr><th>シーズン</th><th>負けた方</th><th>早慶戦（早大–慶大）</th><th>優勝</th><th>負けた方の順位</th></tr>
+          <tr><th>シーズン</th><th>負けた方</th><th>早慶戦</th><th>優勝</th><th>負けた方の順位</th></tr>
         </thead>
         <tbody>
           <% lost.reverse_each do |row| %>
             <tr>
               <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
-              <td><%= name.fetch(row.loser) %></td>
-              <td><%= row.waseda_wins %>勝–<%= row.keio_wins %>勝</td>
-              <td><%= row.champion.short_name %></td>
+              <td><%= chip.(chips.fetch(row.loser)) %></td>
+              <td><%= badge.(chips[:waseda]) %> <%= row.waseda_wins %>–<%= row.keio_wins %> <%= badge.(chips[:keio]) %></td>
+              <td><%= chip.(row.champion) %></td>
               <td><%= row.loser_rank %>位<%= "（勝てば同率首位）" if row.shared %></td>
             </tr>
           <% end %>
@@ -130,14 +135,14 @@
   <div class="table-scroll">
     <table class="formula-table">
       <thead>
-        <tr><th>シーズン</th><th>早慶戦の前の順位（早大・慶大）</th><th>勝ち点を取った方</th><th></th></tr>
+        <tr><th>シーズン</th><th>早慶戦の前の順位</th><th>勝ち点を取った方</th><th></th></tr>
       </thead>
       <tbody>
         <% rows.last(20).reverse_each do |row| %>
           <tr>
             <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
-            <td><%= row.waseda_rank %>位・<%= row.keio_rank %>位</td>
-            <td><%= name.fetch(row.winner) %></td>
+            <td><%= badge.(chips[:waseda]) %> <%= row.waseda_rank %>位　<%= badge.(chips[:keio]) %> <%= row.keio_rank %>位</td>
+            <td><%= chip.(chips.fetch(row.winner)) %></td>
             <td><%= row.lower_won? ? "下の方が勝った" : "" %></td>
           </tr>
         <% end %>
