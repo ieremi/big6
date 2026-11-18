@@ -23,11 +23,15 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     game.(10, "hosei", "meiji", 1); game.(11, "meiji", "hosei", 2); game.(12, "hosei", "meiji", 3)
     game.(31, "keio", "waseda", 1); game.(31, "keio", "waseda", 2)
 
+    # Its first URL is sent on to this one.
     get article_path("sokei-underdog")
+    assert_redirected_to article_path("sokei-standings")
+
+    get article_path("sokei-standings")
 
     assert_response :success
-    assert_select "table.sokei-underdog tbody tr:first-child td:first-of-type", text: "100%（1/1）"
-    assert_select "table.sokei-underdog tbody tr:first-child td:last-of-type", text: "0%（0/1）" # 法大–明大: 明大 stood lower, 法大 took it
+    assert_select "table.sokei-standings tbody tr:first-child td:first-of-type", text: "100%（1/1）"
+    assert_select "table.sokei-standings tbody tr:first-child td:last-of-type", text: "0%（0/1）" # 法大–明大: 明大 stood lower, 法大 took it
     assert_select "td", text: "下の方が勝った"
     # Had 早大 taken the 早慶戦, it would have been top (勝ち点2 like 法大, 4勝0敗 to 4勝1敗); 法大 won it instead.
     assert_select "table.sokei-lost-titles tbody tr", 1 do

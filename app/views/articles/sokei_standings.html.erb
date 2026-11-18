@@ -1,19 +1,19 @@
-<%# 早慶戦は順位が下の方が勝ちやすいか: in each season since 1938, which of 早慶 stood lower going into the 早慶戦 and
-    which took it (SokeiUnderdog), against every other card of the same seasons but 東大's, overall, by how far apart the
+<%# 早慶戦と順位：下の方が勝ちやすいか、負けて優勝をのがした季: in each season since 1938, which of 早慶 stood lower going into the 早慶戦 and
+    which took it (SokeiStanding), against every other card of the same seasons but 東大's, overall, by how far apart the
     two stood and by era, with the latest seasons listed. Worked out from the data, so it follows it as seasons end. %>
 <%
   content_for :title, site_title(@article.title)
   content_for :description, @article.description
   content_for :image_url, article_og_image_url(@article.slug)
-  rows, cards = SokeiUnderdog.rows, SokeiUnderdog.cards
-  tally = SokeiUnderdog::Tally
+  rows, cards = SokeiStanding.rows, SokeiStanding.cards
+  tally = SokeiStanding::Tally
   all, others = tally.of(rows), tally.of(cards)
   percent = ->(t) { t.rate ? "#{(t.rate * 100).round}%" : "—" }
   # A university as its chip (colour and initial), its short name on hover.
   chips = University.where(slug: %w[waseda keio]).index_by { |u| u.slug.to_sym }
   badge = ->(university) { tag.span(university.initial, class: "team-chip", style: "background: #{university.color}", title: university.short_name) }
   eras = { "1938〜1949年" => 1938..1949, "1950〜1969年" => 1950..1969, "1970〜1989年" => 1970..1989, "1990〜2009年" => 1990..2009, "2010年〜" => 2010.. }
-  p_value = SokeiUnderdog.p_value(all)
+  p_value = SokeiStanding.p_value(all)
 %>
 
 <% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
@@ -27,9 +27,9 @@
   <% else %>
 
   <p class="article-lead">
-    「早慶戦は、それまでの順位が下の方が勝つ」とよく言われます。<%= SokeiUnderdog::FROM_YEAR %>年以降、早慶戦の前の順位に差があり勝ち点が決まった<%= all.count %>回で確かめると、
+    「早慶戦は、それまでの順位が下の方が勝つ」とよく言われます。<%= SokeiStanding::FROM_YEAR %>年以降、早慶戦の前の順位に差があり勝ち点が決まった<%= all.count %>回で確かめると、
     下だった方が勝ったのは<%= all.lower_won %>回（<%= percent.(all) %>）で、ほかのカードと同じく上の方が勝ちやすく、回数の少ない1940年代のほかは、そう言える年代もありませんでした。
-    <% if (lost = SokeiUnderdog.lost_titles).any? %>
+    <% if (lost = SokeiStanding.lost_titles).any? %>
       早慶戦に負けて優勝をのがした<%= lost.size %>回の季も一覧にしました。
     <% end %>
   </p>
@@ -38,7 +38,7 @@
   <p>
     シーズンごとに、早慶戦の1試合目より前の試合だけで順位をつけ（勝ち点、つぎに勝率）、早大と慶大のどちらが下だったかを見ます。
     そして早慶戦で勝ち越した方（勝ち点を取った方）と比べます。早慶戦の前に早慶が同じ順位だった季と、早慶戦が1勝1敗や引き分けで勝ち越しがなかった季はのぞきました。
-    BIG6 Scorebook にすべての試合がある<%= SokeiUnderdog::FROM_YEAR %>年春季からの季を数え、優勝決定戦は数えていません。
+    BIG6 Scorebook にすべての試合がある<%= SokeiStanding::FROM_YEAR %>年春季からの季を数え、優勝決定戦は数えていません。
   </p>
   <p>
     くらべる相手として、同じ季のほかのカードも同じように数えました（カードの1試合目より前の順位と、勝ち点を取った方）。
@@ -47,7 +47,7 @@
 
   <h2 class="card-heading">順位が下だった方が勝った割合</h2>
   <div class="table-scroll">
-    <table class="formula-table sokei-underdog">
+    <table class="formula-table sokei-standings">
       <thead>
         <tr><th></th><th>早慶戦</th><th>ほかのカード（東大をのぞく）</th></tr>
       </thead>
@@ -97,7 +97,7 @@
     下の方が勝った早慶戦は、優勝がかかっていたり、大差を覆したりして記憶に残りやすいので、そう言われるのかもしれません。
   </p>
 
-  <% lost = SokeiUnderdog.lost_titles %>
+  <% lost = SokeiStanding.lost_titles %>
   <% if lost.any? %>
     <h2 class="card-heading">早慶戦で負けて優勝をのがした例</h2>
     <p>

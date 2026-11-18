@@ -1,4 +1,4 @@
-# 早慶戦は順位が下の方が勝ちやすいか, for the article on it: in each season,
+# 早慶戦と順位：下の方が勝ちやすいか、負けて優勝をのがした季, for the article on it: in each season,
 # which of 早大 and 慶大 stood lower in the standings going into the 早慶戦
 # (Standings over the games played before its first game: 勝ち点, then 勝率),
 # and which of them took the card (more wins in it). Seasons where the two were
@@ -10,7 +10,7 @@
 #
 # From 1938 spring, the first season Scorebook has every game of; playoffs
 # (counted_in_stats false) are left out. Cached until a game changes.
-class SokeiUnderdog
+class SokeiStanding
   FROM_YEAR = 1938
 
   # A season: its 早慶戦, who stood lower before it (:waseda, :keio), who took it,
@@ -51,7 +51,7 @@ class SokeiUnderdog
   end
 
   def self.computed
-    Rails.cache.fetch([ "sokei_underdog/v2", Game.maximum(:updated_at)&.to_i, Game.count ], expires_in: 1.week) { new.compute }
+    Rails.cache.fetch([ "sokei_standing/v1", Game.maximum(:updated_at)&.to_i, Game.count ], expires_in: 1.week) { new.compute }
   end
 
   def compute

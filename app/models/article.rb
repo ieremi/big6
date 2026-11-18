@@ -11,7 +11,7 @@ class Article
 
   ALL = [
     Entry.new(
-      slug: "sokei-underdog", title: "早慶戦は順位が下の方が勝ちやすいか", published_on: Date.new(2026, 11, 18),
+      slug: "sokei-standings", title: "早慶戦と順位：下の方が勝ちやすいか、負けて優勝をのがした季", published_on: Date.new(2026, 11, 18),
       description: "「早慶戦は順位が下の方が勝つ」と言われるが本当か。1938年以降の早慶戦で、それまでの順位が下だった方が勝ち点を取った割合を、ほかのカードや年代ごとと比べる。早慶戦で負けて優勝をのがした例も。"
     ),
     Entry.new(
@@ -65,7 +65,7 @@ class Article
   ].freeze
 
   # Articles that have moved, by their old slug: the old URL is sent on to the new one.
-  MOVED = { "strength-50-years" => "strength-postwar" }.freeze
+  MOVED = { "strength-50-years" => "strength-postwar", "sokei-underdog" => "sokei-standings" }.freeze
 
   def self.all
     ALL.sort_by { |entry| [ entry.published_on, entry.slug ] }.reverse
