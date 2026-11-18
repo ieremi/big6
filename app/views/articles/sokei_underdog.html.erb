@@ -9,10 +9,9 @@
   tally = SokeiUnderdog::Tally
   all, others = tally.of(rows), tally.of(cards)
   percent = ->(t) { t.rate ? "#{(t.rate * 100).round}%" : "—" }
-  # A university as its chip (colour and initial) and short name, as the site shows it elsewhere.
+  # A university as its chip (colour and initial), its short name on hover.
   chips = University.where(slug: %w[waseda keio]).index_by { |u| u.slug.to_sym }
   badge = ->(university) { tag.span(university.initial, class: "team-chip", style: "background: #{university.color}", title: university.short_name) }
-  chip = ->(university) { safe_join([ tag.span(university.initial, class: "team-chip", style: "background: #{university.color}"), " ", university.short_name ]) }
   eras = { "1938〜1949年" => 1938..1949, "1950〜1969年" => 1950..1969, "1970〜1989年" => 1970..1989, "1990〜2009年" => 1990..2009, "2010年〜" => 2010.. }
   p_value = SokeiUnderdog.p_value(all)
 %>
@@ -112,12 +111,12 @@
           <tr><th>シーズン</th><th>負けた方</th><th>早慶戦</th><th>優勝</th><th>負けた方の順位</th></tr>
         </thead>
         <tbody>
-          <% lost.reverse_each do |row| %>
+          <% lost.each do |row| %>
             <tr>
               <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
-              <td><%= chip.(chips.fetch(row.loser)) %></td>
+              <td><%= badge.(chips.fetch(row.loser)) %></td>
               <td><%= badge.(chips[:waseda]) %> <%= row.waseda_wins %>–<%= row.keio_wins %> <%= badge.(chips[:keio]) %></td>
-              <td><%= chip.(row.champion) %></td>
+              <td><%= badge.(row.champion) %></td>
               <td><%= row.loser_rank %>位<%= "（勝てば同率首位）" if row.shared %></td>
             </tr>
           <% end %>
@@ -138,11 +137,11 @@
         <tr><th>シーズン</th><th>早慶戦の前の順位</th><th>勝ち点を取った方</th><th></th></tr>
       </thead>
       <tbody>
-        <% rows.last(20).reverse_each do |row| %>
+        <% rows.last(20).each do |row| %>
           <tr>
             <th><%= link_to row.season.title, season_path(row.season.year, row.season.term) %></th>
             <td><%= badge.(chips[:waseda]) %> <%= row.waseda_rank %>位　<%= badge.(chips[:keio]) %> <%= row.keio_rank %>位</td>
-            <td><%= chip.(chips.fetch(row.winner)) %></td>
+            <td><%= badge.(chips.fetch(row.winner)) %></td>
             <td><%= row.lower_won? ? "下の方が勝った" : "" %></td>
           </tr>
         <% end %>
