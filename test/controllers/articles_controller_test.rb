@@ -117,6 +117,19 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "table tbody tr td span[data-view=odds][hidden]", text: "4.00" # alpha's best as odds
   end
 
+  test "the Jingu article tallies the league's entrants, and lists every tournament" do
+    %w[waseda keio meiji hosei rikkio tokyo].each_with_index do |slug, i|
+      University.find_or_create_by!(slug:) { |university| university.assign_attributes(name: slug, short_name: slug, position: 10 + i) }
+    end
+
+    get article_path("jingu-big6-record")
+
+    assert_response :success
+    assert_select ".article-lead", text: /16回優勝/
+    assert_select "h2", text: "すべての大会"
+    assert_select "td", text: "第57回"
+  end
+
   test "the home runs article gives the fewest, the most, the mean and the spread, and every season" do
     Game.delete_all
     player = Player.create!(scorebook_id: 1, university: universities(:one), name: "打者", enter_year: 2023, role: "選手")

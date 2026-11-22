@@ -1,0 +1,233 @@
+# 東京六大学's entrants in the 大学の部 of the 明治神宮野球大会, every year it was
+# held (1970 on; none in 1988 or 2020), for the article at /articles/jingu-big6-record
+# (JinguBig6Record). Checked 2026-11-22, through the 2026 tournament (明治大's
+# part in it over).
+#
+# entrants: the 東京六大学 universities that played (more than one in 1972, 1975
+#   and 1976, when the league had more places), from Wikipedia's table of every
+#   tournament's entrants (wikipedia: below), with how far each went: champion
+#   (★ there), runner_up (●), semifinal (△▽, the other two of the last four),
+#   or early (out before the semifinals).
+# games: each of the entrant's games, from 2013 on, as the 日本学生野球協会's
+#   schedule pages give them (association: below; runs are the entrant's).
+sources:
+  wikipedia:
+    name: Wikipedia「明治神宮野球大会」歴代結果（大学の部）
+    url: https://ja.wikipedia.org/wiki/明治神宮野球大会
+  association:
+    name: 日本学生野球協会「明治神宮野球大会 試合日程&結果」
+    url: https://www.student-baseball.or.jp/system/prog/schedule.php?m=pc&k=all&e=jingu&s=2026
+cancelled: [ 1988, 2020 ]
+years:
+  - year: 1970
+    entrants:
+      - { university: hosei, result: early }
+  - year: 1971
+    entrants:
+      - { university: keio, result: early }
+  - year: 1972
+    entrants:
+      - { university: meiji, result: early }
+      - { university: keio, result: early }
+      - { university: waseda, result: semifinal }
+      - { university: hosei, result: runner_up }
+  - year: 1973
+    entrants:
+      - { university: meiji, result: semifinal }
+  - year: 1974
+    entrants:
+      - { university: hosei, result: runner_up }
+  - year: 1975
+    entrants:
+      - { university: meiji, result: champion }
+      - { university: hosei, result: semifinal }
+  - year: 1976
+    entrants:
+      - { university: hosei, result: champion }
+      - { university: waseda, result: runner_up }
+  - year: 1977
+    entrants:
+      - { university: hosei, result: champion }
+  - year: 1978
+    entrants:
+      - { university: waseda, result: semifinal }
+  - year: 1979
+    entrants:
+      - { university: meiji, result: champion }
+  - year: 1980
+    entrants:
+      - { university: hosei, result: semifinal }
+  - year: 1981
+    entrants:
+      - { university: hosei, result: champion }
+  - year: 1982
+    entrants:
+      - { university: waseda, result: semifinal }
+  - year: 1983
+    entrants:
+      - { university: hosei, result: semifinal }
+  - year: 1984
+    entrants:
+      - { university: meiji, result: early }
+  - year: 1985
+    entrants:
+      - { university: keio, result: champion }
+  - year: 1986
+    entrants:
+      - { university: meiji, result: early }
+  - year: 1987
+    entrants:
+      - { university: hosei, result: runner_up }
+  - year: 1989
+    entrants:
+      - { university: rikkio, result: runner_up }
+  - year: 1990
+    entrants:
+      - { university: rikkio, result: runner_up }
+  - year: 1991
+    entrants:
+      - { university: keio, result: semifinal }
+  - year: 1992
+    entrants:
+      - { university: keio, result: champion }
+  - year: 1993
+    entrants:
+      - { university: waseda, result: runner_up }
+  - year: 1994
+    entrants:
+      - { university: hosei, result: early }
+  - year: 1995
+    entrants:
+      - { university: meiji, result: champion }
+  - year: 1996
+    entrants:
+      - { university: meiji, result: champion }
+  - year: 1997
+    entrants:
+      - { university: hosei, result: runner_up }
+  - year: 1998
+    entrants:
+      - { university: hosei, result: semifinal }
+  - year: 1999
+    entrants:
+      - { university: rikkio, result: semifinal }
+  - year: 2000
+    entrants:
+      - { university: keio, result: champion }
+  - year: 2001
+    entrants:
+      - { university: keio, result: early }
+  - year: 2002
+    entrants:
+      - { university: waseda, result: semifinal }
+  - year: 2003
+    entrants:
+      - { university: waseda, result: semifinal }
+  - year: 2004
+    entrants:
+      - { university: keio, result: runner_up }
+  - year: 2005
+    entrants:
+      - { university: hosei, result: semifinal }
+  - year: 2006
+    entrants:
+      - { university: waseda, result: runner_up }
+  - year: 2007
+    entrants:
+      - { university: waseda, result: runner_up }
+  - year: 2008
+    entrants:
+      - { university: waseda, result: semifinal }
+  - year: 2009
+    entrants:
+      - { university: meiji, result: semifinal }
+  - year: 2010
+    entrants:
+      - { university: waseda, result: champion }
+  - year: 2011
+    entrants:
+      - { university: meiji, result: champion }
+  - year: 2012
+    entrants:
+      - { university: hosei, result: runner_up }
+  - year: 2013
+    entrants:
+      - { university: meiji, result: runner_up }
+    games:
+      - { round: 2回戦, opponent: 道都大, runs: 4, allowed: 1 }
+      - { round: 準決勝, opponent: 大阪商業大, runs: 4, allowed: 1 }
+      - { round: 決勝, opponent: 亜細亜大, runs: 1, allowed: 2 }
+  - year: 2014
+    entrants:
+      - { university: meiji, result: runner_up }
+    games:
+      - { round: 2回戦, opponent: 徳山大, runs: 9, allowed: 0 }
+      - { round: 準決勝, opponent: 創価大, runs: 6, allowed: 2 }
+      - { round: 決勝, opponent: 駒澤大, runs: 0, allowed: 3 }
+  - year: 2015
+    entrants:
+      - { university: waseda, result: runner_up }
+    games:
+      - { round: 2回戦, opponent: 愛知大, runs: 3, allowed: 0 }
+      - { round: 準決勝, opponent: 上武大, runs: 2, allowed: 1 }
+      - { round: 決勝, opponent: 亜細亜大, runs: 1, allowed: 2 }
+  - year: 2016
+    entrants:
+      - { university: meiji, result: champion }
+    games:
+      - { round: 2回戦, opponent: 関西大, runs: 4, allowed: 1 }
+      - { round: 準決勝, opponent: 上武大, runs: 3, allowed: 0 }
+      - { round: 決勝, opponent: 桜美林大, runs: 5, allowed: 2 }
+  - year: 2017
+    entrants:
+      - { university: keio, result: early }
+    games:
+      - { round: 2回戦, opponent: 環太平洋大, runs: 1, allowed: 5 }
+  - year: 2018
+    entrants:
+      - { university: hosei, result: early }
+    games:
+      - { round: 2回戦, opponent: 環太平洋大, runs: 2, allowed: 4 }
+  - year: 2019
+    entrants:
+      - { university: keio, result: champion }
+    games:
+      - { round: 2回戦, opponent: 東海大札幌, runs: 9, allowed: 0 }
+      - { round: 準決勝, opponent: 城西国際大, runs: 6, allowed: 1 }
+      - { round: 決勝, opponent: 関西大, runs: 8, allowed: 0 }
+  - year: 2021
+    entrants:
+      - { university: keio, result: runner_up }
+    games:
+      - { round: 2回戦, opponent: 東農大北海道, runs: 7, allowed: 0 }
+      - { round: 準決勝, opponent: 神奈川大, runs: 6, allowed: 4 }
+      - { round: 決勝, opponent: 中央学院大, runs: 8, allowed: 9 }
+  - year: 2022
+    entrants:
+      - { university: meiji, result: champion }
+    games:
+      - { round: 2回戦, opponent: 関西大, runs: 2, allowed: 1 }
+      - { round: 準決勝, opponent: 名城大, runs: 5, allowed: 1 }
+      - { round: 決勝, opponent: 國學院大, runs: 1, allowed: 0 }
+  - year: 2023
+    entrants:
+      - { university: keio, result: champion }
+    games:
+      - { round: 2回戦, opponent: 環太平洋大, runs: 7, allowed: 0 }
+      - { round: 準決勝, opponent: 日本体育大, runs: 5, allowed: 1 }
+      - { round: 決勝, opponent: 青山学院大, runs: 2, allowed: 0 }
+  - year: 2024
+    entrants:
+      - { university: waseda, result: early }
+    games:
+      - { round: 2回戦, opponent: 環太平洋大, runs: 1, allowed: 2 }
+  - year: 2025
+    entrants:
+      - { university: meiji, result: early }
+    games:
+      - { round: 2回戦, opponent: 立命館大, runs: 2, allowed: 7 }
+  - year: 2026
+    entrants:
+      - { university: meiji, result: early }
+    games:
+      - { round: 2回戦, opponent: 筑波大, runs: 1, allowed: 2 }

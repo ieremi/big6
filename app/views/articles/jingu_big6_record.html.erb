@@ -1,0 +1,137 @@
+<%# 神宮大会での東京六大学代表の戦績 (JinguBig6Record): how far the league's entrants have gone in the 大学の部 of the
+    明治神宮野球大会 since 1970, in all, by university and by decade, the years the autumn champion didn't go, each
+    game from 2013, and every tournament. From db/articles/jingu_big6.yml, as checked on 2026-11-22. %>
+<%
+  content_for :title, site_title(@article.title)
+  content_for :description, @article.description
+  content_for :image_url, article_og_image_url(@article.slug)
+  record = JinguBig6Record.new
+  years = record.years
+  results = record.results
+  # A university as its chip (colour and initial), its short name beside it.
+  named = ->(university) { safe_join([ tag.span(university.initial, class: "team-chip", style: "background: #{university.color}"), " ", university.short_name ]) }
+  wins, losses = record.games_record
+  latest = years.last
+%>
+
+<% breadcrumbs [ "読み物", articles_path ], [ @article.title ] %>
+
+<article class="article">
+  <p class="muted"><%= @article.published_on.strftime("%Y-%m-%d") %></p>
+  <h1><%= @article.title %></h1>
+
+  <p class="article-lead">
+    明治神宮野球大会の大学の部は、<%= years.first.year %>年の第1回から<%= latest.year %>年の第<%= latest.edition %>回まで、
+    中止の<%= record.cancelled.size %>回（<%= record.cancelled.map { |year| "#{year}年" }.join("・") %>）をのぞいて<%= years.size %>回行われました。
+    東京六大学の代表は、そのうち<strong><%= results["champion"] %>回優勝</strong>し、準優勝が<%= results["runner_up"] %>回、ベスト4が<%= results["semifinal"] %>回です。
+    ベスト4に届かなかったのは<%= results["early"] %>回でした（代表が2校以上の年は、それぞれ1回と数えています）。
+  </p>
+
+  <h2 class="card-heading">大学ごと</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead>
+        <tr><th>大学</th><th>出場</th><% JinguBig6Record::RESULTS.each_value do |label| %><th><%= label %></th><% end %></tr>
+      </thead>
+      <tbody>
+        <% record.by_university.each do |tally| %>
+          <tr>
+            <td><%= named.(tally.university) %></td>
+            <td class="num"><%= tally.entries %></td>
+            <% JinguBig6Record::RESULTS.each_key do |result| %><td class="num"><%= tally.results[result] %></td><% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">東大は出場したことがありません。</p>
+
+  <h2 class="card-heading">年代ごと</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead>
+        <tr><th>年代</th><th>大会</th><% JinguBig6Record::RESULTS.each_value do |label| %><th><%= label %></th><% end %></tr>
+      </thead>
+      <tbody>
+        <% record.by_decade.each do |decade, (held, counts)| %>
+          <tr>
+            <td><%= decade %>年代</td>
+            <td class="num"><%= held %></td>
+            <% JinguBig6Record::RESULTS.each_key do |result| %><td class="num"><%= counts[result] %></td><% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="card-heading">秋の優勝校ではない大学が出た年</h2>
+  <% places = record.without_champion.map(&:last).uniq %>
+  <p>
+    代表はふつう秋季リーグ戦の優勝校ですが、優勝校が出ずに<%= places == [ 2 ] ? "2位の大学が" : "ほかの大学が" %>出た年が<%= record.without_champion.size %>回あります。
+    出典には、その理由は書かれていません。
+  </p>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead><tr><th>年</th><th>秋の優勝校</th><th>出場した大学</th><th>成績</th></tr></thead>
+      <tbody>
+        <% record.without_champion.each do |year, entrant, place| %>
+          <tr>
+            <td><%= link_to "#{year.year}年", standings_season_path(year.year, "autumn") %></td>
+            <td><%= named.(year.autumn_champion) %></td>
+            <td><%= named.(entrant.university) %>（<%= place %>位）</td>
+            <td><%= entrant.result_label %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">
+    1972年は4校、1975年と1976年は2校が出ました。出場枠がこの年だけ多かったためで、秋の優勝校も出ています。
+  </p>
+
+  <h2 class="card-heading"><%= record.years_with_games.first.year %>年からの試合</h2>
+  <p>
+    <%= record.years_with_games.first.year %>年からの<%= record.years_with_games.size %>回で、代表は<%= wins %>勝<%= losses %>敗です。
+    この間の代表は、どの年も2回戦（初戦）からの出場でした。
+  </p>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead><tr><th>年</th><th>代表</th><th>試合</th><th>成績</th></tr></thead>
+      <tbody>
+        <% record.years_with_games.each do |year| %>
+          <tr>
+            <td><%= year.year %>年</td>
+            <td><%= safe_join(year.entrants.map { |entrant| named.(entrant.university) }, "、") %></td>
+            <td><%= safe_join(year.games.map { |game| "#{game.round} #{game.won? ? "○" : "●"}#{game.runs}-#{game.allowed} #{game.opponent}" }, tag.br) %></td>
+            <td><%= year.entrants.map(&:result_label).join("、") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="card-heading">すべての大会</h2>
+  <div class="table-scroll">
+    <table class="formula-table">
+      <thead><tr><th>年</th><th>回</th><th>代表</th><th>成績</th></tr></thead>
+      <tbody>
+        <% years.each do |year| %>
+          <tr>
+            <td><%= year.year %>年</td>
+            <td class="num">第<%= year.edition %>回</td>
+            <td><%= safe_join(year.entrants.map { |entrant| named.(entrant.university) }, tag.br) %></td>
+            <td><%= safe_join(year.entrants.map(&:result_label), tag.br) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="card-heading">出典</h2>
+  <p class="muted">
+    出場校とベスト4以上の成績は<%= link_to record.source("wikipedia")["name"], record.source("wikipedia")["url"] %>、
+    <%= record.years_with_games.first.year %>年からの試合は<%= link_to record.source("association")["name"], record.source("association")["url"] %>によります（2026年11月22日に確認）。
+    秋の優勝校と順位は、このサイトの順位表のものです。
+    1999年は、秋の優勝を争った法大と立大の優勝決定戦がこのサイトのデータにないため、表に入れていません（神宮大会には立大が出ています）。
+  </p>
+</article>
