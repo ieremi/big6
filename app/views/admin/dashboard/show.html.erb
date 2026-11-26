@@ -67,3 +67,10 @@
   <%= link_to "未決定の提案（#{FixSuggestion.pending.count}件）→", admin_suggestions_path %>
   <span class="muted">（ほかに<%= link_to "対応不要 #{FixSuggestion.where(status: "not_needed").count}件", admin_suggestions_path(status: "not_needed") %>）</span>
 </p>
+
+<h2 class="card-heading">サーバーエラー（500）</h2>
+<% last_day = ServerError.where(last_seen_at: 24.hours.ago..) %>
+<p>
+  <%= link_to "サーバーエラー（#{ServerError.count}種類）→", admin_server_errors_path %>
+  <span class="muted">（直近24時間に起きたもの：<%= last_day.count %>種類）</span>
+</p>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -270,6 +270,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_000002) do
     t.string "term"
     t.datetime "updated_at", null: false
     t.integer "year"
+  end
+
+  create_table "server_errors", force: :cascade do |t|
+    t.text "backtrace"
+    t.string "controller_action"
+    t.string "exception_class", null: false
+    t.string "fingerprint", null: false
+    t.datetime "first_seen_at", null: false
+    t.datetime "last_seen_at", null: false
+    t.text "message"
+    t.integer "occurrences", default: 1, null: false
+    t.text "path"
+    t.string "request_method"
+    t.text "user_agent"
+    t.index ["fingerprint"], name: "index_server_errors_on_fingerprint", unique: true
+    t.index ["last_seen_at"], name: "index_server_errors_on_last_seen_at"
   end
 
   create_table "universities", force: :cascade do |t|

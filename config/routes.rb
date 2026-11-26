@@ -50,6 +50,9 @@ Rails.application.routes.draw do
   namespace :admin do
     get "game_checks", to: "game_checks#index", as: :game_checks
     post "game_checks/review", to: "game_checks#review", as: :review_game_check
+    resources :server_errors, only: %i[index show destroy] do
+      delete :destroy_all, on: :collection
+    end
     resources :suggestions, only: %i[index show update] do
       member do
         post :apply

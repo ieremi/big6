@@ -14,7 +14,12 @@ module Big6
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    config.autoload_lib(ignore: %w[assets middleware tasks])
+
+    # Records the requests that end in a 500 (ServerErrorRecorder), for the
+    # admin pages.
+    require_relative "../lib/middleware/server_error_recorder"
+    config.middleware.insert_after ActionDispatch::DebugExceptions, ServerErrorRecorder
 
     # Configuration for the application, engines, and railties goes here.
     #

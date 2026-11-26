@@ -2376,3 +2376,20 @@ tr.bench-only td a {
   stroke-width: 3;
   stroke-linecap: square;
 }
+
+/* The admin list of 500s (Admin::ServerErrorsController). */
+.server-errors td {
+  vertical-align: top;
+}
+
+.server-errors td:first-child {
+  text-align: right;
+}
+
+.server-error-backtrace {
+  overflow-x: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8rem;
+}

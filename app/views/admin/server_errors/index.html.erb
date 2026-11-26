@@ -1,0 +1,43 @@
+<%# The errors that turned requests into 500s (ServerError), latest first: what was raised, where, how often, and the latest request. %>
+<%
+  content_for :title, "サーバーエラー - 管理画面 - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+  tokyo = ActiveSupport::TimeZone["Asia/Tokyo"]
+%>
+
+<p><%= link_to "← 管理画面", admin_path %></p>
+<h1>サーバーエラー（500）</h1>
+
+<p class="muted">
+  500 になったリクエストを、例外・アクション・発生箇所が同じものごとにまとめて数えています。URL・User-Agent・バックトレースは最後のリクエストのものです。
+  直したものは削除すると、また起きたときだけ一覧に戻ります。時刻は日本時間です。
+</p>
+
+<% if @server_errors.empty? %>
+  <p>記録されたエラーはありません。</p>
+<% else %>
+  <% if @total > @server_errors.size %>
+    <p class="muted">全<%= number_with_delimiter(@total) %>種類のうち、最近の<%= @server_errors.size %>種類を表示しています。</p>
+  <% end %>
+  <div class="table-scroll">
+    <table class="server-errors">
+      <thead><tr><th>回数</th><th>例外</th><th>アクション</th><th>最後のリクエスト</th><th>最初</th><th>最後</th></tr></thead>
+      <tbody>
+        <% @server_errors.each do |server_error| %>
+          <tr>
+            <td><%= number_with_delimiter(server_error.occurrences) %></td>
+            <td>
+              <%= link_to server_error.exception_class, admin_server_error_path(server_error) %>
+              <div class="muted"><%= server_error.message.to_s.truncate(120) %></div>
+            </td>
+            <td><%= server_error.controller_action %></td>
+            <td><code><%= server_error.request_method %> <%= server_error.path.to_s.truncate(80) %></code></td>
+            <td><%= server_error.first_seen_at.in_time_zone(tokyo).strftime("%Y-%m-%d %H:%M") %></td>
+            <td><%= server_error.last_seen_at.in_time_zone(tokyo).strftime("%Y-%m-%d %H:%M") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= button_to "すべて削除", destroy_all_admin_server_errors_path, method: :delete, class: "period-btn", form: { data: { turbo_confirm: "記録したエラーをすべて削除しますか？" } } %>
+<% end %>

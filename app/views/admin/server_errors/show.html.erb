@@ -1,0 +1,24 @@
+<%# One kind of error that turned requests into 500s (ServerError): the latest request's details and backtrace. %>
+<%
+  content_for :title, "#{@server_error.exception_class} - サーバーエラー - 管理画面 - Big6"
+  content_for :head, tag.meta(name: "robots", content: "noindex, nofollow")
+  tokyo = ActiveSupport::TimeZone["Asia/Tokyo"]
+%>
+
+<p><%= link_to "← サーバーエラー", admin_server_errors_path %></p>
+<h1><%= @server_error.exception_class %></h1>
+<p><%= @server_error.message %></p>
+
+<dl class="admin-facts">
+  <dt>回数</dt><dd><%= number_with_delimiter(@server_error.occurrences) %></dd>
+  <dt>アクション</dt><dd><%= @server_error.controller_action || "—" %></dd>
+  <dt>最初</dt><dd><%= @server_error.first_seen_at.in_time_zone(tokyo).strftime("%Y-%m-%d %H:%M:%S") %></dd>
+  <dt>最後</dt><dd><%= @server_error.last_seen_at.in_time_zone(tokyo).strftime("%Y-%m-%d %H:%M:%S") %></dd>
+  <dt>最後のリクエスト</dt><dd><code><%= @server_error.request_method %> <%= @server_error.path %></code></dd>
+  <dt>User-Agent</dt><dd><%= @server_error.user_agent || "—" %></dd>
+</dl>
+
+<h2 class="card-heading">バックトレース</h2>
+<pre class="server-error-backtrace"><%= @server_error.backtrace %></pre>
+
+<%= button_to "削除", admin_server_error_path(@server_error), method: :delete, class: "period-btn", form: { data: { turbo_confirm: "このエラーの記録を削除しますか？" } } %>
