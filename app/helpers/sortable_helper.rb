@@ -20,7 +20,7 @@ module SortableHelper
     query = request.query_parameters.except("page", "sort", "direction").merge(next_order.to_params)
 
     tag.th(**sorted_heading_attributes(shown, sorted, "sortable")) do
-      link_to "#{request.path}?#{query.to_query}", data: { shortcut: shortcut, shortcut_label: "#{label}でソート" } do
+      link_to "#{request.path}?#{query.to_query}", rel: "nofollow", data: { shortcut: shortcut, shortcut_label: "#{label}でソート" } do
         safe_join([ label, " ", tag.kbd(shortcut) ])
       end
     end
@@ -43,7 +43,7 @@ module SortableHelper
     return if order.empty?
 
     query = request.query_parameters.except("page", "sort", "direction")
-    link_to "並べ替えをリセット", [ path || request.path, query.to_query.presence ].compact.join("?"), class: "period-btn sort-reset"
+    link_to "並べ替えをリセット", [ path || request.path, query.to_query.presence ].compact.join("?"), class: "period-btn sort-reset", rel: "nofollow"
   end
 
   # A heading for a table in a sortable-table controller. Columns that hold

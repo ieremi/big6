@@ -4,5 +4,13 @@ Allow: /
 Disallow: /admin
 Disallow: /login
 Disallow: /auth/
+# The players and games searches, and any table sorted by its headings, take
+# filters and sort orders in the query, in endless combinations of the same
+# rows: crawlers following them were most of the site's traffic. Every player,
+# game and season page is in the sitemap.
+Disallow: /players?
+Disallow: /games?
+Disallow: /*?*sort=
+Disallow: /*?*direction=
 
 Sitemap: https://big6.onrender.com/sitemap.xml

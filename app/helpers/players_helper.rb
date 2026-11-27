@@ -31,7 +31,7 @@ module PlayersHelper
   def player_filter_link(value, param)
     return value if value.blank?
 
-    link_to value, players_path(request.query_parameters.except("page").merge(param => value))
+    link_to value, players_path(request.query_parameters.except("page").merge(param => value)), rel: "nofollow", rel: "nofollow"
   end
 
   # Same idea, but narrows to exactly this entry year (both ends of the
@@ -39,7 +39,7 @@ module PlayersHelper
   def player_enter_year_link(enter_year)
     return "—" unless enter_year
 
-    link_to enter_year, players_path(request.query_parameters.except("page").merge(start_year: enter_year, end_year: enter_year))
+    link_to enter_year, players_path(request.query_parameters.except("page").merge(start_year: enter_year, end_year: enter_year)), rel: "nofollow", rel: "nofollow"
   end
 
   # The player's game page, from the point of view of the game they were on the roster for.

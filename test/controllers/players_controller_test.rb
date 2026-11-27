@@ -18,6 +18,19 @@ class PlayersControllerTest < ActionDispatch::IntegrationTest
     css_select("tbody tr td:nth-child(2) a").map(&:text)
   end
 
+  # Each filter link adds one more filter to the current search, and each
+  # heading another sort order: crawlers following them never ran out of URLs.
+  test "the filter links and the sort headings are nofollow, and robots.txt keeps crawlers off them" do
+    get players_url
+
+    assert_select "a[rel=nofollow][href*=?]", "high_school="
+    assert_select "a[rel=nofollow][href*=?]", "start_year=2023"
+    assert_select "th.sortable a[rel=nofollow][href*=?]", "sort="
+
+    robots = Rails.root.join("public/robots.txt").read
+    [ "/players?", "/games?", "/*?*sort=", "/*?*direction=" ].each { |path| assert_includes robots, "Disallow: #{path}\n" }
+  end
+
   test "index lists every player, newest entry year first and those without one last" do
     get players_url
 
