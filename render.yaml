@@ -7,7 +7,9 @@ services:
   - type: web
     name: big6
     runtime: docker
-    plan: 0.5c-512mb
+    # 1 CPU, 2 GB (formerly "standard"). Raised from 0.5c-512mb in the
+    # dashboard: memory sits around 30% and CPU around 3%.
+    plan: 1c-2g
     region: singapore
     dockerfilePath: ./Dockerfile
     healthCheckPath: /up

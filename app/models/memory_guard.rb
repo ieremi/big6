@@ -1,6 +1,7 @@
 # Lets a long-running script stop cleanly before the machine runs out of memory.
 # Where a container is shared with the web server (Render runs both in one
-# 512MB instance), a script that keeps growing gets the whole container killed,
+# instance, 2GB since November 2026 and 512MB before), a script that keeps
+# growing gets the whole container killed,
 # web server included, and loses its progress with no message.
 #
 # The guard remembers the process's memory when it is created and, when asked,

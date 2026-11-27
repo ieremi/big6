@@ -121,7 +121,7 @@ The scripts in `script/big6/` are run with `bin/rails runner`, and each one docu
 
 ## Performance constraints
 
-Production is a single Render instance with 0.5 CPU and 512 MB (`render.yaml`, Singapore), shared by web, jobs and one-off scripts. Keep that in mind:
+Production is a single Render instance with 1 CPU and 2 GB (`render.yaml`, plan `1c-2g`, Singapore), shared by web, jobs and one-off scripts. In late November 2026 memory sat around 30% and CPU around 3%, yet up to about 13% of a day's requests were 502s from Render's proxy (they never reach the app, so `ServerError` doesn't see them). The likely bottleneck is Puma's few threads (`RAILS_MAX_THREADS`, default 3, one process) waiting on the database, not memory or CPU. The database is a small plan (0.1 CPU). Keep that in mind:
 - Avoid N+1 queries and loading JSONB in bulk. Several classes accept preloaded `games:` or `universities:` for this reason.
 - Expensive pages cache their results in `Rails.cache` (sitemap, matchups, ICS, season tags, rankings, player-search counts). Any cache key must vary with every parameter that affects the result. The test environment uses `:null_store`.
 - Long scripts should use `MemoryGuard`.
